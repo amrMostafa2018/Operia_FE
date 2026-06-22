@@ -41,3 +41,24 @@
   .p-inputgroup-addon:first-child { border-radius: 0 $border-radius $border-radius 0; }
   .p-inputgroup-addon:last-child  { border-radius: $border-radius 0 0 $border-radius; }
 }
+
+[dir='ltr'] {
+  body, p, span, label, td, th { text-align: left; }
+
+  input, textarea, select {
+    text-align: left;
+    direction: ltr;
+  }
+
+  .p-datatable .p-datatable-thead > tr > th,
+  .p-datatable .p-datatable-tbody > tr > td {
+    text-align: left !important;
+  }
+
+  .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+    text-align: left;
+  }
+
+  .p-inputgroup-addon:first-child { border-radius: $border-radius 0 0 $border-radius; }
+  .p-inputgroup-addon:last-child  { border-radius: 0 $border-radius $border-radius 0; }
+}

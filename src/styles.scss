@@ -20,11 +20,19 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: $font-ar;
   background-color: var(--surface-bg);
   color: var(--text-primary);
-  direction: rtl;
   -webkit-font-smoothing: antialiased;
+}
+
+html[dir='rtl'] body {
+  direction: rtl;
+  font-family: $font-ar;
+}
+
+html[dir='ltr'] body {
+  direction: ltr;
+  font-family: $font-en;
 }
 
 a {

@@ -14,8 +14,9 @@
 // ─── Top link ─────────────────────────────────────────────────────────────────
 .page-top-link {
   position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
+  top: 1.25rem;
+  inset-inline-start: 1.5rem;
+  z-index: 10;
   font-size: 0.82rem;
   color: var(--text-secondary);
   display: flex;
@@ -89,7 +90,7 @@
     font-family: $font-ar;
   }
 
-  .required { color: var(--color-danger); margin-right: 2px; }
+  .required { color: var(--color-danger); margin-inline-end: 2px; }
 }
 
 // Input wrapper
@@ -117,7 +118,7 @@
 
   .input-icon {
     position: absolute;
-    right: 0.85rem;
+    inset-inline-start: 0.85rem;
     color: var(--text-secondary);
     font-size: 0.85rem;
     pointer-events: none;
@@ -131,25 +132,25 @@
   outline: none !important;
   box-shadow: none !important;
   background: transparent !important;
-  padding: 0.65rem 2.5rem 0.65rem 2.75rem;
-  font-family: $font-ar;
+  padding-block: 0.65rem;
+  padding-inline-start: 2.5rem;
+  padding-inline-end: 0.85rem;
   font-size: 0.85rem;
   color: var(--text-primary);
   width: 100%;
-  direction: rtl;
 
   &::placeholder {
     color: var(--text-disabled);
   }
 
   &.has-toggle {
-    padding-left: 2.75rem;
+    padding-inline-end: 2.75rem;
   }
 }
 
 .toggle-btn {
   position: absolute;
-  left: 0.75rem;
+  inset-inline-end: 0.75rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -192,16 +193,19 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    border-inline-start: 1.5px solid var(--surface-border);
+    border-inline-end: 1.5px solid var(--surface-border);
     background: var(--surface-hover);
-    border-radius: 0 $border-radius $border-radius 0;
+    border-start-start-radius: $border-radius;
+    border-end-start-radius: $border-radius;
 
     .country-select {
       appearance: none;
       -webkit-appearance: none;
       border: none;
       background: transparent;
-      padding: 0.65rem 1.75rem 0.65rem 0.65rem;
+      padding-block: 0.65rem;
+      padding-inline-start: 0.65rem;
+      padding-inline-end: 1.75rem;
       font-size: 0.82rem;
       font-family: $font-en;
       direction: ltr;
@@ -219,7 +223,7 @@
 
     .country-chevron {
       position: absolute;
-      left: 0.45rem;
+      inset-inline-end: 0.45rem;
       top: 50%;
       transform: translateY(-50%);
       font-size: 0.6rem;
@@ -237,15 +241,15 @@
 
     .input-icon {
       position: absolute;
-      right: 0.85rem;
+      inset-inline-start: 0.85rem;
       color: var(--text-secondary);
       font-size: 0.85rem;
       pointer-events: none;
     }
 
     .p-inputtext-custom {
-      padding-right: 2.5rem;
-      padding-left: 0.85rem;
+      padding-inline-start: 2.5rem;
+      padding-inline-end: 0.85rem;
     }
   }
 }
@@ -302,12 +306,22 @@
   margin-top: 1.25rem;
   padding: 0.75rem 1rem !important;
   font-size: 0.95rem !important;
-  font-family: $font-ar !important;
   font-weight: 600 !important;
   border-radius: $border-radius !important;
   background: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
-  justify-content: center;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+
+  .p-button-icon {
+    margin: 0 !important;
+  }
+
+  .p-button-label {
+    flex: 0 1 auto;
+  }
 
   &:hover:not(:disabled) {
     background: var(--color-primary-dark) !important;
@@ -338,7 +352,7 @@
 
   .page-top-link {
     top: 1rem;
-    left: 1rem;
+    inset-inline-start: 1rem;
   }
 }
 

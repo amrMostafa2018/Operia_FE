@@ -4,8 +4,8 @@
 
   <!-- Top link -->
   <div class="page-top-link">
-    <span>لديك حساب بالفعل؟</span>
-    <a routerLink="/auth/login" class="link-btn">سجل الدخول</a>
+    <span>{{ 'AUTH.REGISTER_PAGE.HAS_ACCOUNT' | translate }}</span>
+    <a routerLink="/auth/login" class="link-btn">{{ 'AUTH.REGISTER_PAGE.SIGN_IN' | translate }}</a>
   </div>
 
   <!-- Form card -->
@@ -14,65 +14,65 @@
     <!-- Title -->
     <div class="form-title">
       <span class="title-icon"><i class="pi pi-user-plus"></i></span>
-      <h2>إنشاء حساب جديد</h2>
+      <h2>{{ 'AUTH.REGISTER_PAGE.TITLE' | translate }}</h2>
     </div>
-    <p class="form-subtitle">الخطوة الأولى لإنشاء نظامك وإدارة عملك بكفاءة</p>
+    <p class="form-subtitle">{{ 'AUTH.REGISTER_PAGE.SUBTITLE' | translate }}</p>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
       <!-- Full Name -->
       <div class="field">
-        <label for="name">الاسم الكامل <span class="required">*</span></label>
+        <label for="name">{{ 'AUTH.REGISTER_PAGE.FULL_NAME' | translate }} <span class="required">*</span></label>
         <div class="input-wrapper" [class.error]="isInvalid('name')">
           <i class="pi pi-user input-icon"></i>
           <input
             id="name"
             pInputText
             formControlName="name"
-            placeholder="أدخل اسمك الكامل"
+            [placeholder]="'AUTH.REGISTER_PAGE.NAME_PLACEHOLDER' | translate"
             class="p-inputtext-custom"
           />
         </div>
         @if (isInvalid('name')) {
           <small class="error-msg">
-            @if (form.get('name')?.errors?.['required']) { الاسم الكامل مطلوب }
-            @else if (form.get('name')?.errors?.['minlength']) { يجب أن يكون الاسم 3 أحرف على الأقل }
+            @if (form.get('name')?.errors?.['required']) { {{ 'AUTH.REGISTER_PAGE.NAME_REQUIRED' | translate }} }
+            @else if (form.get('name')?.errors?.['minlength']) { {{ 'AUTH.REGISTER_PAGE.NAME_MIN' | translate }} }
           </small>
         }
       </div>
 
       <!-- Email -->
       <div class="field">
-        <label for="email">البريد الإلكتروني <span class="required">*</span></label>
+        <label for="email">{{ 'AUTH.EMAIL' | translate }} <span class="required">*</span></label>
         <div class="input-wrapper" [class.error]="isInvalid('email')">
           <i class="pi pi-envelope input-icon"></i>
           <input
             id="email"
             pInputText
             formControlName="email"
-            placeholder="أدخل بريدك الإلكتروني"
+            [placeholder]="'AUTH.LOGIN_PAGE.EMAIL_PLACEHOLDER' | translate"
             type="email"
             class="p-inputtext-custom"
           />
         </div>
         @if (isInvalid('email')) {
           <small class="error-msg">
-            @if (form.get('email')?.errors?.['required']) { البريد الإلكتروني مطلوب }
-            @else if (form.get('email')?.errors?.['email']) { البريد الإلكتروني غير صحيح }
+            @if (form.get('email')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_REQUIRED' | translate }} }
+            @else if (form.get('email')?.errors?.['email']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_INVALID' | translate }} }
           </small>
         }
       </div>
 
       <!-- Phone -->
       <div class="field">
-        <label for="phone">رقم الموبايل <span class="required">*</span></label>
+        <label for="phone">{{ 'AUTH.REGISTER_PAGE.PHONE' | translate }} <span class="required">*</span></label>
         <div class="phone-row" [class.error]="isInvalid('phone')">
           <div class="country-select-wrap">
             <select
               id="countryCode"
               formControlName="countryCode"
               class="country-select"
-              aria-label="رمز الدولة"
+              [attr.aria-label]="'AUTH.REGISTER_PAGE.COUNTRY_CODE' | translate"
             >
               @for (country of countryCodes; track country.code) {
                 <option [value]="country.code">
@@ -88,7 +88,7 @@
               id="phone"
               pInputText
               formControlName="phone"
-              placeholder="أدخل رقم الموبايل"
+              [placeholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
               type="tel"
               class="p-inputtext-custom"
             />
@@ -96,16 +96,16 @@
         </div>
         <small class="whatsapp-hint">
           <i class="pi pi-whatsapp"></i>
-          سيتم استخدام هذا الرقم للتواصل معك عبر واتساب
+          {{ 'AUTH.REGISTER_PAGE.WHATSAPP_HINT' | translate }}
         </small>
         @if (isInvalid('phone')) {
-          <small class="error-msg">رقم الهاتف غير صحيح</small>
+          <small class="error-msg">{{ 'AUTH.REGISTER_PAGE.PHONE_INVALID' | translate }}</small>
         }
       </div>
 
       <!-- Password -->
       <div class="field">
-        <label for="password">كلمة المرور <span class="required">*</span></label>
+        <label for="password">{{ 'AUTH.PASSWORD' | translate }} <span class="required">*</span></label>
         <div class="input-wrapper" [class.error]="isInvalid('password')">
           <i class="pi pi-lock input-icon"></i>
           <input
@@ -113,7 +113,7 @@
             pInputText
             formControlName="password"
             [type]="showPassword() ? 'text' : 'password'"
-            placeholder="أدخل كلمة المرور"
+            [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
             class="p-inputtext-custom has-toggle"
           />
           <button type="button" class="toggle-btn" (click)="togglePassword()">
@@ -122,20 +122,20 @@
         </div>
         <small class="hint-msg">
           <i class="pi pi-info-circle"></i>
-          يجب أن تكون 8 أحرف على الأقل وتتضمن حرف كبير ورقم
+          {{ 'AUTH.REGISTER_PAGE.PASSWORD_HINT' | translate }}
         </small>
         @if (isInvalid('password')) {
           <small class="error-msg">
-            @if (form.get('password')?.errors?.['required']) { كلمة المرور مطلوبة }
-            @else if (form.get('password')?.errors?.['minlength']) { يجب أن تكون 8 أحرف على الأقل }
-            @else if (form.get('password')?.errors?.['pattern']) { يجب أن تحتوي على حرف كبير ورقم }
+            @if (form.get('password')?.errors?.['required']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_REQUIRED' | translate }} }
+            @else if (form.get('password')?.errors?.['minlength']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_MIN' | translate }} }
+            @else if (form.get('password')?.errors?.['pattern']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_PATTERN' | translate }} }
           </small>
         }
       </div>
 
       <!-- Confirm Password -->
       <div class="field">
-        <label for="confirmPassword">تأكيد كلمة المرور <span class="required">*</span></label>
+        <label for="confirmPassword">{{ 'AUTH.REGISTER_PAGE.CONFIRM_PASSWORD' | translate }} <span class="required">*</span></label>
         <div class="input-wrapper" [class.error]="isInvalid('confirmPassword')">
           <i class="pi pi-lock input-icon"></i>
           <input
@@ -143,7 +143,7 @@
             pInputText
             formControlName="confirmPassword"
             [type]="showConfirm() ? 'text' : 'password'"
-            placeholder="أعد إدخال كلمة المرور"
+            [placeholder]="'AUTH.REGISTER_PAGE.CONFIRM_PLACEHOLDER' | translate"
             class="p-inputtext-custom has-toggle"
           />
           <button type="button" class="toggle-btn" (click)="toggleConfirm()">
@@ -152,8 +152,8 @@
         </div>
         @if (isInvalid('confirmPassword')) {
           <small class="error-msg">
-            @if (form.get('confirmPassword')?.errors?.['required']) { تأكيد كلمة المرور مطلوب }
-            @else if (form.get('confirmPassword')?.errors?.['mismatch']) { كلمتا المرور غير متطابقتين }
+            @if (form.get('confirmPassword')?.errors?.['required']) { {{ 'AUTH.REGISTER_PAGE.CONFIRM_REQUIRED' | translate }} }
+            @else if (form.get('confirmPassword')?.errors?.['mismatch']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_MISMATCH' | translate }} }
           </small>
         }
       </div>
@@ -166,19 +166,19 @@
           inputId="terms"
         />
         <label for="terms" class="terms-label">
-          أوافق على
-          <a href="#" class="link-inline">الشروط وسياسة الخصوصية</a>
+          {{ 'AUTH.REGISTER_PAGE.TERMS_PREFIX' | translate }}
+          <a href="#" class="link-inline">{{ 'AUTH.REGISTER_PAGE.TERMS_LINK' | translate }}</a>
         </label>
       </div>
       @if (form.get('agreeToTerms')?.invalid && form.get('agreeToTerms')?.touched) {
-        <small class="error-msg">يجب الموافقة على الشروط وسياسة الخصوصية</small>
+        <small class="error-msg">{{ 'AUTH.REGISTER_PAGE.TERMS_REQUIRED' | translate }}</small>
       }
 
       <!-- Submit -->
       <p-button
         type="submit"
-        label="التالي"
-        icon="pi pi-arrow-left"
+        [label]="'AUTH.REGISTER_PAGE.SUBMIT' | translate"
+        [icon]="submitIcon()"
         iconPos="right"
         styleClass="submit-btn"
         [loading]="isLoading()"
@@ -188,7 +188,7 @@
       <!-- Footer note -->
       <p class="form-footer-note">
         <i class="pi pi-lock"></i>
-        نحن نلتزم بحماية بياناتك وخصوصيتك
+        {{ 'AUTH.PRIVACY_NOTE' | translate }}
       </p>
 
     </form>

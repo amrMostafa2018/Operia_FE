@@ -37,6 +37,10 @@ function resolveMessage(error: HttpErrorResponse): string {
 }
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  if (req.url.includes('/assets/')) {
+    return next(req);
+  }
+
   const router = inject(Router);
   const messageService = inject(MessageService);
 

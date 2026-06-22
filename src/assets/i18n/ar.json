@@ -1,8 +1,13 @@
 {
   "APP": {
-    "NAME": "أوبيريا",
+    "NAME": "OPERIA",
     "LOADING": "جاري التحميل...",
     "ERROR": "حدث خطأ ما"
+  },
+  "LANGUAGE": {
+    "LABEL": "اللغة",
+    "EN": "English",
+    "AR": "العربية"
   },
   "NAV": {
     "DASHBOARD":     "لوحة التحكم",
@@ -25,7 +30,64 @@
     "REMEMBER_ME":    "تذكرني",
     "FORGOT_PASSWORD":"نسيت كلمة المرور؟",
     "INVALID_CREDENTIALS": "بيانات الدخول غير صحيحة",
-    "SESSION_EXPIRED": "انتهت الجلسة، يرجى تسجيل الدخول مجدداً"
+    "SESSION_EXPIRED": "انتهت الجلسة، يرجى تسجيل الدخول مجدداً",
+    "ERROR":          "خطأ",
+    "LOGIN_ERROR":    "خطأ في تسجيل الدخول",
+    "REGISTER_ERROR": "حدث خطأ أثناء إنشاء الحساب",
+    "PRIVACY_NOTE":   "نحن نلتزم بحماية بياناتك وخصوصيتك",
+    "LAYOUT": {
+      "TAGLINE":      "Smart Business Management",
+      "HERO_TITLE":   "ابدأ إدارة عملك<br>بسهولة واحترافية",
+      "HERO_SUB":     "انضم إلى آلاف الشركات التي تدير أعمالها\nبذكاء مع <strong>Operia</strong>",
+      "STAT_BOOKINGS":"الحجوزات",
+      "STAT_CUSTOMERS":"العملاء",
+      "STAT_REVENUE": "الإيرادات",
+      "FEATURE_1":    "إدارة مواعيد وحجوزات بكل سهولة",
+      "FEATURE_2":    "تقارير دقيقة تساعدك على اتخاذ القرار",
+      "FEATURE_3":    "نظام أمن وموثوق لحماية بياناتك",
+      "PRIVACY":      "بياناتك محمية بالكامل ولن يتم مشاركتها مع أي جهة خارجية"
+    },
+    "LOGIN_PAGE": {
+      "NO_ACCOUNT":       "ليس لديك حساب؟",
+      "CREATE_ACCOUNT":   "أنشئ حساباً جديداً",
+      "TITLE":            "تسجيل الدخول",
+      "SUBTITLE":         "مرحباً بعودتك! أدخل بياناتك للدخول إلى حسابك",
+      "EMAIL_PLACEHOLDER":"أدخل بريدك الإلكتروني",
+      "PASSWORD_PLACEHOLDER": "أدخل كلمة المرور",
+      "EMAIL_REQUIRED":   "البريد الإلكتروني مطلوب",
+      "EMAIL_INVALID":    "البريد الإلكتروني غير صحيح",
+      "PASSWORD_REQUIRED":"كلمة المرور مطلوبة",
+      "PASSWORD_MIN":     "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+      "OR":               "أو",
+      "NEW_ACCOUNT":      "إنشاء حساب جديد"
+    },
+    "REGISTER_PAGE": {
+      "HAS_ACCOUNT":      "لديك حساب بالفعل؟",
+      "SIGN_IN":          "سجل الدخول",
+      "TITLE":            "إنشاء حساب جديد",
+      "SUBTITLE":         "الخطوة الأولى لإنشاء نظامك وإدارة عملك بكفاءة",
+      "FULL_NAME":        "الاسم الكامل",
+      "NAME_PLACEHOLDER": "أدخل اسمك الكامل",
+      "NAME_REQUIRED":    "الاسم الكامل مطلوب",
+      "NAME_MIN":         "يجب أن يكون الاسم 3 أحرف على الأقل",
+      "PHONE":            "رقم الموبايل",
+      "COUNTRY_CODE":     "رمز الدولة",
+      "PHONE_PLACEHOLDER":"أدخل رقم الموبايل",
+      "WHATSAPP_HINT":    "سيتم استخدام هذا الرقم للتواصل معك عبر واتساب",
+      "PHONE_INVALID":    "رقم الهاتف غير صحيح",
+      "PASSWORD_HINT":    "يجب أن تكون 8 أحرف على الأقل وتتضمن حرف كبير ورقم",
+      "PASSWORD_REQUIRED":"كلمة المرور مطلوبة",
+      "PASSWORD_MIN":     "يجب أن تكون 8 أحرف على الأقل",
+      "PASSWORD_PATTERN": "يجب أن تحتوي على حرف كبير ورقم",
+      "CONFIRM_PASSWORD": "تأكيد كلمة المرور",
+      "CONFIRM_PLACEHOLDER": "أعد إدخال كلمة المرور",
+      "CONFIRM_REQUIRED": "تأكيد كلمة المرور مطلوب",
+      "PASSWORD_MISMATCH":"كلمتا المرور غير متطابقتين",
+      "TERMS_PREFIX":     "أوافق على",
+      "TERMS_LINK":       "الشروط وسياسة الخصوصية",
+      "TERMS_REQUIRED":   "يجب الموافقة على الشروط وسياسة الخصوصية",
+      "SUBMIT":           "التالي"
+    }
   },
   "COMMON": {
     "SAVE":     "حفظ",

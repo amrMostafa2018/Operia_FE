@@ -4,6 +4,11 @@
     "LOADING": "Loading...",
     "ERROR": "Something went wrong"
   },
+  "LANGUAGE": {
+    "LABEL": "Language",
+    "EN": "English",
+    "AR": "العربية"
+  },
   "NAV": {
     "DASHBOARD":     "Dashboard",
     "BOOKINGS":      "Bookings",
@@ -25,7 +30,64 @@
     "REMEMBER_ME":    "Remember me",
     "FORGOT_PASSWORD":"Forgot password?",
     "INVALID_CREDENTIALS": "Invalid email or password",
-    "SESSION_EXPIRED": "Session expired. Please sign in again."
+    "SESSION_EXPIRED": "Session expired. Please sign in again.",
+    "ERROR":          "Error",
+    "LOGIN_ERROR":    "Sign in failed",
+    "REGISTER_ERROR": "An error occurred while creating your account",
+    "PRIVACY_NOTE":   "We are committed to protecting your data and privacy",
+    "LAYOUT": {
+      "TAGLINE":      "Smart Business Management",
+      "HERO_TITLE":   "Manage your business<br>easily and professionally",
+      "HERO_SUB":     "Join thousands of companies running their business\nsmartly with <strong>Operia</strong>",
+      "STAT_BOOKINGS":"Bookings",
+      "STAT_CUSTOMERS":"Customers",
+      "STAT_REVENUE": "Revenue",
+      "FEATURE_1":    "Manage appointments and bookings with ease",
+      "FEATURE_2":    "Accurate reports to help you make decisions",
+      "FEATURE_3":    "A secure and reliable system to protect your data",
+      "PRIVACY":      "Your data is fully protected and will never be shared with third parties"
+    },
+    "LOGIN_PAGE": {
+      "NO_ACCOUNT":       "Don't have an account?",
+      "CREATE_ACCOUNT":   "Create a new account",
+      "TITLE":            "Sign In",
+      "SUBTITLE":         "Welcome back! Enter your credentials to access your account",
+      "EMAIL_PLACEHOLDER":"Enter your email address",
+      "PASSWORD_PLACEHOLDER": "Enter your password",
+      "EMAIL_REQUIRED":   "Email is required",
+      "EMAIL_INVALID":    "Invalid email address",
+      "PASSWORD_REQUIRED":"Password is required",
+      "PASSWORD_MIN":     "Password must be at least 6 characters",
+      "OR":               "or",
+      "NEW_ACCOUNT":      "Create a new account"
+    },
+    "REGISTER_PAGE": {
+      "HAS_ACCOUNT":      "Already have an account?",
+      "SIGN_IN":          "Sign In",
+      "TITLE":            "Create a new account",
+      "SUBTITLE":         "The first step to set up your system and manage your business efficiently",
+      "FULL_NAME":        "Full Name",
+      "NAME_PLACEHOLDER": "Enter your full name",
+      "NAME_REQUIRED":    "Full name is required",
+      "NAME_MIN":         "Name must be at least 3 characters",
+      "PHONE":            "Mobile Number",
+      "COUNTRY_CODE":     "Country code",
+      "PHONE_PLACEHOLDER":"Enter your mobile number",
+      "WHATSAPP_HINT":    "This number will be used to contact you via WhatsApp",
+      "PHONE_INVALID":    "Invalid phone number",
+      "PASSWORD_HINT":    "Must be at least 8 characters and include an uppercase letter and a number",
+      "PASSWORD_REQUIRED":"Password is required",
+      "PASSWORD_MIN":     "Must be at least 8 characters",
+      "PASSWORD_PATTERN": "Must contain an uppercase letter and a number",
+      "CONFIRM_PASSWORD": "Confirm Password",
+      "CONFIRM_PLACEHOLDER": "Re-enter your password",
+      "CONFIRM_REQUIRED": "Password confirmation is required",
+      "PASSWORD_MISMATCH":"Passwords do not match",
+      "TERMS_PREFIX":     "I agree to the",
+      "TERMS_LINK":       "Terms & Privacy Policy",
+      "TERMS_REQUIRED":   "You must agree to the Terms & Privacy Policy",
+      "SUBMIT":           "Next"
+    }
   },
   "COMMON": {
     "SAVE":     "Save",

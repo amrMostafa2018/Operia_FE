@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -8,6 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -17,6 +18,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
 
 interface CountryCode {
@@ -43,6 +45,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     InputTextModule,
     PasswordModule,
     ToastModule,
+    TranslatePipe,
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
@@ -53,6 +56,8 @@ export class RegisterComponent implements OnInit {
   private readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
 
   form!: FormGroup;
   isLoading = this.authStore.isLoading;
@@ -60,6 +65,10 @@ export class RegisterComponent implements OnInit {
 
   showPassword = signal(false);
   showConfirm = signal(false);
+
+  readonly submitIcon = computed(() =>
+    this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'
+  );
 
   countryCodes: CountryCode[] = [
     { name: 'مصر', code: '+20', flag: '🇪🇬' },
@@ -128,8 +137,8 @@ export class RegisterComponent implements OnInit {
       error: (err) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'خطأ',
-          detail: err?.error?.message ?? 'حدث خطأ أثناء إنشاء الحساب',
+          summary: this.translate.instant('AUTH.ERROR'),
+          detail: err?.error?.message ?? this.translate.instant('AUTH.REGISTER_ERROR'),
           life: 4000,
         });
       },

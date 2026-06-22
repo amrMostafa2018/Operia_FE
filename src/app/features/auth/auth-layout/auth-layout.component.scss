@@ -4,7 +4,27 @@
 .auth-wrapper {
   display: flex;
   min-height: 100vh;
-  direction: rtl;
+}
+
+.panel-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-content {
+  position: relative;
+}
+
+.auth-content-lang {
+  position: absolute;
+  top: 1.25rem;
+  inset-inline-end: 1.5rem;
+  z-index: 10;
 }
 
 // ─── Left Branding Panel ──────────────────────────────────────────────────────
