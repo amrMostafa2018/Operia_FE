@@ -1,0 +1,344 @@
+@use '../../../../styles/variables' as *;
+
+// ─── Wrapper ──────────────────────────────────────────────────────────────────
+.auth-wrapper {
+  display: flex;
+  min-height: 100vh;
+  direction: rtl;
+}
+
+// ─── Left Branding Panel ──────────────────────────────────────────────────────
+.auth-panel {
+  width: 38%;
+  min-width: 320px;
+  background: linear-gradient(160deg, #1E1B4B 0%, #2D2A6B 50%, #3B3580 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+
+  // Decorative blobs
+  &::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    left: -80px;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, rgba(108, 99, 255, 0.35) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(67, 206, 162, 0.25) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+}
+
+// Logo
+.panel-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+
+    .logo-name {
+      font-family: $font-en;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .logo-tagline {
+      font-family: $font-en;
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.6);
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+  }
+}
+
+// Hero
+.panel-hero {
+  margin-bottom: 1.75rem;
+  position: relative;
+  z-index: 1;
+
+  .hero-title {
+    font-family: $font-ar;
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: #fff;
+    margin: 0 0 0.75rem;
+  }
+
+  .hero-sub {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+
+    strong {
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+  }
+}
+
+// Dashboard Illustration
+.panel-illustration {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 1.75rem;
+
+  .dash-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 0.75rem;
+    position: relative;
+  }
+
+  .dash-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 0.6rem;
+
+    .dash-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+
+      &.red    { background: #FF6584; }
+      &.yellow { background: #FFC107; }
+      &.green  { background: #43CEA2; }
+    }
+
+    .dash-title-bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      margin-right: 0.5rem;
+    }
+  }
+
+  .dash-stats {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+
+    .stat-item {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 0.4rem 0.5rem;
+      text-align: center;
+
+      .stat-label {
+        display: block;
+        font-size: 0.55rem;
+        color: rgba(255, 255, 255, 0.55);
+        margin-bottom: 2px;
+      }
+
+      .stat-value {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #fff;
+        font-family: $font-en;
+        line-height: 1.1;
+      }
+
+      .stat-badge {
+        display: inline-block;
+        font-size: 0.5rem;
+        font-family: $font-en;
+        padding: 1px 4px;
+        border-radius: 10px;
+        margin-top: 2px;
+
+        &.up {
+          background: rgba(67, 206, 162, 0.25);
+          color: #43CEA2;
+        }
+      }
+    }
+  }
+
+  .dash-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+
+    .chart-bars {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 60px;
+
+      .bar {
+        flex: 1;
+        background: rgba(108, 99, 255, 0.4);
+        border-radius: 3px 3px 0 0;
+        transition: background 0.2s;
+
+        &.active {
+          background: #6C63FF;
+        }
+      }
+    }
+
+    .chart-donut {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .donut-label {
+        position: absolute;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #fff;
+        font-family: $font-en;
+      }
+    }
+  }
+
+  .dash-plant {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.75rem;
+    font-size: 1.25rem;
+    opacity: 0.85;
+  }
+}
+
+// Feature bullets
+.panel-features {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  position: relative;
+  z-index: 1;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: $font-ar;
+
+    .feature-icon {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      i {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.85);
+      }
+    }
+  }
+}
+
+// Privacy note
+.panel-privacy {
+  margin-top: auto;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+  z-index: 1;
+
+  i { font-size: 0.7rem; }
+}
+
+// ─── Right Content Area ───────────────────────────────────────────────────────
+.auth-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow-y: auto;
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: $bp-lg) {
+  .auth-panel {
+    width: 42%;
+    min-width: 280px;
+    padding: 2rem 1.5rem;
+
+    .hero-title { font-size: 1.4rem; }
+    .panel-illustration { display: none; }
+  }
+}
+
+@media (max-width: $bp-md) {
+  .auth-wrapper {
+    flex-direction: column;
+  }
+
+  .auth-panel {
+    width: 100%;
+    min-width: unset;
+    padding: 1.5rem;
+    min-height: unset;
+
+    .panel-hero { margin-bottom: 1rem; }
+    .hero-title { font-size: 1.25rem; }
+    .panel-features { display: none; }
+    .panel-privacy { display: none; }
+    .panel-illustration { display: none; }
+    .panel-logo { margin-bottom: 1.25rem; }
+  }
+
+  .auth-content {
+    min-height: 0;
+    flex: 1;
+  }
+}

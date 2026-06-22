@@ -1,0 +1,113 @@
+<p-toast position="top-center" />
+
+<div class="login-page">
+
+  <!-- Top link -->
+  <div class="page-top-link">
+    <span>ليس لديك حساب؟</span>
+    <a routerLink="/auth/register" class="link-btn">أنشئ حساباً جديداً</a>
+  </div>
+
+  <!-- Form card -->
+  <div class="form-card">
+
+    <!-- Title -->
+    <div class="form-title">
+      <span class="title-icon"><i class="pi pi-sign-in"></i></span>
+      <h2>تسجيل الدخول</h2>
+    </div>
+    <p class="form-subtitle">مرحباً بعودتك! أدخل بياناتك للدخول إلى حسابك</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+      <!-- Email -->
+      <div class="field">
+        <label for="email">البريد الإلكتروني <span class="required">*</span></label>
+        <div class="input-wrapper" [class.error]="isInvalid('email')">
+          <i class="pi pi-envelope input-icon"></i>
+          <input
+            id="email"
+            pInputText
+            formControlName="email"
+            placeholder="أدخل بريدك الإلكتروني"
+            type="email"
+            class="p-inputtext-custom"
+          />
+        </div>
+        @if (isInvalid('email')) {
+          <small class="error-msg">
+            @if (form.get('email')?.errors?.['required']) { البريد الإلكتروني مطلوب }
+            @else if (form.get('email')?.errors?.['email']) { البريد الإلكتروني غير صحيح }
+          </small>
+        }
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <div class="field-header">
+          <label for="password">كلمة المرور <span class="required">*</span></label>
+          <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
+        </div>
+        <div class="input-wrapper" [class.error]="isInvalid('password')">
+          <i class="pi pi-lock input-icon"></i>
+          <input
+            id="password"
+            pInputText
+            formControlName="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            placeholder="أدخل كلمة المرور"
+            class="p-inputtext-custom has-toggle"
+          />
+          <button type="button" class="toggle-btn" (click)="togglePassword()">
+            <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+          </button>
+        </div>
+        @if (isInvalid('password')) {
+          <small class="error-msg">
+            @if (form.get('password')?.errors?.['required']) { كلمة المرور مطلوبة }
+            @else if (form.get('password')?.errors?.['minlength']) { كلمة المرور يجب أن تكون 6 أحرف على الأقل }
+          </small>
+        }
+      </div>
+
+      <!-- Remember Me -->
+      <div class="remember-row">
+        <p-checkbox
+          formControlName="rememberMe"
+          [binary]="true"
+          inputId="rememberMe"
+        />
+        <label for="rememberMe" class="remember-label">تذكرني</label>
+      </div>
+
+      <!-- Submit -->
+      <p-button
+        type="submit"
+        label="تسجيل الدخول"
+        icon="pi pi-sign-in"
+        iconPos="right"
+        styleClass="submit-btn"
+        [loading]="isLoading()"
+        [disabled]="isLoading()"
+      />
+
+      <!-- Divider -->
+      <div class="divider">
+        <span>أو</span>
+      </div>
+
+      <!-- Register link -->
+      <div class="register-cta">
+        <span>ليس لديك حساب؟</span>
+        <a routerLink="/auth/register" class="link-btn">إنشاء حساب جديد</a>
+      </div>
+
+      <!-- Footer note -->
+      <p class="form-footer-note">
+        <i class="pi pi-lock"></i>
+        نحن نلتزم بحماية بياناتك وخصوصيتك
+      </p>
+
+    </form>
+  </div>
+</div>

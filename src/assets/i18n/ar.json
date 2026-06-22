@@ -1,0 +1,73 @@
+{
+  "APP": {
+    "NAME": "أوبيريا",
+    "LOADING": "جاري التحميل...",
+    "ERROR": "حدث خطأ ما"
+  },
+  "NAV": {
+    "DASHBOARD":     "لوحة التحكم",
+    "BOOKINGS":      "الحجوزات",
+    "CUSTOMERS":     "العملاء",
+    "EMPLOYEES":     "الموظفون",
+    "PACKAGES":      "الباقات والعروض",
+    "BRANCHES":      "الفروع",
+    "FINANCE":       "المالية",
+    "REPORTS":       "التقارير",
+    "SETTINGS":      "الإعدادات",
+    "PERMISSIONS":   "الصلاحيات",
+    "SUBSCRIPTION":  "اشتراك أوبيريا"
+  },
+  "AUTH": {
+    "LOGIN":          "تسجيل الدخول",
+    "LOGOUT":         "تسجيل الخروج",
+    "EMAIL":          "البريد الإلكتروني",
+    "PASSWORD":       "كلمة المرور",
+    "REMEMBER_ME":    "تذكرني",
+    "FORGOT_PASSWORD":"نسيت كلمة المرور؟",
+    "INVALID_CREDENTIALS": "بيانات الدخول غير صحيحة",
+    "SESSION_EXPIRED": "انتهت الجلسة، يرجى تسجيل الدخول مجدداً"
+  },
+  "COMMON": {
+    "SAVE":     "حفظ",
+    "CANCEL":   "إلغاء",
+    "DELETE":   "حذف",
+    "EDIT":     "تعديل",
+    "ADD":      "إضافة",
+    "VIEW":     "عرض",
+    "SEARCH":   "بحث",
+    "FILTER":   "تصفية",
+    "EXPORT":   "تصدير",
+    "IMPORT":   "استيراد",
+    "CONFIRM":  "تأكيد",
+    "ACTIONS":  "الإجراءات",
+    "STATUS":   "الحالة",
+    "DATE":     "التاريخ",
+    "NAME":     "الاسم",
+    "PHONE":    "الهاتف",
+    "EMAIL":    "البريد",
+    "YES":      "نعم",
+    "NO":       "لا",
+    "ALL":      "الكل",
+    "LOADING":  "جاري التحميل...",
+    "NO_DATA":  "لا توجد بيانات",
+    "ROWS_PER_PAGE": "صفوف في الصفحة",
+    "OF": "من"
+  },
+  "BOOKING_STATUS": {
+    "PENDING":   "قيد الانتظار",
+    "CONFIRMED": "مؤكد",
+    "CANCELLED": "ملغي",
+    "COMPLETED": "مكتمل",
+    "NO_SHOW":   "لم يحضر"
+  },
+  "DASHBOARD": {
+    "TITLE":               "لوحة التحكم",
+    "TODAY_BOOKINGS":      "حجوزات اليوم",
+    "TOTAL_REVENUE":       "إجمالي الإيرادات",
+    "NEW_CUSTOMERS":       "عملاء جدد",
+    "ACTIVE_PACKAGES":     "الباقات النشطة",
+    "QUICK_ACTIONS":       "الإجراءات السريعة",
+    "NEW_BOOKING":         "حجز جديد",
+    "NEW_CUSTOMER":        "عميل جديد"
+  }
+}

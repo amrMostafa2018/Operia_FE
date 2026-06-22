@@ -1,0 +1,348 @@
+@use '../../../../styles/variables' as *;
+
+.register-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  min-height: 100%;
+  position: relative;
+}
+
+// ─── Top link ─────────────────────────────────────────────────────────────────
+.page-top-link {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  .link-btn {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+
+    &:hover { opacity: 0.75; }
+  }
+}
+
+// ─── Form card ────────────────────────────────────────────────────────────────
+.form-card {
+  width: 100%;
+  max-width: 480px;
+}
+
+// Title
+.form-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    font-family: $font-ar;
+  }
+
+  .title-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--color-primary-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 1rem;
+      color: var(--color-primary);
+    }
+  }
+}
+
+.form-subtitle {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.5rem;
+  line-height: 1.6;
+}
+
+// ─── Fields ───────────────────────────────────────────────────────────────────
+.field {
+  margin-bottom: 1rem;
+
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+    font-family: $font-ar;
+  }
+
+  .required { color: var(--color-danger); margin-right: 2px; }
+}
+
+// Input wrapper
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--surface-border);
+  border-radius: $border-radius;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+  }
+
+  &.error {
+    border-color: var(--color-danger);
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    }
+  }
+
+  .input-icon {
+    position: absolute;
+    right: 0.85rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+.p-inputtext-custom {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0.65rem 2.5rem 0.65rem 2.75rem;
+  font-family: $font-ar;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  width: 100%;
+  direction: rtl;
+
+  &::placeholder {
+    color: var(--text-disabled);
+  }
+
+  &.has-toggle {
+    padding-left: 2.75rem;
+  }
+}
+
+.toggle-btn {
+  position: absolute;
+  left: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+
+  &:hover { color: var(--color-primary); }
+
+  i { font-size: 0.85rem; }
+}
+
+// ─── Phone field ──────────────────────────────────────────────────────────────
+.phone-row {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--surface-border);
+  border-radius: $border-radius;
+  background: #fff;
+  min-height: 44px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+  }
+
+  &.error {
+    border-color: var(--color-danger);
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    }
+  }
+
+  .country-select-wrap {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    border-inline-start: 1.5px solid var(--surface-border);
+    background: var(--surface-hover);
+    border-radius: 0 $border-radius $border-radius 0;
+
+    .country-select {
+      appearance: none;
+      -webkit-appearance: none;
+      border: none;
+      background: transparent;
+      padding: 0.65rem 1.75rem 0.65rem 0.65rem;
+      font-size: 0.82rem;
+      font-family: $font-en;
+      direction: ltr;
+      cursor: pointer;
+      min-width: 108px;
+      max-width: 120px;
+      height: 100%;
+      color: var(--text-primary);
+      line-height: 1.2;
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    .country-chevron {
+      position: absolute;
+      left: 0.45rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+  }
+
+  .phone-input-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+
+    .input-icon {
+      position: absolute;
+      right: 0.85rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+
+    .p-inputtext-custom {
+      padding-right: 2.5rem;
+      padding-left: 0.85rem;
+    }
+  }
+}
+
+// ─── Hints & Errors ───────────────────────────────────────────────────────────
+.hint-msg, .whatsapp-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+
+  i { font-size: 0.7rem; }
+}
+
+.whatsapp-hint i {
+  color: #25D366;
+}
+
+.error-msg {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-danger);
+  margin-top: 0.3rem;
+}
+
+// ─── Terms ────────────────────────────────────────────────────────────────────
+.terms-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.25rem;
+
+  .terms-label {
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: $font-ar;
+    user-select: none;
+
+    .link-inline {
+      color: var(--color-primary);
+      font-weight: 600;
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+  }
+}
+
+// ─── Submit button ────────────────────────────────────────────────────────────
+::ng-deep .submit-btn {
+  width: 100% !important;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.95rem !important;
+  font-family: $font-ar !important;
+  font-weight: 600 !important;
+  border-radius: $border-radius !important;
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-dark) !important;
+    border-color: var(--color-primary-dark) !important;
+  }
+}
+
+// ─── Footer note ──────────────────────────────────────────────────────────────
+.form-footer-note {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+
+  i { font-size: 0.7rem; }
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: $bp-md) {
+  .register-page {
+    padding: 4rem 1rem 2rem;
+    justify-content: flex-start;
+  }
+
+  .page-top-link {
+    top: 1rem;
+    left: 1rem;
+  }
+}
+
+@media (max-width: $bp-sm) {
+  .form-title h2 { font-size: 1.25rem; }
+  .form-card { max-width: 100%; }
+}

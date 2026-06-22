@@ -1,0 +1,65 @@
+@use 'styles/variables' as *;
+@use 'styles/themes';
+@use 'styles/rtl';
+
+// ─── Google Fonts ─────────────────────────────────────────────────────────────
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+// ─── PrimeNG Theme ────────────────────────────────────────────────────────────
+// Using lara-light theme for good RTL support
+// $p-primary-color and overrides are injected via CSS vars in _themes.scss
+
+// ─── Base Reset ───────────────────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: $font-size-base;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: $font-ar;
+  background-color: var(--surface-bg);
+  color: var(--text-primary);
+  direction: rtl;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+// ─── Scrollbar ────────────────────────────────────────────────────────────────
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface-hover); }
+::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+// ─── Utility Classes ──────────────────────────────────────────────────────────
+.text-primary-color  { color: var(--color-primary) !important; }
+.text-success        { color: var(--color-success) !important; }
+.text-danger         { color: var(--color-danger) !important; }
+.text-warning        { color: var(--color-warning) !important; }
+.text-muted          { color: var(--text-secondary) !important; }
+.bg-primary-light    { background: var(--color-primary-light) !important; }
+
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  h1, h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+}

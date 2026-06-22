@@ -1,0 +1,73 @@
+{
+  "APP": {
+    "NAME": "OPERIA",
+    "LOADING": "Loading...",
+    "ERROR": "Something went wrong"
+  },
+  "NAV": {
+    "DASHBOARD":     "Dashboard",
+    "BOOKINGS":      "Bookings",
+    "CUSTOMERS":     "Customers",
+    "EMPLOYEES":     "Employees",
+    "PACKAGES":      "Packages & Offers",
+    "BRANCHES":      "Branches",
+    "FINANCE":       "Finance",
+    "REPORTS":       "Reports",
+    "SETTINGS":      "Settings",
+    "PERMISSIONS":   "Permissions",
+    "SUBSCRIPTION":  "OPERIA Subscription"
+  },
+  "AUTH": {
+    "LOGIN":          "Sign In",
+    "LOGOUT":         "Sign Out",
+    "EMAIL":          "Email Address",
+    "PASSWORD":       "Password",
+    "REMEMBER_ME":    "Remember me",
+    "FORGOT_PASSWORD":"Forgot password?",
+    "INVALID_CREDENTIALS": "Invalid email or password",
+    "SESSION_EXPIRED": "Session expired. Please sign in again."
+  },
+  "COMMON": {
+    "SAVE":     "Save",
+    "CANCEL":   "Cancel",
+    "DELETE":   "Delete",
+    "EDIT":     "Edit",
+    "ADD":      "Add",
+    "VIEW":     "View",
+    "SEARCH":   "Search",
+    "FILTER":   "Filter",
+    "EXPORT":   "Export",
+    "IMPORT":   "Import",
+    "CONFIRM":  "Confirm",
+    "ACTIONS":  "Actions",
+    "STATUS":   "Status",
+    "DATE":     "Date",
+    "NAME":     "Name",
+    "PHONE":    "Phone",
+    "EMAIL":    "Email",
+    "YES":      "Yes",
+    "NO":       "No",
+    "ALL":      "All",
+    "LOADING":  "Loading...",
+    "NO_DATA":  "No data found",
+    "ROWS_PER_PAGE": "Rows per page",
+    "OF": "of"
+  },
+  "BOOKING_STATUS": {
+    "PENDING":   "Pending",
+    "CONFIRMED": "Confirmed",
+    "CANCELLED": "Cancelled",
+    "COMPLETED": "Completed",
+    "NO_SHOW":   "No Show"
+  },
+  "DASHBOARD": {
+    "TITLE":               "Dashboard",
+    "TODAY_BOOKINGS":      "Today's Bookings",
+    "TOTAL_REVENUE":       "Total Revenue",
+    "NEW_CUSTOMERS":       "New Customers",
+    "ACTIVE_PACKAGES":     "Active Packages",
+    "QUICK_ACTIONS":       "Quick Actions",
+    "NEW_BOOKING":         "New Booking",
+    "NEW_CUSTOMER":        "New Customer"
+  }
+}

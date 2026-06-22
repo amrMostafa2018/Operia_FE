@@ -1,0 +1,56 @@
+// ─── CSS Custom Properties (Design Tokens) ───────────────────────────────────
+
+:root {
+  // Surface
+  --surface-bg:         #FFFFFF;
+  --surface-card:       #FFFFFF;
+  --surface-overlay:    #FFFFFF;
+  --surface-border:     #DEE2E6;
+  --surface-hover:      #F8F9FA;
+
+  // Text
+  --text-primary:       #212529;
+  --text-secondary:     #6C757D;
+  --text-disabled:      #ADB5BD;
+  --text-inverse:       #FFFFFF;
+
+  // Brand
+  --color-primary:      #6C63FF;
+  --color-primary-dark: #4B44CC;
+  --color-primary-light:#EAE9FF;
+  --color-secondary:    #FF6584;
+  --color-accent:       #43CEA2;
+
+  // Semantic
+  --color-success:      #28A745;
+  --color-warning:      #FFC107;
+  --color-danger:       #DC3545;
+  --color-info:         #17A2B8;
+
+  // Sidebar
+  --sidebar-bg:         #1E1B4B;
+  --sidebar-text:       rgba(255,255,255,.75);
+  --sidebar-text-active:#FFFFFF;
+  --sidebar-item-active:rgba(108,99,255,.25);
+  --sidebar-icon:       rgba(255,255,255,.55);
+
+  // Header
+  --header-bg:          #FFFFFF;
+  --header-border:      #DEE2E6;
+}
+
+// ─── Dark Theme ───────────────────────────────────────────────────────────────
+[data-theme='dark'] {
+  --surface-bg:         #0F0F23;
+  --surface-card:       #1A1A2E;
+  --surface-overlay:    #16213E;
+  --surface-border:     #2A2A4A;
+  --surface-hover:      #1E1E3F;
+
+  --text-primary:       #E8E8F0;
+  --text-secondary:     #9999BB;
+  --text-disabled:      #555577;
+
+  --header-bg:          #1A1A2E;
+  --header-border:      #2A2A4A;
+}

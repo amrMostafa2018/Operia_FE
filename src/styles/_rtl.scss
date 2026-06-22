@@ -1,0 +1,43 @@
+@use 'variables' as *;
+
+// ─── RTL Global Overrides ─────────────────────────────────────────────────────
+
+[dir='rtl'] {
+  // Text alignment
+  body, p, span, label, td, th { text-align: right; }
+
+  // Form inputs
+  input, textarea, select {
+    text-align: right;
+    direction: rtl;
+  }
+
+  // Flip horizontal spacing utilities
+  .ms-auto { margin-inline-start: auto !important; margin-inline-end: unset !important; }
+  .me-auto { margin-inline-end: auto !important; margin-inline-start: unset !important; }
+
+  // Flip icons/chevrons
+  .rtl-flip { transform: scaleX(-1); }
+
+  // PrimeNG overrides
+  .p-datatable .p-datatable-thead > tr > th,
+  .p-datatable .p-datatable-tbody > tr > td {
+    text-align: right !important;
+  }
+
+  .p-sidebar-left {
+    left: unset !important;
+    right: 0 !important;
+  }
+
+  .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+    text-align: right;
+  }
+
+  // Badge / chip placement
+  .p-badge { direction: ltr; }
+
+  // Input group
+  .p-inputgroup-addon:first-child { border-radius: 0 $border-radius $border-radius 0; }
+  .p-inputgroup-addon:last-child  { border-radius: $border-radius 0 0 $border-radius; }
+}
