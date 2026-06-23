@@ -3,6 +3,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
+import { AuthService } from '../services/auth.service';
 
 interface ApiError {
   message?: string;
@@ -46,10 +47,19 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   const router = inject(Router);
   const messageService = inject(MessageService);
+  const authService = inject(AuthService);
 
   return next(req).pipe(
     catchError((error: unknown) => {
       if (!(error instanceof HttpErrorResponse)) {
+        return throwError(() => error);
+      }
+
+      const isLogoutRequest = req.url.includes('/auth/logout');
+      const suppressSessionError =
+        authService.isLoggingOut() || isLogoutRequest;
+
+      if (suppressSessionError) {
         return throwError(() => error);
       }
 

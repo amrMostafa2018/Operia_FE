@@ -30,6 +30,7 @@ export const AuthStore = signalStore(
     isAuthenticated: computed(() => !!store.accessToken() && !!store.user()),
     userRole: computed(() => store.user()?.role ?? null),
     currentUser: computed(() => store.user()),
+    permissions: computed(() => store.user()?.permissions ?? []),
   })),
   withMethods((store) => ({
     setAccessToken(accessToken: string): void {

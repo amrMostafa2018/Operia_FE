@@ -1,4 +1,5 @@
 import { User, UserRole } from '../models/user.model';
+import { PERMISSION_CLAIM_TYPE } from '../models/permissions.model';
 
 const ROLE_MAP: Record<string, UserRole> = {
   Admin: 'admin',
@@ -15,6 +16,28 @@ function claim(payload: Record<string, unknown>, ...keys: string[]): string {
   return '';
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  const segment = token.split('.')[1];
+  if (!segment) {
+    throw new Error('Invalid JWT');
+  }
+
+  const base64 = segment.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+  return JSON.parse(atob(padded)) as Record<string, unknown>;
+}
+
+function claimValues(payload: Record<string, unknown>, type: string): string[] {
+  const raw = payload[type];
+  if (Array.isArray(raw)) {
+    return raw.filter((value): value is string => typeof value === 'string' && value.length > 0);
+  }
+  if (typeof raw === 'string' && raw) {
+    return [raw];
+  }
+  return [];
+}
+
 function roleFromPayload(payload: Record<string, unknown>): UserRole {
   const raw =
     payload['role'] ??
@@ -28,8 +51,13 @@ function roleFromPayload(payload: Record<string, unknown>): UserRole {
   return 'admin';
 }
 
+export function permissionsFromAccessToken(token: string): string[] {
+  const payload = decodeJwtPayload(token);
+  return claimValues(payload, PERMISSION_CLAIM_TYPE);
+}
+
 export function userFromAccessToken(token: string, name?: string): User {
-  const payload = JSON.parse(atob(token.split('.')[1])) as Record<string, unknown>;
+  const payload = decodeJwtPayload(token);
 
   const id = claim(
     payload,
@@ -48,6 +76,7 @@ export function userFromAccessToken(token: string, name?: string): User {
     name: name ?? email,
     email,
     role: roleFromPayload(payload),
+    permissions: claimValues(payload, PERMISSION_CLAIM_TYPE),
     isActive: true,
   };
 }

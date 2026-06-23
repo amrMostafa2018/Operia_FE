@@ -23,18 +23,28 @@ import { AuthTokens } from '../models/user.model';
 let isRefreshing = false;
 const refreshSubject$ = new BehaviorSubject<string | null>(null);
 
-/** URLs that must never receive an Authorization header or trigger a refresh. */
-const AUTH_URL_FRAGMENTS = [
+/** Public auth endpoints — no Authorization header, no token refresh on 401. */
+const PUBLIC_AUTH_URL_FRAGMENTS = [
   '/auth/login',
   '/auth/verify-otp',
   '/auth/verify-register-otp',
   '/auth/register',
   '/auth/refresh',
-  '/auth/logout',
 ];
 
-function isAuthUrl(url: string): boolean {
-  return AUTH_URL_FRAGMENTS.some((fragment) => url.includes(fragment));
+/** Authenticated auth endpoints — send token, but do not refresh on 401. */
+const NO_REFRESH_ON_401_URL_FRAGMENTS = ['/auth/logout'];
+
+function matchesUrlFragment(url: string, fragments: string[]): boolean {
+  return fragments.some((fragment) => url.includes(fragment));
+}
+
+function isPublicAuthUrl(url: string): boolean {
+  return matchesUrlFragment(url, PUBLIC_AUTH_URL_FRAGMENTS);
+}
+
+function shouldRefreshOn401(url: string): boolean {
+  return !isPublicAuthUrl(url) && !matchesUrlFragment(url, NO_REFRESH_ON_401_URL_FRAGMENTS);
 }
 
 function attachToken<T>(req: HttpRequest<T>, token: string): HttpRequest<T> {
@@ -76,17 +86,17 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
 
   const token = authService.getAccessToken();
-  const shouldSkip = isAuthUrl(req.url);
+  const isPublicAuth = isPublicAuthUrl(req.url);
 
   const outgoingReq =
-    token && !shouldSkip ? attachToken(req, token) : req;
+    token && !isPublicAuth ? attachToken(req, token) : req;
 
   return next(outgoingReq).pipe(
     catchError((error) => {
       if (
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
-        !shouldSkip
+        shouldRefreshOn401(req.url)
       ) {
         return handle401(req, next, authService);
       }

@@ -3,10 +3,10 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import {
   catchError,
+  finalize,
   map,
   Observable,
   of,
-  switchMap,
   tap,
   throwError,
 } from 'rxjs';
@@ -36,6 +36,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly authStore = inject(AuthStore);
   private readonly api = environment.apiUrl;
+  private loggingOut = false;
 
   // ─── Public API ────────────────────────────────────────────────────────────
 
@@ -127,16 +128,23 @@ export class AuthService {
   }
 
   logout(): void {
-    const refreshToken = this.getRefreshToken();
-    if (refreshToken) {
-      // Fire-and-forget — don't block the UX on server response
-      this.http
-        .post(`${this.api}/auth/logout`, { refreshToken })
-        .pipe(catchError(() => of(null)))
-        .subscribe();
-    }
-    this.clearSession();
-    this.router.navigate(['/auth/login']);
+    this.loggingOut = true;
+
+    this.http
+      .post(`${this.api}/auth/logout`, {})
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => {
+          this.clearSession();
+          this.loggingOut = false;
+          this.router.navigate(['/auth/login']);
+        })
+      )
+      .subscribe();
+  }
+
+  isLoggingOut(): boolean {
+    return this.loggingOut;
   }
 
   /**
@@ -155,6 +163,7 @@ export class AuthService {
       .pipe(
         tap((tokens) => {
           this.authStore.setAccessToken(tokens.accessToken);
+          this.syncUserFromAccessToken();
           this.updateStoredRefreshToken(tokens.refreshToken);
         }),
         catchError((err) => {
@@ -181,7 +190,7 @@ export class AuthService {
     this.authStore.setUser(storedUser);
 
     return this.refreshAccessToken().pipe(
-      switchMap(() => this.fetchCurrentUser()),
+      tap(() => this.syncUserFromAccessToken()),
       map(() => true),
       catchError(() => {
         this.clearSession();
@@ -206,13 +215,16 @@ export class AuthService {
 
   // ─── Private helpers ───────────────────────────────────────────────────────
 
-  private fetchCurrentUser(): Observable<User> {
-    return this.http.get<User>(`${this.api}/auth/me`).pipe(
-      tap((user) => {
-        this.authStore.setUser(user);
-        this.updateStoredUser(user);
-      })
-    );
+  private syncUserFromAccessToken(displayName?: string): void {
+    const token = this.authStore.accessToken();
+    if (!token) {
+      return;
+    }
+
+    const storedUser = this.getStoredUser();
+    const user = userFromAccessToken(token, displayName ?? storedUser?.name);
+    this.authStore.setUser(user);
+    this.updateStoredUser(user);
   }
 
   private persistSession(user: User, refreshToken: string, rememberMe?: boolean): void {
