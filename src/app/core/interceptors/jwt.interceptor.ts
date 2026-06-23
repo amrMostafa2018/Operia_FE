@@ -24,7 +24,14 @@ let isRefreshing = false;
 const refreshSubject$ = new BehaviorSubject<string | null>(null);
 
 /** URLs that must never receive an Authorization header or trigger a refresh. */
-const AUTH_URL_FRAGMENTS = ['/auth/login', '/auth/refresh', '/auth/logout'];
+const AUTH_URL_FRAGMENTS = [
+  '/auth/login',
+  '/auth/verify-otp',
+  '/auth/verify-register-otp',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+];
 
 function isAuthUrl(url: string): boolean {
   return AUTH_URL_FRAGMENTS.some((fragment) => url.includes(fragment));

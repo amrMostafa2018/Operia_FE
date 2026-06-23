@@ -360,28 +360,3 @@
   .form-title h2 { font-size: 1.25rem; }
   .form-card { max-width: 100%; }
 }
-
-.otp-input-wrapper .otp-input {
-  letter-spacing: 0.35rem;
-  font-size: 1.1rem;
-  text-align: center;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  width: 100%;
-  margin-top: 0.75rem;
-  padding: 0.65rem;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--color-primary);
-  }
-}

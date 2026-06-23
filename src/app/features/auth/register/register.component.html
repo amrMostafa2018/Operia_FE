@@ -1,4 +1,3 @@
-<p-toast position="top-center" />
 
 <div class="register-page">
 
@@ -17,12 +16,6 @@
         <h2>{{ 'AUTH.REGISTER_PAGE.TITLE' | translate }}</h2>
       </div>
       <p class="form-subtitle">{{ 'AUTH.REGISTER_PAGE.SUBTITLE' | translate }}</p>
-    } @else {
-      <div class="form-title">
-        <span class="title-icon"><i class="pi pi-shield"></i></span>
-        <h2>{{ 'AUTH.REGISTER_PAGE.OTP_TITLE' | translate }}</h2>
-      </div>
-      <p class="form-subtitle">{{ 'AUTH.REGISTER_PAGE.OTP_SUBTITLE' | translate }}</p>
     }
 
     @if (step() === 'form') {
@@ -199,42 +192,14 @@
 
     </form>
     } @else {
-    <form [formGroup]="otpForm" (ngSubmit)="onVerifyOtp()" novalidate>
-      <div class="field">
-        <label for="otpCode">{{ 'AUTH.REGISTER_PAGE.OTP_CODE' | translate }} <span class="required">*</span></label>
-        <div class="input-wrapper otp-input-wrapper" [class.error]="isOtpInvalid('code')">
-          <i class="pi pi-key input-icon"></i>
-          <input
-            id="otpCode"
-            pInputText
-            formControlName="code"
-            [placeholder]="'AUTH.REGISTER_PAGE.OTP_PLACEHOLDER' | translate"
-            inputmode="numeric"
-            maxlength="6"
-            autocomplete="one-time-code"
-            class="p-inputtext-custom otp-input"
-          />
-        </div>
-        @if (isOtpInvalid('code')) {
-          <small class="error-msg">{{ 'AUTH.REGISTER_PAGE.OTP_INVALID' | translate }}</small>
-        }
-      </div>
-
-      <p-button
-        type="submit"
-        [label]="'AUTH.REGISTER_PAGE.OTP_VERIFY' | translate"
-        [icon]="submitIcon()"
-        iconPos="right"
-        styleClass="submit-btn"
-        [loading]="isLoading()"
-        [disabled]="isLoading()"
+      <app-otp-verification
+        [labels]="otpLabels"
+        [isLoading]="isLoading()"
+        [submitIcon]="submitIcon()"
+        inputId="registerOtpCode"
+        (verify)="onVerifyOtp($event)"
+        (back)="backToForm()"
       />
-
-      <button type="button" class="back-btn" (click)="backToForm()">
-        <i class="pi pi-arrow-right"></i>
-        {{ 'AUTH.REGISTER_PAGE.OTP_BACK' | translate }}
-      </button>
-    </form>
     }
   </div>
 </div>

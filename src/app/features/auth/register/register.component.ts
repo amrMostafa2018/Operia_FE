@@ -14,12 +14,13 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
+import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
+import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
 
 interface CountryCode {
   name: string;
@@ -46,8 +47,8 @@ type RegisterStep = 'form' | 'otp';
     CheckboxModule,
     InputTextModule,
     PasswordModule,
-    ToastModule,
     TranslatePipe,
+    OtpVerificationComponent,
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
@@ -62,13 +63,22 @@ export class RegisterComponent implements OnInit {
   private readonly languageService = inject(LanguageService);
 
   form!: FormGroup;
-  otpForm!: FormGroup;
   isLoading = this.authStore.isLoading;
   errorMessage = this.authStore.error;
 
   step = signal<RegisterStep>('form');
   registrationId = signal<string | null>(null);
   displayName = signal('');
+
+  readonly otpLabels: OtpLabels = {
+    title: 'AUTH.REGISTER_PAGE.OTP_TITLE',
+    subtitle: 'AUTH.REGISTER_PAGE.OTP_SUBTITLE',
+    code: 'AUTH.REGISTER_PAGE.OTP_CODE',
+    placeholder: 'AUTH.REGISTER_PAGE.OTP_PLACEHOLDER',
+    invalid: 'AUTH.REGISTER_PAGE.OTP_INVALID',
+    verify: 'AUTH.REGISTER_PAGE.OTP_VERIFY',
+    back: 'AUTH.REGISTER_PAGE.OTP_BACK',
+  };
 
   showPassword = signal(false);
   showConfirm = signal(false);
@@ -108,16 +118,11 @@ export class RegisterComponent implements OnInit {
     this.form.get('password')?.valueChanges.subscribe(() => {
       this.form.get('confirmPassword')?.updateValueAndValidity();
     });
-
-    this.otpForm = this.fb.group({
-      code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
-    });
   }
 
   backToForm(): void {
     this.step.set('form');
     this.registrationId.set(null);
-    this.otpForm.reset();
   }
 
   togglePassword(): void {
@@ -130,11 +135,6 @@ export class RegisterComponent implements OnInit {
 
   isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
-    return !!(ctrl?.invalid && ctrl?.touched);
-  }
-
-  isOtpInvalid(field: string): boolean {
-    const ctrl = this.otpForm.get(field);
     return !!(ctrl?.invalid && ctrl?.touched);
   }
 
@@ -167,25 +167,18 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  onVerifyOtp(): void {
-    if (this.otpForm.invalid) {
-      this.otpForm.markAllAsTouched();
-      return;
-    }
-
+  onVerifyOtp(code: string): void {
     const registrationId = this.registrationId();
     if (!registrationId) {
       this.backToForm();
       return;
     }
 
-    const { code } = this.otpForm.value;
-
     this.authService.verifyRegisterOtp(
       { registrationId, code },
       this.displayName()
     ).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => this.router.navigate(['/dashboard']),
     });
   }
 }

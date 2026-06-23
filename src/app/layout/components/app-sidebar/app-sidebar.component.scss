@@ -1,0 +1,151 @@
+@use '../../../../styles/variables' as *;
+
+.sidebar {
+  width: $sidebar-width;
+  min-height: 100vh;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  &.collapsed {
+    width: $sidebar-collapsed;
+
+    .nav-item { justify-content: center; padding: 0.65rem 0; }
+  }
+}
+
+// ─── Logo ─────────────────────────────────────────────────────────────────────
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  min-height: $header-height;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(108,99,255,.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+.sidebar-nav {
+  padding: 0.75rem 0.5rem;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: $border-radius;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: start;
+
+  &:hover {
+    background: rgba(255,255,255,.07);
+    color: var(--sidebar-text-active);
+    text-decoration: none;
+  }
+
+  &.active {
+    background: var(--sidebar-item-active);
+    color: var(--sidebar-text-active);
+
+    .nav-icon { color: var(--color-primary); }
+  }
+
+  &.sub-item {
+    padding-inline-start: 1.5rem;
+    font-size: 0.82rem;
+  }
+}
+
+.nav-icon {
+  font-size: 1rem;
+  color: var(--sidebar-icon);
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+
+  &.small { font-size: 0.8rem; }
+}
+
+.nav-label { flex: 1; white-space: nowrap; }
+
+.nav-badge {
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 0.1rem 0.45rem;
+  min-width: 18px;
+  text-align: center;
+}
+
+// ─── Settings section ─────────────────────────────────────────────────────────
+.sidebar-section {
+  padding: 0 0.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding-top: 0.5rem;
+}
+
+.settings-toggle {
+  @extend .nav-item;
+
+  .toggle-arrow {
+    font-size: 0.75rem;
+    margin-inline-start: auto;
+    color: var(--sidebar-icon);
+  }
+
+  &.collapsed-icon { justify-content: center; }
+}
+
+.settings-items {
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+.sidebar-footer {
+  padding: 0.5rem 0.5rem 1rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+
+  .support-item {
+    color: var(--sidebar-text);
+    font-size: 0.85rem;
+  }
+}

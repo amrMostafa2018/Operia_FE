@@ -20,7 +20,21 @@
     "REPORTS":       "Reports",
     "SETTINGS":      "Settings",
     "PERMISSIONS":   "Permissions",
-    "SUBSCRIPTION":  "OPERIA Subscription"
+    "SUBSCRIPTION":  "OPERIA Subscription",
+    "PAYMENTS":      "Payments",
+    "SUPPORT":       "Technical Support",
+    "SETTINGS_SECTION": {
+      "BUSINESS_IDENTITY": "Business Identity",
+      "PAYMENT_METHODS":   "Payment Methods",
+      "NOTIFICATIONS":     "Notifications",
+      "LANGUAGE":          "Language & Region",
+      "TECH_SUPPORT":      "Technical Support"
+    }
+  },
+  "HEADER": {
+    "NOTIFICATIONS": "Notifications",
+    "LOGOUT":        "Sign Out",
+    "PROFILE":       "My Profile"
   },
   "AUTH": {
     "LOGIN":          "Sign In",
@@ -59,7 +73,16 @@
       "PASSWORD_REQUIRED":"Password is required",
       "PASSWORD_MIN":     "Password must be at least 6 characters",
       "OR":               "or",
-      "NEW_ACCOUNT":      "Create a new account"
+      "NEW_ACCOUNT":      "Create a new account",
+      "OTP_TITLE":        "Verify your identity",
+      "OTP_SUBTITLE":     "Enter the 6-digit code sent to your WhatsApp number",
+      "OTP_CODE":         "Verification code",
+      "OTP_PLACEHOLDER":  "Enter 6-digit code",
+      "OTP_INVALID":      "Enter a valid 6-digit code",
+      "OTP_VERIFY":       "Sign In",
+      "OTP_BACK":         "Back to sign in",
+      "OTP_SENT_TITLE":   "Code sent",
+      "OTP_SENT_DETAIL":  "Check your WhatsApp for the verification code"
     },
     "REGISTER_PAGE": {
       "HAS_ACCOUNT":      "Already have an account?",
@@ -132,13 +155,33 @@
     "NO_SHOW":   "No Show"
   },
   "DASHBOARD": {
-    "TITLE":               "Dashboard",
-    "TODAY_BOOKINGS":      "Today's Bookings",
-    "TOTAL_REVENUE":       "Total Revenue",
-    "NEW_CUSTOMERS":       "New Customers",
-    "ACTIVE_PACKAGES":     "Active Packages",
-    "QUICK_ACTIONS":       "Quick Actions",
-    "NEW_BOOKING":         "New Booking",
-    "NEW_CUSTOMER":        "New Customer"
+    "TITLE":                    "Dashboard",
+    "TODAY_BOOKINGS":           "Today's Bookings",
+    "MONTHLY_BOOKINGS":         "Monthly Bookings",
+    "TOTAL_REVENUE":            "Today's Revenue",
+    "MONTHLY_REVENUE":          "Monthly Revenue",
+    "NEW_CUSTOMERS":            "New Customers This Month",
+    "ACTIVE_PACKAGES":          "Active Packages",
+    "QUICK_ACTIONS":            "Quick Actions",
+    "NEW_BOOKING":              "New Booking",
+    "NEW_CUSTOMER":             "New Customer",
+    "FROM_DATE":                "From date",
+    "TO_DATE":                  "To date",
+    "ALL_EMPLOYEES":            "All Employees",
+    "ALL_STATUS":               "All Statuses",
+    "TODAY_TABLE_TITLE":        "Today's Bookings",
+    "TABLE_NUM":                "#",
+    "TABLE_CUSTOMER":           "Customer Name",
+    "TABLE_BOOKING_NUM":        "Booking Number",
+    "TABLE_EMPLOYEE":           "Employee",
+    "TABLE_SERVICE":            "Service",
+    "TABLE_FROM":               "From",
+    "TABLE_TO":                 "To",
+    "TABLE_STATUS":             "Status",
+    "TABLE_ACTIONS":            "Actions",
+    "EXPORT_REPORT":            "Export Report",
+    "COMPARED_LAST_MONTH":      "compared to last month",
+    "COMPARED_YESTERDAY":       "compared to yesterday",
+    "EGP":                      "EGP"
   }
 }

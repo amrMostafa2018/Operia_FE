@@ -1,0 +1,199 @@
+<div class="dashboard">
+
+  <!-- ═══ Date + Quick Actions bar ═══ -->
+  <div class="top-bar">
+    <div class="date-filters">
+      <div class="date-field">
+        <label>{{ 'DASHBOARD.FROM_DATE' | translate }}</label>
+        <p-calendar
+          [(ngModel)]="dateRange"
+          selectionMode="range"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'DASHBOARD.FROM_DATE' | translate"
+          styleClass="date-picker"
+        />
+      </div>
+    </div>
+    <div class="quick-actions">
+      <p-button
+        [label]="'DASHBOARD.NEW_BOOKING' | translate"
+        icon="pi pi-plus"
+        iconPos="right"
+        styleClass="action-btn primary-action"
+      />
+      <p-button
+        [label]="'DASHBOARD.NEW_CUSTOMER' | translate"
+        icon="pi pi-user-plus"
+        iconPos="right"
+        styleClass="action-btn secondary-action"
+        [outlined]="true"
+      />
+    </div>
+  </div>
+
+  <!-- ═══ Stat cards ═══ -->
+  <div class="stats-grid">
+    @for (stat of stats; track stat.labelKey) {
+      <div class="stat-card">
+        <div class="stat-icon" [style.background]="stat.iconBg">
+          <i [class]="stat.icon"></i>
+        </div>
+        <div class="stat-body">
+          <span class="stat-label">{{ stat.labelKey | translate }}</span>
+          <div class="stat-row">
+            <span class="stat-value">{{ stat.value }}</span>
+            <span class="stat-change up">
+              <i class="pi pi-arrow-up"></i> {{ stat.change }}%
+            </span>
+          </div>
+          <span class="stat-compare">
+            {{ stat.change }}%
+            {{ (stat.changeType === 'vs_yesterday'
+                ? 'DASHBOARD.COMPARED_YESTERDAY'
+                : 'DASHBOARD.COMPARED_LAST_MONTH') | translate }}
+          </span>
+        </div>
+        <!-- Mini sparkline -->
+        <div class="sparkline" aria-hidden="true">
+          <svg viewBox="0 0 80 30" fill="none" preserveAspectRatio="none">
+            <polyline
+              points="0,28 12,20 24,24 36,12 48,16 60,8 72,14 80,4"
+              stroke="var(--color-primary)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ═══ Table section ═══ -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="table-title">
+        <i class="pi pi-calendar"></i>
+        <span>{{ 'DASHBOARD.TODAY_TABLE_TITLE' | translate }}</span>
+        <span class="table-date">{{ today }}</span>
+      </div>
+      <div class="table-filters">
+        <p-dropdown
+          [options]="[{ label: 'DASHBOARD.ALL_EMPLOYEES', value: null }]"
+          [(ngModel)]="selectedEmployee"
+          [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
+          styleClass="filter-drop"
+        />
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
+          styleClass="filter-drop"
+        />
+        <p-button
+          icon="pi pi-search"
+          styleClass="search-btn"
+          [outlined]="true"
+        />
+      </div>
+    </div>
+
+    <p-table
+      [value]="filteredBookings()"
+      [rows]="rows()"
+      [first]="first()"
+      [paginator]="false"
+      styleClass="bookings-table"
+      [scrollable]="true"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'DASHBOARD.TABLE_NUM'        | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_CUSTOMER'   | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_BOOKING_NUM'| translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_EMPLOYEE'   | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_SERVICE'    | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_FROM'       | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_TO'         | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_STATUS'     | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_ACTIONS'    | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row let-i="rowIndex">
+        <tr>
+          <td>{{ i + 1 }}</td>
+          <td>
+            <div class="customer-cell">
+              <div class="customer-avatar">{{ row.customerName[0] }}</div>
+              <div>
+                <div class="customer-name">{{ row.customerName }}</div>
+                <div class="customer-phone">{{ row.customerPhone }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="mono">{{ row.bookingNumber }}</td>
+          <td>{{ row.employee }}</td>
+          <td class="service-cell">{{ row.service }}</td>
+          <td>{{ row.fromTime }}</td>
+          <td>{{ row.toTime }}</td>
+          <td>
+            <p-tag
+              [value]="statusKey(row.status) | translate"
+              [severity]="statusSeverity(row.status)"
+              styleClass="status-tag"
+            />
+          </td>
+          <td>
+            <button class="row-action-btn">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'COMMON.NO_DATA' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <!-- ═══ Table footer: rows selector + paginator + export ═══ -->
+    <div class="table-footer">
+      <div class="rows-selector">
+        <p-dropdown
+          [options]="rowOptions"
+          [ngModel]="rows()"
+          (ngModelChange)="onRowsChange($event)"
+          styleClass="rows-drop"
+        />
+      </div>
+
+      <div class="paginator">
+        <button class="page-btn">{{ 'السابق' }}</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <span class="page-ellipsis">...</span>
+        <button class="page-btn">7</button>
+        <button class="page-btn">{{ 'التالي' }}</button>
+      </div>
+
+      <p-button
+        [label]="'DASHBOARD.EXPORT_REPORT' | translate"
+        icon="pi pi-download"
+        iconPos="right"
+        styleClass="export-btn"
+        [outlined]="true"
+        (onClick)="exportReport()"
+      />
+    </div>
+  </div>
+
+</div>

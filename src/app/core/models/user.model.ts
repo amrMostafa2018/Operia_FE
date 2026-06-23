@@ -22,9 +22,14 @@ export interface LoginRequest {
   rememberMe?: boolean;
 }
 
-export interface LoginResponse {
-  user: User;
-  tokens: AuthTokens;
+export interface LoginInitiateResponse {
+  requiresOtp: boolean;
+  userId: string;
+}
+
+export interface VerifyLoginOtpRequest {
+  userId: string;
+  code: string;
 }
 
 export interface RegisterInitiateRequest {

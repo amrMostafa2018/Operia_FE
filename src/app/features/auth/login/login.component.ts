@@ -6,12 +6,15 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
+import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
+import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
+
+type LoginStep = 'form' | 'otp';
 
 @Component({
   selector: 'app-login',
@@ -22,8 +25,8 @@ import { AuthStore } from '../../../core/store/auth.store';
     ButtonModule,
     CheckboxModule,
     InputTextModule,
-    ToastModule,
     TranslatePipe,
+    OtpVerificationComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -39,7 +42,22 @@ export class LoginComponent implements OnInit {
 
   form!: FormGroup;
   isLoading = this.authStore.isLoading;
+
+  step = signal<LoginStep>('form');
+  userId = signal<string | null>(null);
+  rememberMe = signal(false);
+
   showPassword = signal(false);
+
+  readonly otpLabels: OtpLabels = {
+    title: 'AUTH.LOGIN_PAGE.OTP_TITLE',
+    subtitle: 'AUTH.LOGIN_PAGE.OTP_SUBTITLE',
+    code: 'AUTH.LOGIN_PAGE.OTP_CODE',
+    placeholder: 'AUTH.LOGIN_PAGE.OTP_PLACEHOLDER',
+    invalid: 'AUTH.LOGIN_PAGE.OTP_INVALID',
+    verify: 'AUTH.LOGIN_PAGE.OTP_VERIFY',
+    back: 'AUTH.LOGIN_PAGE.OTP_BACK',
+  };
 
   readonly submitIcon = computed(() =>
     this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'
@@ -62,6 +80,11 @@ export class LoginComponent implements OnInit {
     return !!(ctrl?.invalid && ctrl?.touched);
   }
 
+  backToForm(): void {
+    this.step.set('form');
+    this.userId.set(null);
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -70,16 +93,30 @@ export class LoginComponent implements OnInit {
 
     const { email, password, rememberMe } = this.form.value;
 
-    this.authService.login({ email, password, rememberMe }).subscribe({
-      next: () => this.router.navigate(['/']),
-      error: (err) => {
+    this.authService.initiateLogin({ email, password, rememberMe }).subscribe({
+      next: (res) => {
+        this.rememberMe.set(!!rememberMe);
+        this.userId.set(res.userId);
+        this.step.set('otp');
         this.messageService.add({
-          severity: 'error',
-          summary: this.translate.instant('AUTH.LOGIN_ERROR'),
-          detail: err?.error?.message ?? this.translate.instant('AUTH.INVALID_CREDENTIALS'),
-          life: 4000,
+          severity: 'success',
+          summary: this.translate.instant('AUTH.LOGIN_PAGE.OTP_SENT_TITLE'),
+          detail: this.translate.instant('AUTH.LOGIN_PAGE.OTP_SENT_DETAIL'),
+          life: 5000,
         });
       },
+    });
+  }
+
+  onVerifyOtp(code: string): void {
+    const userId = this.userId();
+    if (!userId) {
+      this.backToForm();
+      return;
+    }
+
+    this.authService.verifyLoginOtp({ userId, code }, this.rememberMe()).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
     });
   }
 }

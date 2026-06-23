@@ -20,7 +20,21 @@
     "REPORTS":       "التقارير",
     "SETTINGS":      "الإعدادات",
     "PERMISSIONS":   "الصلاحيات",
-    "SUBSCRIPTION":  "اشتراك أوبيريا"
+    "SUBSCRIPTION":  "اشتراك أوبيريا",
+    "PAYMENTS":      "المدفوعات",
+    "SUPPORT":       "الدعم الفني",
+    "SETTINGS_SECTION": {
+      "BUSINESS_IDENTITY": "هوية النشاط",
+      "PAYMENT_METHODS":   "وسائل الدفع",
+      "NOTIFICATIONS":     "الإشعارات",
+      "LANGUAGE":          "اللغة والمنطقة",
+      "TECH_SUPPORT":      "الدعم الفني"
+    }
+  },
+  "HEADER": {
+    "NOTIFICATIONS": "الإشعارات",
+    "LOGOUT":        "تسجيل الخروج",
+    "PROFILE":       "ملفي الشخصي"
   },
   "AUTH": {
     "LOGIN":          "تسجيل الدخول",
@@ -59,7 +73,16 @@
       "PASSWORD_REQUIRED":"كلمة المرور مطلوبة",
       "PASSWORD_MIN":     "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
       "OR":               "أو",
-      "NEW_ACCOUNT":      "إنشاء حساب جديد"
+      "NEW_ACCOUNT":      "إنشاء حساب جديد",
+      "OTP_TITLE":        "تأكيد الهوية",
+      "OTP_SUBTITLE":     "أدخل الرمز المكون من 6 أرقام المرسل إلى واتساب",
+      "OTP_CODE":         "رمز التحقق",
+      "OTP_PLACEHOLDER":  "أدخل الرمز المكون من 6 أرقام",
+      "OTP_INVALID":      "أدخل رمزاً صحيحاً مكوناً من 6 أرقام",
+      "OTP_VERIFY":       "تسجيل الدخول",
+      "OTP_BACK":         "العودة لتسجيل الدخول",
+      "OTP_SENT_TITLE":   "تم إرسال الرمز",
+      "OTP_SENT_DETAIL":  "تحقق من واتساب للحصول على رمز التحقق"
     },
     "REGISTER_PAGE": {
       "HAS_ACCOUNT":      "لديك حساب بالفعل؟",
@@ -132,13 +155,33 @@
     "NO_SHOW":   "لم يحضر"
   },
   "DASHBOARD": {
-    "TITLE":               "لوحة التحكم",
-    "TODAY_BOOKINGS":      "حجوزات اليوم",
-    "TOTAL_REVENUE":       "إجمالي الإيرادات",
-    "NEW_CUSTOMERS":       "عملاء جدد",
-    "ACTIVE_PACKAGES":     "الباقات النشطة",
-    "QUICK_ACTIONS":       "الإجراءات السريعة",
-    "NEW_BOOKING":         "حجز جديد",
-    "NEW_CUSTOMER":        "عميل جديد"
+    "TITLE":                    "لوحة التحكم",
+    "TODAY_BOOKINGS":           "حجوزات اليوم",
+    "MONTHLY_BOOKINGS":         "إجمالي حجوزات الشهر",
+    "TOTAL_REVENUE":            "إيرادات اليوم",
+    "MONTHLY_REVENUE":          "إجمالي إيرادات الشهر",
+    "NEW_CUSTOMERS":            "العملاء الجدد هذا الشهر",
+    "ACTIVE_PACKAGES":          "الباقات النشطة",
+    "QUICK_ACTIONS":            "الإجراءات السريعة",
+    "NEW_BOOKING":              "حجز جديد",
+    "NEW_CUSTOMER":             "عميل جديد",
+    "FROM_DATE":                "من تاريخ",
+    "TO_DATE":                  "إلى تاريخ",
+    "ALL_EMPLOYEES":            "كل الموظفين",
+    "ALL_STATUS":               "كل الحالات",
+    "TODAY_TABLE_TITLE":        "حجوزات اليوم",
+    "TABLE_NUM":                "#",
+    "TABLE_CUSTOMER":           "اسم العميل",
+    "TABLE_BOOKING_NUM":        "رقم الحجز",
+    "TABLE_EMPLOYEE":           "الموظف",
+    "TABLE_SERVICE":            "الخدمة",
+    "TABLE_FROM":               "من وقت",
+    "TABLE_TO":                 "إلى وقت",
+    "TABLE_STATUS":             "الحالة",
+    "TABLE_ACTIONS":            "العملية",
+    "EXPORT_REPORT":            "تحضير التقرير",
+    "COMPARED_LAST_MONTH":      "من الشهر الماضي",
+    "COMPARED_YESTERDAY":       "من أمس",
+    "EGP":                      "ج.م"
   }
 }

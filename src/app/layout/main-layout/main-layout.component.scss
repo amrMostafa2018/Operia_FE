@@ -1,0 +1,53 @@
+@use '../../../styles/variables' as *;
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--surface-bg);
+}
+
+// ─── Sidebar slot ─────────────────────────────────────────────────────────────
+app-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;
+  transition: width 0.25s ease;
+
+  @media (max-width: $bp-lg) {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: -$sidebar-width;
+    z-index: $z-sidebar;
+    transition: inset-inline-start 0.25s ease;
+
+    &.mobile-open {
+      inset-inline-start: 0;
+    }
+  }
+}
+
+// ─── Main column ──────────────────────────────────────────────────────────────
+.main-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: var(--surface-bg);
+}
+
+// ─── Mobile overlay ───────────────────────────────────────────────────────────
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: $z-sidebar - 1;
+  backdrop-filter: blur(2px);
+}

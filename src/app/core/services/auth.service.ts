@@ -15,11 +15,12 @@ import { environment } from '../../../environments/environment';
 import {
   ApiAuthResponse,
   AuthTokens,
+  LoginInitiateResponse,
   LoginRequest,
-  LoginResponse,
   RegisterInitiateRequest,
   RegisterInitiateResponse,
   User,
+  VerifyLoginOtpRequest,
   VerifyRegisterOtpRequest,
 } from '../models/user.model';
 import { AuthStore } from '../store/auth.store';
@@ -38,23 +39,46 @@ export class AuthService {
 
   // ─── Public API ────────────────────────────────────────────────────────────
 
-  login(request: LoginRequest): Observable<void> {
+  initiateLogin(request: LoginRequest): Observable<LoginInitiateResponse> {
     this.authStore.setLoading(true);
     this.authStore.setError(null);
 
     return this.http
-      .post<LoginResponse>(`${this.api}/auth/login`, request)
+      .post<LoginInitiateResponse>(`${this.api}/auth/login`, {
+        email: request.email,
+        password: request.password,
+      })
+      .pipe(
+        tap(() => this.authStore.setLoading(false)),
+        catchError((err: HttpErrorResponse) => {
+          this.authStore.setLoading(false);
+          this.authStore.setError(extractApiError(err));
+          return throwError(() => err);
+        })
+      );
+  }
+
+  verifyLoginOtp(
+    request: VerifyLoginOtpRequest,
+    rememberMe = false
+  ): Observable<void> {
+    this.authStore.setLoading(true);
+    this.authStore.setError(null);
+
+    return this.http
+      .post<ApiAuthResponse>(`${this.api}/auth/verify-otp`, request)
       .pipe(
         tap((res) => {
-          this.authStore.setUser(res.user);
-          this.authStore.setAccessToken(res.tokens.accessToken);
-          this.persistSession(res.user, res.tokens.refreshToken, request.rememberMe);
+          const user = userFromAccessToken(res.accessToken);
+          this.authStore.setUser(user);
+          this.authStore.setAccessToken(res.accessToken);
+          this.persistSession(user, res.refreshToken, rememberMe);
           this.authStore.setLoading(false);
         }),
         map(() => void 0),
-        catchError((err) => {
+        catchError((err: HttpErrorResponse) => {
           this.authStore.setLoading(false);
-          this.authStore.setError(err?.error?.message ?? 'Login failed.');
+          this.authStore.setError(extractApiError(err));
           return throwError(() => err);
         })
       );

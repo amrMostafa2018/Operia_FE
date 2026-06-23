@@ -1,0 +1,35 @@
+<header class="app-header">
+
+  <!-- Start: hamburger + breadcrumb -->
+  <div class="header-start">
+    <button class="hamburger" (click)="onToggleSidebar()" [attr.aria-label]="'NAV.DASHBOARD' | translate">
+      <i class="pi pi-bars"></i>
+    </button>
+  </div>
+
+  <!-- End: notifications + user -->
+  <div class="header-end">
+    <!-- Notification bell -->
+    <button class="icon-btn notif-btn" [attr.aria-label]="'HEADER.NOTIFICATIONS' | translate">
+      <i class="pi pi-bell"></i>
+      <span class="notif-dot"></span>
+    </button>
+
+    <!-- User block -->
+    <div class="user-block">
+      <div class="user-info">
+        <span class="user-name">{{ userName }}</span>
+        <span class="user-role">{{ authStore.userRole() }}</span>
+      </div>
+      <div class="user-avatar" [attr.aria-label]="userName">
+        {{ userInitials }}
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <button class="icon-btn logout-btn" (click)="logout()" [title]="'HEADER.LOGOUT' | translate">
+      <i class="pi pi-sign-out"></i>
+    </button>
+  </div>
+
+</header>

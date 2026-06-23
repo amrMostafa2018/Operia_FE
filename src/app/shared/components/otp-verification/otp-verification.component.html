@@ -1,0 +1,46 @@
+<div class="otp-verification">
+  <div class="form-title">
+    <span class="title-icon"><i class="pi pi-shield"></i></span>
+    <h2>{{ labels().title | translate }}</h2>
+  </div>
+  <p class="form-subtitle">{{ labels().subtitle | translate }}</p>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="field">
+      <label [for]="inputId()">
+        {{ labels().code | translate }} <span class="required">*</span>
+      </label>
+      <div class="input-wrapper otp-input-wrapper" [class.error]="isInvalid('code')">
+        <i class="pi pi-key input-icon"></i>
+        <input
+          [id]="inputId()"
+          pInputText
+          formControlName="code"
+          [placeholder]="labels().placeholder | translate"
+          inputmode="numeric"
+          maxlength="6"
+          autocomplete="one-time-code"
+          class="p-inputtext-custom otp-input"
+        />
+      </div>
+      @if (isInvalid('code')) {
+        <small class="error-msg">{{ labels().invalid | translate }}</small>
+      }
+    </div>
+
+    <p-button
+      type="submit"
+      [label]="labels().verify | translate"
+      [icon]="submitIcon()"
+      iconPos="right"
+      styleClass="submit-btn"
+      [loading]="isLoading()"
+      [disabled]="isLoading()"
+    />
+
+    <button type="button" class="back-btn" (click)="onBack()">
+      <i class="pi pi-arrow-right"></i>
+      {{ labels().back | translate }}
+    </button>
+  </form>
+</div>

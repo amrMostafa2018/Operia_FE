@@ -1,0 +1,23 @@
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+
+  <!-- Mobile overlay -->
+  @if (mobileOpen()) {
+    <div class="sidebar-overlay" (click)="closeMobileSidebar()"></div>
+  }
+
+  <!-- Sidebar -->
+  <app-sidebar
+    [collapsed]="sidebarCollapsed()"
+    [class.mobile-open]="mobileOpen()"
+    (closeSidebar)="closeMobileSidebar()"
+  />
+
+  <!-- Main column -->
+  <div class="main-column">
+    <app-header (toggleSidebar)="toggleSidebar()" />
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </div>
+
+</div>

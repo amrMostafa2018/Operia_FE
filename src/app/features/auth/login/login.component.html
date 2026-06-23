@@ -1,4 +1,3 @@
-<p-toast position="top-center" />
 
 <div class="login-page">
 
@@ -11,13 +10,15 @@
   <!-- Form card -->
   <div class="form-card">
 
-    <!-- Title -->
-    <div class="form-title">
-      <span class="title-icon"><i class="pi pi-sign-in"></i></span>
-      <h2>{{ 'AUTH.LOGIN_PAGE.TITLE' | translate }}</h2>
-    </div>
-    <p class="form-subtitle">{{ 'AUTH.LOGIN_PAGE.SUBTITLE' | translate }}</p>
+    @if (step() === 'form') {
+      <div class="form-title">
+        <span class="title-icon"><i class="pi pi-sign-in"></i></span>
+        <h2>{{ 'AUTH.LOGIN_PAGE.TITLE' | translate }}</h2>
+      </div>
+      <p class="form-subtitle">{{ 'AUTH.LOGIN_PAGE.SUBTITLE' | translate }}</p>
+    }
 
+    @if (step() === 'form') {
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
       <!-- Email -->
@@ -109,5 +110,15 @@
       </p>
 
     </form>
+    } @else {
+      <app-otp-verification
+        [labels]="otpLabels"
+        [isLoading]="isLoading()"
+        [submitIcon]="submitIcon()"
+        inputId="loginOtpCode"
+        (verify)="onVerifyOtp($event)"
+        (back)="backToForm()"
+      />
+    }
   </div>
 </div>
