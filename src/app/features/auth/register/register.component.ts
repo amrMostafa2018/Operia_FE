@@ -34,6 +34,8 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   return control.value && control.value !== password ? { mismatch: true } : null;
 }
 
+type RegisterStep = 'form' | 'otp';
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -60,8 +62,13 @@ export class RegisterComponent implements OnInit {
   private readonly languageService = inject(LanguageService);
 
   form!: FormGroup;
+  otpForm!: FormGroup;
   isLoading = this.authStore.isLoading;
   errorMessage = this.authStore.error;
+
+  step = signal<RegisterStep>('form');
+  registrationId = signal<string | null>(null);
+  displayName = signal('');
 
   showPassword = signal(false);
   showConfirm = signal(false);
@@ -92,7 +99,7 @@ export class RegisterComponent implements OnInit {
       password: ['', [
         Validators.required,
         Validators.minLength(8),
-        Validators.pattern(/^(?=.*[A-Z])(?=.*\d).+$/),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/),
       ]],
       confirmPassword: ['', [Validators.required, passwordMatchValidator]],
       agreeToTerms: [false, Validators.requiredTrue],
@@ -101,6 +108,16 @@ export class RegisterComponent implements OnInit {
     this.form.get('password')?.valueChanges.subscribe(() => {
       this.form.get('confirmPassword')?.updateValueAndValidity();
     });
+
+    this.otpForm = this.fb.group({
+      code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+    });
+  }
+
+  backToForm(): void {
+    this.step.set('form');
+    this.registrationId.set(null);
+    this.otpForm.reset();
   }
 
   togglePassword(): void {
@@ -116,32 +133,59 @@ export class RegisterComponent implements OnInit {
     return !!(ctrl?.invalid && ctrl?.touched);
   }
 
+  isOtpInvalid(field: string): boolean {
+    const ctrl = this.otpForm.get(field);
+    return !!(ctrl?.invalid && ctrl?.touched);
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const { name, email, phone, countryCode, password, confirmPassword, agreeToTerms } = this.form.value;
+    const { name, email, phone, countryCode, password, confirmPassword } = this.form.value;
+    const phoneNumber = `${countryCode}${phone}`.replace(/\s/g, '');
 
-    this.authService.register({
-      name,
+    this.authService.initiateRegistration({
       email,
-      phone,
-      countryCode,
       password,
       confirmPassword,
-      agreeToTerms,
+      phoneNumber,
     }).subscribe({
-      next: () => this.router.navigate(['/']),
-      error: (err) => {
+      next: (res) => {
+        this.displayName.set(name);
+        this.registrationId.set(res.registrationId);
+        this.step.set('otp');
         this.messageService.add({
-          severity: 'error',
-          summary: this.translate.instant('AUTH.ERROR'),
-          detail: err?.error?.message ?? this.translate.instant('AUTH.REGISTER_ERROR'),
-          life: 4000,
+          severity: 'success',
+          summary: this.translate.instant('AUTH.REGISTER_PAGE.OTP_SENT_TITLE'),
+          detail: this.translate.instant('AUTH.REGISTER_PAGE.OTP_SENT_DETAIL'),
+          life: 5000,
         });
       },
+    });
+  }
+
+  onVerifyOtp(): void {
+    if (this.otpForm.invalid) {
+      this.otpForm.markAllAsTouched();
+      return;
+    }
+
+    const registrationId = this.registrationId();
+    if (!registrationId) {
+      this.backToForm();
+      return;
+    }
+
+    const { code } = this.otpForm.value;
+
+    this.authService.verifyRegisterOtp(
+      { registrationId, code },
+      this.displayName()
+    ).subscribe({
+      next: () => this.router.navigate(['/']),
     });
   }
 }

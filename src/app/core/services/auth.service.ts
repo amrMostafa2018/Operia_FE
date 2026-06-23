@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import {
   catchError,
@@ -12,8 +12,19 @@ import {
 } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AuthTokens, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '../models/user.model';
+import {
+  ApiAuthResponse,
+  AuthTokens,
+  LoginRequest,
+  LoginResponse,
+  RegisterInitiateRequest,
+  RegisterInitiateResponse,
+  User,
+  VerifyRegisterOtpRequest,
+} from '../models/user.model';
 import { AuthStore } from '../store/auth.store';
+import { extractApiError } from '../utils/api-error.util';
+import { userFromAccessToken } from '../utils/jwt.util';
 
 const RT_KEY = 'operia_rt';
 const USER_KEY = 'operia_user';
@@ -49,23 +60,43 @@ export class AuthService {
       );
   }
 
-  register(request: RegisterRequest): Observable<void> {
+  initiateRegistration(request: RegisterInitiateRequest): Observable<RegisterInitiateResponse> {
     this.authStore.setLoading(true);
     this.authStore.setError(null);
 
     return this.http
-      .post<RegisterResponse>(`${this.api}/auth/register`, request)
+      .post<RegisterInitiateResponse>(`${this.api}/auth/register`, request)
+      .pipe(
+        tap(() => this.authStore.setLoading(false)),
+        catchError((err: HttpErrorResponse) => {
+          this.authStore.setLoading(false);
+          this.authStore.setError(extractApiError(err));
+          return throwError(() => err);
+        })
+      );
+  }
+
+  verifyRegisterOtp(
+    request: VerifyRegisterOtpRequest,
+    displayName?: string
+  ): Observable<void> {
+    this.authStore.setLoading(true);
+    this.authStore.setError(null);
+
+    return this.http
+      .post<ApiAuthResponse>(`${this.api}/auth/verify-register-otp`, request)
       .pipe(
         tap((res) => {
-          this.authStore.setUser(res.user);
-          this.authStore.setAccessToken(res.tokens.accessToken);
-          this.persistSession(res.user, res.tokens.refreshToken, false);
+          const user = userFromAccessToken(res.accessToken, displayName);
+          this.authStore.setUser(user);
+          this.authStore.setAccessToken(res.accessToken);
+          this.persistSession(user, res.refreshToken, false);
           this.authStore.setLoading(false);
         }),
         map(() => void 0),
-        catchError((err) => {
+        catchError((err: HttpErrorResponse) => {
           this.authStore.setLoading(false);
-          this.authStore.setError(err?.error?.message ?? 'Registration failed.');
+          this.authStore.setError(extractApiError(err));
           return throwError(() => err);
         })
       );

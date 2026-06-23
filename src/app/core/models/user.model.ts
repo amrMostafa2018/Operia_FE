@@ -27,17 +27,25 @@ export interface LoginResponse {
   tokens: AuthTokens;
 }
 
-export interface RegisterRequest {
-  name: string;
+export interface RegisterInitiateRequest {
   email: string;
-  phone: string;
-  countryCode: string;
   password: string;
   confirmPassword: string;
-  agreeToTerms: boolean;
+  phoneNumber: string;
 }
 
-export interface RegisterResponse {
-  user: User;
-  tokens: AuthTokens;
+export interface RegisterInitiateResponse {
+  requiresOtp: boolean;
+  registrationId: string;
+}
+
+export interface VerifyRegisterOtpRequest {
+  registrationId: string;
+  code: string;
+}
+
+export interface ApiAuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
 }

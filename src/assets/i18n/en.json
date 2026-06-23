@@ -75,10 +75,10 @@
       "PHONE_PLACEHOLDER":"Enter your mobile number",
       "WHATSAPP_HINT":    "This number will be used to contact you via WhatsApp",
       "PHONE_INVALID":    "Invalid phone number",
-      "PASSWORD_HINT":    "Must be at least 8 characters and include an uppercase letter and a number",
+      "PASSWORD_HINT":    "Must be at least 8 characters and include uppercase, lowercase, a number, and a special character",
       "PASSWORD_REQUIRED":"Password is required",
       "PASSWORD_MIN":     "Must be at least 8 characters",
-      "PASSWORD_PATTERN": "Must contain an uppercase letter and a number",
+      "PASSWORD_PATTERN": "Must contain uppercase, lowercase, a number, and a special character",
       "CONFIRM_PASSWORD": "Confirm Password",
       "CONFIRM_PLACEHOLDER": "Re-enter your password",
       "CONFIRM_REQUIRED": "Password confirmation is required",
@@ -86,7 +86,16 @@
       "TERMS_PREFIX":     "I agree to the",
       "TERMS_LINK":       "Terms & Privacy Policy",
       "TERMS_REQUIRED":   "You must agree to the Terms & Privacy Policy",
-      "SUBMIT":           "Next"
+      "SUBMIT":           "Next",
+      "OTP_TITLE":        "Verify your number",
+      "OTP_SUBTITLE":     "Enter the 6-digit code sent to your WhatsApp number",
+      "OTP_CODE":         "Verification code",
+      "OTP_PLACEHOLDER":  "Enter 6-digit code",
+      "OTP_INVALID":      "Enter a valid 6-digit code",
+      "OTP_VERIFY":       "Create account",
+      "OTP_BACK":         "Back to registration",
+      "OTP_SENT_TITLE":   "Code sent",
+      "OTP_SENT_DETAIL":  "Check your WhatsApp for the verification code"
     }
   },
   "COMMON": {

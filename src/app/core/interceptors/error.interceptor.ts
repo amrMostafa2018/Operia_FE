@@ -18,6 +18,9 @@ function resolveMessage(error: HttpErrorResponse): string {
     case 400:
       return body?.message ?? 'Invalid request. Please check your input.';
     case 401:
+      if (body?.errors?.['detail']?.[0]) {
+        return body.errors['detail'][0];
+      }
       return 'Your session has expired. Please sign in again.';
     case 403:
       return 'You do not have permission to perform this action.';
@@ -54,7 +57,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       // 401 navigation is handled here only if the JWT interceptor could not
       // recover (i.e. the refresh itself failed and rethrew).
-      if (error.status === 401) {
+      if (
+        error.status === 401 &&
+        !req.url.includes('/auth/verify-register-otp') &&
+        !req.url.includes('/auth/verify-otp')
+      ) {
         router.navigate(['/auth/login']);
       }
 
