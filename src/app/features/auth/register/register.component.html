@@ -56,7 +56,8 @@
         </div>
         @if (isInvalid('email')) {
           <small class="error-msg">
-            @if (form.get('email')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_REQUIRED' | translate }} }
+            @if (form.get('email')?.errors?.['server']) { {{ getFieldError('email') }} }
+            @else if (form.get('email')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_REQUIRED' | translate }} }
             @else if (form.get('email')?.errors?.['email']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_INVALID' | translate }} }
           </small>
         }
@@ -98,7 +99,10 @@
           {{ 'AUTH.REGISTER_PAGE.WHATSAPP_HINT' | translate }}
         </small>
         @if (isInvalid('phone')) {
-          <small class="error-msg">{{ 'AUTH.REGISTER_PAGE.PHONE_INVALID' | translate }}</small>
+          <small class="error-msg">
+            @if (form.get('phone')?.errors?.['server']) { {{ getFieldError('phone') }} }
+            @else { {{ 'AUTH.REGISTER_PAGE.PHONE_INVALID' | translate }} }
+          </small>
         }
       </div>
 
@@ -195,9 +199,12 @@
       <app-otp-verification
         [labels]="otpLabels"
         [isLoading]="isLoading()"
+        [isResending]="isResendingOtp()"
         [submitIcon]="submitIcon()"
+        [serverError]="otpServerError()"
         inputId="registerOtpCode"
         (verify)="onVerifyOtp($event)"
+        (resend)="onResendOtp()"
         (back)="backToForm()"
       />
     }

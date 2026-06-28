@@ -50,6 +50,14 @@ export interface VerifyRegisterOtpRequest {
   code: string;
 }
 
+export interface ResendRegisterOtpRequest {
+  registrationId: string;
+}
+
+export interface ResendLoginOtpRequest {
+  userId: string;
+}
+
 export interface ApiAuthResponse {
   accessToken: string;
   refreshToken: string;

@@ -14,6 +14,11 @@ import {
   throwError,
 } from 'rxjs';
 
+import {
+  AuthApiEndpoint,
+  PUBLIC_AUTH_API_ENDPOINTS,
+  urlIncludesAuthEndpoint,
+} from '../constants/auth-api-endpoint.enum';
 import { AuthService } from '../services/auth.service';
 import { AuthTokens } from '../models/user.model';
 
@@ -23,28 +28,16 @@ import { AuthTokens } from '../models/user.model';
 let isRefreshing = false;
 const refreshSubject$ = new BehaviorSubject<string | null>(null);
 
-/** Public auth endpoints — no Authorization header, no token refresh on 401. */
-const PUBLIC_AUTH_URL_FRAGMENTS = [
-  '/auth/login',
-  '/auth/verify-otp',
-  '/auth/verify-register-otp',
-  '/auth/register',
-  '/auth/refresh',
-];
-
-/** Authenticated auth endpoints — send token, but do not refresh on 401. */
-const NO_REFRESH_ON_401_URL_FRAGMENTS = ['/auth/logout'];
-
-function matchesUrlFragment(url: string, fragments: string[]): boolean {
-  return fragments.some((fragment) => url.includes(fragment));
+function matchesUrlFragment(url: string, fragments: AuthApiEndpoint[]): boolean {
+  return urlIncludesAuthEndpoint(url, fragments);
 }
 
 function isPublicAuthUrl(url: string): boolean {
-  return matchesUrlFragment(url, PUBLIC_AUTH_URL_FRAGMENTS);
+  return matchesUrlFragment(url, [...PUBLIC_AUTH_API_ENDPOINTS]);
 }
 
 function shouldRefreshOn401(url: string): boolean {
-  return !isPublicAuthUrl(url) && !matchesUrlFragment(url, NO_REFRESH_ON_401_URL_FRAGMENTS);
+  return !isPublicAuthUrl(url) && !url.includes(AuthApiEndpoint.Logout);
 }
 
 function attachToken<T>(req: HttpRequest<T>, token: string): HttpRequest<T> {

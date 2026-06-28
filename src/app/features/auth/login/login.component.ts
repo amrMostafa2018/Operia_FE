@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -11,6 +12,7 @@ import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
+import { extractOtpFieldError } from '../../../core/utils/api-error.util';
 import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
 import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
 
@@ -46,6 +48,8 @@ export class LoginComponent implements OnInit {
   step = signal<LoginStep>('form');
   userId = signal<string | null>(null);
   rememberMe = signal(false);
+  isResendingOtp = signal(false);
+  otpServerError = signal<string | null>(null);
 
   showPassword = signal(false);
 
@@ -57,6 +61,8 @@ export class LoginComponent implements OnInit {
     invalid: 'AUTH.LOGIN_PAGE.OTP_INVALID',
     verify: 'AUTH.LOGIN_PAGE.OTP_VERIFY',
     back: 'AUTH.LOGIN_PAGE.OTP_BACK',
+    resend: 'AUTH.LOGIN_PAGE.OTP_RESEND',
+    resendIn: 'AUTH.LOGIN_PAGE.OTP_RESEND_IN',
   };
 
   readonly submitIcon = computed(() =>
@@ -83,6 +89,7 @@ export class LoginComponent implements OnInit {
   backToForm(): void {
     this.step.set('form');
     this.userId.set(null);
+    this.otpServerError.set(null);
   }
 
   onSubmit(): void {
@@ -97,6 +104,7 @@ export class LoginComponent implements OnInit {
       next: (res) => {
         this.rememberMe.set(!!rememberMe);
         this.userId.set(res.userId);
+        this.otpServerError.set(null);
         this.step.set('otp');
         this.messageService.add({
           severity: 'success',
@@ -115,8 +123,41 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    this.otpServerError.set(null);
+
     this.authService.verifyLoginOtp({ userId, code }, this.rememberMe()).subscribe({
       next: () => this.router.navigate(['/dashboard']),
+      error: (err: HttpErrorResponse) => this.handleOtpVerifyError(err),
+    });
+  }
+
+  private handleOtpVerifyError(err: HttpErrorResponse): void {
+    this.otpServerError.set(
+      extractOtpFieldError(err, key => this.translate.instant(key))
+    );
+  }
+
+  onResendOtp(): void {
+    const userId = this.userId();
+    if (!userId) {
+      this.backToForm();
+      return;
+    }
+
+    this.isResendingOtp.set(true);
+    this.otpServerError.set(null);
+
+    this.authService.resendLoginOtp({ userId }).subscribe({
+      next: () => {
+        this.isResendingOtp.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translate.instant('AUTH.LOGIN_PAGE.OTP_SENT_TITLE'),
+          detail: this.translate.instant('AUTH.LOGIN_PAGE.OTP_SENT_DETAIL'),
+          life: 5000,
+        });
+      },
+      error: () => this.isResendingOtp.set(false),
     });
   }
 }

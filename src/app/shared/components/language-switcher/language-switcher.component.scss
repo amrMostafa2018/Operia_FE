@@ -30,12 +30,14 @@
   }
 }
 
-:host-context(.auth-content) .lang-switcher {
+:host-context(.auth-content) .lang-switcher,
+:host-context(.header-actions) .lang-switcher {
   background: var(--surface-hover, #f1f3f5);
   border-color: var(--surface-border, #dee2e6);
 }
 
-:host-context(.auth-content) .lang-btn {
+:host-context(.auth-content) .lang-btn,
+:host-context(.header-actions) .lang-btn {
   color: var(--text-secondary, #6c757d);
 
   &:hover {

@@ -22,8 +22,14 @@ import {
   User,
   VerifyLoginOtpRequest,
   VerifyRegisterOtpRequest,
+  ResendLoginOtpRequest,
+  ResendRegisterOtpRequest,
 } from '../models/user.model';
 import { AuthStore } from '../store/auth.store';
+import {
+  AuthApiEndpoint,
+  buildAuthApiUrl,
+} from '../constants/auth-api-endpoint.enum';
 import { extractApiError } from '../utils/api-error.util';
 import { userFromAccessToken } from '../utils/jwt.util';
 
@@ -45,7 +51,7 @@ export class AuthService {
     this.authStore.setError(null);
 
     return this.http
-      .post<LoginInitiateResponse>(`${this.api}/auth/login`, {
+      .post<LoginInitiateResponse>(buildAuthApiUrl(this.api, AuthApiEndpoint.Login), {
         email: request.email,
         password: request.password,
       })
@@ -67,7 +73,7 @@ export class AuthService {
     this.authStore.setError(null);
 
     return this.http
-      .post<ApiAuthResponse>(`${this.api}/auth/verify-otp`, request)
+      .post<ApiAuthResponse>(buildAuthApiUrl(this.api, AuthApiEndpoint.VerifyOtp), request)
       .pipe(
         tap((res) => {
           const user = userFromAccessToken(res.accessToken);
@@ -90,7 +96,7 @@ export class AuthService {
     this.authStore.setError(null);
 
     return this.http
-      .post<RegisterInitiateResponse>(`${this.api}/auth/register`, request)
+      .post<RegisterInitiateResponse>(buildAuthApiUrl(this.api, AuthApiEndpoint.Register), request)
       .pipe(
         tap(() => this.authStore.setLoading(false)),
         catchError((err: HttpErrorResponse) => {
@@ -109,7 +115,7 @@ export class AuthService {
     this.authStore.setError(null);
 
     return this.http
-      .post<ApiAuthResponse>(`${this.api}/auth/verify-register-otp`, request)
+      .post<ApiAuthResponse>(buildAuthApiUrl(this.api, AuthApiEndpoint.VerifyRegisterOtp), request)
       .pipe(
         tap((res) => {
           const user = userFromAccessToken(res.accessToken, displayName);
@@ -127,11 +133,25 @@ export class AuthService {
       );
   }
 
+  resendLoginOtp(request: ResendLoginOtpRequest): Observable<void> {
+    return this.http.post<void>(
+      buildAuthApiUrl(this.api, AuthApiEndpoint.ResendLoginOtp),
+      request
+    );
+  }
+
+  resendRegisterOtp(request: ResendRegisterOtpRequest): Observable<void> {
+    return this.http.post<void>(
+      buildAuthApiUrl(this.api, AuthApiEndpoint.ResendRegisterOtp),
+      request
+    );
+  }
+
   logout(): void {
     this.loggingOut = true;
 
     this.http
-      .post(`${this.api}/auth/logout`, {})
+      .post(buildAuthApiUrl(this.api, AuthApiEndpoint.Logout), {})
       .pipe(
         catchError(() => of(null)),
         finalize(() => {
@@ -159,7 +179,7 @@ export class AuthService {
     }
 
     return this.http
-      .post<AuthTokens>(`${this.api}/auth/refresh`, { refreshToken })
+      .post<AuthTokens>(buildAuthApiUrl(this.api, AuthApiEndpoint.Refresh), { refreshToken })
       .pipe(
         tap((tokens) => {
           this.authStore.setAccessToken(tokens.accessToken);

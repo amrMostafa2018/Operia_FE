@@ -6,4 +6,6 @@ export interface OtpLabels {
   invalid: string;
   verify: string;
   back: string;
+  resend: string;
+  resendIn: string;
 }

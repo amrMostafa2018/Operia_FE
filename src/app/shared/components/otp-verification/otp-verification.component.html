@@ -10,7 +10,7 @@
       <label [for]="inputId()">
         {{ labels().code | translate }} <span class="required">*</span>
       </label>
-      <div class="input-wrapper otp-input-wrapper" [class.error]="isInvalid('code')">
+      <div class="input-wrapper otp-input-wrapper" [class.error]="isInvalid('code') || serverError()">
         <i class="pi pi-key input-icon"></i>
         <input
           [id]="inputId()"
@@ -23,8 +23,30 @@
           class="p-inputtext-custom otp-input"
         />
       </div>
-      @if (isInvalid('code')) {
+      @if (serverError()) {
+        <small class="error-msg">{{ serverError() }}</small>
+      } @else if (isInvalid('code')) {
         <small class="error-msg">{{ labels().invalid | translate }}</small>
+      }
+    </div>
+
+    <div class="resend-row">
+      @if (canResend()) {
+        <button
+          type="button"
+          class="resend-btn"
+          [disabled]="isResending()"
+          (click)="onResend()"
+        >
+          @if (isResending()) {
+            <i class="pi pi-spin pi-spinner"></i>
+          }
+          {{ labels().resend | translate }}
+        </button>
+      } @else {
+        <span class="resend-countdown">
+          {{ labels().resendIn | translate: { seconds: resendCountdown() } }}
+        </span>
       }
     </div>
 

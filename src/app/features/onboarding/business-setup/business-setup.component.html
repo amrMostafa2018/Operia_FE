@@ -1,0 +1,212 @@
+<div class="setup-page">
+  <div class="setup-body" [class.is-arabic]="isArabic()" [class.is-english]="!isArabic()">
+    <!-- Summary Sidebar: first in DOM → inline-start (left EN / right AR) -->
+    <aside class="setup-sidebar">
+      <h3>{{ 'ONBOARDING.BUSINESS_SETUP.SUMMARY_TITLE' | translate }}</h3>
+
+      <div class="summary-card">
+        <div class="summary-icon">
+          <i [class]="selectedActivity().icon"></i>
+        </div>
+        <h4>{{ selectedActivity().titleKey | translate }}</h4>
+        <p>{{ selectedActivity().descriptionKey | translate }}</p>
+
+        <div class="summary-features">
+          <h5>{{ 'ONBOARDING.BUSINESS_SETUP.SUMMARY_FEATURES_TITLE' | translate }}</h5>
+          <ul>
+            @for (featureKey of selectedActivity().featureKeys; track featureKey) {
+              <li>
+                <i class="pi pi-check"></i>
+                {{ featureKey | translate }}
+              </li>
+            }
+          </ul>
+        </div>
+
+        <div class="summary-note">
+          <i class="pi pi-plus-circle"></i>
+          <span>{{ 'ONBOARDING.BUSINESS_SETUP.SUMMARY_NOTE' | translate }}</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="setup-main">
+      <!-- Activity Type Selection -->
+      <section class="section">
+        <div class="section-header">
+          <span class="section-icon"><i class="pi pi-shop"></i></span>
+          <div>
+            <h2>{{ 'ONBOARDING.BUSINESS_SETUP.CHOOSE_TYPE_TITLE' | translate }}</h2>
+            <p>{{ 'ONBOARDING.BUSINESS_SETUP.CHOOSE_TYPE_SUBTITLE' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <i class="pi pi-exclamation-triangle"></i>
+          <div>
+            <strong>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TITLE' | translate }}</strong>
+            <p>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TEXT' | translate }}</p>
+          </div>
+        </div>
+
+        <div class="activity-grid">
+          @for (activity of activityTypes; track activity.id) {
+            <div
+              class="activity-card"
+              role="button"
+              tabindex="0"
+              [class.selected]="selectedActivityId() === activity.id"
+              (click)="selectActivity(activity.id)"
+              (keydown.enter)="selectActivity(activity.id)"
+              (keydown.space)="selectActivity(activity.id); $event.preventDefault()"
+            >
+              <span class="card-radio" [class.checked]="selectedActivityId() === activity.id">
+                @if (selectedActivityId() === activity.id) {
+                  <i class="pi pi-check"></i>
+                }
+              </span>
+              <span class="card-icon"><i [class]="activity.icon"></i></span>
+              <span class="card-title">{{ activity.titleKey | translate }}</span>
+              <ul class="card-features">
+                @for (featureKey of activity.featureKeys.slice(0, 3); track featureKey) {
+                  <li>
+                    <i class="pi pi-check"></i>
+                    {{ featureKey | translate }}
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Business Data Form -->
+      <section class="section">
+        <div class="section-header">
+          <span class="section-icon"><i class="pi pi-building"></i></span>
+          <h2>{{ 'ONBOARDING.BUSINESS_SETUP.BUSINESS_DATA_TITLE' | translate }}</h2>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <div class="form-grid">
+            <div class="field span-2">
+              <label for="businessName">
+                {{ 'ONBOARDING.BUSINESS_SETUP.BUSINESS_NAME' | translate }}
+                <span class="required">*</span>
+              </label>
+              <div class="input-wrapper" [class.error]="isInvalid('businessName')">
+                <i class="pi pi-building input-icon"></i>
+                <input
+                  id="businessName"
+                  pInputText
+                  formControlName="businessName"
+                  [placeholder]="'ONBOARDING.BUSINESS_SETUP.BUSINESS_NAME_PLACEHOLDER' | translate"
+                  class="p-inputtext-custom"
+                />
+              </div>
+              @if (isInvalid('businessName')) {
+                <small class="error-msg">{{ 'ONBOARDING.BUSINESS_SETUP.BUSINESS_NAME_REQUIRED' | translate }}</small>
+              }
+            </div>
+
+            <div class="field">
+              <label>{{ 'ONBOARDING.BUSINESS_SETUP.LOGO' | translate }}</label>
+              <label class="logo-upload" for="logoInput">
+                @if (logoPreview()) {
+                  <img [src]="logoPreview()" alt="" class="logo-preview" />
+                } @else {
+                  <i class="pi pi-cloud-upload"></i>
+                  <span>{{ 'ONBOARDING.BUSINESS_SETUP.LOGO_HINT' | translate }}</span>
+                }
+                <input
+                  id="logoInput"
+                  type="file"
+                  accept="image/*"
+                  class="sr-only"
+                  (change)="onLogoSelected($event)"
+                />
+              </label>
+            </div>
+
+            <div class="field">
+              <label for="country">
+                {{ 'ONBOARDING.BUSINESS_SETUP.COUNTRY' | translate }}
+                <span class="required">*</span>
+              </label>
+              <p-dropdown
+                inputId="country"
+                formControlName="country"
+                [options]="countries"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="setup-dropdown"
+              />
+            </div>
+
+            <div class="field">
+              <label for="city">
+                {{ 'ONBOARDING.BUSINESS_SETUP.CITY' | translate }}
+                <span class="required">*</span>
+              </label>
+              <p-dropdown
+                inputId="city"
+                formControlName="city"
+                [options]="cities()"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="setup-dropdown"
+              />
+            </div>
+
+            <div class="field">
+              <label for="currency">
+                {{ 'ONBOARDING.BUSINESS_SETUP.CURRENCY' | translate }}
+                <span class="required">*</span>
+              </label>
+              <p-dropdown
+                inputId="currency"
+                formControlName="currency"
+                [options]="currencies"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="setup-dropdown"
+              />
+            </div>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Footer Navigation -->
+  <footer class="setup-footer">
+    <div class="footer-start">
+      <p-button
+        type="button"
+        [label]="'ONBOARDING.BUSINESS_SETUP.PREVIOUS' | translate"
+        [icon]="prevIcon()"
+        [iconPos]="prevIconPos()"
+        styleClass="prev-btn"
+        (onClick)="onPrevious()"
+      />
+    </div>
+
+    <p class="footer-note" [attr.dir]="isArabic() ? 'rtl' : 'ltr'">
+      <i class="pi pi-lock"></i>
+      {{ 'ONBOARDING.BUSINESS_SETUP.FOOTER_NOTE' | translate }}
+    </p>
+
+    <div class="footer-end">
+      <p-button
+        type="button"
+        [label]="'ONBOARDING.BUSINESS_SETUP.SUBMIT' | translate"
+        [icon]="submitIcon()"
+        [iconPos]="submitIconPos()"
+        styleClass="submit-btn"
+        [loading]="isSubmitting()"
+        [disabled]="isSubmitting()"
+        (onClick)="onSubmit()"
+      />
+    </div>
+  </footer>
+</div>

@@ -8,6 +8,11 @@ export const routes: Routes = [
       import('./features/auth/auth.routes').then(m => m.authRoutes),
   },
   {
+    path: 'onboarding',
+    loadChildren: () =>
+      import('./features/onboarding/onboarding.routes').then(m => m.onboardingRoutes),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadChildren: () =>

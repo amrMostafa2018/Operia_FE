@@ -114,9 +114,12 @@
       <app-otp-verification
         [labels]="otpLabels"
         [isLoading]="isLoading()"
+        [isResending]="isResendingOtp()"
         [submitIcon]="submitIcon()"
+        [serverError]="otpServerError()"
         inputId="loginOtpCode"
         (verify)="onVerifyOtp($event)"
+        (resend)="onResendOtp()"
         (back)="backToForm()"
       />
     }

@@ -9,6 +9,21 @@
     "EN": "English",
     "AR": "العربية"
   },
+  "ERRORS": {
+    "EmailAlreadyRegistered": "Email is already registered.",
+    "EmailRequired": "Email is required.",
+    "EmailInvalid": "Email is not valid.",
+    "PasswordRequired": "Password is required.",
+    "PasswordMinLength": "Password must be at least 8 characters.",
+    "PasswordMismatch": "Password and Confirm Password must match.",
+    "PhoneRequired": "Phone number is required.",
+    "PhoneInvalid": "Phone number is not valid.",
+    "ConfirmPasswordRequired": "Confirm Password is required.",
+    "OtpPhoneRequired": "User phone number is required for OTP delivery.",
+    "OtpInvalid": "Invalid OTP code.",
+    "OtpExpired": "OTP has expired.",
+    "IdentityError": "An error occurred while creating your account."
+  },
   "NAV": {
     "DASHBOARD":     "Dashboard",
     "BOOKINGS":      "Bookings",
@@ -48,6 +63,10 @@
     "ERROR":          "Error",
     "LOGIN_ERROR":    "Sign in failed",
     "REGISTER_ERROR": "An error occurred while creating your account",
+    "ERROR": {
+      "IDENTITY": "An error occurred while creating your account. Please try again",
+      "UNEXPECTED": "An unexpected error occurred. Please try again"
+    },
     "PRIVACY_NOTE":   "We are committed to protecting your data and privacy",
     "LAYOUT": {
       "TAGLINE":      "Smart Business Management",
@@ -81,6 +100,8 @@
       "OTP_INVALID":      "Enter a valid 6-digit code",
       "OTP_VERIFY":       "Sign In",
       "OTP_BACK":         "Back to sign in",
+      "OTP_RESEND":       "Resend code",
+      "OTP_RESEND_IN":    "Resend code in {{seconds}}s",
       "OTP_SENT_TITLE":   "Code sent",
       "OTP_SENT_DETAIL":  "Check your WhatsApp for the verification code"
     },
@@ -110,6 +131,13 @@
       "TERMS_LINK":       "Terms & Privacy Policy",
       "TERMS_REQUIRED":   "You must agree to the Terms & Privacy Policy",
       "SUBMIT":           "Next",
+      "EMAIL_ALREADY_REGISTERED": "This email is already registered",
+      "EMAIL_REQUIRED":       "Email is required",
+      "EMAIL_INVALID":        "Invalid email address",
+      "PHONE_REQUIRED":       "Mobile number is required",
+      "OTP_PHONE_REQUIRED":   "Phone number is required for OTP delivery",
+      "OTP_INVALID":          "Invalid verification code",
+      "OTP_EXPIRED":          "Verification code has expired",
       "OTP_TITLE":        "Verify your number",
       "OTP_SUBTITLE":     "Enter the 6-digit code sent to your WhatsApp number",
       "OTP_CODE":         "Verification code",
@@ -117,8 +145,79 @@
       "OTP_INVALID":      "Enter a valid 6-digit code",
       "OTP_VERIFY":       "Create account",
       "OTP_BACK":         "Back to registration",
+      "OTP_RESEND":       "Resend code",
+      "OTP_RESEND_IN":    "Resend code in {{seconds}}s",
       "OTP_SENT_TITLE":   "Code sent",
       "OTP_SENT_DETAIL":  "Check your WhatsApp for the verification code"
+    }
+  },
+  "ONBOARDING": {
+    "STEPS": {
+      "CREATE_ACCOUNT": "Create Account",
+      "SETUP_BUSINESS": "Set Up Your Business"
+    },
+    "BUSINESS_SETUP": {
+      "CHOOSE_TYPE_TITLE": "Choose your activity type",
+      "CHOOSE_TYPE_SUBTITLE": "System tools will be customized based on your business type",
+      "NOTE_TITLE": "Important note",
+      "NOTE_TEXT": "Your choice determines the dashboard layout and available features. You can add more later from settings",
+      "BUSINESS_DATA_TITLE": "Your business details",
+      "BUSINESS_NAME": "Business name",
+      "BUSINESS_NAME_PLACEHOLDER": "Enter your business name",
+      "BUSINESS_NAME_REQUIRED": "Business name is required",
+      "LOGO": "Logo (optional)",
+      "LOGO_HINT": "Drag an image or click to upload",
+      "COUNTRY": "Country",
+      "CITY": "City",
+      "CURRENCY": "Currency",
+      "SUMMARY_TITLE": "Your selection summary",
+      "SUMMARY_FEATURES_TITLE": "System features you'll get",
+      "SUMMARY_NOTE": "You can add more features later from settings",
+      "PREVIOUS": "Previous",
+      "SUBMIT": "Create System",
+      "FOOTER_NOTE": "You can change some settings later from the dashboard",
+      "ACTIVITY_TYPES": {
+        "LASER_CLINIC": {
+          "TITLE": "Laser Clinics",
+          "DESCRIPTION": "Complete system for laser and aesthetic clinics",
+          "FEATURES": {
+            "PACKAGES": "Package & offer management",
+            "DISCOUNTS": "Smart discount codes",
+            "REPORTS": "Accurate financial reports",
+            "POS": "In-clinic point of sale",
+            "SUBSCRIPTION": "Flexible customer subscriptions"
+          }
+        },
+        "APPOINTMENT_CLINIC": {
+          "TITLE": "Clinics & Appointment Services",
+          "DESCRIPTION": "Appointment and booking management for clinics and medical centers",
+          "FEATURES": {
+            "BOOKINGS": "Booking & appointment management",
+            "CALENDAR": "Smart staff calendar",
+            "REMINDERS": "Automatic customer reminders",
+            "REPORTS": "Comprehensive performance reports"
+          }
+        },
+        "SALON": {
+          "TITLE": "Salon / Barber",
+          "DESCRIPTION": "Complete solutions for salons and barbershops",
+          "FEATURES": {
+            "BOOKINGS": "Flexible bookings & appointments",
+            "STAFF": "Staff & shift management",
+            "PACKAGES": "Special packages & offers",
+            "REPORTS": "Revenue reports"
+          }
+        },
+        "OTHER": {
+          "TITLE": "Other Activity",
+          "DESCRIPTION": "Flexible system customizable for any business type",
+          "FEATURES": {
+            "CUSTOM": "Customizable tools",
+            "FLEXIBLE": "Flexible service management",
+            "REPORTS": "Reports & analytics"
+          }
+        }
+      }
     }
   },
   "COMMON": {

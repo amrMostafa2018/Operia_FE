@@ -20,6 +20,7 @@ import { AuthService } from './core/services/auth.service';
 import { LanguageService } from './core/services/language.service';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
+import { languageInterceptor } from './core/interceptors/language.interceptor';
 
 /**
  * On startup: try to exchange a stored refresh token for a new access token.
@@ -43,7 +44,7 @@ export const appConfig: ApplicationConfig = {
     // errorInterceptor sees the error.
     provideHttpClient(
       withFetch(),
-      withInterceptors([errorInterceptor, jwtInterceptor])
+      withInterceptors([languageInterceptor, errorInterceptor, jwtInterceptor])
     ),
     provideAnimationsAsync(),
     provideTranslateService({

@@ -112,6 +112,39 @@
   margin-top: 0.3rem;
 }
 
+.resend-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.resend-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.resend-countdown {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
 ::ng-deep .submit-btn {
   width: 100% !important;
   margin-top: 0.25rem;

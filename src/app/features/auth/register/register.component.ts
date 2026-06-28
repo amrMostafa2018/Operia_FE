@@ -7,6 +7,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -19,6 +20,13 @@ import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
+import {
+  applyServerFieldErrors,
+  clearServerFieldError,
+  extractApiFieldErrors,
+  extractOtpFieldError,
+  translateApiFieldErrors,
+} from '../../../core/utils/api-error.util';
 import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
 import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
 
@@ -69,6 +77,8 @@ export class RegisterComponent implements OnInit {
   step = signal<RegisterStep>('form');
   registrationId = signal<string | null>(null);
   displayName = signal('');
+  otpServerError = signal<string | null>(null);
+  isResendingOtp = signal(false);
 
   readonly otpLabels: OtpLabels = {
     title: 'AUTH.REGISTER_PAGE.OTP_TITLE',
@@ -78,6 +88,8 @@ export class RegisterComponent implements OnInit {
     invalid: 'AUTH.REGISTER_PAGE.OTP_INVALID',
     verify: 'AUTH.REGISTER_PAGE.OTP_VERIFY',
     back: 'AUTH.REGISTER_PAGE.OTP_BACK',
+    resend: 'AUTH.REGISTER_PAGE.OTP_RESEND',
+    resendIn: 'AUTH.REGISTER_PAGE.OTP_RESEND_IN',
   };
 
   showPassword = signal(false);
@@ -118,11 +130,37 @@ export class RegisterComponent implements OnInit {
     this.form.get('password')?.valueChanges.subscribe(() => {
       this.form.get('confirmPassword')?.updateValueAndValidity();
     });
+
+    this.setupServerErrorClearing();
+  }
+
+  private setupServerErrorClearing(): void {
+    const fields = ['email', 'phone', 'password', 'confirmPassword'];
+    for (const field of fields) {
+      this.form.get(field)?.valueChanges.subscribe(() => {
+        clearServerFieldError(this.form, field);
+      });
+    }
+  }
+
+  private handleRegisterError(err: HttpErrorResponse): void {
+    const fieldErrors = extractApiFieldErrors(err);
+    const translated = translateApiFieldErrors(fieldErrors, key =>
+      this.translate.instant(key)
+    );
+    applyServerFieldErrors(this.form, translated);
+  }
+
+  private handleOtpVerifyError(err: HttpErrorResponse): void {
+    this.otpServerError.set(
+      extractOtpFieldError(err, key => this.translate.instant(key))
+    );
   }
 
   backToForm(): void {
     this.step.set('form');
     this.registrationId.set(null);
+    this.otpServerError.set(null);
   }
 
   togglePassword(): void {
@@ -136,6 +174,17 @@ export class RegisterComponent implements OnInit {
   isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
     return !!(ctrl?.invalid && ctrl?.touched);
+  }
+
+  getFieldError(field: string): string | null {
+    const ctrl = this.form.get(field);
+    if (!ctrl?.touched || !ctrl.errors) {
+      return null;
+    }
+    if (ctrl.errors['server']) {
+      return ctrl.errors['server'];
+    }
+    return null;
   }
 
   onSubmit(): void {
@@ -156,6 +205,7 @@ export class RegisterComponent implements OnInit {
       next: (res) => {
         this.displayName.set(name);
         this.registrationId.set(res.registrationId);
+        this.otpServerError.set(null);
         this.step.set('otp');
         this.messageService.add({
           severity: 'success',
@@ -164,6 +214,7 @@ export class RegisterComponent implements OnInit {
           life: 5000,
         });
       },
+      error: (err: HttpErrorResponse) => this.handleRegisterError(err),
     });
   }
 
@@ -174,11 +225,38 @@ export class RegisterComponent implements OnInit {
       return;
     }
 
+    this.otpServerError.set(null);
+
     this.authService.verifyRegisterOtp(
       { registrationId, code },
       this.displayName()
     ).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => this.router.navigate(['/onboarding/setup']),
+      error: (err: HttpErrorResponse) => this.handleOtpVerifyError(err),
+    });
+  }
+
+  onResendOtp(): void {
+    const registrationId = this.registrationId();
+    if (!registrationId) {
+      this.backToForm();
+      return;
+    }
+
+    this.isResendingOtp.set(true);
+    this.otpServerError.set(null);
+
+    this.authService.resendRegisterOtp({ registrationId }).subscribe({
+      next: () => {
+        this.isResendingOtp.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translate.instant('AUTH.REGISTER_PAGE.OTP_SENT_TITLE'),
+          detail: this.translate.instant('AUTH.REGISTER_PAGE.OTP_SENT_DETAIL'),
+          life: 5000,
+        });
+      },
+      error: () => this.isResendingOtp.set(false),
     });
   }
 }
