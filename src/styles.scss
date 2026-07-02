@@ -72,14 +72,17 @@ a {
   h1, h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
 }
 
-// Intl tel input flag sprites (global path fix)
-.iti__flag {
-  background-image: url('/assets/intl-tel-input/img/flags.png') !important;
-  background-repeat: no-repeat;
-}
-
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .iti__flag {
-    background-image: url('/assets/intl-tel-input/img/flags@2x.png') !important;
+// Per-country flag images (replaces intl-tel-input sprite sheet)
+@each $iso, $asset in (
+  'eg': '/assets/flags/eg.svg',
+  'sa': '/assets/flags/sa.svg',
+  'ae': '/assets/flags/ae.svg',
+  'kw': '/assets/flags/kw.svg'
+) {
+  .phone-row--intl .iti__flag.iti__#{$iso} {
+    background-image: url(#{$asset}) !important;
+    background-position: center !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
   }
 }

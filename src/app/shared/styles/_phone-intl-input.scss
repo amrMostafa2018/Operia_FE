@@ -29,6 +29,7 @@
 }
 
 .phone-row--intl {
+  --phone-flag-width: 108px;
   position: relative;
   padding: 0;
   overflow: visible;
@@ -37,7 +38,7 @@
   .phone-row-icon {
     position: absolute;
     top: 50%;
-    left: calc(76px + 0.85rem);
+    left: calc(var(--phone-flag-width) + 0.85rem);
     right: auto;
     transform: translateY(-50%);
     z-index: 3;
@@ -70,14 +71,15 @@
       bottom: auto !important;
       right: auto !important;
       left: auto !important;
-      flex: 0 0 76px;
-      width: 76px;
-      min-width: 76px;
-      max-width: 76px;
+      flex: 0 0 auto;
+      width: auto;
+      min-width: var(--phone-flag-width);
+      max-width: none;
       display: flex;
       align-items: stretch;
       border-right: 1.5px solid var(--surface-border);
       border-left: none;
+      overflow: visible;
     }
 
     .iti__flag-container.dropdown {
@@ -87,13 +89,14 @@
     .iti__selected-flag {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 0.2rem;
+      justify-content: flex-start;
+      gap: 0.35rem;
       height: 100%;
       min-height: 42px;
-      padding-inline: 0.4rem;
+      padding-inline: 0.5rem;
       background: var(--surface-hover) !important;
       border-radius: $border-radius 0 0 $border-radius;
+      overflow: visible;
     }
 
     .iti.separate-dial-code .iti__selected-flag,
@@ -105,10 +108,34 @@
       max-width: none;
     }
 
-    .iti__selected-flag .iti__flag {
+    .iti__selected-flag .iti__flag,
+    .iti__flag-box .iti__flag,
+    .iti__flag {
       flex-shrink: 0;
-      transform: scale(0.9);
+      display: inline-block;
+      width: 22px;
+      min-width: 22px;
+      height: 16px;
+      transform: none;
       transform-origin: center;
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+      background-image: none;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+      overflow: hidden;
+    }
+
+    @each $iso, $asset in (
+      'eg': '/assets/flags/eg.svg',
+      'sa': '/assets/flags/sa.svg',
+      'ae': '/assets/flags/ae.svg',
+      'kw': '/assets/flags/kw.svg'
+    ) {
+      .iti__flag.iti__#{$iso} {
+        background-image: url(#{$asset}) !important;
+      }
     }
 
     .selected-dial-code {
@@ -233,14 +260,7 @@
       display: flex;
       align-items: center;
       flex-shrink: 0;
-    }
-
-    .iti__flag {
-      display: inline-block;
-      width: 20px;
-      height: 15px;
-      background-image: url('/assets/intl-tel-input/img/flags.png');
-      background-repeat: no-repeat;
+      margin-inline-end: 0.35rem;
     }
 
     .iti__dial-code {
@@ -260,7 +280,7 @@
 
 html[dir='ltr'] .phone-row--intl {
   .phone-row-icon {
-    left: calc(76px + 0.85rem);
+    left: calc(var(--phone-flag-width) + 0.85rem);
     right: auto;
     transform: translateY(-50%);
   }
@@ -299,7 +319,8 @@ html[dir='rtl'] .phone-row--intl {
 
     [id$='__item-eg'] .iti__country-name,
     [id$='__item-sa'] .iti__country-name,
-    [id$='__item-ae'] .iti__country-name {
+    [id$='__item-ae'] .iti__country-name,
+    [id$='__item-kw'] .iti__country-name {
       font-size: 0;
       line-height: 0;
 
@@ -313,6 +334,7 @@ html[dir='rtl'] .phone-row--intl {
     [id$='__item-eg'] .iti__country-name::after { content: 'مصر'; }
     [id$='__item-sa'] .iti__country-name::after { content: 'السعودية'; }
     [id$='__item-ae'] .iti__country-name::after { content: 'الإمارات'; }
+    [id$='__item-kw'] .iti__country-name::after { content: 'الكويت'; }
 
     li.iti__country {
       direction: rtl;

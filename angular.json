@@ -38,11 +38,6 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets"
-              },
-              {
-                "glob": "**/*",
-                "input": "node_modules/intl-tel-input/build/img",
-                "output": "/assets/intl-tel-input/img"
               }
             ],
             "styles": [
@@ -111,11 +106,6 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets"
-              },
-              {
-                "glob": "**/*",
-                "input": "node_modules/intl-tel-input/build/img",
-                "output": "/assets/intl-tel-input/img"
               }
             ],
             "styles": [
