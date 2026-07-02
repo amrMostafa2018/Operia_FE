@@ -292,9 +292,9 @@ html[dir='rtl'] .phone-row--intl {
 
     .operia-tel-input,
     .iti input.iti__tel-input.operia-tel-input {
-      text-align: right;
+      text-align: left;
       direction: ltr;
-      unicode-bidi: plaintext;
+      unicode-bidi: isolate;
     }
 
     [id$='__item-eg'] .iti__country-name,

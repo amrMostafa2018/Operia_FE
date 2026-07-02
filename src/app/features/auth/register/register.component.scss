@@ -41,6 +41,10 @@
   overflow: visible;
 }
 
+.auth-step-panel--hidden {
+  display: none;
+}
+
 // Title
 .form-title {
   display: flex;

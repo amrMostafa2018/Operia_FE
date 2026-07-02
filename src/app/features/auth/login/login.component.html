@@ -18,13 +18,13 @@
       <p class="form-subtitle">{{ 'AUTH.LOGIN_PAGE.SUBTITLE' | translate }}</p>
     }
 
-    @if (step() === 'form') {
+    <div class="auth-step-panel" [class.auth-step-panel--hidden]="step() !== 'form'">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
       <!-- Mobile Number -->
       <div class="field field--phone">
         <label for="loginPhone">{{ 'AUTH.LOGIN_PAGE.PHONE' | translate }} <span class="required">*</span></label>
-        <div class="phone-row phone-row--intl" [class.error]="isInvalid('phone')">
+        <div class="phone-row phone-row--intl" [class.error]="isInvalid('phone')" dir="ltr">
           <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
           <ngx-intl-tel-input
             [cssClass]="phoneInputCssClass"
@@ -113,7 +113,9 @@
       </p>
 
     </form>
-    } @else {
+    </div>
+
+    @if (step() === 'otp') {
       <app-otp-verification
         [labels]="otpLabels"
         [isLoading]="isLoading()"
