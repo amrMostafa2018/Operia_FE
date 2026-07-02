@@ -1,4 +1,5 @@
 @use '../../../../styles/variables' as *;
+@use '../../../shared/styles/phone-intl-input';
 
 .login-page {
   flex: 1;
@@ -37,6 +38,7 @@
 .form-card {
   width: 100%;
   max-width: 440px;
+  overflow: visible;
 }
 
 // Title
@@ -80,6 +82,7 @@
 // ─── Fields ───────────────────────────────────────────────────────────────────
 .field {
   margin-bottom: 1.1rem;
+  overflow: visible;
 
   .field-header {
     display: flex;

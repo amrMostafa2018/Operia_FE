@@ -71,3 +71,15 @@ a {
 
   h1, h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
 }
+
+// Intl tel input flag sprites (global path fix)
+.iti__flag {
+  background-image: url('/assets/intl-tel-input/img/flags.png') !important;
+  background-repeat: no-repeat;
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .iti__flag {
+    background-image: url('/assets/intl-tel-input/img/flags@2x.png') !important;
+  }
+}

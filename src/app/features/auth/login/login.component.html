@@ -21,25 +21,28 @@
     @if (step() === 'form') {
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
-      <!-- Email -->
-      <div class="field">
-        <label for="email">{{ 'AUTH.EMAIL' | translate }} <span class="required">*</span></label>
-        <div class="input-wrapper" [class.error]="isInvalid('email')">
-          <i class="pi pi-envelope input-icon"></i>
-          <input
-            id="email"
-            pInputText
-            formControlName="email"
-            [placeholder]="'AUTH.LOGIN_PAGE.EMAIL_PLACEHOLDER' | translate"
-            type="email"
-            class="p-inputtext-custom"
+      <!-- Mobile Number -->
+      <div class="field field--phone">
+        <label for="loginPhone">{{ 'AUTH.LOGIN_PAGE.PHONE' | translate }} <span class="required">*</span></label>
+        <div class="phone-row phone-row--intl" [class.error]="isInvalid('phone')">
+          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+          <ngx-intl-tel-input
+            [cssClass]="phoneInputCssClass"
+            [onlyCountries]="onlyCountries"
+            [selectedCountryISO]="selectedCountryISO"
+            [enableAutoCountrySelect]="false"
+            [enablePlaceholder]="true"
+            [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+            [searchCountryFlag]="false"
+            [selectFirstCountry]="false"
+            [separateDialCode]="true"
+            [phoneValidation]="true"
+            inputId="loginPhone"
+            formControlName="phone"
           />
         </div>
-        @if (isInvalid('email')) {
-          <small class="error-msg">
-            @if (form.get('email')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_REQUIRED' | translate }} }
-            @else if (form.get('email')?.errors?.['email']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_INVALID' | translate }} }
-          </small>
+        @if (isInvalid('phone') && getPhoneError()) {
+          <small class="error-msg">{{ getPhoneError() }}</small>
         }
       </div>
 

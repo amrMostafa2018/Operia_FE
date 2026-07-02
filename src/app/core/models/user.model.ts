@@ -18,7 +18,7 @@ export interface AuthTokens {
 }
 
 export interface LoginRequest {
-  email: string;
+  phoneNumber: string;
   password: string;
   rememberMe?: boolean;
 }

@@ -52,7 +52,7 @@ export class AuthService {
 
     return this.http
       .post<LoginInitiateResponse>(buildAuthApiUrl(this.api, AuthApiEndpoint.Login), {
-        email: request.email,
+        phoneNumber: request.phoneNumber,
         password: request.password,
       })
       .pipe(

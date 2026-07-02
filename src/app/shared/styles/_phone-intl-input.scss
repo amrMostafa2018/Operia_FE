@@ -1,0 +1,321 @@
+@use '../../../styles/variables' as *;
+
+.field--phone:has(.dropdown-menu.show) {
+  position: relative;
+  z-index: 3000;
+}
+
+.phone-row {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--surface-border);
+  border-radius: $border-radius;
+  background: #fff;
+  min-height: 44px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+  }
+
+  &.error {
+    border-color: var(--color-danger);
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    }
+  }
+}
+
+.phone-row--intl {
+  position: relative;
+  padding: 0;
+  overflow: visible;
+  min-height: 44px;
+
+  .phone-row-icon {
+    position: absolute;
+    top: 50%;
+    left: calc(76px + 0.85rem);
+    right: auto;
+    transform: translateY(-50%);
+    z-index: 3;
+    pointer-events: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+
+  ::ng-deep {
+    ngx-intl-tel-input {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .iti {
+      width: 100%;
+      display: flex !important;
+      flex-direction: row !important;
+      direction: ltr !important;
+      align-items: stretch;
+      min-height: 44px;
+    }
+
+    .iti__flag-container {
+      order: 1;
+      position: relative !important;
+      top: auto !important;
+      bottom: auto !important;
+      right: auto !important;
+      left: auto !important;
+      flex: 0 0 76px;
+      width: 76px;
+      min-width: 76px;
+      max-width: 76px;
+      display: flex;
+      align-items: stretch;
+      border-right: 1.5px solid var(--surface-border);
+      border-left: none;
+    }
+
+    .iti__flag-container.dropdown {
+      position: relative !important;
+    }
+
+    .iti__selected-flag {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      height: 100%;
+      min-height: 42px;
+      padding-inline: 0.4rem;
+      background: var(--surface-hover) !important;
+      border-radius: $border-radius 0 0 $border-radius;
+    }
+
+    .iti.separate-dial-code .iti__selected-flag,
+    .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-2 .iti__selected-flag,
+    .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-3 .iti__selected-flag,
+    .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-4 .iti__selected-flag {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: none;
+    }
+
+    .iti__selected-flag .iti__flag {
+      flex-shrink: 0;
+      transform: scale(0.9);
+      transform-origin: center;
+    }
+
+    .selected-dial-code {
+      margin: 0 !important;
+      font-size: 0.78rem;
+      font-family: $font-en;
+      color: var(--text-primary);
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .iti__arrow {
+      margin-inline-start: 0;
+      flex-shrink: 0;
+      border-top-color: var(--text-secondary);
+    }
+
+    .operia-tel-input,
+    .iti input.iti__tel-input.operia-tel-input {
+      order: 2;
+      flex: 1 1 auto;
+      width: auto !important;
+      min-width: 0;
+      height: auto;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      margin: 0 !important;
+      padding-block: 0.65rem !important;
+      padding-left: 2.5rem !important;
+      padding-right: 0.85rem !important;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      min-height: 42px;
+      line-height: 1.2;
+
+      &::placeholder {
+        color: var(--text-disabled);
+      }
+    }
+
+    .iti.separate-dial-code input,
+    .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-2 input,
+    .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-3 input,
+    .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-4 input {
+      padding-left: 2.5rem !important;
+      padding-right: 0.85rem !important;
+    }
+
+    .dropdown-menu.iti__dropdown-content {
+      position: absolute !important;
+      top: calc(100% + 4px) !important;
+      left: 0 !important;
+      right: auto !important;
+      float: none !important;
+      display: none;
+      width: auto !important;
+      min-width: 200px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #fff !important;
+      border: 1.5px solid var(--surface-border) !important;
+      border-radius: $border-radius !important;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14) !important;
+      overflow: hidden;
+      z-index: 4000 !important;
+
+      &.show {
+        display: block !important;
+      }
+    }
+
+    ul.iti__country-list {
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0.25rem 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+      position: relative !important;
+      border: none !important;
+      width: 100% !important;
+    }
+
+    li.iti__country {
+      list-style: none !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0.5rem 0.75rem !important;
+      font-size: 0.82rem;
+      cursor: pointer;
+      direction: ltr;
+      white-space: nowrap;
+    }
+
+    .iti__country-name,
+    span.iti__country-name {
+      display: inline !important;
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0 !important;
+      padding: 0 !important;
+      visibility: visible !important;
+      position: static !important;
+      width: auto !important;
+      max-width: none !important;
+      overflow: visible !important;
+      clip: auto !important;
+      color: var(--text-primary);
+      font-size: 0.82rem;
+      line-height: 1.2;
+    }
+
+    li.iti__divider {
+      display: none !important;
+    }
+
+    .iti__flag-box {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .iti__flag {
+      display: inline-block;
+      width: 20px;
+      height: 15px;
+      background-image: url('/assets/intl-tel-input/img/flags.png');
+      background-repeat: no-repeat;
+    }
+
+    .iti__dial-code {
+      font-family: $font-en;
+      color: var(--text-primary);
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-inline-start: auto;
+    }
+
+    li.iti__country.iti__highlight,
+    li.iti__country:hover {
+      background-color: var(--surface-hover) !important;
+    }
+  }
+}
+
+html[dir='ltr'] .phone-row--intl {
+  .phone-row-icon {
+    left: calc(76px + 0.85rem);
+    right: auto;
+    transform: translateY(-50%);
+  }
+
+  ::ng-deep {
+    .operia-tel-input,
+    .iti input.iti__tel-input.operia-tel-input {
+      text-align: left;
+      direction: ltr;
+    }
+  }
+}
+
+html[dir='rtl'] .phone-row--intl {
+  ::ng-deep {
+    .iti--allow-dropdown .iti__flag-container,
+    .iti--show-selected-dial-code .iti__flag-container {
+      right: auto !important;
+      left: auto !important;
+    }
+
+    .iti--allow-dropdown input.iti__tel-input,
+    .iti--show-selected-dial-code input.iti__tel-input {
+      padding-left: 2.5rem !important;
+      padding-right: 0.85rem !important;
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+    }
+
+    .operia-tel-input,
+    .iti input.iti__tel-input.operia-tel-input {
+      text-align: right;
+      direction: ltr;
+      unicode-bidi: plaintext;
+    }
+
+    [id$='__item-eg'] .iti__country-name,
+    [id$='__item-sa'] .iti__country-name,
+    [id$='__item-ae'] .iti__country-name {
+      font-size: 0;
+      line-height: 0;
+
+      &::after {
+        font-size: 0.82rem;
+        line-height: 1.2;
+        color: var(--text-primary);
+      }
+    }
+
+    [id$='__item-eg'] .iti__country-name::after { content: 'مصر'; }
+    [id$='__item-sa'] .iti__country-name::after { content: 'السعودية'; }
+    [id$='__item-ae'] .iti__country-name::after { content: 'الإمارات'; }
+
+    li.iti__country {
+      direction: rtl;
+    }
+  }
+}
