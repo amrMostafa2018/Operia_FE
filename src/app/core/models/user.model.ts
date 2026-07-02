@@ -8,6 +8,7 @@ export interface User {
   permissions: string[];
   branchId?: string;
   avatarUrl?: string;
+  activityTypeId?: string;
   isActive: boolean;
 }
 

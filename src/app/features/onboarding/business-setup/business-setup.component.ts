@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { ACTIVITY_TYPES, ActivityType, ActivityTypeId } from '../models/activity-type.model';
 
@@ -31,12 +32,16 @@ interface SelectOption<T = string> {
 export class BusinessSetupComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   private readonly languageService = inject(LanguageService);
 
   form!: FormGroup;
   isSubmitting = signal(false);
   selectedActivityId = signal<ActivityTypeId>('laser_clinic');
   logoPreview = signal<string | null>(null);
+  isLogoDragOver = signal(false);
+
+  private logoDragCounter = 0;
 
   readonly activityTypes = ACTIVITY_TYPES;
 
@@ -137,17 +142,68 @@ export class BusinessSetupComponent implements OnInit {
   }
 
   onLogoSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      this.setLogoFile(file);
+    }
+  }
 
-    const reader = new FileReader();
-    reader.onload = () => this.logoPreview.set(reader.result as string);
-    reader.readAsDataURL(file);
+  onLogoDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.logoDragCounter++;
+    this.isLogoDragOver.set(true);
+  }
+
+  onLogoDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  onLogoDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.logoDragCounter--;
+    if (this.logoDragCounter <= 0) {
+      this.logoDragCounter = 0;
+      this.isLogoDragOver.set(false);
+    }
+  }
+
+  onLogoDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.logoDragCounter = 0;
+    this.isLogoDragOver.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      this.setLogoFile(file);
+    }
+  }
+
+  onRemoveLogo(): void {
+    this.logoPreview.set(null);
+    const input = document.getElementById('logoInput') as HTMLInputElement | null;
+    if (input) {
+      input.value = '';
+    }
   }
 
   onPrevious(): void {
-    this.router.navigate(['/auth/register']);
+    const entrySource = this.authService.getOnboardingEntrySource();
+
+    if (entrySource === 'register') {
+      this.authService.returnToRegister();
+      return;
+    }
+
+    if (entrySource === 'login' || this.authService.isAuthenticated()) {
+      this.authService.logout();
+    }
   }
 
   onSubmit(): void {
@@ -158,6 +214,17 @@ export class BusinessSetupComponent implements OnInit {
 
     this.isSubmitting.set(true);
     // TODO: integrate with backend API when available
+    this.authService.markOnboardingComplete(this.selectedActivityId());
     this.router.navigate(['/dashboard']);
+  }
+
+  private setLogoFile(file: File): void {
+    if (!file.type.startsWith('image/')) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => this.logoPreview.set(reader.result as string);
+    reader.readAsDataURL(file);
   }
 }

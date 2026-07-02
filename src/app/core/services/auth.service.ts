@@ -35,6 +35,12 @@ import { userFromAccessToken } from '../utils/jwt.util';
 
 const RT_KEY = 'operia_rt';
 const USER_KEY = 'operia_user';
+const ONBOARDING_KEY_PREFIX = 'operia_onboarding_';
+const ONBOARDING_SOURCE_KEY = 'operia_onboarding_source';
+const ONBOARDING_SETUP_URL = '/onboarding/setup';
+const DASHBOARD_URL = '/dashboard';
+
+export type OnboardingEntrySource = 'login' | 'register';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -76,11 +82,13 @@ export class AuthService {
       .post<ApiAuthResponse>(buildAuthApiUrl(this.api, AuthApiEndpoint.VerifyOtp), request)
       .pipe(
         tap((res) => {
-          const user = userFromAccessToken(res.accessToken);
+          const user = this.mergeStoredActivityType(userFromAccessToken(res.accessToken));
           this.authStore.setUser(user);
           this.authStore.setAccessToken(res.accessToken);
           this.persistSession(user, res.refreshToken, rememberMe);
           this.authStore.setLoading(false);
+
+          this.navigateAfterAuth('login');
         }),
         map(() => void 0),
         catchError((err: HttpErrorResponse) => {
@@ -118,11 +126,15 @@ export class AuthService {
       .post<ApiAuthResponse>(buildAuthApiUrl(this.api, AuthApiEndpoint.VerifyRegisterOtp), request)
       .pipe(
         tap((res) => {
-          const user = userFromAccessToken(res.accessToken, displayName);
+          const user = this.mergeStoredActivityType(
+            userFromAccessToken(res.accessToken, displayName)
+          );
           this.authStore.setUser(user);
           this.authStore.setAccessToken(res.accessToken);
           this.persistSession(user, res.refreshToken, false);
           this.authStore.setLoading(false);
+
+          this.navigateAfterAuth('register');
         }),
         map(() => void 0),
         catchError((err: HttpErrorResponse) => {
@@ -156,6 +168,7 @@ export class AuthService {
         catchError(() => of(null)),
         finalize(() => {
           this.clearSession();
+          this.clearOnboardingEntrySource();
           this.loggingOut = false;
           this.router.navigate(['/auth/login']);
         })
@@ -207,7 +220,7 @@ export class AuthService {
 
     // Optimistically restore the user so guards work immediately,
     // then exchange the refresh token in the background.
-    this.authStore.setUser(storedUser);
+    this.authStore.setUser(this.mergeStoredActivityType(storedUser));
 
     return this.refreshAccessToken().pipe(
       tap(() => this.syncUserFromAccessToken()),
@@ -230,10 +243,92 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return this.authStore.isAuthenticated();
+    return this.hasActiveSession();
+  }
+
+  /** True when the user has a usable in-memory or persisted session. */
+  hasActiveSession(): boolean {
+    if (this.authStore.isAuthenticated()) {
+      return true;
+    }
+
+    return !!(this.getRefreshToken() && this.getStoredUser());
+  }
+
+  needsOnboarding(): boolean {
+    const user = this.authStore.user() ?? this.getStoredUser();
+    if (!user) {
+      return true;
+    }
+
+    return !this.resolveActivityTypeId(user);
+  }
+
+  getPostAuthRedirectUrl(): string {
+    return this.needsOnboarding() ? ONBOARDING_SETUP_URL : DASHBOARD_URL;
+  }
+
+  markOnboardingComplete(activityTypeId: string): void {
+    const current = this.authStore.user() ?? this.getStoredUser();
+    if (!current) {
+      return;
+    }
+
+    const updated: User = { ...current, activityTypeId };
+    this.authStore.setUser(updated);
+    this.updateStoredUser(updated);
+    this.storeActivityTypeId(updated.id, activityTypeId);
+    this.clearOnboardingEntrySource();
+  }
+
+  getOnboardingEntrySource(): OnboardingEntrySource | null {
+    const value = sessionStorage.getItem(ONBOARDING_SOURCE_KEY);
+    return value === 'login' || value === 'register' ? value : null;
+  }
+
+  returnToRegister(): void {
+    this.clearOnboardingEntrySource();
+    this.clearSession();
+    void this.router.navigate(['/auth/register']);
   }
 
   // ─── Private helpers ───────────────────────────────────────────────────────
+
+  private navigateAfterAuth(entrySource: OnboardingEntrySource): void {
+    const url = this.getPostAuthRedirectUrl();
+    if (url === ONBOARDING_SETUP_URL) {
+      sessionStorage.setItem(ONBOARDING_SOURCE_KEY, entrySource);
+    } else {
+      this.clearOnboardingEntrySource();
+    }
+
+    void this.router.navigateByUrl(url, { replaceUrl: true });
+  }
+
+  private clearOnboardingEntrySource(): void {
+    sessionStorage.removeItem(ONBOARDING_SOURCE_KEY);
+  }
+
+  private resolveActivityTypeId(user: User): string | undefined {
+    return user.activityTypeId ?? this.getStoredActivityTypeId(user.id);
+  }
+
+  private mergeStoredActivityType(user: User): User {
+    const activityTypeId = this.resolveActivityTypeId(user);
+    return activityTypeId ? { ...user, activityTypeId } : user;
+  }
+
+  private getOnboardingKey(userId: string): string {
+    return `${ONBOARDING_KEY_PREFIX}${userId}`;
+  }
+
+  private getStoredActivityTypeId(userId: string): string | undefined {
+    return localStorage.getItem(this.getOnboardingKey(userId)) ?? undefined;
+  }
+
+  private storeActivityTypeId(userId: string, activityTypeId: string): void {
+    localStorage.setItem(this.getOnboardingKey(userId), activityTypeId);
+  }
 
   private syncUserFromAccessToken(displayName?: string): void {
     const token = this.authStore.accessToken();
@@ -243,8 +338,12 @@ export class AuthService {
 
     const storedUser = this.getStoredUser();
     const user = userFromAccessToken(token, displayName ?? storedUser?.name);
-    this.authStore.setUser(user);
-    this.updateStoredUser(user);
+    const merged = this.mergeStoredActivityType({
+      ...user,
+      activityTypeId: user.activityTypeId ?? storedUser?.activityTypeId,
+    });
+    this.authStore.setUser(merged);
+    this.updateStoredUser(merged);
   }
 
   private persistSession(user: User, refreshToken: string, rememberMe?: boolean): void {

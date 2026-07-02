@@ -4,16 +4,15 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Protects routes that require an authenticated user.
- * Redirects unauthenticated visitors to /auth/login.
+ * Redirects authenticated users who have not selected an activity to onboarding.
  */
-export const authGuard: CanActivateFn = () => {
+export const onboardingCompleteGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.hasActiveSession()) {
+  if (!authService.needsOnboarding()) {
     return true;
   }
 
-  return router.createUrlTree(['/auth/login']);
+  return router.createUrlTree(['/onboarding/setup']);
 };

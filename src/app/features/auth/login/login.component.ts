@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ButtonModule } from 'primeng/button';
@@ -37,7 +37,6 @@ export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly authStore = inject(AuthStore);
-  private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly languageService = inject(LanguageService);
@@ -126,7 +125,6 @@ export class LoginComponent implements OnInit {
     this.otpServerError.set(null);
 
     this.authService.verifyLoginOtp({ userId, code }, this.rememberMe()).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
       error: (err: HttpErrorResponse) => this.handleOtpVerifyError(err),
     });
   }

@@ -84,13 +84,16 @@
       <section class="section">
         <div class="section-header">
           <span class="section-icon"><i class="pi pi-building"></i></span>
-          <h2>{{ 'ONBOARDING.BUSINESS_SETUP.BUSINESS_DATA_TITLE' | translate }}</h2>
+          <div>
+            <h2>{{ 'ONBOARDING.BUSINESS_SETUP.BUSINESS_DATA_TITLE' | translate }}</h2>
+            <p>{{ 'ONBOARDING.BUSINESS_SETUP.BUSINESS_DATA_SUBTITLE' | translate }}</p>
+          </div>
         </div>
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-          <div class="form-grid">
-            <div class="field span-2">
-              <label for="businessName">
+          <div class="form-row form-row-primary">
+            <div class="field field-grow">
+              <label class="field-label" for="businessName">
                 {{ 'ONBOARDING.BUSINESS_SETUP.BUSINESS_NAME' | translate }}
                 <span class="required">*</span>
               </label>
@@ -109,27 +112,55 @@
               }
             </div>
 
-            <div class="field">
-              <label>{{ 'ONBOARDING.BUSINESS_SETUP.LOGO' | translate }}</label>
-              <label class="logo-upload" for="logoInput">
+            <div class="field field-logo">
+              <span class="field-label">{{ 'ONBOARDING.BUSINESS_SETUP.LOGO' | translate }}</span>
+              <div
+                class="logo-upload logo-upload--large"
+                [class.has-preview]="!!logoPreview()"
+                [class.is-drag-over]="isLogoDragOver()"
+                (dragenter)="onLogoDragEnter($event)"
+                (dragover)="onLogoDragOver($event)"
+                (dragleave)="onLogoDragLeave($event)"
+                (drop)="onLogoDrop($event)"
+              >
                 @if (logoPreview()) {
                   <img [src]="logoPreview()" alt="" class="logo-preview" />
+                  <button
+                    type="button"
+                    class="logo-remove-btn"
+                    [attr.aria-label]="'ONBOARDING.BUSINESS_SETUP.LOGO_REMOVE' | translate"
+                    (click)="onRemoveLogo()"
+                  >
+                    <i class="pi pi-times"></i>
+                  </button>
                 } @else {
-                  <i class="pi pi-cloud-upload"></i>
-                  <span>{{ 'ONBOARDING.BUSINESS_SETUP.LOGO_HINT' | translate }}</span>
+                  <label class="logo-upload-trigger" for="logoInput">
+                    <span class="logo-upload-icon" aria-hidden="true">
+                      <i class="pi pi-cloud-upload"></i>
+                    </span>
+                    <span class="logo-upload-text">
+                      {{ 'ONBOARDING.BUSINESS_SETUP.LOGO_HINT' | translate }}
+                    </span>
+                  </label>
                 }
-                <input
-                  id="logoInput"
-                  type="file"
-                  accept="image/*"
-                  class="sr-only"
-                  (change)="onLogoSelected($event)"
-                />
-              </label>
+              </div>
+              <input
+                id="logoInput"
+                type="file"
+                accept="image/*"
+                class="sr-only"
+                (change)="onLogoSelected($event)"
+              />
             </div>
+          </div>
 
+          <div class="form-row-divider" aria-hidden="true">
+            <span>{{ 'ONBOARDING.BUSINESS_SETUP.LOCATION_TITLE' | translate }}</span>
+          </div>
+
+          <div class="form-row form-row-thirds">
             <div class="field">
-              <label for="country">
+              <label class="field-label" for="country">
                 {{ 'ONBOARDING.BUSINESS_SETUP.COUNTRY' | translate }}
                 <span class="required">*</span>
               </label>
@@ -144,7 +175,7 @@
             </div>
 
             <div class="field">
-              <label for="city">
+              <label class="field-label" for="city">
                 {{ 'ONBOARDING.BUSINESS_SETUP.CITY' | translate }}
                 <span class="required">*</span>
               </label>
@@ -159,7 +190,7 @@
             </div>
 
             <div class="field">
-              <label for="currency">
+              <label class="field-label" for="currency">
                 {{ 'ONBOARDING.BUSINESS_SETUP.CURRENCY' | translate }}
                 <span class="required">*</span>
               </label>

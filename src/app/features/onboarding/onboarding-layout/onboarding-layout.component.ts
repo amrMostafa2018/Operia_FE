@@ -1,7 +1,8 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
@@ -12,5 +13,8 @@ import { LanguageSwitcherComponent } from '../../../shared/components/language-s
   styleUrl: './onboarding-layout.component.scss',
 })
 export class OnboardingLayoutComponent {
-  currentStep = input(2);
+  private readonly authService = inject(AuthService);
+
+  /** Step 1 is complete once the user is authenticated (after login or register). */
+  readonly currentStep = computed(() => (this.authService.hasActiveSession() ? 2 : 1));
 }

@@ -70,6 +70,7 @@ export function userFromAccessToken(token: string, name?: string): User {
     'email',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
   );
+  const activityTypeId = claim(payload, 'activity_type', 'activityTypeId');
 
   return {
     id,
@@ -77,6 +78,7 @@ export function userFromAccessToken(token: string, name?: string): User {
     email,
     role: roleFromPayload(payload),
     permissions: claimValues(payload, PERMISSION_CLAIM_TYPE),
+    ...(activityTypeId ? { activityTypeId } : {}),
     isActive: true,
   };
 }
