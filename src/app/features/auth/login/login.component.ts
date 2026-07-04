@@ -8,13 +8,26 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
+import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
-import { extractOtpFieldError } from '../../../core/utils/api-error.util';
+import {
+  applyServerFieldErrors,
+  clearServerFieldError,
+  extractAuthFormFieldErrors,
+  extractOtpFieldError,
+  translateApiFieldErrors,
+} from '../../../core/utils/api-error.util';
+import {
+  PHONE_INPUT_CSS_CLASS,
+  PHONE_INPUT_DEFAULT_COUNTRY,
+  PHONE_INPUT_ONLY_COUNTRIES,
+} from '../../../shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
 import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
+import { getE164PhoneNumber, getPhoneFieldError } from '../../../shared/utils/phone-number.util';
 
 type LoginStep = 'form' | 'otp';
 
@@ -27,6 +40,7 @@ type LoginStep = 'form' | 'otp';
     ButtonModule,
     CheckboxModule,
     InputTextModule,
+    NgxIntlTelInputModule,
     TranslatePipe,
     OtpVerificationComponent,
   ],
@@ -40,6 +54,10 @@ export class LoginComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly languageService = inject(LanguageService);
+
+  readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
+  readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
 
   form!: FormGroup;
   isLoading = this.authStore.isLoading;
@@ -70,10 +88,36 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      phone: [null, Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false],
     });
+
+    this.setupServerErrorClearing();
+  }
+
+  private setupServerErrorClearing(): void {
+    for (const field of ['phone', 'password']) {
+      this.form.get(field)?.valueChanges.subscribe(() => {
+        clearServerFieldError(this.form, field);
+      });
+    }
+  }
+
+  private handleLoginError(err: HttpErrorResponse): void {
+    const fieldErrors = extractAuthFormFieldErrors(err);
+    const translated = translateApiFieldErrors(fieldErrors, key =>
+      this.translate.instant(key)
+    );
+    applyServerFieldErrors(this.form, translated);
+  }
+
+  getFieldError(field: string): string | null {
+    const ctrl = this.form.get(field);
+    if (!ctrl?.touched || !ctrl.errors?.['server']) {
+      return null;
+    }
+    return ctrl.errors['server'];
   }
 
   togglePassword(): void {
@@ -91,15 +135,23 @@ export class LoginComponent implements OnInit {
     this.otpServerError.set(null);
   }
 
+  getPhoneError(): string | null {
+    return getPhoneFieldError(this.form.get('phone'), {
+      required: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_REQUIRED'),
+      invalid: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_INVALID'),
+    });
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const { email, password, rememberMe } = this.form.value;
+    const { phone, password, rememberMe } = this.form.value;
+    const phoneNumber = getE164PhoneNumber(phone);
 
-    this.authService.initiateLogin({ email, password, rememberMe }).subscribe({
+    this.authService.initiateLogin({ phoneNumber, password, rememberMe }).subscribe({
       next: (res) => {
         this.rememberMe.set(!!rememberMe);
         this.userId.set(res.userId);
@@ -112,6 +164,7 @@ export class LoginComponent implements OnInit {
           life: 5000,
         });
       },
+      error: (err: HttpErrorResponse) => this.handleLoginError(err),
     });
   }
 

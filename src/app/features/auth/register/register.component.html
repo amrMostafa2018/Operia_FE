@@ -18,7 +18,7 @@
       <p class="form-subtitle">{{ 'AUTH.REGISTER_PAGE.SUBTITLE' | translate }}</p>
     }
 
-    @if (step() === 'form') {
+    <div class="auth-step-panel" [class.auth-step-panel--hidden]="step() !== 'form'">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
       <div class="field">
         <label for="name">{{ 'AUTH.REGISTER_PAGE.FULL_NAME' | translate }} <span class="required">*</span></label>
@@ -37,6 +37,35 @@
             @if (form.get('name')?.errors?.['required']) { {{ 'AUTH.REGISTER_PAGE.NAME_REQUIRED' | translate }} }
             @else if (form.get('name')?.errors?.['minlength']) { {{ 'AUTH.REGISTER_PAGE.NAME_MIN' | translate }} }
           </small>
+        }
+      </div>
+
+      <!-- Phone -->
+      <div class="field field--phone">
+        <label for="registerPhone">{{ 'AUTH.REGISTER_PAGE.PHONE' | translate }} <span class="required">*</span></label>
+        <div class="phone-row phone-row--intl" [class.error]="isInvalid('phone')" dir="ltr">
+          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+          <ngx-intl-tel-input
+            [cssClass]="phoneInputCssClass"
+            [onlyCountries]="onlyCountries"
+            [selectedCountryISO]="selectedCountryISO"
+            [enableAutoCountrySelect]="false"
+            [enablePlaceholder]="true"
+            [customPlaceholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
+            [searchCountryFlag]="false"
+            [selectFirstCountry]="false"
+            [separateDialCode]="true"
+            [phoneValidation]="true"
+            inputId="registerPhone"
+            formControlName="phone"
+          />
+        </div>
+        <small class="whatsapp-hint">
+          <i class="pi pi-whatsapp"></i>
+          {{ 'AUTH.REGISTER_PAGE.WHATSAPP_HINT' | translate }}
+        </small>
+        @if (isInvalid('phone') && getPhoneError()) {
+          <small class="error-msg">{{ getPhoneError() }}</small>
         }
       </div>
 
@@ -59,49 +88,6 @@
             @if (form.get('email')?.errors?.['server']) { {{ getFieldError('email') }} }
             @else if (form.get('email')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_REQUIRED' | translate }} }
             @else if (form.get('email')?.errors?.['email']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_INVALID' | translate }} }
-          </small>
-        }
-      </div>
-
-      <!-- Phone -->
-      <div class="field">
-        <label for="phone">{{ 'AUTH.REGISTER_PAGE.PHONE' | translate }} <span class="required">*</span></label>
-        <div class="phone-row" [class.error]="isInvalid('phone')">
-          <div class="country-select-wrap">
-            <select
-              id="countryCode"
-              formControlName="countryCode"
-              class="country-select"
-              [attr.aria-label]="'AUTH.REGISTER_PAGE.COUNTRY_CODE' | translate"
-            >
-              @for (country of countryCodes; track country.code) {
-                <option [value]="country.code">
-                  {{ country.flag }} {{ country.code }}
-                </option>
-              }
-            </select>
-            <i class="pi pi-chevron-down country-chevron" aria-hidden="true"></i>
-          </div>
-          <div class="phone-input-wrap">
-            <i class="pi pi-phone input-icon"></i>
-            <input
-              id="phone"
-              pInputText
-              formControlName="phone"
-              [placeholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
-              type="tel"
-              class="p-inputtext-custom"
-            />
-          </div>
-        </div>
-        <small class="whatsapp-hint">
-          <i class="pi pi-whatsapp"></i>
-          {{ 'AUTH.REGISTER_PAGE.WHATSAPP_HINT' | translate }}
-        </small>
-        @if (isInvalid('phone')) {
-          <small class="error-msg">
-            @if (form.get('phone')?.errors?.['server']) { {{ getFieldError('phone') }} }
-            @else { {{ 'AUTH.REGISTER_PAGE.PHONE_INVALID' | translate }} }
           </small>
         }
       </div>
@@ -195,7 +181,9 @@
       </p>
 
     </form>
-    } @else {
+    </div>
+
+    @if (step() === 'otp') {
       <app-otp-verification
         [labels]="otpLabels"
         [isLoading]="isLoading()"

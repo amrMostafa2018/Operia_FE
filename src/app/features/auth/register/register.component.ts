@@ -10,6 +10,7 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -27,14 +28,14 @@ import {
   extractOtpFieldError,
   translateApiFieldErrors,
 } from '../../../core/utils/api-error.util';
+import {
+  PHONE_INPUT_CSS_CLASS,
+  PHONE_INPUT_DEFAULT_COUNTRY,
+  PHONE_INPUT_ONLY_COUNTRIES,
+} from '../../../shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
 import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
-
-interface CountryCode {
-  name: string;
-  code: string;
-  flag: string;
-}
+import { getE164PhoneNumber, getPhoneFieldError } from '../../../shared/utils/phone-number.util';
 
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const parent = control.parent;
@@ -55,6 +56,7 @@ type RegisterStep = 'form' | 'otp';
     CheckboxModule,
     InputTextModule,
     PasswordModule,
+    NgxIntlTelInputModule,
     TranslatePipe,
     OtpVerificationComponent,
   ],
@@ -68,6 +70,10 @@ export class RegisterComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly languageService = inject(LanguageService);
+
+  readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
+  readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
 
   form!: FormGroup;
   isLoading = this.authStore.isLoading;
@@ -98,25 +104,11 @@ export class RegisterComponent implements OnInit {
     this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'
   );
 
-  countryCodes: CountryCode[] = [
-    { name: 'مصر', code: '+20', flag: '🇪🇬' },
-    { name: 'السعودية', code: '+966', flag: '🇸🇦' },
-    { name: 'الإمارات', code: '+971', flag: '🇦🇪' },
-    { name: 'الكويت', code: '+965', flag: '🇰🇼' },
-    { name: 'قطر', code: '+974', flag: '🇶🇦' },
-    { name: 'البحرين', code: '+973', flag: '🇧🇭' },
-    { name: 'عُمان', code: '+968', flag: '🇴🇲' },
-    { name: 'الأردن', code: '+962', flag: '🇯🇴' },
-    { name: 'لبنان', code: '+961', flag: '🇱🇧' },
-    { name: 'المغرب', code: '+212', flag: '🇲🇦' },
-  ];
-
   ngOnInit(): void {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      countryCode: ['+20', Validators.required],
-      phone: ['', [Validators.required, Validators.pattern(/^[0-9]{7,15}$/)]],
+      phone: [null, Validators.required],
       password: ['', [
         Validators.required,
         Validators.minLength(8),
@@ -186,14 +178,21 @@ export class RegisterComponent implements OnInit {
     return null;
   }
 
+  getPhoneError(): string | null {
+    return getPhoneFieldError(this.form.get('phone'), {
+      required: this.translate.instant('AUTH.REGISTER_PAGE.PHONE_REQUIRED'),
+      invalid: this.translate.instant('AUTH.REGISTER_PAGE.PHONE_INVALID'),
+    });
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const { name, email, phone, countryCode, password, confirmPassword } = this.form.value;
-    const phoneNumber = `${countryCode}${phone}`.replace(/\s/g, '');
+    const { name, email, phone, password, confirmPassword } = this.form.value;
+    const phoneNumber = getE164PhoneNumber(phone);
 
     this.authService.initiateRegistration({
       email,

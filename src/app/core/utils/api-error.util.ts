@@ -24,6 +24,12 @@ const API_MESSAGE_TO_CODE: Record<string, string> = {
   'Invalid OTP code.': 'OtpInvalid',
   'OTP has expired.': 'OtpExpired',
   'Invalid or expired OTP code.': 'OtpInvalid',
+  'Invalid phone number or password.': 'InvalidCredentials',
+};
+
+/** Maps global API fields to login/register form control names. */
+const AUTH_FORM_FIELD_ALIASES: Record<string, string> = {
+  detail: 'password',
 };
 
 function mapApiField(field: string): string {
@@ -106,6 +112,20 @@ export function translateApiFieldErrors(
       return [field, translated !== errorKey ? translated : codeOrMessage];
     })
   );
+}
+
+/** Resolves auth form 401/validation errors for inline display on form fields. */
+export function extractAuthFormFieldErrors(error: HttpErrorResponse): Record<string, string> {
+  const aliased: Record<string, string> = {};
+
+  for (const [field, value] of Object.entries(extractApiFieldErrors(error))) {
+    const target = AUTH_FORM_FIELD_ALIASES[field] ?? mapApiField(field);
+    if (!aliased[target]) {
+      aliased[target] = value;
+    }
+  }
+
+  return aliased;
 }
 
 /** Resolves OTP verify 401 errors for inline display on the code field. */

@@ -19,7 +19,7 @@ export interface AuthTokens {
 }
 
 export interface LoginRequest {
-  email: string;
+  phoneNumber: string;
   password: string;
   rememberMe?: boolean;
 }
@@ -57,6 +57,26 @@ export interface ResendRegisterOtpRequest {
 
 export interface ResendLoginOtpRequest {
   userId: string;
+}
+
+export interface ForgotPasswordRequest {
+  phoneNumber: string;
+}
+
+export interface VerifyForgotPasswordOtpRequest {
+  phoneNumber: string;
+  otpCode: string;
+}
+
+export interface VerifyForgotPasswordOtpResponse {
+  resetToken: string;
+}
+
+export interface ResetPasswordRequest {
+  phoneNumber: string;
+  resetToken: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 export interface ApiAuthResponse {

@@ -19,6 +19,12 @@ export const authRoutes: Routes = [
         title: 'إنشاء حساب - Operia',
       },
       {
+        path: 'forgot-password',
+        loadComponent: () =>
+          import('./forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+        title: 'Forgot Password - Operia',
+      },
+      {
         path: '',
         redirectTo: 'login',
         pathMatch: 'full',

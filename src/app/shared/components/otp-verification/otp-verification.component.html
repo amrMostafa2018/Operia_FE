@@ -7,25 +7,34 @@
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
     <div class="field">
-      <label [for]="inputId()">
+      <label [attr.for]="inputId() + '-0'">
         {{ labels().code | translate }} <span class="required">*</span>
       </label>
-      <div class="input-wrapper otp-input-wrapper" [class.error]="isInvalid('code') || serverError()">
-        <i class="pi pi-key input-icon"></i>
-        <input
-          [id]="inputId()"
-          pInputText
-          formControlName="code"
-          [placeholder]="labels().placeholder | translate"
-          inputmode="numeric"
-          maxlength="6"
-          autocomplete="one-time-code"
-          class="p-inputtext-custom otp-input"
-        />
+      <div
+        class="otp-digit-row"
+        [class.error]="isInvalid() || serverError()"
+        dir="ltr"
+        (paste)="onPaste($event)"
+      >
+        @for (index of digitIndices; track index) {
+          <input
+            #digitInput
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+            class="otp-digit-input"
+            [id]="inputId() + '-' + index"
+            [formControl]="digitControl(index)"
+            [attr.autocomplete]="index === 0 ? 'one-time-code' : 'off'"
+            [attr.aria-label]="(labels().code | translate) + ' ' + (index + 1)"
+            (input)="onDigitInput(index, $event)"
+            (keydown)="onDigitKeydown(index, $event)"
+          />
+        }
       </div>
       @if (serverError()) {
         <small class="error-msg">{{ serverError() }}</small>
-      } @else if (isInvalid('code')) {
+      } @else if (isInvalid()) {
         <small class="error-msg">{{ labels().invalid | translate }}</small>
       }
     </div>
