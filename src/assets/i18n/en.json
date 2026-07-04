@@ -197,9 +197,9 @@
     },
     "BUSINESS_SETUP": {
       "CHOOSE_TYPE_TITLE": "Choose your activity type",
-      "CHOOSE_TYPE_SUBTITLE": "System tools will be customized based on your business type",
+      "CHOOSE_TYPE_SUBTITLE": "Your activity type prepares the system with the tools and features suited to your business needs",
       "NOTE_TITLE": "Important note",
-      "NOTE_TEXT": "Your choice determines the dashboard layout and available features. You can add more later from settings",
+      "NOTE_TEXT": "Your activity type determines the system layout and features available in the dashboard.\nYou can add more features later from settings.",
       "BUSINESS_DATA_TITLE": "Your business details",
       "BUSINESS_DATA_SUBTITLE": "Enter your business name and location details",
       "BUSINESS_NAME": "Business name",
@@ -219,6 +219,7 @@
       "PREVIOUS": "Previous",
       "SUBMIT": "Create System",
       "FOOTER_NOTE": "You can change some settings later from the dashboard",
+      "COMING_SOON": "Coming Soon",
       "ACTIVITY_TYPES": {
         "LASER_CLINIC": {
           "TITLE": "Laser Clinics",

@@ -129,7 +129,16 @@ export class BusinessSetupComponent implements OnInit {
   }
 
   selectActivity(id: ActivityTypeId): void {
+    const activity = this.activityTypes.find(a => a.id === id);
+    if (activity?.comingSoon) {
+      return;
+    }
+
     this.selectedActivityId.set(id);
+  }
+
+  isActivityDisabled(activity: ActivityType): boolean {
+    return !!activity.comingSoon;
   }
 
   isActivitySelected(activity: ActivityType): boolean {

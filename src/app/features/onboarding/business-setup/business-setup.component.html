@@ -33,19 +33,27 @@
     <div class="setup-main">
       <!-- Activity Type Selection -->
       <section class="section">
-        <div class="section-header">
-          <span class="section-icon"><i class="pi pi-shop"></i></span>
-          <div>
-            <h2>{{ 'ONBOARDING.BUSINESS_SETUP.CHOOSE_TYPE_TITLE' | translate }}</h2>
-            <p>{{ 'ONBOARDING.BUSINESS_SETUP.CHOOSE_TYPE_SUBTITLE' | translate }}</p>
+        <div class="section-intro">
+          <div class="section-header section-header--intro">
+            <div class="section-header__title-row">
+              <span class="section-icon section-icon--hero"><i class="pi pi-shop"></i></span>
+              <h2>{{ 'ONBOARDING.BUSINESS_SETUP.CHOOSE_TYPE_TITLE' | translate }}</h2>
+            </div>
+            <p class="section-header__subtitle">
+              {{ 'ONBOARDING.BUSINESS_SETUP.CHOOSE_TYPE_SUBTITLE' | translate }}
+            </p>
           </div>
-        </div>
 
-        <div class="info-box">
-          <i class="pi pi-exclamation-triangle"></i>
-          <div>
-            <strong>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TITLE' | translate }}</strong>
-            <p>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TEXT' | translate }}</p>
+          <div class="info-box info-box--panel">
+            <div class="info-box__heading">
+              <span class="info-box__icon-wrap" aria-hidden="true">
+                <i class="pi pi-lightbulb"></i>
+              </span>
+              <strong>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TITLE' | translate }}</strong>
+            </div>
+            <div class="info-box__text">
+              <p>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TEXT' | translate }}</p>
+            </div>
           </div>
         </div>
 
@@ -53,13 +61,20 @@
           @for (activity of activityTypes; track activity.id) {
             <div
               class="activity-card"
-              role="button"
-              tabindex="0"
               [class.selected]="selectedActivityId() === activity.id"
+              [class.disabled]="isActivityDisabled(activity)"
+              [attr.role]="isActivityDisabled(activity) ? null : 'button'"
+              [attr.tabindex]="isActivityDisabled(activity) ? -1 : 0"
+              [attr.aria-disabled]="isActivityDisabled(activity) || null"
               (click)="selectActivity(activity.id)"
               (keydown.enter)="selectActivity(activity.id)"
               (keydown.space)="selectActivity(activity.id); $event.preventDefault()"
             >
+              @if (activity.comingSoon) {
+                <span class="coming-soon-badge">
+                  {{ 'ONBOARDING.BUSINESS_SETUP.COMING_SOON' | translate }}
+                </span>
+              }
               <span class="card-radio" [class.checked]="selectedActivityId() === activity.id">
                 @if (selectedActivityId() === activity.id) {
                   <i class="pi pi-check"></i>
