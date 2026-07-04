@@ -24,6 +24,7 @@ import {
   VerifyRegisterOtpRequest,
   ResendLoginOtpRequest,
   ResendRegisterOtpRequest,
+  VerifyForgotPasswordOtpResponse,
 } from '../models/user.model';
 import { AuthStore } from '../store/auth.store';
 import {
@@ -144,6 +145,77 @@ export class AuthService {
     return this.http.post<void>(
       buildAuthApiUrl(this.api, AuthApiEndpoint.ResendRegisterOtp),
       request
+    );
+  }
+
+  forgotPassword(phoneNumber: string): Observable<void> {
+    this.authStore.setLoading(true);
+    this.authStore.setError(null);
+
+    return this.http
+      .post<void>(buildAuthApiUrl(this.api, AuthApiEndpoint.ForgotPassword), { phoneNumber })
+      .pipe(
+        tap(() => this.authStore.setLoading(false)),
+        catchError((err: HttpErrorResponse) => {
+          this.authStore.setLoading(false);
+          this.authStore.setError(extractApiError(err));
+          return throwError(() => err);
+        })
+      );
+  }
+
+  verifyForgotPasswordOtp(
+    phoneNumber: string,
+    otpCode: string
+  ): Observable<VerifyForgotPasswordOtpResponse> {
+    this.authStore.setLoading(true);
+    this.authStore.setError(null);
+
+    return this.http
+      .post<VerifyForgotPasswordOtpResponse>(
+        buildAuthApiUrl(this.api, AuthApiEndpoint.VerifyForgotPasswordOtp),
+        { phoneNumber, otpCode }
+      )
+      .pipe(
+        tap(() => this.authStore.setLoading(false)),
+        catchError((err: HttpErrorResponse) => {
+          this.authStore.setLoading(false);
+          this.authStore.setError(extractApiError(err));
+          return throwError(() => err);
+        })
+      );
+  }
+
+  resetPassword(
+    phoneNumber: string,
+    resetToken: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Observable<void> {
+    this.authStore.setLoading(true);
+    this.authStore.setError(null);
+
+    return this.http
+      .post<void>(buildAuthApiUrl(this.api, AuthApiEndpoint.ResetPassword), {
+        phoneNumber,
+        resetToken,
+        newPassword,
+        confirmPassword,
+      })
+      .pipe(
+        tap(() => this.authStore.setLoading(false)),
+        catchError((err: HttpErrorResponse) => {
+          this.authStore.setLoading(false);
+          this.authStore.setError(extractApiError(err));
+          return throwError(() => err);
+        })
+      );
+  }
+
+  resendForgotPasswordOtp(phoneNumber: string): Observable<void> {
+    return this.http.post<void>(
+      buildAuthApiUrl(this.api, AuthApiEndpoint.ResendForgotPasswordOtp),
+      { phoneNumber }
     );
   }
 

@@ -50,7 +50,7 @@
       <div class="field">
         <div class="field-header">
           <label for="password">{{ 'AUTH.PASSWORD' | translate }} <span class="required">*</span></label>
-          <a href="#" class="forgot-link">{{ 'AUTH.FORGOT_PASSWORD' | translate }}</a>
+          <a routerLink="/auth/forgot-password" class="forgot-link">{{ 'AUTH.FORGOT_PASSWORD' | translate }}</a>
         </div>
         <div class="input-wrapper" [class.error]="isInvalid('password')">
           <i class="pi pi-lock input-icon"></i>
