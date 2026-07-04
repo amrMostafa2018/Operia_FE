@@ -23,7 +23,8 @@
     "OtpPhoneRequired": "User phone number is required for OTP delivery.",
     "OtpInvalid": "Invalid OTP code.",
     "OtpExpired": "OTP has expired.",
-    "IdentityError": "An error occurred while creating your account."
+    "IdentityError": "An error occurred while creating your account.",
+    "InvalidCredentials": "Invalid phone number or password."
   },
   "NAV": {
     "DASHBOARD":     "Dashboard",

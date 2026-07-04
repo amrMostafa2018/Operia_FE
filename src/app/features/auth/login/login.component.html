@@ -68,7 +68,8 @@
         </div>
         @if (isInvalid('password')) {
           <small class="error-msg">
-            @if (form.get('password')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.PASSWORD_REQUIRED' | translate }} }
+            @if (form.get('password')?.errors?.['server']) { {{ getFieldError('password') }} }
+            @else if (form.get('password')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.PASSWORD_REQUIRED' | translate }} }
             @else if (form.get('password')?.errors?.['minlength']) { {{ 'AUTH.LOGIN_PAGE.PASSWORD_MIN' | translate }} }
           </small>
         }

@@ -11,7 +11,6 @@
   border: 1.5px solid var(--surface-border);
   border-radius: $border-radius;
   background: #fff;
-  min-height: 44px;
   transition: border-color 0.2s, box-shadow 0.2s;
 
   &:focus-within {
@@ -33,7 +32,6 @@
   position: relative;
   padding: 0;
   overflow: visible;
-  min-height: 44px;
 
   .phone-row-icon {
     position: absolute;
@@ -61,7 +59,6 @@
       flex-direction: row !important;
       direction: ltr !important;
       align-items: stretch;
-      min-height: 44px;
     }
 
     .iti__flag-container {
@@ -92,7 +89,7 @@
       justify-content: flex-start;
       gap: 0.35rem;
       height: 100%;
-      min-height: 42px;
+      padding-block: var(--auth-field-padding-block, 0.65rem);
       padding-inline: 0.5rem;
       background: var(--surface-hover) !important;
       border-radius: $border-radius 0 0 $border-radius;
@@ -165,13 +162,12 @@
       box-shadow: none !important;
       background: transparent !important;
       margin: 0 !important;
-      padding-block: 0.65rem !important;
+      padding-block: var(--auth-field-padding-block, 0.65rem) !important;
       padding-left: 2.5rem !important;
       padding-right: 0.85rem !important;
-      font-size: 0.85rem;
+      font-size: var(--auth-field-font-size, 0.85rem);
       color: var(--text-primary);
-      min-height: 42px;
-      line-height: 1.2;
+      line-height: var(--auth-field-line-height, 1.5);
 
       &::placeholder {
         color: var(--text-disabled);
@@ -315,6 +311,12 @@ html[dir='rtl'] .phone-row--intl {
       text-align: left;
       direction: ltr;
       unicode-bidi: isolate;
+    }
+
+    .phone-row-icon {
+      left: calc(var(--phone-flag-width) + 0.85rem);
+      right: auto;
+      transform: translateY(-50%);
     }
 
     [id$='__item-eg'] .iti__country-name,

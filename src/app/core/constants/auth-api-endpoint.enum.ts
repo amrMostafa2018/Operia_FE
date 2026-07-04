@@ -38,6 +38,14 @@ export const OTP_AUTH_API_ENDPOINTS: readonly AuthApiEndpoint[] = [
   AuthApiEndpoint.ResendForgotPasswordOtp,
 ];
 
+/** Auth form endpoints where 401 should stay on the page for inline errors. */
+export const AUTH_FORM_API_ENDPOINTS: readonly AuthApiEndpoint[] = [
+  AuthApiEndpoint.Login,
+  AuthApiEndpoint.Register,
+  AuthApiEndpoint.ForgotPassword,
+  AuthApiEndpoint.ResetPassword,
+];
+
 export function buildAuthApiUrl(baseUrl: string, endpoint: AuthApiEndpoint): string {
   return `${baseUrl}${endpoint}`;
 }

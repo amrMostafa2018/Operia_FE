@@ -6,6 +6,7 @@ import { MessageService } from 'primeng/api';
 import { AuthService } from '../services/auth.service';
 import {
   AuthApiEndpoint,
+  AUTH_FORM_API_ENDPOINTS,
   OTP_AUTH_API_ENDPOINTS,
   urlIncludesAuthEndpoint,
 } from '../constants/auth-api-endpoint.enum';
@@ -69,12 +70,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         ((error.status === 400 || error.status === 422 || error.status === 401) &&
           hasApiFieldErrors(error));
 
+      const suppressLoginRedirect =
+        urlIncludesAuthEndpoint(req.url, OTP_AUTH_API_ENDPOINTS) ||
+        urlIncludesAuthEndpoint(req.url, AUTH_FORM_API_ENDPOINTS);
+
       // 401 navigation is handled here only if the JWT interceptor could not
       // recover (i.e. the refresh itself failed and rethrew).
-      if (
-        error.status === 401 &&
-        !urlIncludesAuthEndpoint(req.url, OTP_AUTH_API_ENDPOINTS)
-      ) {
+      if (error.status === 401 && !suppressLoginRedirect) {
         router.navigate(['/auth/login']);
       }
 

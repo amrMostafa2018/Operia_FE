@@ -13,7 +13,13 @@ import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
-import { extractOtpFieldError } from '../../../core/utils/api-error.util';
+import {
+  applyServerFieldErrors,
+  clearServerFieldError,
+  extractAuthFormFieldErrors,
+  extractOtpFieldError,
+  translateApiFieldErrors,
+} from '../../../core/utils/api-error.util';
 import {
   PHONE_INPUT_CSS_CLASS,
   PHONE_INPUT_DEFAULT_COUNTRY,
@@ -87,6 +93,32 @@ export class LoginComponent implements OnInit {
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false],
     });
+
+    this.setupServerErrorClearing();
+  }
+
+  private setupServerErrorClearing(): void {
+    for (const field of ['phone', 'password']) {
+      this.form.get(field)?.valueChanges.subscribe(() => {
+        clearServerFieldError(this.form, field);
+      });
+    }
+  }
+
+  private handleLoginError(err: HttpErrorResponse): void {
+    const fieldErrors = extractAuthFormFieldErrors(err);
+    const translated = translateApiFieldErrors(fieldErrors, key =>
+      this.translate.instant(key)
+    );
+    applyServerFieldErrors(this.form, translated);
+  }
+
+  getFieldError(field: string): string | null {
+    const ctrl = this.form.get(field);
+    if (!ctrl?.touched || !ctrl.errors?.['server']) {
+      return null;
+    }
+    return ctrl.errors['server'];
   }
 
   togglePassword(): void {
@@ -133,6 +165,7 @@ export class LoginComponent implements OnInit {
           life: 5000,
         });
       },
+      error: (err: HttpErrorResponse) => this.handleLoginError(err),
     });
   }
 
