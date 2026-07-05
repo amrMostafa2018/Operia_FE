@@ -1,10 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import {
-  AbstractControl,
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
-  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,22 +17,16 @@ import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { AuthStore } from '../../../core/store/auth.store';
-import { extractOtpFieldError } from '../../../core/utils/api-error.util';
+import { passwordMatchValidator } from '../../../core/utils/validators.util';
 import {
   PHONE_INPUT_CSS_CLASS,
   PHONE_INPUT_DEFAULT_COUNTRY,
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '../../../shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
-import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
+import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '../../../shared/utils/otp.util';
+import { getSubmitArrowIcon } from '../../../shared/utils/rtl.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '../../../shared/utils/phone-number.util';
-
-function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const parent = control.parent;
-  if (!parent) return null;
-  const password = parent.get('password')?.value;
-  return control.value && control.value !== password ? { mismatch: true } : null;
-}
 
 type ForgotPasswordStep = 'phone' | 'otp' | 'reset';
 
@@ -79,20 +71,10 @@ export class ForgotPasswordComponent implements OnInit {
   showPassword = signal(false);
   showConfirm = signal(false);
 
-  readonly otpLabels: OtpLabels = {
-    title: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_TITLE',
-    subtitle: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_SUBTITLE',
-    code: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_CODE',
-    placeholder: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_PLACEHOLDER',
-    invalid: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_INVALID',
-    verify: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_VERIFY',
-    back: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_BACK',
-    resend: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_RESEND',
-    resendIn: 'AUTH.FORGOT_PASSWORD_PAGE.OTP_RESEND_IN',
-  };
+  readonly otpLabels = buildOtpLabels('AUTH.FORGOT_PASSWORD_PAGE');
 
   readonly submitIcon = computed(() =>
-    this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'
+    getSubmitArrowIcon(this.languageService.currentLang())
   );
 
   ngOnInit(): void {
@@ -240,7 +222,7 @@ export class ForgotPasswordComponent implements OnInit {
 
   private handleOtpVerifyError(err: HttpErrorResponse): void {
     this.otpServerError.set(
-      extractOtpFieldError(err, key => this.translate.instant(key))
+      resolveOtpVerifyError(err, key => this.translate.instant(key))
     );
   }
 }

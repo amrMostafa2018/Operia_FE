@@ -17,7 +17,6 @@ import {
   applyServerFieldErrors,
   clearServerFieldError,
   extractAuthFormFieldErrors,
-  extractOtpFieldError,
   translateApiFieldErrors,
 } from '../../../core/utils/api-error.util';
 import {
@@ -26,7 +25,8 @@ import {
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '../../../shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
-import { OtpLabels } from '../../../shared/components/otp-verification/otp-labels.model';
+import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '../../../shared/utils/otp.util';
+import { getSubmitArrowIcon } from '../../../shared/utils/rtl.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '../../../shared/utils/phone-number.util';
 
 type LoginStep = 'form' | 'otp';
@@ -70,20 +70,10 @@ export class LoginComponent implements OnInit {
 
   showPassword = signal(false);
 
-  readonly otpLabels: OtpLabels = {
-    title: 'AUTH.LOGIN_PAGE.OTP_TITLE',
-    subtitle: 'AUTH.LOGIN_PAGE.OTP_SUBTITLE',
-    code: 'AUTH.LOGIN_PAGE.OTP_CODE',
-    placeholder: 'AUTH.LOGIN_PAGE.OTP_PLACEHOLDER',
-    invalid: 'AUTH.LOGIN_PAGE.OTP_INVALID',
-    verify: 'AUTH.LOGIN_PAGE.OTP_VERIFY',
-    back: 'AUTH.LOGIN_PAGE.OTP_BACK',
-    resend: 'AUTH.LOGIN_PAGE.OTP_RESEND',
-    resendIn: 'AUTH.LOGIN_PAGE.OTP_RESEND_IN',
-  };
+  readonly otpLabels = buildOtpLabels('AUTH.LOGIN_PAGE');
 
   readonly submitIcon = computed(() =>
-    this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'
+    getSubmitArrowIcon(this.languageService.currentLang())
   );
 
   ngOnInit(): void {
@@ -184,7 +174,7 @@ export class LoginComponent implements OnInit {
 
   private handleOtpVerifyError(err: HttpErrorResponse): void {
     this.otpServerError.set(
-      extractOtpFieldError(err, key => this.translate.instant(key))
+      resolveOtpVerifyError(err, key => this.translate.instant(key))
     );
   }
 

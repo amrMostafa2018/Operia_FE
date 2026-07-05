@@ -1,5 +1,6 @@
 @use '../../../../styles/variables' as *;
 @use '../../../shared/styles/phone-intl-input';
+@use '../../../shared/styles/auth-form';
 
 .login-page {
   --auth-field-padding-block: 0.7rem;
@@ -15,188 +16,8 @@
   position: relative;
 }
 
-// ─── Top link ─────────────────────────────────────────────────────────────────
-.page-top-link {
-  position: absolute;
-  top: 1.25rem;
-  inset-inline-start: 1.5rem;
-  z-index: 10;
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-
-  .link-btn {
-    color: var(--color-primary);
-    font-weight: 600;
-    text-decoration: none;
-    transition: opacity 0.15s;
-
-    &:hover { opacity: 0.75; }
-  }
-}
-
-// ─── Form card ────────────────────────────────────────────────────────────────
 .form-card {
-  width: 100%;
   max-width: 440px;
-  overflow: visible;
-}
-
-.auth-step-panel--hidden {
-  display: none;
-}
-
-// Title
-.form-title {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  margin-bottom: 0.35rem;
-
-  h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-    font-family: $font-ar;
-  }
-
-  .title-icon {
-    width: 40px;
-    height: 40px;
-    background: var(--color-primary-light);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    i {
-      font-size: 1rem;
-      color: var(--color-primary);
-    }
-  }
-}
-
-.form-subtitle {
-  font-size: 0.83rem;
-  color: var(--text-secondary);
-  margin: 0 0 1.75rem;
-  line-height: 1.6;
-}
-
-// ─── Fields ───────────────────────────────────────────────────────────────────
-.field {
-  margin-bottom: 1.1rem;
-  overflow: visible;
-
-  .field-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.4rem;
-
-    .forgot-link {
-      font-size: 0.75rem;
-      color: var(--color-primary);
-      text-decoration: none;
-      font-weight: 500;
-
-      &:hover { text-decoration: underline; }
-    }
-  }
-
-  label {
-    display: block;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.4rem;
-    font-family: $font-ar;
-  }
-
-  .required { color: var(--color-danger); margin-inline-end: 2px; }
-}
-
-// Input wrapper
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  border: 1.5px solid var(--surface-border);
-  border-radius: $border-radius;
-  background: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-
-  &:focus-within {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
-  }
-
-  &.error {
-    border-color: var(--color-danger);
-
-    &:focus-within {
-      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
-    }
-  }
-
-  .input-icon {
-    position: absolute;
-    inset-inline-start: 0.85rem;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    pointer-events: none;
-    z-index: 1;
-  }
-}
-
-.p-inputtext-custom {
-  flex: 1;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  padding-block: var(--auth-field-padding-block, 0.7rem);
-  padding-inline-start: 2.5rem;
-  padding-inline-end: 0.85rem;
-  font-size: var(--auth-field-font-size, 0.85rem);
-  line-height: var(--auth-field-line-height, 1.5);
-  color: var(--text-primary);
-  width: 100%;
-
-  &::placeholder {
-    color: var(--text-disabled);
-  }
-
-  &.has-toggle {
-    padding-inline-end: 2.75rem;
-  }
-}
-
-.toggle-btn {
-  position: absolute;
-  inset-inline-end: 0.75rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  transition: color 0.15s;
-
-  &:hover { color: var(--color-primary); }
-
-  i { font-size: 0.85rem; }
-}
-
-.error-msg {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--color-danger);
-  margin-top: 0.3rem;
 }
 
 // ─── Remember Me ──────────────────────────────────────────────────────────────
@@ -212,35 +33,6 @@
     cursor: pointer;
     font-family: $font-ar;
     user-select: none;
-  }
-}
-
-// ─── Submit ───────────────────────────────────────────────────────────────────
-::ng-deep .submit-btn {
-  width: 100% !important;
-  margin-top: 1.25rem;
-  padding: 0.75rem 1rem !important;
-  font-size: 0.95rem !important;
-  font-weight: 600 !important;
-  border-radius: $border-radius !important;
-  background: var(--color-primary) !important;
-  border-color: var(--color-primary) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.5rem !important;
-
-  .p-button-icon {
-    margin: 0 !important;
-  }
-
-  .p-button-label {
-    flex: 0 1 auto;
-  }
-
-  &:hover:not(:disabled) {
-    background: var(--color-primary-dark) !important;
-    border-color: var(--color-primary-dark) !important;
   }
 }
 
@@ -285,34 +77,10 @@
   }
 }
 
-// ─── Footer note ──────────────────────────────────────────────────────────────
-.form-footer-note {
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  margin-top: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-
-  i { font-size: 0.7rem; }
-}
-
-// ─── Responsive ───────────────────────────────────────────────────────────────
+// ─── Responsive (page shell) ────────────────────────────────────────────────
 @media (max-width: $bp-md) {
   .login-page {
     padding: 4rem 1rem 2rem;
     justify-content: flex-start;
   }
-
-  .page-top-link {
-    top: 1rem;
-    inset-inline-start: 1rem;
-  }
-}
-
-@media (max-width: $bp-sm) {
-  .form-title h2 { font-size: 1.25rem; }
-  .form-card { max-width: 100%; }
 }

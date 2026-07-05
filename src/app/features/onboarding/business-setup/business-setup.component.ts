@@ -9,6 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { getSubmitArrowIcon } from '../../../shared/utils/rtl.util';
 import { ACTIVITY_TYPES, ActivityType, ActivityTypeId } from '../models/activity-type.model';
 
 interface SelectOption<T = string> {
@@ -56,7 +57,7 @@ export class BusinessSetupComponent implements OnInit {
   );
 
   readonly submitIcon = computed(() =>
-    this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'
+    getSubmitArrowIcon(this.languageService.currentLang())
   );
 
   readonly prevIconPos = computed<'left' | 'right'>(() =>
