@@ -211,7 +211,8 @@
   "ONBOARDING": {
     "STEPS": {
       "CREATE_ACCOUNT": "إنشاء الحساب",
-      "SETUP_BUSINESS": "إعداد نشاطك"
+      "SETUP_BUSINESS": "اختيار نوع النشاط",
+      "SUBSCRIPTION": "الاشتراك والدفع"
     },
     "BUSINESS_SETUP": {
       "CHOOSE_TYPE_TITLE": "اختر نوع نشاطك",
@@ -236,6 +237,7 @@
       "SUMMARY_FEATURES_TITLE": "مميزات النظام الذي ستحصل عليه",
       "SUMMARY_NOTE": "يمكنك إضافة مميزات أخرى لاحقاً من الإعدادات",
       "PREVIOUS": "السابق",
+      "NEXT": "التالي",
       "SUBMIT": "إنشاء النظام",
       "FOOTER_NOTE": "يمكنك تغيير بعض الإعدادات لاحقاً من لوحة التحكم",
       "COMING_SOON": "قريباً",
@@ -314,6 +316,85 @@
           }
         }
       }
+    },
+    "PLAN_SELECTION": {
+      "TITLE": "اختر باقة الاشتراك وطريقة الدفع",
+      "SUBTITLE": "اختر الباقة المناسبة لنشاطك التجاري",
+      "SUMMARY_TITLE": "ملخص الطلب",
+      "BUSINESS_TYPE": "نوع النشاط",
+      "SELECTED_PLAN": "الباقة المختارة",
+      "BILLING_PERIOD": "مدة الاشتراك",
+      "PRICE": "السعر",
+      "VAT": "ضريبة القيمة المضافة (14%)",
+      "TOTAL_MONTHLY": "الإجمالي الشهري",
+      "TOTAL_YEARLY": "الإجمالي السنوي",
+      "MONTHLY": "شهري",
+      "YEARLY": "سنوي",
+      "PER_MONTH": "شهر",
+      "PER_YEAR": "سنة",
+      "SAVE_BADGE": "وفر حتى 20%",
+      "MOST_SELECTED": "الأكثر اختياراً",
+      "TRIAL_DAYS": "تجربة مجانية {{days}} يوم",
+      "START_TRIAL": "ابدأ تجربتك المجانية",
+      "SELECT_PLAN": "اختر الباقة",
+      "CHOOSE_MONTHLY": "اختر الباقة الشهرية",
+      "CHOOSE_YEARLY": "اختر الباقة السنوية",
+      "COMPLETE_PAYMENT": "إتمام الدفع وتفعيل النظام",
+      "FOOTER_NOTE": "يمكنك العودة وتغيير باقتك في أي وقت",
+      "CANCEL_NOTE": "يمكنك إلغاء الاشتراك في أي وقت بدون رسوم خفية",
+      "PROMO_TITLE": "لماذا تختار Operia؟",
+      "PROMO_BENEFIT_1": "إدارة متكاملة لنشاطك التجاري",
+      "PROMO_BENEFIT_2": "سهولة في الاستخدام",
+      "PROMO_BENEFIT_3": "أمان وحماية للبيانات",
+      "PROMO_BENEFIT_4": "دعم فني متخصص",
+      "SECURE_BADGE": "100% آمن",
+      "SECURE_NOTE": "بياناتك مشفرة ومحمية بأعلى معايير الأمان",
+      "PAYMENT_METHODS_TITLE": "طرق الدفع",
+      "PAYMENT_METHODS": {
+        "CARD": "بطاقة ائتمان / مدى",
+        "BANK_TRANSFER": "تحويل بنكي",
+        "INSTAPAY": "Instapay",
+        "COD": "الدفع عند الاستلام (لاحقاً)"
+      },
+      "PAYMENT_SECURE_TITLE": "عملية دفع آمنة 100%",
+      "PAYMENT_SECURE_NOTE": "جميع المعاملات مشفرة ومحمية",
+      "INSTAPAY_NOTE": "حوّل قيمة الباقة ثم ارفع صورة إثبات الدفع.",
+      "UPLOAD_SCREENSHOT": "رفع صورة إثبات الدفع",
+      "SCREENSHOT_REQUIRED": "صورة إثبات الدفع مطلوبة",
+      "PLANS": {
+        "FREE_TRIAL": {
+          "DESCRIPTION": "جرّب جميع المميزات مجاناً"
+        },
+        "STARTER": {
+          "DESCRIPTION": "الباقة الأساسية للعيادات الصغيرة"
+        },
+        "GROWTH": {
+          "DESCRIPTION": "باقة النمو للأعمال المتوسطة"
+        },
+        "PRO": {
+          "DESCRIPTION": "الباقة الاحترافية للمؤسسات الكبيرة"
+        }
+      },
+      "FEATURES": {
+        "all_features": "جميع المميزات",
+        "max_3_employees": "حتى 3 موظفين",
+        "max_100_bookings": "حتى 100 حجز",
+        "1_branch": "فرع واحد",
+        "max_5_employees": "حتى 5 موظفين",
+        "unlimited_bookings": "حجوزات غير محدودة",
+        "max_3_branches": "حتى 3 فروع",
+        "max_20_employees": "حتى 20 موظف",
+        "advanced_reports": "تقارير متقدمة",
+        "unlimited_branches": "فروع غير محدودة",
+        "unlimited_employees": "موظفين غير محدودين",
+        "api_whatsapp": "تكامل API وواتساب",
+        "support_24_7": "دعم 24/7"
+      }
+    },
+    "PENDING": {
+      "TITLE": "طلبك قيد المراجعة",
+      "MESSAGE": "استلمنا إثبات الدفع الخاص بك. سيقوم فريقنا بمراجعته وإضافة الرصيد وتفعيل الباقة قريباً.",
+      "CHECK_STATUS": "تحقق من الحالة"
     }
   },
   "COMMON": {

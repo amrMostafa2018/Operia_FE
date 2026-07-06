@@ -1,0 +1,22 @@
+.pending-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.pending-card {
+  max-width: 32rem;
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.pending-icon {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}

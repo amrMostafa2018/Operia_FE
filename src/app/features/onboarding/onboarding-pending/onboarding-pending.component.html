@@ -1,0 +1,13 @@
+<div class="pending-page" [class.is-arabic]="isArabic()">
+  <div class="pending-card">
+    <i class="pi pi-clock pending-icon"></i>
+    <h2>{{ 'ONBOARDING.PENDING.TITLE' | translate }}</h2>
+    <p>{{ 'ONBOARDING.PENDING.MESSAGE' | translate }}</p>
+    <p-button
+      type="button"
+      [label]="'ONBOARDING.PENDING.CHECK_STATUS' | translate"
+      styleClass="submit-btn"
+      (onClick)="checkStatus()"
+    />
+  </div>
+</div>

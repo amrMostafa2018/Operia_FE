@@ -7,6 +7,8 @@ export interface User {
   role: UserRole;
   permissions: string[];
   branchId?: string;
+  tenantId?: string;
+  businessId?: string;
   avatarUrl?: string;
   activityTypeId?: string;
   isActive: boolean;

@@ -17,9 +17,16 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 
 import { AuthService } from '@core/services/auth.service';
+import { OnboardingService } from '@core/services/onboarding.service';
+import { OnboardingStateService } from '@core/services/onboarding-state.service';
 import { LanguageService } from '@core/services/language.service';
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 import { ACTIVITY_TYPES, ActivityType, ActivityTypeId } from '@app/features/onboarding/models/activity-type.model';
+import {
+  ACTIVITY_TO_BUSINESS_TYPE,
+} from '@app/features/onboarding/models/onboarding.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { extractApiError } from '@core/utils/api-error.util';
 
 interface SelectOption<T = string> {
   label: string;
@@ -58,12 +65,15 @@ export class BusinessSetupComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly onboardingService = inject(OnboardingService);
+  private readonly onboardingState = inject(OnboardingStateService);
   private readonly languageService = inject(LanguageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
   form!: FormGroup;
   isSubmitting = signal(false);
+  submitError = signal<string | null>(null);
   selectedActivityId = signal<ActivityTypeId>('laser_clinic');
   logoPreview = signal<string | null>(null);
   isLogoDragOver = signal(false);
@@ -234,9 +244,40 @@ export class BusinessSetupComponent implements OnInit {
     }
 
     this.isSubmitting.set(true);
-    // TODO: integrate with backend API when available
-    this.authService.markOnboardingComplete(this.selectedActivityId());
-    this.router.navigate(['/dashboard']);
+    this.submitError.set(null);
+
+    const formValue = this.form.getRawValue();
+    const logoUrl = this.logoPreview();
+
+    this.onboardingService.setupBusiness({
+      businessName: formValue.businessName,
+      businessType: ACTIVITY_TO_BUSINESS_TYPE[this.selectedActivityId()],
+      countryCode: formValue.country,
+      city: formValue.city,
+      currencyCode: formValue.currency,
+      logoUrl,
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: result => {
+        this.onboardingState.setBusinessSetup({
+          activityTypeId: this.selectedActivityId(),
+          businessName: formValue.businessName,
+          country: formValue.country,
+          city: formValue.city,
+          currency: formValue.currency,
+          logoUrl,
+          tenantId: result.tenantId,
+          businessId: result.businessId,
+        });
+        this.isSubmitting.set(false);
+        void this.router.navigate(['/onboarding/plan']);
+      },
+      error: (err: unknown) => {
+        this.isSubmitting.set(false);
+        this.submitError.set(extractApiError(err as HttpErrorResponse));
+      },
+    });
   }
 
   private setLogoFile(file: File): void {

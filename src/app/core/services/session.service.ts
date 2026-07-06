@@ -6,10 +6,14 @@ import { User } from '@core/models/user.model';
 import { AuthStore } from '@core/store/auth.store';
 import { userFromAccessToken } from '@core/utils/jwt.util';
 import { AuthHttpService } from './auth-http.service';
+import { OnboardingService } from './onboarding.service';
+import {
+  onboardingRouteForStep,
+  OnboardingStep,
+} from '@app/features/onboarding/models/onboarding.model';
 
 const RT_KEY = 'operia_rt';
 const USER_KEY = 'operia_user';
-const ONBOARDING_KEY_PREFIX = 'operia_onboarding_';
 const ONBOARDING_SOURCE_KEY = 'operia_onboarding_source';
 export const ONBOARDING_SETUP_URL = '/onboarding/setup';
 export const DASHBOARD_URL = '/dashboard';
@@ -20,6 +24,7 @@ export type OnboardingEntrySource = 'login' | 'register';
 export class SessionService {
   private readonly authStore = inject(AuthStore);
   private readonly authHttp = inject(AuthHttpService);
+  private readonly onboardingService = inject(OnboardingService);
   private readonly router = inject(Router);
 
   restoreSession(): Observable<boolean> {
@@ -102,39 +107,30 @@ export class SessionService {
   }
 
   needsOnboarding(): boolean {
-    const user = this.authStore.user() ?? this.getStoredUser();
-    if (!user) {
-      return true;
-    }
-
-    return !this.resolveActivityTypeId(user);
+    return false;
   }
 
   getPostAuthRedirectUrl(): string {
-    return this.needsOnboarding() ? ONBOARDING_SETUP_URL : DASHBOARD_URL;
+    return ONBOARDING_SETUP_URL;
   }
 
   navigateAfterAuth(entrySource: OnboardingEntrySource): void {
-    const url = this.getPostAuthRedirectUrl();
-    if (url === ONBOARDING_SETUP_URL) {
+    if (entrySource === 'register' || entrySource === 'login') {
       sessionStorage.setItem(ONBOARDING_SOURCE_KEY, entrySource);
-    } else {
-      this.clearOnboardingEntrySource();
     }
 
-    void this.router.navigateByUrl(url, { replaceUrl: true });
+    this.onboardingService.getStatus().pipe(
+      map(status => onboardingRouteForStep(status.step)),
+      catchError(() => of(ONBOARDING_SETUP_URL))
+    ).subscribe(url => {
+      if (url === DASHBOARD_URL) {
+        this.clearOnboardingEntrySource();
+      }
+      void this.router.navigateByUrl(url, { replaceUrl: true });
+    });
   }
 
-  markOnboardingComplete(activityTypeId: string): void {
-    const current = this.authStore.user() ?? this.getStoredUser();
-    if (!current) {
-      return;
-    }
-
-    const updated: User = { ...current, activityTypeId };
-    this.authStore.setUser(updated);
-    this.updateStoredUser(updated);
-    this.storeActivityTypeId(updated.id, activityTypeId);
+  markOnboardingComplete(_activityTypeId: string): void {
     this.clearOnboardingEntrySource();
   }
 
@@ -161,25 +157,20 @@ export class SessionService {
     sessionStorage.removeItem(ONBOARDING_SOURCE_KEY);
   }
 
-  private resolveActivityTypeId(user: User): string | undefined {
-    return user.activityTypeId ?? this.getStoredActivityTypeId(user.id);
-  }
-
   private mergeStoredActivityType(user: User): User {
-    const activityTypeId = this.resolveActivityTypeId(user);
-    return activityTypeId ? { ...user, activityTypeId } : user;
+    return user;
   }
 
-  private getOnboardingKey(userId: string): string {
-    return `${ONBOARDING_KEY_PREFIX}${userId}`;
+  private getOnboardingKey(_userId: string): string {
+    return '';
   }
 
-  private getStoredActivityTypeId(userId: string): string | undefined {
-    return localStorage.getItem(this.getOnboardingKey(userId)) ?? undefined;
+  private getStoredActivityTypeId(_userId: string): string | undefined {
+    return undefined;
   }
 
-  private storeActivityTypeId(userId: string, activityTypeId: string): void {
-    localStorage.setItem(this.getOnboardingKey(userId), activityTypeId);
+  private storeActivityTypeId(_userId: string, _activityTypeId: string): void {
+    // onboarding state is managed by the backend status API
   }
 
   private syncUserFromAccessToken(displayName?: string): void {
@@ -192,7 +183,7 @@ export class SessionService {
     const user = userFromAccessToken(token, displayName ?? storedUser?.name);
     const merged = this.mergeStoredActivityType({
       ...user,
-      activityTypeId: user.activityTypeId ?? storedUser?.activityTypeId,
+      tenantId: user.tenantId ?? storedUser?.tenantId,
     });
     this.authStore.setUser(merged);
     this.updateStoredUser(merged);

@@ -1,18 +1,28 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
 
-import { AuthService } from '@core/services/auth.service';
+import { OnboardingService } from '@core/services/onboarding.service';
+import {
+  onboardingRouteForStep,
+  OnboardingStep,
+} from '@app/features/onboarding/models/onboarding.model';
 
 /**
- * Redirects authenticated users who have not selected an activity to onboarding.
+ * Redirects authenticated users who have not completed onboarding away from the main app.
  */
 export const onboardingCompleteGuard: CanActivateFn = () => {
-  const authService = inject(AuthService);
+  const onboardingService = inject(OnboardingService);
   const router = inject(Router);
 
-  if (!authService.needsOnboarding()) {
-    return true;
-  }
+  return onboardingService.getStatus().pipe(
+    map(status => {
+      if (status.step === OnboardingStep.Active) {
+        return true;
+      }
 
-  return router.createUrlTree(['/onboarding/setup']);
+      return router.createUrlTree([onboardingRouteForStep(status.step)]);
+    }),
+    catchError(() => of(router.createUrlTree(['/onboarding/setup'])))
+  );
 };

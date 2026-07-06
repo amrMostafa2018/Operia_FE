@@ -211,7 +211,8 @@
   "ONBOARDING": {
     "STEPS": {
       "CREATE_ACCOUNT": "Create Account",
-      "SETUP_BUSINESS": "Set Up Your Business"
+      "SETUP_BUSINESS": "Choose Activity Type",
+      "SUBSCRIPTION": "Subscription & Payment"
     },
     "BUSINESS_SETUP": {
       "CHOOSE_TYPE_TITLE": "Choose your activity type",
@@ -236,6 +237,7 @@
       "SUMMARY_FEATURES_TITLE": "System features you'll get",
       "SUMMARY_NOTE": "You can add more features later from settings",
       "PREVIOUS": "Previous",
+      "NEXT": "Next",
       "SUBMIT": "Create System",
       "FOOTER_NOTE": "You can change some settings later from the dashboard",
       "COMING_SOON": "Coming Soon",
@@ -314,6 +316,85 @@
           }
         }
       }
+    },
+    "PLAN_SELECTION": {
+      "TITLE": "Choose subscription and payment plan",
+      "SUBTITLE": "Select the plan that suits your business",
+      "SUMMARY_TITLE": "Order summary",
+      "BUSINESS_TYPE": "Business type",
+      "SELECTED_PLAN": "Selected plan",
+      "BILLING_PERIOD": "Billing period",
+      "PRICE": "Price",
+      "VAT": "VAT (14%)",
+      "TOTAL_MONTHLY": "Total monthly",
+      "TOTAL_YEARLY": "Total yearly",
+      "MONTHLY": "Monthly",
+      "YEARLY": "Yearly",
+      "PER_MONTH": "month",
+      "PER_YEAR": "year",
+      "SAVE_BADGE": "Save up to 20%",
+      "MOST_SELECTED": "Most popular",
+      "TRIAL_DAYS": "{{days}}-day free trial",
+      "START_TRIAL": "Start your free trial",
+      "SELECT_PLAN": "Select plan",
+      "CHOOSE_MONTHLY": "Choose monthly plan",
+      "CHOOSE_YEARLY": "Choose yearly plan",
+      "COMPLETE_PAYMENT": "Complete payment and activate system",
+      "FOOTER_NOTE": "You can go back and change your plan at any time",
+      "CANCEL_NOTE": "Subscriptions can be canceled at any time with no hidden fees",
+      "PROMO_TITLE": "Why choose Operia?",
+      "PROMO_BENEFIT_1": "Integrated management for your business",
+      "PROMO_BENEFIT_2": "Ease of use",
+      "PROMO_BENEFIT_3": "Security and data protection",
+      "PROMO_BENEFIT_4": "Specialized technical support",
+      "SECURE_BADGE": "100% Secure",
+      "SECURE_NOTE": "Your data is encrypted and protected with the highest security standards",
+      "PAYMENT_METHODS_TITLE": "Payment methods",
+      "PAYMENT_METHODS": {
+        "CARD": "Credit card / Mada",
+        "BANK_TRANSFER": "Bank transfer",
+        "INSTAPAY": "Instapay",
+        "COD": "Cash on delivery (later)"
+      },
+      "PAYMENT_SECURE_TITLE": "100% secure payment process",
+      "PAYMENT_SECURE_NOTE": "All transactions are encrypted and protected",
+      "INSTAPAY_NOTE": "Transfer the plan amount, then upload a screenshot of the payment.",
+      "UPLOAD_SCREENSHOT": "Upload payment screenshot",
+      "SCREENSHOT_REQUIRED": "Payment screenshot is required",
+      "PLANS": {
+        "FREE_TRIAL": {
+          "DESCRIPTION": "Try all features for free"
+        },
+        "STARTER": {
+          "DESCRIPTION": "Basic plan for small clinics"
+        },
+        "GROWTH": {
+          "DESCRIPTION": "Growth plan for medium businesses"
+        },
+        "PRO": {
+          "DESCRIPTION": "Professional plan for large institutions"
+        }
+      },
+      "FEATURES": {
+        "all_features": "All features included",
+        "max_3_employees": "Up to 3 employees",
+        "max_100_bookings": "Up to 100 bookings",
+        "1_branch": "1 branch",
+        "max_5_employees": "Up to 5 employees",
+        "unlimited_bookings": "Unlimited bookings",
+        "max_3_branches": "Up to 3 branches",
+        "max_20_employees": "Up to 20 employees",
+        "advanced_reports": "Advanced reports",
+        "unlimited_branches": "Unlimited branches",
+        "unlimited_employees": "Unlimited employees",
+        "api_whatsapp": "API & WhatsApp integration",
+        "support_24_7": "24/7 support"
+      }
+    },
+    "PENDING": {
+      "TITLE": "Your request is under review",
+      "MESSAGE": "We received your payment proof. Our team will review it, add your balance, and activate your plan shortly.",
+      "CHECK_STATUS": "Check status"
     }
   },
   "COMMON": {
