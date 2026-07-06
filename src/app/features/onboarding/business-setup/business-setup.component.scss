@@ -44,7 +44,7 @@ $logo-upload-min-height: 7.5rem;
   background: #fff;
   border: 1px solid var(--surface-border);
   border-radius: $border-radius-lg;
-  padding: 1.5rem;
+  padding: 1.15rem 1.25rem;
 }
 
 .section-header {
@@ -58,32 +58,32 @@ $logo-upload-min-height: 7.5rem;
     align-items: center;
     text-align: center;
     margin-bottom: 0;
-    gap: 0.5rem;
+    gap: 0.35rem;
 
     .section-header__title-row {
       display: inline-flex;
       align-items: center;
-      gap: 0.65rem;
+      gap: 0.5rem;
     }
 
     .section-header__subtitle {
-      max-width: 40rem;
+      max-width: 36rem;
       margin: 0;
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       color: var(--text-secondary);
-      line-height: 1.65;
+      line-height: 1.5;
     }
 
     h2 {
       margin: 0;
-      font-size: 1.25rem;
+      font-size: 1.125rem;
     }
 
     .section-icon--hero {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      border-radius: 8px;
       box-shadow: none;
     }
   }
@@ -194,45 +194,59 @@ $logo-upload-min-height: 7.5rem;
   }
 
   &--compact {
-    display: inline-flex;
-    flex-direction: row;
-    align-items: flex-start;
-    text-align: start;
-    gap: 0.75rem;
-    width: min(100%, 38rem);
-    padding: 0.8rem 1.1rem;
-    margin-inline: auto;
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-    border: 1px solid #fcd34d;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(217, 119, 6, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    margin-inline: 0;
+    background: #fff9f2;
+    border: 1px solid #f3e8d8;
+    border-radius: 10px;
+    box-shadow: none;
+
+    .info-box__heading {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+    }
 
     .info-box__icon-wrap {
       flex-shrink: 0;
-      width: 2rem;
-      height: 2rem;
+      width: 1.5rem;
+      height: 1.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      background: rgba(217, 119, 6, 0.14);
+      background: rgba(217, 119, 6, 0.12);
+      border: 1.5px solid #d97706;
       color: #d97706;
 
       i {
-        font-size: 0.95rem;
+        font-size: 0.75rem;
       }
     }
 
-    .info-box__body {
-      min-width: 0;
-    }
-
     strong {
-      margin-bottom: 0.15rem;
+      margin: 0;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #c2410c;
+      font-family: $font-ar;
     }
 
-    p {
-      line-height: 1.55;
+    .info-box__line {
+      margin: 0;
+      max-width: 40rem;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: #475569;
+      font-family: $font-ar;
+      text-align: center;
     }
   }
 
@@ -263,10 +277,10 @@ $logo-upload-min-height: 7.5rem;
 .section-intro {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.15rem;
-  padding-bottom: 1.5rem;
-  margin-bottom: 1.5rem;
+  align-items: stretch;
+  gap: 0.65rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
   border-bottom: 1px solid var(--surface-border);
 
   .info-box {

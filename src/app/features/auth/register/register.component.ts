@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -16,25 +16,29 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { MessageService } from 'primeng/api';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { LanguageService } from '../../../core/services/language.service';
-import { AuthStore } from '../../../core/store/auth.store';
+import { AuthService } from '@core/services/auth.service';
+import { LanguageService } from '@core/services/language.service';
+import { AuthStore } from '@core/store/auth.store';
 import {
   applyServerFieldErrors,
-  clearServerFieldError,
   extractApiFieldErrors,
   translateApiFieldErrors,
-} from '../../../core/utils/api-error.util';
-import { passwordMatchValidator } from '../../../core/utils/validators.util';
+} from '@core/utils/api-error.util';
+import {
+  PASSWORD_VALIDATORS,
+  passwordMatchValidator,
+  setupPasswordConfirmSync,
+  setupServerErrorClearing,
+} from '@core/utils/validators.util';
 import {
   PHONE_INPUT_CSS_CLASS,
   PHONE_INPUT_DEFAULT_COUNTRY,
   PHONE_INPUT_ONLY_COUNTRIES,
-} from '../../../shared/constants/phone-input.config';
-import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
-import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '../../../shared/utils/otp.util';
-import { getSubmitArrowIcon } from '../../../shared/utils/rtl.util';
-import { getE164PhoneNumber, getPhoneFieldError } from '../../../shared/utils/phone-number.util';
+} from '@app/shared/constants/phone-input.config';
+import { OtpVerificationComponent } from '@app/shared/components/otp-verification/otp-verification.component';
+import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '@app/shared/utils/otp.util';
+import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
+import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
 
 type RegisterStep = 'form' | 'otp';
 
@@ -54,6 +58,7 @@ type RegisterStep = 'form' | 'otp';
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -62,6 +67,7 @@ export class RegisterComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly languageService = inject(LanguageService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
@@ -91,29 +97,18 @@ export class RegisterComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       phone: [null, Validators.required],
-      password: ['', [
-        Validators.required,
-        Validators.minLength(8),
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/),
-      ]],
+      password: ['', PASSWORD_VALIDATORS],
       confirmPassword: ['', [Validators.required, passwordMatchValidator]],
       agreeToTerms: [false, Validators.requiredTrue],
     });
 
-    this.form.get('password')?.valueChanges.subscribe(() => {
-      this.form.get('confirmPassword')?.updateValueAndValidity();
-    });
-
-    this.setupServerErrorClearing();
-  }
-
-  private setupServerErrorClearing(): void {
-    const fields = ['email', 'phone', 'password', 'confirmPassword'];
-    for (const field of fields) {
-      this.form.get(field)?.valueChanges.subscribe(() => {
-        clearServerFieldError(this.form, field);
-      });
-    }
+    setupPasswordConfirmSync(this.form, this.destroyRef);
+    setupServerErrorClearing(this.form, this.destroyRef, [
+      'email',
+      'phone',
+      'password',
+      'confirmPassword',
+    ]);
   }
 
   private handleRegisterError(err: HttpErrorResponse): void {

@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateFn, Router } from '@angular/router';
 
-import { PermissionService } from '../services/permission.service';
+import { PermissionService } from '@core/services/permission.service';
 
 /**
  * Restricts routes to users who have at least one permission from route data.
@@ -11,7 +11,7 @@ import { PermissionService } from '../services/permission.service';
  * {
  *   path: 'admins',
  *   canActivate: [authGuard, permissionGuard],
- *   data: { permissions: [Permissions.Admin.Read] },
+ *   data: { permissions: [Permissions.Admin.DashboardRead] },
  * }
  * ```
  */

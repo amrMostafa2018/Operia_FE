@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 /**
  * Redirects authenticated users who have not selected an activity to onboarding.

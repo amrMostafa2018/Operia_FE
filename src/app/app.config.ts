@@ -15,17 +15,13 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
-import { routes } from './app.routes';
-import { AuthService } from './core/services/auth.service';
-import { LanguageService } from './core/services/language.service';
-import { errorInterceptor } from './core/interceptors/error.interceptor';
-import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
-import { languageInterceptor } from './core/interceptors/language.interceptor';
+import { routes } from '@app/app.routes';
+import { AuthService } from '@core/services/auth.service';
+import { LanguageService } from '@core/services/language.service';
+import { errorInterceptor } from '@core/interceptors/error.interceptor';
+import { jwtInterceptor } from '@core/interceptors/jwt.interceptor';
+import { languageInterceptor } from '@core/interceptors/language.interceptor';
 
-/**
- * On startup: try to exchange a stored refresh token for a new access token.
- * The app continues loading regardless of whether this succeeds or fails.
- */
 function initAuth(authService: AuthService): () => Promise<boolean> {
   return () =>
     firstValueFrom(authService.restoreSession().pipe(catchError(() => of(false))));
@@ -39,9 +35,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
-    // errorInterceptor must be outer (registered first) so jwtInterceptor
-    // (inner, closer to the backend) handles 401s with token refresh before
-    // errorInterceptor sees the error.
     provideHttpClient(
       withFetch(),
       withInterceptors([languageInterceptor, errorInterceptor, jwtInterceptor])

@@ -1,8 +1,8 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateFn, Router } from '@angular/router';
 
-import { UserRole } from '../models/user.model';
-import { AuthStore } from '../store/auth.store';
+import { UserRole } from '@core/models/user.model';
+import { AuthStore } from '@core/store/auth.store';
 
 /**
  * Restricts routes to users whose role is listed in route data `roles`.

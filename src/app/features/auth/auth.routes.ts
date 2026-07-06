@@ -10,13 +10,13 @@ export const authRoutes: Routes = [
         path: 'login',
         loadComponent: () =>
           import('./login/login.component').then(m => m.LoginComponent),
-        title: 'تسجيل الدخول - Operia',
+        title: 'Sign In - Operia',
       },
       {
         path: 'register',
         loadComponent: () =>
           import('./register/register.component').then(m => m.RegisterComponent),
-        title: 'إنشاء حساب - Operia',
+        title: 'Create Account - Operia',
       },
       {
         path: 'forgot-password',

@@ -18,9 +18,8 @@ import {
   AuthApiEndpoint,
   PUBLIC_AUTH_API_ENDPOINTS,
   urlIncludesAuthEndpoint,
-} from '../constants/auth-api-endpoint.enum';
-import { AuthService } from '../services/auth.service';
-import { AuthTokens } from '../models/user.model';
+} from '@core/constants/auth-api-endpoint.enum';
+import { AuthService } from '@core/services/auth.service';
 
 // Module-level state shared across all calls to this interceptor function.
 // This is intentional: we need a single "is refreshing" gate regardless of
@@ -54,10 +53,14 @@ function handle401<T>(
     refreshSubject$.next(null);
 
     return authService.refreshAccessToken().pipe(
-      switchMap((tokens: AuthTokens) => {
+      switchMap(() => {
         isRefreshing = false;
-        refreshSubject$.next(tokens.accessToken);
-        return next(attachToken(req, tokens.accessToken));
+        const accessToken = authService.getAccessToken();
+        if (!accessToken) {
+          return throwError(() => new Error('No access token after refresh.'));
+        }
+        refreshSubject$.next(accessToken);
+        return next(attachToken(req, accessToken));
       }),
       catchError((err) => {
         isRefreshing = false;

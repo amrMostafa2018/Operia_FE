@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 
-import { AuthStore } from '../store/auth.store';
+import { AuthStore } from '@core/store/auth.store';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionService {

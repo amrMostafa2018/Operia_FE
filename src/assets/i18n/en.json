@@ -9,6 +9,24 @@
     "EN": "English",
     "AR": "العربية"
   },
+  "UNAUTHORIZED": {
+    "TITLE": "Access Denied",
+    "MESSAGE": "You do not have permission to view this page.",
+    "BACK_TO_DASHBOARD": "Back to Dashboard"
+  },
+  "FEATURE_PLACEHOLDER": {
+    "TITLE": "Feature",
+    "MESSAGE": "This feature is coming soon."
+  },
+  "HTTP_ERRORS": {
+    "SUMMARY": "Error",
+    "NETWORK": "Network error. Please check your connection.",
+    "FORBIDDEN": "You do not have permission to perform this action.",
+    "NOT_FOUND": "The requested resource was not found.",
+    "CONFLICT": "A conflict occurred. Please refresh and try again.",
+    "SERVER": "A server error occurred. Please try again later.",
+    "UNEXPECTED": "An unexpected error occurred."
+  },
   "ERRORS": {
     "EmailAlreadyRegistered": "Email is already registered.",
     "EmailRequired": "Email is required.",
@@ -199,7 +217,8 @@
       "CHOOSE_TYPE_TITLE": "Choose your activity type",
       "CHOOSE_TYPE_SUBTITLE": "Your activity type prepares the system with the tools and features suited to your business needs",
       "NOTE_TITLE": "Important note",
-      "NOTE_TEXT": "Your activity type determines the system layout and features available in the dashboard.\nYou can add more features later from settings.",
+      "NOTE_TEXT_1": "Your activity type determines the system layout and features available in the dashboard.",
+      "NOTE_TEXT_2": "You can add more features later from settings.",
       "BUSINESS_DATA_TITLE": "Your business details",
       "BUSINESS_DATA_SUBTITLE": "Enter your business name and location details",
       "BUSINESS_NAME": "Business name",
@@ -220,6 +239,39 @@
       "SUBMIT": "Create System",
       "FOOTER_NOTE": "You can change some settings later from the dashboard",
       "COMING_SOON": "Coming Soon",
+      "COUNTRIES": {
+        "EG": "Egypt",
+        "SA": "Saudi Arabia",
+        "AE": "United Arab Emirates",
+        "KW": "Kuwait",
+        "QA": "Qatar",
+        "BH": "Bahrain",
+        "OM": "Oman",
+        "JO": "Jordan"
+      },
+      "CITIES": {
+        "cairo": "Cairo",
+        "alexandria": "Alexandria",
+        "giza": "Giza",
+        "sharm": "Sharm El Sheikh",
+        "riyadh": "Riyadh",
+        "jeddah": "Jeddah",
+        "dammam": "Dammam",
+        "dubai": "Dubai",
+        "abu_dhabi": "Abu Dhabi",
+        "sharjah": "Sharjah",
+        "kuwait_city": "Kuwait City",
+        "doha": "Doha",
+        "manama": "Manama",
+        "muscat": "Muscat",
+        "amman": "Amman"
+      },
+      "CURRENCIES": {
+        "EGP": "Egyptian Pound (EGP)",
+        "SAR": "Saudi Riyal (SAR)",
+        "AED": "UAE Dirham (AED)",
+        "USD": "US Dollar (USD)"
+      },
       "ACTIVITY_TYPES": {
         "LASER_CLINIC": {
           "TITLE": "Laser Clinics",

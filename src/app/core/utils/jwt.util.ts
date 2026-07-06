@@ -1,8 +1,10 @@
-import { User, UserRole } from '../models/user.model';
-import { PERMISSION_CLAIM_TYPE } from '../models/permissions.model';
+import { User, UserRole } from '@core/models/user.model';
+import { PERMISSION_CLAIM_TYPE } from '@core/models/permissions.model';
 
 const ROLE_MAP: Record<string, UserRole> = {
   Admin: 'admin',
+  SuperAdmin: 'super_admin',
+  Reception: 'reception',
   Staff: 'staff',
 };
 
@@ -48,12 +50,7 @@ function roleFromPayload(payload: Record<string, unknown>): UserRole {
     return ROLE_MAP[roleName];
   }
 
-  return 'admin';
-}
-
-export function permissionsFromAccessToken(token: string): string[] {
-  const payload = decodeJwtPayload(token);
-  return claimValues(payload, PERMISSION_CLAIM_TYPE);
+  return 'staff';
 }
 
 export function userFromAccessToken(token: string, name?: string): User {

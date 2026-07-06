@@ -3,41 +3,43 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { AuthService } from '../services/auth.service';
+import { TranslateService } from '@ngx-translate/core';
+
+import { AuthService } from '@core/services/auth.service';
 import {
   AuthApiEndpoint,
   AUTH_FORM_API_ENDPOINTS,
   OTP_AUTH_API_ENDPOINTS,
   urlIncludesAuthEndpoint,
-} from '../constants/auth-api-endpoint.enum';
-import { extractApiError, hasApiFieldErrors } from '../utils/api-error.util';
+} from '@core/constants/auth-api-endpoint.enum';
+import { extractApiError, hasApiFieldErrors } from '@core/utils/api-error.util';
 
-function resolveMessage(error: HttpErrorResponse): string {
+function resolveMessage(error: HttpErrorResponse, translate: TranslateService): string {
   switch (error.status) {
     case 0:
-      return 'Network error. Please check your connection.';
+      return translate.instant('HTTP_ERRORS.NETWORK');
     case 400:
     case 422:
       return extractApiError(error);
     case 401:
       return extractApiError(error);
     case 403:
-      return 'You do not have permission to perform this action.';
+      return translate.instant('HTTP_ERRORS.FORBIDDEN');
     case 404: {
       const body = error.error as { message?: string } | null;
-      return body?.message ?? 'The requested resource was not found.';
+      return body?.message ?? translate.instant('HTTP_ERRORS.NOT_FOUND');
     }
     case 409: {
       const body = error.error as { message?: string } | null;
-      return body?.message ?? 'A conflict occurred. Please refresh and try again.';
+      return body?.message ?? translate.instant('HTTP_ERRORS.CONFLICT');
     }
     case 500:
     case 502:
     case 503:
-      return 'A server error occurred. Please try again later.';
+      return translate.instant('HTTP_ERRORS.SERVER');
     default: {
       const body = error.error as { message?: string } | null;
-      return body?.message ?? 'An unexpected error occurred.';
+      return body?.message ?? translate.instant('HTTP_ERRORS.UNEXPECTED');
     }
   }
 }
@@ -50,6 +52,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const messageService = inject(MessageService);
   const authService = inject(AuthService);
+  const translate = inject(TranslateService);
 
   return next(req).pipe(
     catchError((error: unknown) => {
@@ -58,14 +61,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       const isLogoutRequest = req.url.includes(AuthApiEndpoint.Logout);
-      const suppressSessionError =
-        authService.isLoggingOut() || isLogoutRequest;
+      const suppressSessionError = authService.isLoggingOut() || isLogoutRequest;
 
       if (suppressSessionError) {
         return throwError(() => error);
       }
 
-      const userMessage = resolveMessage(error);
+      const userMessage = resolveMessage(error, translate);
       const skipToast =
         ((error.status === 400 || error.status === 422 || error.status === 401) &&
           hasApiFieldErrors(error));
@@ -74,8 +76,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         urlIncludesAuthEndpoint(req.url, OTP_AUTH_API_ENDPOINTS) ||
         urlIncludesAuthEndpoint(req.url, AUTH_FORM_API_ENDPOINTS);
 
-      // 401 navigation is handled here only if the JWT interceptor could not
-      // recover (i.e. the refresh itself failed and rethrew).
       if (error.status === 401 && !suppressLoginRedirect) {
         router.navigate(['/auth/login']);
       }
@@ -87,14 +87,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (!skipToast) {
         messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: translate.instant('HTTP_ERRORS.SUMMARY'),
           detail: userMessage,
           life: 6000,
         });
       }
 
-      // Augment the original error with a user-friendly message so callers
-      // can display it without duplicating resolution logic.
       return throwError(() => Object.assign(error, { userMessage }));
     })
   );

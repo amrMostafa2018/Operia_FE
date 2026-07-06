@@ -166,6 +166,7 @@ export function clearServerFieldError(form: FormGroup, field: string): void {
     return;
   }
 
-  const { server: _removed, ...remaining } = control.errors;
+  const remaining = { ...control.errors };
+  delete remaining['server'];
   control.setErrors(Object.keys(remaining).length > 0 ? remaining : null);
 }

@@ -2,7 +2,14 @@
 
   <!-- Mobile overlay -->
   @if (mobileOpen()) {
-    <div class="sidebar-overlay" (click)="closeMobileSidebar()"></div>
+    <div
+      class="sidebar-overlay"
+      role="button"
+      tabindex="0"
+      (click)="closeMobileSidebar()"
+      (keydown.enter)="closeMobileSidebar()"
+      (keydown.space)="closeMobileSidebar()"
+    ></div>
   }
 
   <!-- Sidebar -->

@@ -1,9 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
+import { AuthService } from '@core/services/auth.service';
+import { LanguageSwitcherComponent } from '@app/shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-onboarding-layout',
@@ -11,6 +11,7 @@ import { LanguageSwitcherComponent } from '../../../shared/components/language-s
   imports: [RouterOutlet, TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './onboarding-layout.component.html',
   styleUrl: './onboarding-layout.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingLayoutComponent {
   private readonly authService = inject(AuthService);

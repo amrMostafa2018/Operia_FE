@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -10,24 +10,24 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
 import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { LanguageService } from '../../../core/services/language.service';
-import { AuthStore } from '../../../core/store/auth.store';
+import { AuthService } from '@core/services/auth.service';
+import { LanguageService } from '@core/services/language.service';
+import { AuthStore } from '@core/store/auth.store';
 import {
   applyServerFieldErrors,
-  clearServerFieldError,
   extractAuthFormFieldErrors,
   translateApiFieldErrors,
-} from '../../../core/utils/api-error.util';
+} from '@core/utils/api-error.util';
+import { setupServerErrorClearing } from '@core/utils/validators.util';
 import {
   PHONE_INPUT_CSS_CLASS,
   PHONE_INPUT_DEFAULT_COUNTRY,
   PHONE_INPUT_ONLY_COUNTRIES,
-} from '../../../shared/constants/phone-input.config';
-import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
-import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '../../../shared/utils/otp.util';
-import { getSubmitArrowIcon } from '../../../shared/utils/rtl.util';
-import { getE164PhoneNumber, getPhoneFieldError } from '../../../shared/utils/phone-number.util';
+} from '@app/shared/constants/phone-input.config';
+import { OtpVerificationComponent } from '@app/shared/components/otp-verification/otp-verification.component';
+import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '@app/shared/utils/otp.util';
+import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
+import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
 
 type LoginStep = 'form' | 'otp';
 
@@ -46,6 +46,7 @@ type LoginStep = 'form' | 'otp';
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -54,6 +55,7 @@ export class LoginComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly languageService = inject(LanguageService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
@@ -83,15 +85,7 @@ export class LoginComponent implements OnInit {
       rememberMe: [false],
     });
 
-    this.setupServerErrorClearing();
-  }
-
-  private setupServerErrorClearing(): void {
-    for (const field of ['phone', 'password']) {
-      this.form.get(field)?.valueChanges.subscribe(() => {
-        clearServerFieldError(this.form, field);
-      });
-    }
+    setupServerErrorClearing(this.form, this.destroyRef, ['phone', 'password']);
   }
 
   private handleLoginError(err: HttpErrorResponse): void {

@@ -41,7 +41,7 @@
       <button class="settings-toggle" (click)="toggleSettings()">
         <i class="pi pi-cog nav-icon"></i>
         <span class="nav-label">{{ 'NAV.SETTINGS' | translate }}</span>
-        <i class="pi toggle-arrow" [class.pi-chevron-down]="!settingsOpen" [class.pi-chevron-up]="settingsOpen"></i>
+        <i class="pi toggle-arrow" [class.pi-chevron-down]="!settingsOpen()" [class.pi-chevron-up]="settingsOpen()"></i>
       </button>
     } @else {
       <button class="settings-toggle collapsed-icon" (click)="toggleSettings()">
@@ -49,7 +49,7 @@
       </button>
     }
 
-    @if (settingsOpen && !collapsed()) {
+    @if (settingsOpen() && !collapsed()) {
       <div class="settings-items">
         @for (item of visibleSettingsNavItems(); track item.route) {
           <a class="nav-item sub-item" [routerLink]="item.route" (click)="onLinkClick()">

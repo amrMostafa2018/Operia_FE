@@ -1,8 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { AppSidebarComponent } from '../components/app-sidebar/app-sidebar.component';
-import { AppHeaderComponent } from '../components/app-header/app-header.component';
+import { AppSidebarComponent } from '@app/layout/components/app-sidebar/app-sidebar.component';
+import { AppHeaderComponent } from '@app/layout/components/app-header/app-header.component';
 
 @Component({
   selector: 'app-main-layout',
@@ -10,6 +10,7 @@ import { AppHeaderComponent } from '../components/app-header/app-header.componen
   imports: [RouterOutlet, AppSidebarComponent, AppHeaderComponent],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayoutComponent {
   sidebarCollapsed = signal(false);

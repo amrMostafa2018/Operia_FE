@@ -1,7 +1,7 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { AppLanguage, LanguageService } from '../../../core/services/language.service';
+import { AppLanguage, LanguageService } from '@core/services/language.service';
 
 @Component({
   selector: 'app-language-switcher',
@@ -9,6 +9,7 @@ import { AppLanguage, LanguageService } from '../../../core/services/language.se
   imports: [TranslatePipe],
   templateUrl: './language-switcher.component.html',
   styleUrl: './language-switcher.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LanguageSwitcherComponent {
   private readonly languageService = inject(LanguageService);

@@ -1,21 +1,44 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { LanguageService } from '../../../core/services/language.service';
-import { getSubmitArrowIcon } from '../../../shared/utils/rtl.util';
-import { ACTIVITY_TYPES, ActivityType, ActivityTypeId } from '../models/activity-type.model';
+import { AuthService } from '@core/services/auth.service';
+import { LanguageService } from '@core/services/language.service';
+import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
+import { ACTIVITY_TYPES, ActivityType, ActivityTypeId } from '@app/features/onboarding/models/activity-type.model';
 
 interface SelectOption<T = string> {
   label: string;
   value: T;
 }
+
+const COUNTRY_CODES = ['EG', 'SA', 'AE', 'KW', 'QA', 'BH', 'OM', 'JO'] as const;
+const CURRENCY_CODES = ['EGP', 'SAR', 'AED', 'USD'] as const;
+
+const CITIES_BY_COUNTRY: Record<string, string[]> = {
+  EG: ['cairo', 'alexandria', 'giza', 'sharm'],
+  SA: ['riyadh', 'jeddah', 'dammam'],
+  AE: ['dubai', 'abu_dhabi', 'sharjah'],
+  KW: ['kuwait_city'],
+  QA: ['doha'],
+  BH: ['manama'],
+  OM: ['muscat'],
+  JO: ['amman'],
+};
 
 @Component({
   selector: 'app-business-setup',
@@ -29,12 +52,15 @@ interface SelectOption<T = string> {
   ],
   templateUrl: './business-setup.component.html',
   styleUrl: './business-setup.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessSetupComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly languageService = inject(LanguageService);
+  private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   form!: FormGroup;
   isSubmitting = signal(false);
@@ -68,49 +94,23 @@ export class BusinessSetupComponent implements OnInit {
     this.languageService.currentLang() === 'ar' ? 'left' : 'right'
   );
 
-  readonly countries: SelectOption[] = [
-    { label: 'مصر', value: 'EG' },
-    { label: 'السعودية', value: 'SA' },
-    { label: 'الإمارات', value: 'AE' },
-    { label: 'الكويت', value: 'KW' },
-    { label: 'قطر', value: 'QA' },
-    { label: 'البحرين', value: 'BH' },
-    { label: 'عُمان', value: 'OM' },
-    { label: 'الأردن', value: 'JO' },
-  ];
+  readonly countries = computed<SelectOption[]>(() => {
+    this.languageService.currentLang();
+    return COUNTRY_CODES.map(code => ({
+      label: this.translate.instant(`ONBOARDING.BUSINESS_SETUP.COUNTRIES.${code}`),
+      value: code,
+    }));
+  });
 
-  readonly citiesByCountry: Record<string, SelectOption[]> = {
-    EG: [
-      { label: 'القاهرة', value: 'cairo' },
-      { label: 'الإسكندرية', value: 'alexandria' },
-      { label: 'الجيزة', value: 'giza' },
-      { label: 'شرم الشيخ', value: 'sharm' },
-    ],
-    SA: [
-      { label: 'الرياض', value: 'riyadh' },
-      { label: 'جدة', value: 'jeddah' },
-      { label: 'الدمام', value: 'dammam' },
-    ],
-    AE: [
-      { label: 'دبي', value: 'dubai' },
-      { label: 'أبوظبي', value: 'abu_dhabi' },
-      { label: 'الشارقة', value: 'sharjah' },
-    ],
-    KW: [{ label: 'الكويت', value: 'kuwait_city' }],
-    QA: [{ label: 'الدوحة', value: 'doha' }],
-    BH: [{ label: 'المنامة', value: 'manama' }],
-    OM: [{ label: 'مسقط', value: 'muscat' }],
-    JO: [{ label: 'عمّان', value: 'amman' }],
-  };
+  readonly currencies = computed<SelectOption[]>(() => {
+    this.languageService.currentLang();
+    return CURRENCY_CODES.map(code => ({
+      label: this.translate.instant(`ONBOARDING.BUSINESS_SETUP.CURRENCIES.${code}`),
+      value: code,
+    }));
+  });
 
-  readonly currencies: SelectOption[] = [
-    { label: 'جنيه مصري (EGP)', value: 'EGP' },
-    { label: 'ريال سعودي (SAR)', value: 'SAR' },
-    { label: 'درهم إماراتي (AED)', value: 'AED' },
-    { label: 'دولار أمريكي (USD)', value: 'USD' },
-  ];
-
-  cities = signal<SelectOption[]>(this.citiesByCountry['EG']);
+  cities = signal<SelectOption[]>(this.buildCityOptions('EG'));
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -120,13 +120,24 @@ export class BusinessSetupComponent implements OnInit {
       currency: ['EGP', Validators.required],
     });
 
-    this.form.get('country')?.valueChanges.subscribe(country => {
-      const cities = this.citiesByCountry[country] ?? [];
-      this.cities.set(cities);
-      if (cities.length) {
-        this.form.patchValue({ city: cities[0].value });
-      }
-    });
+    this.form.get('country')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(country => {
+        const cityOptions = this.buildCityOptions(country);
+        this.cities.set(cityOptions);
+        if (cityOptions.length) {
+          this.form.patchValue({ city: cityOptions[0].value });
+        }
+      });
+  }
+
+  private buildCityOptions(country: string): SelectOption[] {
+    this.languageService.currentLang();
+    const cityCodes = CITIES_BY_COUNTRY[country] ?? [];
+    return cityCodes.map(code => ({
+      label: this.translate.instant(`ONBOARDING.BUSINESS_SETUP.CITIES.${code}`),
+      value: code,
+    }));
   }
 
   selectActivity(id: ActivityTypeId): void {

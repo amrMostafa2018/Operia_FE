@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   inject,
@@ -23,6 +24,7 @@ import { OtpLabels } from './otp-labels.model';
   imports: [ReactiveFormsModule, TranslatePipe, ButtonModule],
   templateUrl: './otp-verification.component.html',
   styleUrl: './otp-verification.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OtpVerificationComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly fb = inject(FormBuilder);

@@ -1,9 +1,9 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { Permissions } from '../../../core/models/permissions.model';
-import { AuthStore } from '../../../core/store/auth.store';
+import { Permissions } from '@core/models/permissions.model';
+import { PermissionService } from '@core/services/permission.service';
 
 interface NavItem {
   labelKey: string;
@@ -13,25 +13,21 @@ interface NavItem {
   permissions?: string[];
 }
 
-interface NavGroup {
-  titleKey?: string;
-  items: NavItem[];
-}
-
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './app-sidebar.component.html',
   styleUrl: './app-sidebar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppSidebarComponent {
-  private readonly authStore = inject(AuthStore);
+  private readonly permissionService = inject(PermissionService);
 
   collapsed = input(false);
   closeSidebar = output<void>();
 
-  settingsOpen = false;
+  settingsOpen = signal(false);
 
   private readonly mainNavItems: NavItem[] = [
     {
@@ -70,20 +66,6 @@ export class AppSidebarComponent {
       route: '/branches',
       permissions: [Permissions.Admin.BranchesRead],
     },
-    /*
-    {
-      labelKey: 'NAV.PAYMENTS',
-      icon: 'pi pi-credit-card',
-      route: '/payments',
-      badge: 2,
-      permissions: [Permissions.Admin.Read],
-    },
-    {
-      labelKey: 'NAV.REPORTS',
-      icon: 'pi pi-chart-bar',
-      route: '/reports',
-      permissions: [Permissions.Admin.Read, Permissions.Staff.Read],
-    },*/
   ];
 
   private readonly settingsNavItems: NavItem[] = [
@@ -126,7 +108,7 @@ export class AppSidebarComponent {
   );
 
   toggleSettings(): void {
-    this.settingsOpen = !this.settingsOpen;
+    this.settingsOpen.update(v => !v);
   }
 
   onLinkClick(): void {
@@ -134,14 +116,12 @@ export class AppSidebarComponent {
   }
 
   private filterByPermission(items: NavItem[]): NavItem[] {
-    const userPermissions = this.authStore.permissions();
-
     return items.filter((item) => {
       if (!item.permissions?.length) {
         return true;
       }
 
-      return item.permissions.some((permission) => userPermissions.includes(permission));
+      return this.permissionService.hasAnyPermission(...item.permissions);
     });
   }
 }

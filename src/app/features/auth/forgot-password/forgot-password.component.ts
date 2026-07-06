@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -14,19 +14,23 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { LanguageService } from '../../../core/services/language.service';
-import { AuthStore } from '../../../core/store/auth.store';
-import { passwordMatchValidator } from '../../../core/utils/validators.util';
+import { AuthService } from '@core/services/auth.service';
+import { LanguageService } from '@core/services/language.service';
+import { AuthStore } from '@core/store/auth.store';
+import {
+  PASSWORD_VALIDATORS,
+  passwordMatchValidator,
+  setupPasswordConfirmSync,
+} from '@core/utils/validators.util';
 import {
   PHONE_INPUT_CSS_CLASS,
   PHONE_INPUT_DEFAULT_COUNTRY,
   PHONE_INPUT_ONLY_COUNTRIES,
-} from '../../../shared/constants/phone-input.config';
-import { OtpVerificationComponent } from '../../../shared/components/otp-verification/otp-verification.component';
-import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '../../../shared/utils/otp.util';
-import { getSubmitArrowIcon } from '../../../shared/utils/rtl.util';
-import { getE164PhoneNumber, getPhoneFieldError } from '../../../shared/utils/phone-number.util';
+} from '@app/shared/constants/phone-input.config';
+import { OtpVerificationComponent } from '@app/shared/components/otp-verification/otp-verification.component';
+import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '@app/shared/utils/otp.util';
+import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
+import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
 
 type ForgotPasswordStep = 'phone' | 'otp' | 'reset';
 
@@ -44,6 +48,7 @@ type ForgotPasswordStep = 'phone' | 'otp' | 'reset';
   ],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ForgotPasswordComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -53,6 +58,7 @@ export class ForgotPasswordComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly languageService = inject(LanguageService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
@@ -83,17 +89,11 @@ export class ForgotPasswordComponent implements OnInit {
     });
 
     this.resetForm = this.fb.group({
-      password: ['', [
-        Validators.required,
-        Validators.minLength(8),
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/),
-      ]],
+      password: ['', PASSWORD_VALIDATORS],
       confirmPassword: ['', [Validators.required, passwordMatchValidator]],
     });
 
-    this.resetForm.get('password')?.valueChanges.subscribe(() => {
-      this.resetForm.get('confirmPassword')?.updateValueAndValidity();
-    });
+    setupPasswordConfirmSync(this.resetForm, this.destroyRef);
   }
 
   isPhoneInvalid(): boolean {

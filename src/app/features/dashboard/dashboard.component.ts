@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -32,14 +32,15 @@ type TagSeverity = 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'co
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {
   readonly stats: StatCard[] = MOCK_STATS;
   readonly allBookings: BookingRow[] = MOCK_BOOKINGS;
 
-  dateRange: Date[] | null = null;
-  selectedEmployee: string | null = null;
-  selectedStatus: BookingStatus | null = null;
+  dateRange = signal<Date[] | null>(null);
+  selectedEmployee = signal<string | null>(null);
+  selectedStatus = signal<BookingStatus | null>(null);
   rows = signal(10);
   first = signal(0);
 
@@ -49,42 +50,45 @@ export class DashboardComponent {
   }));
 
   readonly rowOptions = [
-    { label: '10',   value: 10 },
-    { label: '25',   value: 25 },
-    { label: '50',   value: 50 },
-    { label: '100',  value: 100 },
-    { label: '500',  value: 500 },
+    { label: '10', value: 10 },
+    { label: '25', value: 25 },
+    { label: '50', value: 50 },
+    { label: '100', value: 100 },
+    { label: '500', value: 500 },
     { label: '1000', value: 1000 },
     { label: '2000', value: 2000 },
   ];
 
   readonly filteredBookings = computed(() => {
     let result = this.allBookings;
-    if (this.selectedEmployee) {
-      result = result.filter(b => b.employee.includes(this.selectedEmployee!));
+    const employee = this.selectedEmployee();
+    const status = this.selectedStatus();
+
+    if (employee) {
+      result = result.filter(b => b.employee.includes(employee));
     }
-    if (this.selectedStatus) {
-      result = result.filter(b => b.status === this.selectedStatus);
+    if (status) {
+      result = result.filter(b => b.status === status);
     }
     return result;
   });
 
-  get today(): string {
-    return new Date().toLocaleDateString('ar-EG', {
+  readonly today = computed(() =>
+    new Date().toLocaleDateString('ar-EG', {
       weekday: 'long',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-    });
-  }
+    })
+  );
 
   statusSeverity(status: BookingStatus): TagSeverity {
     const map: Record<BookingStatus, TagSeverity> = {
       confirmed: 'success',
-      pending:   'warning',
+      pending: 'warning',
       cancelled: 'danger',
       completed: 'info',
-      no_show:   'secondary',
+      no_show: 'secondary',
     };
     return map[status];
   }
@@ -92,10 +96,10 @@ export class DashboardComponent {
   statusKey(status: BookingStatus): string {
     const map: Record<BookingStatus, string> = {
       confirmed: 'BOOKING_STATUS.CONFIRMED',
-      pending:   'BOOKING_STATUS.PENDING',
+      pending: 'BOOKING_STATUS.PENDING',
       cancelled: 'BOOKING_STATUS.CANCELLED',
       completed: 'BOOKING_STATUS.COMPLETED',
-      no_show:   'BOOKING_STATUS.NO_SHOW',
+      no_show: 'BOOKING_STATUS.NO_SHOW',
     };
     return map[status];
   }

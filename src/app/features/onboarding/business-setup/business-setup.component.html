@@ -44,16 +44,15 @@
             </p>
           </div>
 
-          <div class="info-box info-box--panel">
+          <div class="info-box info-box--compact">
             <div class="info-box__heading">
               <span class="info-box__icon-wrap" aria-hidden="true">
                 <i class="pi pi-lightbulb"></i>
               </span>
               <strong>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TITLE' | translate }}</strong>
             </div>
-            <div class="info-box__text">
-              <p>{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TEXT' | translate }}</p>
-            </div>
+            <p class="info-box__line">{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TEXT_1' | translate }}</p>
+            <p class="info-box__line">{{ 'ONBOARDING.BUSINESS_SETUP.NOTE_TEXT_2' | translate }}</p>
           </div>
         </div>
 
@@ -182,7 +181,7 @@
               <p-dropdown
                 inputId="country"
                 formControlName="country"
-                [options]="countries"
+                [options]="countries()"
                 optionLabel="label"
                 optionValue="value"
                 styleClass="setup-dropdown"
@@ -212,7 +211,7 @@
               <p-dropdown
                 inputId="currency"
                 formControlName="currency"
-                [options]="currencies"
+                [options]="currencies()"
                 optionLabel="label"
                 optionValue="value"
                 styleClass="setup-dropdown"

@@ -4,9 +4,10 @@
   <div class="top-bar">
     <div class="date-filters">
       <div class="date-field">
-        <label>{{ 'DASHBOARD.FROM_DATE' | translate }}</label>
+        <span class="date-label">{{ 'DASHBOARD.FROM_DATE' | translate }}</span>
         <p-calendar
-          [(ngModel)]="dateRange"
+          [ngModel]="dateRange()"
+          (ngModelChange)="dateRange.set($event)"
           selectionMode="range"
           [readonlyInput]="true"
           [showIcon]="true"
@@ -77,18 +78,20 @@
       <div class="table-title">
         <i class="pi pi-calendar"></i>
         <span>{{ 'DASHBOARD.TODAY_TABLE_TITLE' | translate }}</span>
-        <span class="table-date">{{ today }}</span>
+        <span class="table-date">{{ today() }}</span>
       </div>
       <div class="table-filters">
         <p-dropdown
           [options]="[{ label: 'DASHBOARD.ALL_EMPLOYEES', value: null }]"
-          [(ngModel)]="selectedEmployee"
+          [ngModel]="selectedEmployee()"
+          (ngModelChange)="selectedEmployee.set($event)"
           [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
           styleClass="filter-drop"
         />
         <p-dropdown
           [options]="statusOptions"
-          [(ngModel)]="selectedStatus"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
           [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
           styleClass="filter-drop"
         />

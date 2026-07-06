@@ -10,7 +10,7 @@ export const onboardingRoutes: Routes = [
         path: 'setup',
         loadComponent: () =>
           import('./business-setup/business-setup.component').then(m => m.BusinessSetupComponent),
-        title: 'إعداد نشاطك - Operia',
+        title: 'Business Setup - Operia',
       },
       {
         path: '',

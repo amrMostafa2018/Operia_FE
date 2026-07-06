@@ -7,14 +7,14 @@ import {
   withState,
 } from '@ngrx/signals';
 
-import { User } from '../models/user.model';
+import { User } from '@core/models/user.model';
 
-type AuthState = {
+interface AuthState {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
   error: string | null;
-};
+}
 
 const initialState: AuthState = {
   user: null,
