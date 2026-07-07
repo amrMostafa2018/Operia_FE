@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { take } from 'rxjs';
 
 import { DecimalPipe } from '@angular/common';
 
@@ -30,12 +31,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ButtonModule } from 'primeng/button';
 
-
-
 import { LanguageService } from '@core/services/language.service';
-
 import { OnboardingService } from '@core/services/onboarding.service';
-
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
 
 import { extractApiError } from '@core/utils/api-error.util';
@@ -47,7 +44,8 @@ import { ACTIVITY_TYPES } from '@app/features/onboarding/models/activity-type.mo
 import {
 
   BillingType,
-
+  OnboardingStatusDto,
+  PendingAddBalancePlatformDto,
   SubscriptionPlanDto,
 
 } from '@app/features/onboarding/models/onboarding.model';
@@ -89,7 +87,6 @@ export class PlanSelectionComponent implements OnInit {
   private readonly router = inject(Router);
 
   private readonly onboardingService = inject(OnboardingService);
-
   private readonly onboardingState = inject(OnboardingStateService);
 
   private readonly languageService = inject(LanguageService);
@@ -107,7 +104,18 @@ export class PlanSelectionComponent implements OnInit {
   readonly billingType = signal<BillingType>(BillingType.Monthly);
 
   readonly screenShotPreview = signal<string | null>(null);
-
+  readonly usableBalance = signal(0);
+  readonly totalBalance = signal(0);
+  readonly tenantId = signal<string | null>(null);
+  readonly subscriptionId = signal<string | null>(null);
+  readonly subscriptionAmount = signal<number | null>(null);
+  readonly pendingAddBalancePlatform = signal<PendingAddBalancePlatformDto | null>(null);
+  readonly addBalancePlatformAmount = signal<number | null>(null);
+  readonly addBalancePlatformScreenshot = signal<string | null>(null);
+  readonly isSubmittingTopUp = signal(false);
+  readonly topUpSubmitError = signal<string | null>(null);
+  readonly topUpSubmitSuccess = signal<string | null>(null);
+  readonly isActivating = signal(false);
   readonly isLoading = signal(true);
 
   readonly isSubmitting = signal(false);
@@ -117,20 +125,6 @@ export class PlanSelectionComponent implements OnInit {
 
 
   readonly billingTypeEnum = BillingType;
-
-  readonly promoBenefitKeys = [
-
-    'ONBOARDING.PLAN_SELECTION.PROMO_BENEFIT_1',
-
-    'ONBOARDING.PLAN_SELECTION.PROMO_BENEFIT_2',
-
-    'ONBOARDING.PLAN_SELECTION.PROMO_BENEFIT_3',
-
-    'ONBOARDING.PLAN_SELECTION.PROMO_BENEFIT_4',
-
-  ];
-
-
 
   readonly businessSetup = computed(() => this.onboardingState.businessSetup());
 
@@ -181,6 +175,45 @@ export class PlanSelectionComponent implements OnInit {
 
 
   readonly isFreeTrial = computed(() => this.selectedPlan()?.code === 'free-trial');
+
+  readonly requiredPlanAmount = computed(() =>
+    this.subscriptionAmount() ?? this.displayPrice()
+  );
+
+  readonly canUserActivateSubscription = computed(() => {
+    const subscriptionId = this.subscriptionId();
+    const amount = this.requiredPlanAmount();
+    if (!subscriptionId) {
+      return false;
+    }
+    return this.usableBalance() >= amount;
+  });
+
+  readonly canActivatePlan = computed(() => {
+    if (!this.selectedPlanId()) {
+      return false;
+    }
+    if (this.isFreeTrial()) {
+      return true;
+    }
+    return this.usableBalance() >= this.displayPrice();
+  });
+
+  readonly hasInsufficientBalance = computed(() => {
+    if (this.isFreeTrial() || !this.subscriptionId()) {
+      return false;
+    }
+    return this.usableBalance() < this.requiredPlanAmount();
+  });
+
+  readonly hasPendingAddBalancePlatform = computed(() => !!this.pendingAddBalancePlatform());
+
+  readonly suggestedTopUpAmount = computed(() => {
+    if (!this.hasInsufficientBalance()) {
+      return null;
+    }
+    return Math.max(this.requiredPlanAmount() - this.usableBalance(), 0);
+  });
 
   readonly isArabic = computed(() => this.languageService.currentLang() === 'ar');
 
@@ -242,19 +275,18 @@ export class PlanSelectionComponent implements OnInit {
 
 
 
-  readonly submitLabelKey = computed(() =>
-
-    this.isFreeTrial()
-
-      ? 'ONBOARDING.PLAN_SELECTION.START_TRIAL'
-
-      : 'ONBOARDING.PLAN_SELECTION.COMPLETE_PAYMENT'
-
-  );
+  readonly submitLabelKey = computed(() => {
+    if (this.isFreeTrial()) {
+      return 'ONBOARDING.PLAN_SELECTION.START_TRIAL';
+    }
+    return 'ONBOARDING.PLAN_SELECTION.ACTIVATE_SYSTEM';
+  });
 
 
 
   ngOnInit(): void {
+    this.onboardingService.invalidateStatus();
+    this.loadOnboardingStatus();
 
     this.onboardingService.getPlans().pipe(
 
@@ -322,6 +354,137 @@ export class PlanSelectionComponent implements OnInit {
 
 
 
+  onTopUpAmountChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    const amount = value === '' ? null : Number(value);
+    this.addBalancePlatformAmount.set(Number.isFinite(amount) ? amount : null);
+  }
+
+  onAddBalancePlatformScreenshotSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file?.type.startsWith('image/')) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => this.addBalancePlatformScreenshot.set(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  onSubmitAddBalancePlatform(): void {
+    const amount = this.addBalancePlatformAmount() ?? this.suggestedTopUpAmount();
+    const screenShotUrl = this.addBalancePlatformScreenshot();
+
+    if (!amount || amount <= 0) {
+      this.topUpSubmitError.set(this.translate.instant('ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.INVALID_AMOUNT'));
+      return;
+    }
+
+    if (!screenShotUrl) {
+      this.topUpSubmitError.set(this.translate.instant('ONBOARDING.PLAN_SELECTION.SCREENSHOT_REQUIRED'));
+      return;
+    }
+
+    this.isSubmittingTopUp.set(true);
+    this.topUpSubmitError.set(null);
+    this.topUpSubmitSuccess.set(null);
+
+    this.onboardingService.addBalancePlatform({ amount, screenShotUrl }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => {
+        this.isSubmittingTopUp.set(false);
+        this.addBalancePlatformAmount.set(null);
+        this.addBalancePlatformScreenshot.set(null);
+        this.topUpSubmitSuccess.set(this.translate.instant('ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.SUBMITTED'));
+        this.refreshOnboardingStatus();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isSubmittingTopUp.set(false);
+        this.topUpSubmitError.set(extractApiError(err));
+      },
+    });
+  }
+
+  onUserActivateSubscription(): void {
+    this.activateSubscription(
+      () => undefined,
+      err => this.submitError.set(err),
+      () => this.isActivating.set(true),
+      () => this.isActivating.set(false),
+    );
+  }
+
+  private activateSubscription(
+    onSuccess: (message: string) => void,
+    onError: (message: string) => void,
+    onStart: () => void,
+    onEnd: () => void,
+  ): void {
+    const subscriptionId = this.subscriptionId();
+
+    if (!subscriptionId) {
+      onError(this.translate.instant('ONBOARDING.PLAN_SELECTION.NO_SUBSCRIPTION'));
+      return;
+    }
+
+    if (!this.canUserActivateSubscription()) {
+      onError(this.translate.instant('ONBOARDING.PLAN_SELECTION.INSUFFICIENT_BALANCE'));
+      return;
+    }
+
+    onStart();
+    this.submitError.set(null);
+
+    this.onboardingService.activateSubscription(subscriptionId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => {
+        onEnd();
+        onSuccess(this.translate.instant('ONBOARDING.PLAN_SELECTION.SUBSCRIPTION_ACTIVATED'));
+        void this.router.navigate(['/dashboard']);
+      },
+      error: (err: HttpErrorResponse) => {
+        onEnd();
+        onError(extractApiError(err));
+      },
+    });
+  }
+
+  private loadOnboardingStatus(): void {
+    this.onboardingService.getStatus().pipe(
+      take(1),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(status => this.applyOnboardingStatus(status));
+  }
+
+  private refreshOnboardingStatus(): void {
+    this.onboardingService.invalidateStatus();
+    this.onboardingService.getStatus().pipe(take(1)).subscribe(status => this.applyOnboardingStatus(status));
+  }
+
+  private applyOnboardingStatus(status: OnboardingStatusDto): void {
+    this.usableBalance.set(status.usableBalance ?? 0);
+    this.totalBalance.set(status.totalBalance ?? 0);
+    this.tenantId.set(status.tenantId);
+    this.subscriptionId.set(status.subscriptionId);
+    this.subscriptionAmount.set(status.subscriptionAmount);
+    this.pendingAddBalancePlatform.set(status.pendingAddBalancePlatform);
+
+    if (!this.businessSetup() && status.business) {
+      this.onboardingState.setBusinessSetup({
+        activityTypeId: 'laser_clinic',
+        businessName: status.business.businessName,
+        country: status.business.countryCode,
+        city: status.business.city,
+        currency: status.business.currencyCode,
+        logoUrl: null,
+        tenantId: status.tenantId ?? undefined,
+        businessId: status.businessId ?? undefined,
+      });
+    }
+  }
+
   onPrevious(): void {
 
     void this.router.navigate(['/onboarding/setup']);
@@ -331,21 +494,18 @@ export class PlanSelectionComponent implements OnInit {
 
 
   onSubmit(): void {
+    if (!this.canActivatePlan()) {
+      return;
+    }
+
+    if (this.canUserActivateSubscription()) {
+      this.onUserActivateSubscription();
+      return;
+    }
 
     const planId = this.selectedPlanId();
 
     if (!planId) {
-
-      return;
-
-    }
-
-
-
-    const screenShotUrl = this.isFreeTrial() ? PAYMENT_PLACEHOLDER : this.screenShotPreview();
-    if (!screenShotUrl) {
-
-      this.submitError.set(this.translate.instant('ONBOARDING.PLAN_SELECTION.SCREENSHOT_REQUIRED'));
 
       return;
 
@@ -365,7 +525,7 @@ export class PlanSelectionComponent implements OnInit {
 
       billingType: this.billingType(),
 
-      screenShotUrl,
+      screenShotUrl: PAYMENT_PLACEHOLDER,
 
     }).pipe(
 
@@ -373,12 +533,15 @@ export class PlanSelectionComponent implements OnInit {
 
     ).subscribe({
 
-      next: () => {
-
+      next: (result) => {
         this.isSubmitting.set(false);
+        this.subscriptionId.set(result.subscriptionId);
+        this.subscriptionAmount.set(this.displayPrice());
+        this.refreshOnboardingStatus();
 
-        void this.router.navigate(['/onboarding/pending']);
-
+        if (this.usableBalance() >= this.displayPrice()) {
+          this.onUserActivateSubscription();
+        }
       },
 
       error: (err: HttpErrorResponse) => {
@@ -432,30 +595,6 @@ export class PlanSelectionComponent implements OnInit {
   planDescriptionKey(plan: SubscriptionPlanDto): string {
 
     return `ONBOARDING.PLAN_SELECTION.PLANS.${this.planCodeKey(plan.code)}.DESCRIPTION`;
-
-  }
-
-
-
-  planCtaKey(plan: SubscriptionPlanDto): string {
-
-    if (plan.code === 'free-trial') {
-
-      return 'ONBOARDING.PLAN_SELECTION.START_TRIAL';
-
-    }
-
-    if (this.isPlanSelected(plan)) {
-
-      return this.billingType() === BillingType.Monthly
-
-        ? 'ONBOARDING.PLAN_SELECTION.CHOOSE_MONTHLY'
-
-        : 'ONBOARDING.PLAN_SELECTION.CHOOSE_YEARLY';
-
-    }
-
-    return 'ONBOARDING.PLAN_SELECTION.SELECT_PLAN';
 
   }
 

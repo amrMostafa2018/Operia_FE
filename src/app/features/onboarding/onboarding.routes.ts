@@ -22,9 +22,8 @@ export const onboardingRoutes: Routes = [
       },
       {
         path: 'pending',
-        loadComponent: () =>
-          import('./onboarding-pending/onboarding-pending.component').then(m => m.OnboardingPendingComponent),
-        title: 'Pending Review - Operia',
+        redirectTo: 'plan',
+        pathMatch: 'full',
       },
       {
         path: '',

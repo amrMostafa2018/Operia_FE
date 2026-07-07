@@ -32,6 +32,26 @@ export interface OnboardingStatusDto {
   businessId: string | null;
   subscriptionId: string | null;
   business: BusinessSummaryDto | null;
+  usableBalance: number;
+  totalBalance: number;
+  subscriptionAmount: number | null;
+  pendingAddBalancePlatform: PendingAddBalancePlatformDto | null;
+}
+
+export interface PendingAddBalancePlatformDto {
+  id: string;
+  amount: number;
+  screenShotUrl: string;
+}
+
+export interface AddBalancePlatformRequest {
+  amount: number;
+  screenShotUrl: string;
+}
+
+export interface AddBalancePlatformResultDto {
+  revenueId: string;
+  amount: number;
 }
 
 export interface SubscriptionPlanDto {
@@ -93,10 +113,39 @@ export const ACTIVITY_TO_BUSINESS_TYPE: Record<ActivityTypeId, BusinessType> = {
 export const ONBOARDING_ROUTES: Record<OnboardingStep, string> = {
   [OnboardingStep.Setup]: '/onboarding/setup',
   [OnboardingStep.Plan]: '/onboarding/plan',
-  [OnboardingStep.Pending]: '/onboarding/pending',
+  [OnboardingStep.Pending]: '/onboarding/plan',
   [OnboardingStep.Active]: '/dashboard',
 };
 
 export function onboardingRouteForStep(step: OnboardingStep): string {
   return ONBOARDING_ROUTES[step] ?? '/onboarding/setup';
+}
+
+type OnboardingStatusApi = OnboardingStatusDto & {
+  balance?: number;
+  UsableBalance?: number;
+  TotalBalance?: number;
+  pendingBalanceTopUp?: PendingAddBalancePlatformDto | null;
+  PendingAddBalancePlatform?: PendingAddBalancePlatformDto | null;
+  PendingBalanceTopUp?: PendingAddBalancePlatformDto | null;
+};
+
+export function normalizeOnboardingStatus(status: OnboardingStatusApi): OnboardingStatusDto {
+  const usableBalance =
+    status.usableBalance ?? status.UsableBalance ?? status.balance ?? 0;
+  const totalBalance =
+    status.totalBalance ?? status.TotalBalance ?? usableBalance;
+  const pendingAddBalancePlatform =
+    status.pendingAddBalancePlatform
+    ?? status.PendingAddBalancePlatform
+    ?? status.pendingBalanceTopUp
+    ?? status.PendingBalanceTopUp
+    ?? null;
+
+  return {
+    ...status,
+    usableBalance,
+    totalBalance,
+    pendingAddBalancePlatform,
+  };
 }

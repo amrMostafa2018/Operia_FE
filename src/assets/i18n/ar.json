@@ -269,10 +269,10 @@
         "amman": "عمّان"
       },
       "CURRENCIES": {
-        "EGP": "جنيه مصري (EGP)",
-        "SAR": "ريال سعودي (SAR)",
-        "AED": "درهم إماراتي (AED)",
-        "USD": "دولار أمريكي (USD)"
+        "EGP": "جنيه مصري",
+        "SAR": "ريال سعودي",
+        "AED": "درهم إماراتي",
+        "USD": "دولار أمريكي"
       },
       "ACTIVITY_TYPES": {
         "LASER_CLINIC": {
@@ -325,6 +325,15 @@
       "SELECTED_PLAN": "الباقة المختارة",
       "BILLING_PERIOD": "مدة الاشتراك",
       "PRICE": "السعر",
+      "CURRENT_BALANCE": "الرصيد الحالي",
+      "TOTAL_BALANCE": "الرصيد",
+      "USABLE_BALANCE": "الرصيد القابل للاستخدام",
+      "BALANCE_OVERVIEW": "رصيدك",
+      "ACTIVATE_SUBSCRIPTION": "تفعيل الاشتراك",
+      "ACTIVATE_SYSTEM": "تفعيل النظام",
+      "INSUFFICIENT_BALANCE": "رصيدك غير كافٍ لهذه الباقة. سيتم إضافة الرصيد بعد مراجعة الدفع.",
+      "NO_SUBSCRIPTION": "لا يوجد اشتراك معلق.",
+      "SUBSCRIPTION_ACTIVATED": "تم تفعيل الاشتراك بنجاح.",
       "VAT": "ضريبة القيمة المضافة (14%)",
       "TOTAL_MONTHLY": "الإجمالي الشهري",
       "TOTAL_YEARLY": "الإجمالي السنوي",
@@ -349,7 +358,7 @@
       "PROMO_BENEFIT_4": "دعم فني متخصص",
       "SECURE_BADGE": "100% آمن",
       "SECURE_NOTE": "بياناتك مشفرة ومحمية بأعلى معايير الأمان",
-      "PAYMENT_METHODS_TITLE": "طرق الدفع",
+      "PAYMENT_METHODS_TITLE": "إضافة رصيد",
       "PAYMENT_METHODS": {
         "CARD": "بطاقة ائتمان / مدى",
         "BANK_TRANSFER": "تحويل بنكي",
@@ -358,9 +367,37 @@
       },
       "PAYMENT_SECURE_TITLE": "عملية دفع آمنة 100%",
       "PAYMENT_SECURE_NOTE": "جميع المعاملات مشفرة ومحمية",
-      "INSTAPAY_NOTE": "حوّل قيمة الباقة ثم ارفع صورة إثبات الدفع.",
+      "INSTAPAY_NOTE": "أضف الرصيد ثم ارفع صورة إثبات الدفع.",
       "UPLOAD_SCREENSHOT": "رفع صورة إثبات الدفع",
       "SCREENSHOT_REQUIRED": "صورة إثبات الدفع مطلوبة",
+      "BALANCE_TOP_UP": {
+        "TITLE": "إضافة رصيد عبر Instapay",
+        "HINT": "حوّل المبلغ عبر Instapay ثم ارفع صورة إثبات الدفع.",
+        "AMOUNT": "المبلغ المراد إضافته",
+        "ADD_BALANCE_BTN": "إضافة رصيد",
+        "SUBMIT": "إرسال طلب إضافة الرصيد",
+        "ADD_BALANCE_BTN": "إضافة رصيد",
+        "SUBMITTED": "تم إرسال طلب الرصيد. سيتم مراجعته قريباً.",
+        "INVALID_AMOUNT": "أدخل مبلغاً صحيحاً أكبر من صفر.",
+        "PENDING_TITLE": "طلب الرصيد قيد المراجعة",
+        "PENDING_MESSAGE": "دفعتك عبر Instapay بمبلغ {{amount}} قيد المراجعة."
+      },
+      "ADMIN": {
+        "TITLE": "إجراءات المسؤول",
+        "HINT": "أضف رصيد المستأجر بعد التحقق من الدفع، ثم فعّل الاشتراك.",
+        "REVIEW_HINT": "راجع صورة Instapay، وافق على الرصيد، ثم فعّل الاشتراك.",
+        "REQUESTED_AMOUNT": "المبلغ المطلوب",
+        "ADD_BALANCE": "المبلغ المراد إضافته",
+        "AMOUNT_PLACEHOLDER": "أدخل المبلغ",
+        "ADD_BALANCE_BTN": "إضافة رصيد",
+        "APPROVE_BALANCE_BTN": "الموافقة على الرصيد",
+        "ACTIVATE_BTN": "تفعيل الاشتراك",
+        "ACTIVATE_HINT": "أكمل اختيار الباقة والدفع أولاً لتفعيل الاشتراك.",
+        "INVALID_AMOUNT": "أدخل مبلغاً صحيحاً أكبر من صفر.",
+        "NO_SUBSCRIPTION": "لا يوجد اشتراك معلق.",
+        "BALANCE_ADDED": "تمت إضافة الرصيد بنجاح.",
+        "SUBSCRIPTION_ACTIVATED": "تم تفعيل الاشتراك بنجاح."
+      },
       "PLANS": {
         "FREE_TRIAL": {
           "DESCRIPTION": "جرّب جميع المميزات مجاناً"
@@ -394,6 +431,8 @@
     "PENDING": {
       "TITLE": "طلبك قيد المراجعة",
       "MESSAGE": "استلمنا إثبات الدفع الخاص بك. سيقوم فريقنا بمراجعته وإضافة الرصيد وتفعيل الباقة قريباً.",
+      "READY_TO_ACTIVATE": "رصيدك كافٍ. يمكنك تفعيل اشتراكك الآن.",
+      "ADD_BALANCE": "إضافة رصيد عبر Instapay",
       "CHECK_STATUS": "تحقق من الحالة"
     }
   },
@@ -458,6 +497,6 @@
     "EXPORT_REPORT":            "تحضير التقرير",
     "COMPARED_LAST_MONTH":      "من الشهر الماضي",
     "COMPARED_YESTERDAY":       "من أمس",
-    "EGP":                      "ج.م"
+    "EGP":                      "جنيه مصري"
   }
 }

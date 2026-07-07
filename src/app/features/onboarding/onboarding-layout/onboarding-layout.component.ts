@@ -34,7 +34,7 @@ export class OnboardingLayoutComponent {
     }
 
     const url = this.currentUrl();
-    if (url.includes('/onboarding/plan') || url.includes('/onboarding/pending')) {
+    if (url.includes('/onboarding/plan')) {
       return 3;
     }
 

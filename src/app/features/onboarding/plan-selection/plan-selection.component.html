@@ -1,30 +1,70 @@
 <div class="plan-page">
   <div class="plan-body" [class.is-arabic]="isArabic()" [class.is-english]="!isArabic()">
-    <!-- Promo panel: inline-start (right in AR, left in EN) -->
+    <!-- Order summary: inline-start (right in AR, left in EN) -->
     <aside class="plan-promo">
-      <div class="promo-visual" aria-hidden="true">
-        <div class="promo-icon-wrap">
-          <i class="pi pi-chart-bar"></i>
+      <h3 class="plan-promo__summary-title">{{ 'ONBOARDING.PLAN_SELECTION.SUMMARY_TITLE' | translate }}</h3>
+
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.BUSINESS_TYPE' | translate }}</span>
+          <strong>{{ selectedActivity().titleKey | translate }}</strong>
         </div>
-      </div>
 
-      <h3>{{ 'ONBOARDING.PLAN_SELECTION.PROMO_TITLE' | translate }}</h3>
+        @if (selectedPlan(); as plan) {
+          <div class="summary-row">
+            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.SELECTED_PLAN' | translate }}</span>
+            <strong>{{ plan.name }}</strong>
+          </div>
 
-      <ul class="promo-benefits">
-        @for (benefitKey of promoBenefitKeys; track benefitKey) {
-          <li>
-            <span class="benefit-icon"><i class="pi pi-check"></i></span>
-            <span>{{ benefitKey | translate }}</span>
-          </li>
+          <div class="summary-row">
+            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.BILLING_PERIOD' | translate }}</span>
+            <strong>
+              {{
+                billingType() === billingTypeEnum.Monthly
+                  ? ('ONBOARDING.PLAN_SELECTION.MONTHLY' | translate)
+                  : ('ONBOARDING.PLAN_SELECTION.YEARLY' | translate)
+              }}
+            </strong>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row summary-row--price">
+            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.TOTAL_BALANCE' | translate }}</span>
+            <strong class="money-amount">
+              <span class="money-amount__value" dir="ltr">{{ usableBalance() | number }}</span>
+              <span class="money-amount__currency">{{ currencyLabel() }}</span>
+            </strong>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row summary-row--price">
+            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.PRICE' | translate }}</span>
+            <strong class="money-amount">
+              <span class="money-amount__value" dir="ltr">{{ displayPrice() | number }}</span>
+              <span class="money-amount__currency">{{ currencyLabel() }}</span>
+            </strong>
+          </div>
+
+          @if (!isFreeTrial()) {
+            <div class="summary-row summary-row--price">
+              <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.VAT' | translate }}</span>
+              <strong class="money-amount">
+                <span class="money-amount__value" dir="ltr">{{ vatAmount() | number }}</span>
+                <span class="money-amount__currency">{{ currencyLabel() }}</span>
+              </strong>
+            </div>
+
+            <div class="summary-row summary-row--total">
+              <span class="summary-label">{{ totalLabelKey() | translate }}</span>
+              <strong class="money-amount money-amount--total">
+                <span class="money-amount__value" dir="ltr">{{ totalPrice() | number }}</span>
+                <span class="money-amount__currency">{{ currencyLabel() }}</span>
+              </strong>
+            </div>
+          }
         }
-      </ul>
-
-      <div class="promo-secure">
-        <i class="pi pi-lock"></i>
-        <div>
-          <strong>{{ 'ONBOARDING.PLAN_SELECTION.SECURE_BADGE' | translate }}</strong>
-          <span>{{ 'ONBOARDING.PLAN_SELECTION.SECURE_NOTE' | translate }}</span>
-        </div>
       </div>
     </aside>
 
@@ -83,7 +123,7 @@
                   <p class="plan-trial-label">{{ 'ONBOARDING.PLAN_SELECTION.TRIAL_DAYS' | translate: { days: plan.trialDays } }}</p>
                 } @else {
                   <p class="plan-price">
-                    {{ planPrice(plan) | number }}
+                    <span class="money-amount__value" dir="ltr">{{ planPrice(plan) | number }}</span>
                     <span class="plan-currency">{{ currencyLabel() }}</span>
                     <span class="plan-period">/ {{ billingPeriodLabel() | translate }}</span>
                   </p>
@@ -99,16 +139,6 @@
                     </li>
                   }
                 </ul>
-
-                <button
-                  type="button"
-                  class="plan-cta"
-                  [class.plan-cta--primary]="isPlanSelected(plan)"
-                  [class.plan-cta--trial]="plan.code === 'free-trial'"
-                  (click)="selectPlan(plan.planId); $event.stopPropagation()"
-                >
-                  {{ planCtaKey(plan) | translate }}
-                </button>
               </article>
             }
           </div>
@@ -120,8 +150,44 @@
         </div>
       </section>
 
-      @if (!isFreeTrial()) {
-        <section class="section payment-section">
+    </div>
+
+    <!-- Order summary & payment: inline-end (left in AR, right in EN) -->
+    <aside class="plan-summary">
+      <div class="balance-card">
+        <div class="balance-card__header">
+          <i class="pi pi-wallet"></i>
+          <span>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_OVERVIEW' | translate }}</span>
+        </div>
+        <div class="balance-row balance-row--usable">
+          <span class="balance-row__label">{{ 'ONBOARDING.PLAN_SELECTION.TOTAL_BALANCE' | translate }}</span>
+          <strong class="balance-row__amount money-amount">
+            <span class="money-amount__value" dir="ltr">{{ usableBalance() | number }}</span>
+            <span class="money-amount__currency">{{ currencyLabel() }}</span>
+          </strong>
+        </div>
+        @if (hasInsufficientBalance()) {
+          <p class="balance-warning">
+            <i class="pi pi-exclamation-triangle"></i>
+            {{ 'ONBOARDING.PLAN_SELECTION.INSUFFICIENT_BALANCE' | translate }}
+          </p>
+        }
+        @if (canUserActivateSubscription()) {
+          <p-button
+            type="button"
+            [label]="'ONBOARDING.PLAN_SELECTION.ACTIVATE_SYSTEM' | translate"
+            icon="pi pi-check"
+            [iconPos]="isArabic() ? 'right' : 'left'"
+            styleClass="activate-btn"
+            [loading]="isActivating()"
+            [disabled]="isActivating() || isSubmitting()"
+            (onClick)="onUserActivateSubscription()"
+          />
+        }
+      </div>
+
+      @if (!isFreeTrial() && !hasPendingAddBalancePlatform()) {
+        <section class="section payment-section payment-section--sidebar">
           <div class="section-header">
             <span class="section-icon"><i class="pi pi-wallet"></i></span>
             <div>
@@ -130,27 +196,39 @@
             </div>
           </div>
 
-          <div class="payment-methods">
+          <label class="balance-amount-field">
+            <span>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.AMOUNT' | translate }}</span>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              [value]="addBalancePlatformAmount() ?? suggestedTopUpAmount() ?? ''"
+              [placeholder]="'ONBOARDING.PLAN_SELECTION.ADMIN.AMOUNT_PLACEHOLDER' | translate"
+              (input)="onTopUpAmountChange($event)"
+            />
+          </label>
+
+          <div class="payment-methods payment-methods--end">
             <label class="payment-option selected">
-              <input type="radio" name="paymentMethod" checked disabled />
-              <span class="payment-option__icon"><i class="pi pi-wallet"></i></span>
               <span class="payment-option__label">{{ 'ONBOARDING.PLAN_SELECTION.PAYMENT_METHODS.INSTAPAY' | translate }}</span>
+              <span class="payment-option__icon"><i class="pi pi-wallet"></i></span>
+              <input type="radio" name="addBalancePlatformMethod" checked disabled />
             </label>
           </div>
 
-          <label class="upload-box" for="screenshotInput">
-            @if (screenShotPreview(); as preview) {
-              <img [src]="preview" alt="payment proof" class="screenshot-preview" />
+          <label class="upload-box" for="addBalancePlatformScreenshotInput">
+            @if (addBalancePlatformScreenshot(); as preview) {
+              <img [src]="preview" alt="Instapay proof" class="screenshot-preview" />
             } @else {
               <i class="pi pi-cloud-upload"></i>
               <span>{{ 'ONBOARDING.PLAN_SELECTION.UPLOAD_SCREENSHOT' | translate }}</span>
             }
             <input
-              id="screenshotInput"
+              id="addBalancePlatformScreenshotInput"
               type="file"
               accept="image/*"
               hidden
-              (change)="onScreenshotSelected($event)"
+              (change)="onAddBalancePlatformScreenshotSelected($event)"
             />
           </label>
 
@@ -162,60 +240,32 @@
             </div>
           </div>
 
-          @if (submitError()) {
-            <p class="error-text">{{ submitError() }}</p>
+          <p-button
+            type="button"
+            [label]="'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.ADD_BALANCE_BTN' | translate"
+            icon="pi pi-plus"
+            [iconPos]="isArabic() ? 'right' : 'left'"
+            styleClass="add-balance-btn"
+            [loading]="isSubmittingTopUp()"
+            [disabled]="isSubmittingTopUp()"
+            (onClick)="onSubmitAddBalancePlatform()"
+          />
+
+          @if (topUpSubmitError()) {
+            <p class="error-text">{{ topUpSubmitError() }}</p>
+          }
+          @if (topUpSubmitSuccess()) {
+            <p class="success-text">{{ topUpSubmitSuccess() }}</p>
           }
         </section>
       }
-    </div>
 
-    <!-- Order summary & payment: inline-end (left in AR, right in EN) -->
-    <aside class="plan-summary">
-      <h3>{{ 'ONBOARDING.PLAN_SELECTION.SUMMARY_TITLE' | translate }}</h3>
-
-      <div class="summary-card">
-        <div class="summary-row">
-          <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.BUSINESS_TYPE' | translate }}</span>
-          <strong>{{ selectedActivity().titleKey | translate }}</strong>
+      @if (pendingAddBalancePlatform(); as pending) {
+        <div class="balance-top-up balance-top-up--pending">
+          <h4>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_TITLE' | translate }}</h4>
+          <p>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_MESSAGE' | translate: { amount: pending.amount | number } }}</p>
         </div>
-
-        @if (selectedPlan(); as plan) {
-          <div class="summary-row">
-            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.SELECTED_PLAN' | translate }}</span>
-            <strong>{{ plan.name }}</strong>
-          </div>
-
-          <div class="summary-row">
-            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.BILLING_PERIOD' | translate }}</span>
-            <strong>
-              {{
-                billingType() === billingTypeEnum.Monthly
-                  ? ('ONBOARDING.PLAN_SELECTION.MONTHLY' | translate)
-                  : ('ONBOARDING.PLAN_SELECTION.YEARLY' | translate)
-              }}
-            </strong>
-          </div>
-
-          <div class="summary-divider"></div>
-
-          <div class="summary-row summary-row--price">
-            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.PRICE' | translate }}</span>
-            <strong>{{ displayPrice() | number }} {{ currencyLabel() }}</strong>
-          </div>
-
-          @if (!isFreeTrial()) {
-            <div class="summary-row summary-row--price">
-              <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.VAT' | translate }}</span>
-              <strong>{{ vatAmount() | number }} {{ currencyLabel() }}</strong>
-            </div>
-
-            <div class="summary-row summary-row--total">
-              <span class="summary-label">{{ totalLabelKey() | translate }}</span>
-              <strong>{{ totalPrice() | number }} {{ currencyLabel() }}</strong>
-            </div>
-          }
-        }
-      </div>
+      }
     </aside>
   </div>
 
@@ -243,8 +293,8 @@
         icon="pi pi-lock"
         [iconPos]="submitIconPos()"
         styleClass="submit-btn"
-        [loading]="isSubmitting()"
-        [disabled]="isSubmitting()"
+        [loading]="isSubmitting() || isActivating()"
+        [disabled]="isSubmitting() || isActivating() || !canActivatePlan()"
         (onClick)="onSubmit()"
       />
     </div>

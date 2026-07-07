@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, shareReplay, tap } from 'rxjs';
+import { map, Observable, shareReplay, tap } from 'rxjs';
 
 import { environment } from '@env/environment';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
@@ -8,8 +8,11 @@ import {
   ActivityTypeId,
 } from '@app/features/onboarding/models/activity-type.model';
 import {
+  AddBalancePlatformRequest,
+  AddBalancePlatformResultDto,
   BusinessType,
   CompleteOnboardingRequest,
+  normalizeOnboardingStatus,
   OnboardingResultDto,
   OnboardingStatusDto,
   SetupBusinessRequest,
@@ -34,6 +37,7 @@ export class OnboardingService {
   getStatus(): Observable<OnboardingStatusDto> {
     if (!this.statusCache$) {
       this.statusCache$ = this.http.get<OnboardingStatusDto>(`${this.baseUrl}/status`).pipe(
+        map(status => normalizeOnboardingStatus(status)),
         tap(status => this.syncBusinessSetupFromStatus(status)),
         shareReplay({ bufferSize: 1, refCount: false }),
       );
@@ -54,6 +58,18 @@ export class OnboardingService {
 
   complete(request: CompleteOnboardingRequest): Observable<OnboardingResultDto> {
     return this.http.post<OnboardingResultDto>(`${this.baseUrl}/complete`, request).pipe(
+      tap(() => this.invalidateStatus()),
+    );
+  }
+
+  activateSubscription(subscriptionId: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/activate`, { subscriptionId }).pipe(
+      tap(() => this.invalidateStatus()),
+    );
+  }
+
+  addBalancePlatform(request: AddBalancePlatformRequest): Observable<AddBalancePlatformResultDto> {
+    return this.http.post<AddBalancePlatformResultDto>(`${this.baseUrl}/add-balance-platform`, request).pipe(
       tap(() => this.invalidateStatus()),
     );
   }
