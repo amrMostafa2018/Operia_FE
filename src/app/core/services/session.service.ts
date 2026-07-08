@@ -7,6 +7,7 @@ import { AuthStore } from '@core/store/auth.store';
 import { userFromAccessToken } from '@core/utils/jwt.util';
 import { AuthHttpService } from './auth-http.service';
 import { OnboardingService } from './onboarding.service';
+import { OnboardingStateService } from './onboarding-state.service';
 import {
   onboardingRouteForStep,
   OnboardingStep,
@@ -25,6 +26,7 @@ export class SessionService {
   private readonly authStore = inject(AuthStore);
   private readonly authHttp = inject(AuthHttpService);
   private readonly onboardingService = inject(OnboardingService);
+  private readonly onboardingState = inject(OnboardingStateService);
   private readonly router = inject(Router);
 
   restoreSession(): Observable<boolean> {
@@ -150,6 +152,8 @@ export class SessionService {
     localStorage.removeItem(USER_KEY);
     sessionStorage.removeItem(RT_KEY);
     sessionStorage.removeItem(USER_KEY);
+    this.onboardingService.invalidateStatus();
+    this.onboardingState.clear();
     this.authStore.clearAuth();
   }
 

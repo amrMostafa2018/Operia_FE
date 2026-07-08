@@ -38,7 +38,9 @@ export class OnboardingService {
     if (!this.statusCache$) {
       this.statusCache$ = this.http.get<OnboardingStatusDto>(`${this.baseUrl}/status`).pipe(
         map(status => normalizeOnboardingStatus(status)),
-        tap(status => this.syncBusinessSetupFromStatus(status)),
+        tap(status => {
+          this.syncBusinessSetupFromStatus(status);
+        }),
         shareReplay({ bufferSize: 1, refCount: false }),
       );
     }

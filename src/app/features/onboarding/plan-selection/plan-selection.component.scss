@@ -42,16 +42,6 @@
       direction: rtl;
     }
 
-    // Flip section-header so icon sits at inline-start (right in Arabic)
-    .section-header {
-      flex-direction: row-reverse;
-    }
-
-    // Flip balance-card header so wallet icon is at inline-start (right in Arabic)
-    .balance-card__header {
-      flex-direction: row-reverse;
-    }
-
     // In Arabic, radio button should be at inline-start (right), label at end (left)
     .payment-option {
       .payment-option__label { order: 3; }
@@ -61,11 +51,6 @@
         margin-inline-start: 0;
         margin-inline-end: auto;
       }
-    }
-
-    // payment-secure: lock icon at inline-start (right)
-    .payment-secure {
-      flex-direction: row-reverse;
     }
   }
 
@@ -389,6 +374,7 @@
   &__header {
     display: flex;
     align-items: center;
+    justify-content: inline-start;
     gap: 0.45rem;
     font-size: 0.72rem;
     color: var(--text-secondary);
@@ -973,10 +959,6 @@
         direction: rtl;
       }
 
-      .section-header { flex-direction: row-reverse; }
-      .balance-card__header { flex-direction: row-reverse; }
-      .payment-secure { flex-direction: row-reverse; }
-
       .payment-option {
         .payment-option__label { order: 3; }
 
@@ -1174,21 +1156,7 @@
   }
 
   .plan-footer {
-    grid-template-columns: 1fr;
+    padding: 0.75rem;
     gap: 0.65rem;
-
-    .footer-note {
-      grid-row: 1;
-    }
-
-    .footer-start {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    .footer-end {
-      grid-column: 1;
-      grid-row: 3;
-    }
   }
 }
