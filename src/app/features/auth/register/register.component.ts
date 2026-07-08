@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
@@ -13,7 +14,6 @@ import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
 import { MessageService } from 'primeng/api';
 
 import { AuthService } from '@core/services/auth.service';
@@ -39,6 +39,11 @@ import { OtpVerificationComponent } from '@app/shared/components/otp-verificatio
 import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '@app/shared/utils/otp.util';
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import {
+  createPasswordToggle,
+  getFieldServerError,
+  isFieldInvalid,
+} from '../auth-form.utils';
 
 type RegisterStep = 'form' | 'otp';
 
@@ -51,7 +56,6 @@ type RegisterStep = 'form' | 'otp';
     ButtonModule,
     CheckboxModule,
     InputTextModule,
-    PasswordModule,
     NgxIntlTelInputModule,
     TranslatePipe,
     OtpVerificationComponent,
@@ -72,10 +76,11 @@ export class RegisterComponent implements OnInit {
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
+  readonly isFieldInvalid = isFieldInvalid;
+  readonly getFieldServerError = getFieldServerError;
 
   form!: FormGroup;
   isLoading = this.authStore.isLoading;
-  errorMessage = this.authStore.error;
 
   step = signal<RegisterStep>('form');
   registrationId = signal<string | null>(null);
@@ -85,8 +90,13 @@ export class RegisterComponent implements OnInit {
 
   readonly otpLabels = buildOtpLabels('AUTH.REGISTER_PAGE');
 
-  showPassword = signal(false);
-  showConfirm = signal(false);
+  private readonly passwordToggle = createPasswordToggle();
+  readonly showPassword = this.passwordToggle.show;
+  readonly togglePassword = this.passwordToggle.toggle;
+
+  private readonly confirmToggle = createPasswordToggle();
+  readonly showConfirm = this.confirmToggle.show;
+  readonly toggleConfirm = this.confirmToggle.toggle;
 
   readonly submitIcon = computed(() =>
     getSubmitArrowIcon(this.languageService.currentLang())
@@ -131,30 +141,6 @@ export class RegisterComponent implements OnInit {
     this.otpServerError.set(null);
   }
 
-  togglePassword(): void {
-    this.showPassword.update(v => !v);
-  }
-
-  toggleConfirm(): void {
-    this.showConfirm.update(v => !v);
-  }
-
-  isInvalid(field: string): boolean {
-    const ctrl = this.form.get(field);
-    return !!(ctrl?.invalid && ctrl?.touched);
-  }
-
-  getFieldError(field: string): string | null {
-    const ctrl = this.form.get(field);
-    if (!ctrl?.touched || !ctrl.errors) {
-      return null;
-    }
-    if (ctrl.errors['server']) {
-      return ctrl.errors['server'];
-    }
-    return null;
-  }
-
   getPhoneError(): string | null {
     return getPhoneFieldError(this.form.get('phone'), {
       required: this.translate.instant('AUTH.REGISTER_PAGE.PHONE_REQUIRED'),
@@ -176,7 +162,9 @@ export class RegisterComponent implements OnInit {
       password,
       confirmPassword,
       phoneNumber,
-    }).subscribe({
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (res) => {
         this.displayName.set(name);
         this.registrationId.set(res.registrationId);
@@ -205,6 +193,8 @@ export class RegisterComponent implements OnInit {
     this.authService.verifyRegisterOtp(
       { registrationId, code },
       this.displayName()
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       error: (err: HttpErrorResponse) => this.handleOtpVerifyError(err),
     });
@@ -220,7 +210,9 @@ export class RegisterComponent implements OnInit {
     this.isResendingOtp.set(true);
     this.otpServerError.set(null);
 
-    this.authService.resendRegisterOtp({ registrationId }).subscribe({
+    this.authService.resendRegisterOtp({ registrationId }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.isResendingOtp.set(false);
         this.messageService.add({

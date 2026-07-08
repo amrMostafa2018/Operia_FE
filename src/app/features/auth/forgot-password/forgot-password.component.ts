@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
@@ -31,6 +32,7 @@ import { OtpVerificationComponent } from '@app/shared/components/otp-verificatio
 import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '@app/shared/utils/otp.util';
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import { createPasswordToggle, isFieldInvalid } from '../auth-form.utils';
 
 type ForgotPasswordStep = 'phone' | 'otp' | 'reset';
 
@@ -63,6 +65,7 @@ export class ForgotPasswordComponent implements OnInit {
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
+  readonly isFieldInvalid = isFieldInvalid;
 
   phoneForm!: FormGroup;
   resetForm!: FormGroup;
@@ -74,8 +77,13 @@ export class ForgotPasswordComponent implements OnInit {
   isResendingOtp = signal(false);
   otpServerError = signal<string | null>(null);
 
-  showPassword = signal(false);
-  showConfirm = signal(false);
+  private readonly passwordToggle = createPasswordToggle();
+  readonly showPassword = this.passwordToggle.show;
+  readonly togglePassword = this.passwordToggle.toggle;
+
+  private readonly confirmToggle = createPasswordToggle();
+  readonly showConfirm = this.confirmToggle.show;
+  readonly toggleConfirm = this.confirmToggle.toggle;
 
   readonly otpLabels = buildOtpLabels('AUTH.FORGOT_PASSWORD_PAGE');
 
@@ -96,29 +104,11 @@ export class ForgotPasswordComponent implements OnInit {
     setupPasswordConfirmSync(this.resetForm, this.destroyRef);
   }
 
-  isPhoneInvalid(): boolean {
-    const ctrl = this.phoneForm.get('phone');
-    return !!(ctrl?.invalid && ctrl?.touched);
-  }
-
-  isResetInvalid(field: string): boolean {
-    const ctrl = this.resetForm.get(field);
-    return !!(ctrl?.invalid && ctrl?.touched);
-  }
-
   getPhoneError(): string | null {
     return getPhoneFieldError(this.phoneForm.get('phone'), {
       required: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.PHONE_REQUIRED'),
       invalid: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.PHONE_INVALID'),
     });
-  }
-
-  togglePassword(): void {
-    this.showPassword.update(v => !v);
-  }
-
-  toggleConfirm(): void {
-    this.showConfirm.update(v => !v);
   }
 
   backToPhone(): void {
@@ -136,7 +126,9 @@ export class ForgotPasswordComponent implements OnInit {
     const phone = getE164PhoneNumber(this.phoneForm.get('phone')?.value);
     this.phoneNumber.set(phone);
 
-    this.authService.forgotPassword(phone).subscribe({
+    this.authService.forgotPassword(phone).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.otpServerError.set(null);
         this.step.set('otp');
@@ -159,7 +151,9 @@ export class ForgotPasswordComponent implements OnInit {
 
     this.otpServerError.set(null);
 
-    this.authService.verifyForgotPasswordOtp(phone, code).subscribe({
+    this.authService.verifyForgotPasswordOtp(phone, code).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (res) => {
         this.resetToken.set(res.resetToken);
         this.step.set('reset');
@@ -178,7 +172,9 @@ export class ForgotPasswordComponent implements OnInit {
     this.isResendingOtp.set(true);
     this.otpServerError.set(null);
 
-    this.authService.resendForgotPasswordOtp(phone).subscribe({
+    this.authService.resendForgotPasswordOtp(phone).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.isResendingOtp.set(false);
         this.messageService.add({
@@ -207,7 +203,9 @@ export class ForgotPasswordComponent implements OnInit {
 
     const { password, confirmPassword } = this.resetForm.value;
 
-    this.authService.resetPassword(phone, token, password, confirmPassword).subscribe({
+    this.authService.resetPassword(phone, token, password, confirmPassword).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',

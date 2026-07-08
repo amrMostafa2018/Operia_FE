@@ -232,7 +232,7 @@ export class BusinessSetupComponent implements OnInit {
       return;
     }
 
-    if (entrySource === 'login' || this.authService.isAuthenticated()) {
+    if (entrySource === 'login' || this.authService.hasActiveSession()) {
       this.authService.logout();
     }
   }

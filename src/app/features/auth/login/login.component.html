@@ -24,7 +24,7 @@
       <!-- Mobile Number -->
       <div class="field field--phone">
         <label for="loginPhone">{{ 'AUTH.LOGIN_PAGE.PHONE' | translate }} <span class="required">*</span></label>
-        <div class="phone-row phone-row--intl" [class.error]="isInvalid('phone')" dir="ltr">
+        <div class="phone-row phone-row--intl" [class.error]="isFieldInvalid(form, 'phone')" dir="ltr">
           <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
           <ngx-intl-tel-input
             [cssClass]="phoneInputCssClass"
@@ -41,7 +41,7 @@
             formControlName="phone"
           />
         </div>
-        @if (isInvalid('phone') && getPhoneError()) {
+        @if (isFieldInvalid(form, 'phone') && getPhoneError()) {
           <small class="error-msg">{{ getPhoneError() }}</small>
         }
       </div>
@@ -52,7 +52,7 @@
           <label for="password">{{ 'AUTH.PASSWORD' | translate }} <span class="required">*</span></label>
           <a routerLink="/auth/forgot-password" class="forgot-link">{{ 'AUTH.FORGOT_PASSWORD' | translate }}</a>
         </div>
-        <div class="input-wrapper" [class.error]="isInvalid('password')">
+        <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'password')">
           <i class="pi pi-lock input-icon"></i>
           <input
             id="password"
@@ -66,9 +66,9 @@
             <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
           </button>
         </div>
-        @if (isInvalid('password')) {
+        @if (isFieldInvalid(form, 'password')) {
           <small class="error-msg">
-            @if (form.get('password')?.errors?.['server']) { {{ getFieldError('password') }} }
+            @if (form.get('password')?.errors?.['server']) { {{ getFieldServerError(form, 'password') }} }
             @else if (form.get('password')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.PASSWORD_REQUIRED' | translate }} }
             @else if (form.get('password')?.errors?.['minlength']) { {{ 'AUTH.LOGIN_PAGE.PASSWORD_MIN' | translate }} }
           </small>

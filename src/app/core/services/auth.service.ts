@@ -36,76 +36,44 @@ export class AuthService {
   private loggingOut = false;
 
   initiateLogin(request: LoginRequest): Observable<LoginInitiateResponse> {
-    this.authStore.setLoading(true);
-    this.authStore.setError(null);
-
-    return this.authHttp.initiateLogin(request.phoneNumber, request.password).pipe(
-      tap(() => this.authStore.setLoading(false)),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setLoading(false);
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
+    return this.withAuthState(
+      this.authHttp.initiateLogin(request.phoneNumber, request.password)
     );
   }
 
   verifyLoginOtp(request: VerifyLoginOtpRequest, rememberMe = false): Observable<void> {
-    this.authStore.setLoading(true);
-    this.authStore.setError(null);
-
-    return this.authHttp.verifyLoginOtp(request).pipe(
-      tap((res) => {
-        this.session.applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe);
-        this.authStore.setLoading(false);
-        this.session.navigateAfterAuth('login');
-      }),
-      map(() => void 0),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setLoading(false);
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
+    return this.withAuthState(
+      this.authHttp.verifyLoginOtp(request).pipe(
+        tap((res) => {
+          this.session.applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe);
+          this.session.navigateAfterAuth('login');
+        }),
+        map(() => void 0)
+      )
     );
   }
 
   initiateRegistration(request: RegisterInitiateRequest): Observable<RegisterInitiateResponse> {
-    this.authStore.setLoading(true);
-    this.authStore.setError(null);
-
-    return this.authHttp.initiateRegistration(request).pipe(
-      tap(() => this.authStore.setLoading(false)),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setLoading(false);
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
-    );
+    return this.withAuthState(this.authHttp.initiateRegistration(request));
   }
 
   verifyRegisterOtp(
     request: VerifyRegisterOtpRequest,
     displayName?: string
   ): Observable<void> {
-    this.authStore.setLoading(true);
-    this.authStore.setError(null);
-
-    return this.authHttp.verifyRegisterOtp(request).pipe(
-      tap((res) => {
-        this.session.applyAuthenticatedSession(
-          res.accessToken,
-          res.refreshToken,
-          false,
-          displayName
-        );
-        this.authStore.setLoading(false);
-        this.session.navigateAfterAuth('register');
-      }),
-      map(() => void 0),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setLoading(false);
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
+    return this.withAuthState(
+      this.authHttp.verifyRegisterOtp(request).pipe(
+        tap((res) => {
+          this.session.applyAuthenticatedSession(
+            res.accessToken,
+            res.refreshToken,
+            false,
+            displayName
+          );
+          this.session.navigateAfterAuth('register');
+        }),
+        map(() => void 0)
+      )
     );
   }
 
@@ -118,34 +86,14 @@ export class AuthService {
   }
 
   forgotPassword(phoneNumber: string): Observable<void> {
-    this.authStore.setLoading(true);
-    this.authStore.setError(null);
-
-    return this.authHttp.forgotPassword(phoneNumber).pipe(
-      tap(() => this.authStore.setLoading(false)),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setLoading(false);
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
-    );
+    return this.withAuthState(this.authHttp.forgotPassword(phoneNumber));
   }
 
   verifyForgotPasswordOtp(
     phoneNumber: string,
     otpCode: string
   ): Observable<VerifyForgotPasswordOtpResponse> {
-    this.authStore.setLoading(true);
-    this.authStore.setError(null);
-
-    return this.authHttp.verifyForgotPasswordOtp(phoneNumber, otpCode).pipe(
-      tap(() => this.authStore.setLoading(false)),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setLoading(false);
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
-    );
+    return this.withAuthState(this.authHttp.verifyForgotPasswordOtp(phoneNumber, otpCode));
   }
 
   resetPassword(
@@ -154,16 +102,8 @@ export class AuthService {
     newPassword: string,
     confirmPassword: string
   ): Observable<void> {
-    this.authStore.setLoading(true);
-    this.authStore.setError(null);
-
-    return this.authHttp.resetPassword(phoneNumber, resetToken, newPassword, confirmPassword).pipe(
-      tap(() => this.authStore.setLoading(false)),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setLoading(false);
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
+    return this.withAuthState(
+      this.authHttp.resetPassword(phoneNumber, resetToken, newPassword, confirmPassword)
     );
   }
 
@@ -208,24 +148,8 @@ export class AuthService {
     return this.session.getRefreshToken();
   }
 
-  isAuthenticated(): boolean {
-    return this.session.hasActiveSession();
-  }
-
   hasActiveSession(): boolean {
     return this.session.hasActiveSession();
-  }
-
-  needsOnboarding(): boolean {
-    return this.session.needsOnboarding();
-  }
-
-  getPostAuthRedirectUrl(): string {
-    return this.session.getPostAuthRedirectUrl();
-  }
-
-  markOnboardingComplete(activityTypeId: string): void {
-    this.session.markOnboardingComplete(activityTypeId);
   }
 
   getOnboardingEntrySource(): OnboardingEntrySource | null {
@@ -234,5 +158,17 @@ export class AuthService {
 
   returnToRegister(): void {
     this.session.returnToRegister();
+  }
+
+  private withAuthState<T>(source$: Observable<T>): Observable<T> {
+    this.authStore.setLoading(true);
+    this.authStore.setError(null);
+    return source$.pipe(
+      finalize(() => this.authStore.setLoading(false)),
+      catchError((err: HttpErrorResponse) => {
+        this.authStore.setError(extractApiError(err));
+        return throwError(() => err);
+      })
+    );
   }
 }

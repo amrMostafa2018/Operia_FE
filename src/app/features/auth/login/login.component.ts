@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -28,6 +29,11 @@ import { OtpVerificationComponent } from '@app/shared/components/otp-verificatio
 import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '@app/shared/utils/otp.util';
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import {
+  createPasswordToggle,
+  getFieldServerError,
+  isFieldInvalid,
+} from '../auth-form.utils';
 
 type LoginStep = 'form' | 'otp';
 
@@ -60,6 +66,8 @@ export class LoginComponent implements OnInit {
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
+  readonly isFieldInvalid = isFieldInvalid;
+  readonly getFieldServerError = getFieldServerError;
 
   form!: FormGroup;
   isLoading = this.authStore.isLoading;
@@ -70,7 +78,9 @@ export class LoginComponent implements OnInit {
   isResendingOtp = signal(false);
   otpServerError = signal<string | null>(null);
 
-  showPassword = signal(false);
+  private readonly passwordToggle = createPasswordToggle();
+  readonly showPassword = this.passwordToggle.show;
+  readonly togglePassword = this.passwordToggle.toggle;
 
   readonly otpLabels = buildOtpLabels('AUTH.LOGIN_PAGE');
 
@@ -96,23 +106,6 @@ export class LoginComponent implements OnInit {
     applyServerFieldErrors(this.form, translated);
   }
 
-  getFieldError(field: string): string | null {
-    const ctrl = this.form.get(field);
-    if (!ctrl?.touched || !ctrl.errors?.['server']) {
-      return null;
-    }
-    return ctrl.errors['server'];
-  }
-
-  togglePassword(): void {
-    this.showPassword.update(v => !v);
-  }
-
-  isInvalid(field: string): boolean {
-    const ctrl = this.form.get(field);
-    return !!(ctrl?.invalid && ctrl?.touched);
-  }
-
   backToForm(): void {
     this.step.set('form');
     this.userId.set(null);
@@ -135,7 +128,9 @@ export class LoginComponent implements OnInit {
     const { phone, password, rememberMe } = this.form.value;
     const phoneNumber = getE164PhoneNumber(phone);
 
-    this.authService.initiateLogin({ phoneNumber, password, rememberMe }).subscribe({
+    this.authService.initiateLogin({ phoneNumber, password, rememberMe }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (res) => {
         this.rememberMe.set(!!rememberMe);
         this.userId.set(res.userId);
@@ -161,7 +156,9 @@ export class LoginComponent implements OnInit {
 
     this.otpServerError.set(null);
 
-    this.authService.verifyLoginOtp({ userId, code }, this.rememberMe()).subscribe({
+    this.authService.verifyLoginOtp({ userId, code }, this.rememberMe()).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       error: (err: HttpErrorResponse) => this.handleOtpVerifyError(err),
     });
   }
@@ -182,7 +179,9 @@ export class LoginComponent implements OnInit {
     this.isResendingOtp.set(true);
     this.otpServerError.set(null);
 
-    this.authService.resendLoginOtp({ userId }).subscribe({
+    this.authService.resendLoginOtp({ userId }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.isResendingOtp.set(false);
         this.messageService.add({

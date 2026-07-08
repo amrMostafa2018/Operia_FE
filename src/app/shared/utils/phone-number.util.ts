@@ -1,10 +1,6 @@
 import { AbstractControl } from '@angular/forms';
 import { ChangeData } from 'ngx-intl-tel-input';
 
-export function buildPhoneNumber(countryCode: string, phone: string): string {
-  return `${countryCode}${phone}`.replace(/\s/g, '');
-}
-
 export function getE164PhoneNumber(
   value: ChangeData | string | null | undefined
 ): string {
