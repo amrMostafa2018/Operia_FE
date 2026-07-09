@@ -370,6 +370,7 @@
       "INSTAPAY_NOTE": "أضف الرصيد ثم ارفع صورة إثبات الدفع.",
       "UPLOAD_SCREENSHOT": "رفع صورة إثبات الدفع",
       "SCREENSHOT_REQUIRED": "صورة إثبات الدفع مطلوبة",
+      "SCREENSHOT_REMOVE": "إزالة الصورة",
       "BALANCE_TOP_UP": {
         "TITLE": "إضافة رصيد عبر Instapay",
         "HINT": "حوّل المبلغ عبر Instapay ثم ارفع صورة إثبات الدفع.",
@@ -380,7 +381,11 @@
         "SUBMITTED": "تم إرسال طلب الرصيد. سيتم مراجعته قريباً.",
         "INVALID_AMOUNT": "أدخل مبلغاً صحيحاً أكبر من صفر.",
         "PENDING_TITLE": "طلب الرصيد قيد المراجعة",
-        "PENDING_MESSAGE": "دفعتك عبر Instapay بمبلغ {{amount}} قيد المراجعة."
+        "PENDING_BADGE": "قيد المراجعة",
+        "PENDING_MESSAGE": "سيتم مراجعة دفعتك وإضافة الرصيد بعد التأكيد.",
+        "PENDING_AMOUNT": "المبلغ",
+        "PENDING_METHOD": "طريقة الدفع",
+        "PENDING_SCREENSHOT": "صورة إثبات الدفع"
       },
       "ADMIN": {
         "TITLE": "إجراءات المسؤول",

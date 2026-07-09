@@ -163,14 +163,6 @@ export class PlanSelectionComponent implements OnInit {
 
 
 
-  readonly vatAmount = computed(() => Math.round(this.displayPrice() * 0.14));
-
-
-
-  readonly totalPrice = computed(() => this.displayPrice() + this.vatAmount());
-
-
-
   readonly isFreeTrial = computed(() => this.selectedPlan()?.code === 'free-trial');
 
   readonly requiredPlanAmount = computed(() =>
@@ -265,18 +257,6 @@ export class PlanSelectionComponent implements OnInit {
 
 
 
-  readonly totalLabelKey = computed(() =>
-
-    this.billingType() === BillingType.Monthly
-
-      ? 'ONBOARDING.PLAN_SELECTION.TOTAL_MONTHLY'
-
-      : 'ONBOARDING.PLAN_SELECTION.TOTAL_YEARLY'
-
-  );
-
-
-
   readonly submitLabelKey = computed(() => {
     if (this.isFreeTrial()) {
       return 'ONBOARDING.PLAN_SELECTION.START_TRIAL';
@@ -351,6 +331,15 @@ export class PlanSelectionComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => this.addBalancePlatformScreenshot.set(reader.result as string);
     reader.readAsDataURL(file);
+  }
+
+  onRemoveAddBalancePlatformScreenshot(): void {
+    this.addBalancePlatformScreenshot.set(null);
+    this.screenshotFile.set(null);
+    const input = document.getElementById('addBalancePlatformScreenshotInput') as HTMLInputElement | null;
+    if (input) {
+      input.value = '';
+    }
   }
 
   onSubmitAddBalancePlatform(): void {

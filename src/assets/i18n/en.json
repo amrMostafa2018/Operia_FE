@@ -370,6 +370,7 @@
       "INSTAPAY_NOTE": "Add balance, then upload proof of payment.",
       "UPLOAD_SCREENSHOT": "Upload payment screenshot",
       "SCREENSHOT_REQUIRED": "Payment screenshot is required",
+      "SCREENSHOT_REMOVE": "Remove screenshot",
       "BALANCE_TOP_UP": {
         "TITLE": "Add balance via Instapay",
         "HINT": "Transfer the amount using Instapay, then upload your payment screenshot.",
@@ -380,7 +381,11 @@
         "SUBMITTED": "Balance request submitted. It will be reviewed shortly.",
         "INVALID_AMOUNT": "Enter a valid amount greater than zero.",
         "PENDING_TITLE": "Balance request pending",
-        "PENDING_MESSAGE": "Your Instapay payment of {{amount}} is under review."
+        "PENDING_BADGE": "Under review",
+        "PENDING_MESSAGE": "Your payment will be reviewed and balance added once confirmed.",
+        "PENDING_AMOUNT": "Amount",
+        "PENDING_METHOD": "Payment method",
+        "PENDING_SCREENSHOT": "Payment proof"
       },
       "ADMIN": {
         "TITLE": "Admin actions",

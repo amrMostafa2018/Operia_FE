@@ -46,24 +46,6 @@
               <span class="money-amount__currency">{{ currencyLabel() }}</span>
             </strong>
           </div>
-
-          @if (!isFreeTrial()) {
-            <div class="summary-row summary-row--price">
-              <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.VAT' | translate }}</span>
-              <strong class="money-amount">
-                <span class="money-amount__value" dir="ltr">{{ vatAmount() | number }}</span>
-                <span class="money-amount__currency">{{ currencyLabel() }}</span>
-              </strong>
-            </div>
-
-            <div class="summary-row summary-row--total">
-              <span class="summary-label">{{ totalLabelKey() | translate }}</span>
-              <strong class="money-amount money-amount--total">
-                <span class="money-amount__value" dir="ltr">{{ totalPrice() | number }}</span>
-                <span class="money-amount__currency">{{ currencyLabel() }}</span>
-              </strong>
-            </div>
-          }
         }
       </div>
     </aside>
@@ -79,24 +61,26 @@
           </div>
         </div>
 
-        <div class="billing-toggle">
-          <button
-            type="button"
-            class="billing-btn"
-            [class.active]="billingType() === billingTypeEnum.Monthly"
-            (click)="setBillingType(billingTypeEnum.Monthly)"
-          >
-            {{ 'ONBOARDING.PLAN_SELECTION.MONTHLY' | translate }}
-          </button>
-          <button
-            type="button"
-            class="billing-btn"
-            [class.active]="billingType() === billingTypeEnum.Yearly"
-            (click)="setBillingType(billingTypeEnum.Yearly)"
-          >
-            {{ 'ONBOARDING.PLAN_SELECTION.YEARLY' | translate }}
+        <div class="billing-toggle-wrap">
+          <div class="billing-toggle">
+            <button
+              type="button"
+              class="billing-btn"
+              [class.active]="billingType() === billingTypeEnum.Monthly"
+              (click)="setBillingType(billingTypeEnum.Monthly)"
+            >
+              {{ 'ONBOARDING.PLAN_SELECTION.MONTHLY' | translate }}
+            </button>
+            <button
+              type="button"
+              class="billing-btn"
+              [class.active]="billingType() === billingTypeEnum.Yearly"
+              (click)="setBillingType(billingTypeEnum.Yearly)"
+            >
+              {{ 'ONBOARDING.PLAN_SELECTION.YEARLY' | translate }}
+            </button>
             <span class="save-badge">{{ 'ONBOARDING.PLAN_SELECTION.SAVE_BADGE' | translate }}</span>
-          </button>
+          </div>
         </div>
 
         @if (isLoading()) {
@@ -216,21 +200,34 @@
             </label>
           </div>
 
-          <label class="upload-box" for="addBalancePlatformScreenshotInput">
+          <div
+            class="upload-box"
+            [class.has-preview]="!!addBalancePlatformScreenshot()"
+          >
             @if (addBalancePlatformScreenshot(); as preview) {
-              <img [src]="preview" alt="Instapay proof" class="screenshot-preview" />
+              <img [src]="preview" alt="" class="screenshot-preview" />
+              <button
+                type="button"
+                class="screenshot-remove-btn"
+                [attr.aria-label]="'ONBOARDING.PLAN_SELECTION.SCREENSHOT_REMOVE' | translate"
+                (click)="onRemoveAddBalancePlatformScreenshot()"
+              >
+                <i class="pi pi-times"></i>
+              </button>
             } @else {
-              <i class="pi pi-cloud-upload"></i>
-              <span>{{ 'ONBOARDING.PLAN_SELECTION.UPLOAD_SCREENSHOT' | translate }}</span>
+              <label class="upload-box-trigger" for="addBalancePlatformScreenshotInput">
+                <i class="pi pi-cloud-upload"></i>
+                <span>{{ 'ONBOARDING.PLAN_SELECTION.UPLOAD_SCREENSHOT' | translate }}</span>
+              </label>
             }
-            <input
-              id="addBalancePlatformScreenshotInput"
-              type="file"
-              accept="image/*"
-              hidden
-              (change)="onAddBalancePlatformScreenshotSelected($event)"
-            />
-          </label>
+          </div>
+          <input
+            id="addBalancePlatformScreenshotInput"
+            type="file"
+            accept="image/*"
+            hidden
+            (change)="onAddBalancePlatformScreenshotSelected($event)"
+          />
 
           <div class="payment-secure">
             <i class="pi pi-lock"></i>
@@ -261,11 +258,63 @@
       }
 
       @if (pendingAddBalancePlatform(); as pending) {
-        <div class="balance-top-up balance-top-up--pending">
-          <h4>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_TITLE' | translate }}</h4>
-          <p>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_MESSAGE' | translate: { amount: pending.amount | number } }}</p>
+        <div class="balance-top-up balance-top-up--pending pending-card">
+          <div class="pending-card__header">
+            <div class="pending-card__icon" aria-hidden="true">
+              <i class="pi pi-hourglass"></i>
+            </div>
+            <div class="pending-card__intro">
+              <span class="pending-card__badge">
+                {{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_BADGE' | translate }}
+              </span>
+              <h4 class="pending-card__title">
+                {{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_TITLE' | translate }}
+              </h4>
+              <p class="pending-card__message">
+                {{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_MESSAGE' | translate }}
+              </p>
+            </div>
+          </div>
+
+          <div class="pending-card__meta">
+            <div class="pending-card__meta-item">
+              <span class="pending-card__meta-label">
+                {{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_AMOUNT' | translate }}
+              </span>
+              <strong class="money-amount pending-card__amount">
+                <span class="money-amount__value" dir="ltr">{{ pending.amount | number }}</span>
+                <span class="money-amount__currency">{{ currencyLabel() }}</span>
+              </strong>
+            </div>
+            <div class="pending-card__meta-item">
+              <span class="pending-card__meta-label">
+                {{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_METHOD' | translate }}
+              </span>
+              <span class="pending-card__method">
+                <i class="pi pi-wallet"></i>
+                {{ 'ONBOARDING.PLAN_SELECTION.PAYMENT_METHODS.INSTAPAY' | translate }}
+              </span>
+            </div>
+          </div>
+
           @if (resolvedPendingScreenshotUrl(); as screenshotUrl) {
-            <img [src]="screenshotUrl" alt="" class="pending-screenshot-preview" />
+            <div class="pending-screenshot">
+              <span class="pending-screenshot__label">
+                {{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_SCREENSHOT' | translate }}
+              </span>
+              <a
+                class="pending-screenshot__frame"
+                [href]="screenshotUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                [attr.aria-label]="'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_SCREENSHOT' | translate"
+              >
+                <img [src]="screenshotUrl" alt="" class="pending-screenshot__image" />
+                <span class="pending-screenshot__zoom" aria-hidden="true">
+                  <i class="pi pi-search-plus"></i>
+                </span>
+              </a>
+            </div>
           }
         </div>
       }
