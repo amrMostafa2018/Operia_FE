@@ -140,8 +140,10 @@
     <aside class="plan-summary">
       <div class="balance-card">
         <div class="balance-card__header">
-          <i class="pi pi-wallet"></i>
-          <span>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_OVERVIEW' | translate }}</span>
+          <div class="balance-card__title-row">
+            <span class="balance-card__title">{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_OVERVIEW' | translate }}</span>
+            <i class="pi pi-wallet" aria-hidden="true"></i>
+          </div>
         </div>
         <div class="balance-row balance-row--usable">
           <span class="balance-row__label">{{ 'ONBOARDING.PLAN_SELECTION.TOTAL_BALANCE' | translate }}</span>
@@ -321,18 +323,7 @@
     </aside>
   </div>
 
-  <footer class="plan-footer">
-    <div class="footer-start">
-      <p-button
-        type="button"
-        [label]="'ONBOARDING.BUSINESS_SETUP.PREVIOUS' | translate"
-        [icon]="prevIcon()"
-        [iconPos]="prevIconPos()"
-        styleClass="prev-btn"
-        (onClick)="onPrevious()"
-      />
-    </div>
-
+  <footer class="plan-footer" [attr.dir]="isArabic() ? 'rtl' : 'ltr'">
     <p class="footer-note" [attr.dir]="isArabic() ? 'rtl' : 'ltr'">
       <i class="pi pi-lock"></i>
       {{ 'ONBOARDING.PLAN_SELECTION.FOOTER_NOTE' | translate }}

@@ -20,7 +20,12 @@ import { AuthService } from '@core/services/auth.service';
 import { OnboardingService } from '@core/services/onboarding.service';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
 import { LanguageService } from '@core/services/language.service';
-import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
+import {
+  getPrevArrowIcon,
+  getPrevIconPos,
+  getSubmitArrowIcon,
+  getSubmitIconPos,
+} from '@app/shared/utils/rtl.util';
 import { ACTIVITY_TYPES, ActivityType, ActivityTypeId } from '@app/features/onboarding/models/activity-type.model';
 import {
   ACTIVITY_TO_BUSINESS_TYPE,
@@ -90,7 +95,7 @@ export class BusinessSetupComponent implements OnInit {
   readonly isArabic = computed(() => this.languageService.currentLang() === 'ar');
 
   readonly prevIcon = computed(() =>
-    this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-right' : 'pi pi-arrow-left'
+    getPrevArrowIcon(this.languageService.currentLang())
   );
 
   readonly submitIcon = computed(() =>
@@ -98,11 +103,11 @@ export class BusinessSetupComponent implements OnInit {
   );
 
   readonly prevIconPos = computed<'left' | 'right'>(() =>
-    this.languageService.currentLang() === 'ar' ? 'right' : 'left'
+    getPrevIconPos(this.languageService.currentLang())
   );
 
   readonly submitIconPos = computed<'left' | 'right'>(() =>
-    this.languageService.currentLang() === 'ar' ? 'left' : 'right'
+    getSubmitIconPos(this.languageService.currentLang())
   );
 
   readonly countries = computed<SelectOption[]>(() => {

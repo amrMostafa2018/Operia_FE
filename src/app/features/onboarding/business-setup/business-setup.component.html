@@ -224,7 +224,7 @@
   </div>
 
   <!-- Footer Navigation -->
-  <footer class="setup-footer">
+  <footer class="setup-footer" [attr.dir]="isArabic() ? 'rtl' : 'ltr'">
     <div class="footer-start">
       <p-button
         type="button"

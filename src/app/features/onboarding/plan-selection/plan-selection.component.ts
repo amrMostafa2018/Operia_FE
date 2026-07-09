@@ -38,7 +38,7 @@ import { OnboardingStateService } from '@core/services/onboarding-state.service'
 import { extractApiError } from '@core/utils/api-error.util';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
 
-import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
+import { getSubmitArrowIcon, getSubmitIconPos } from '@app/shared/utils/rtl.util';
 
 import { ACTIVITY_TYPES } from '@app/features/onboarding/models/activity-type.model';
 
@@ -213,14 +213,6 @@ export class PlanSelectionComponent implements OnInit {
 
 
 
-  readonly prevIcon = computed(() =>
-
-    this.languageService.currentLang() === 'ar' ? 'pi pi-arrow-right' : 'pi pi-arrow-left'
-
-  );
-
-
-
   readonly submitIcon = computed(() =>
 
     getSubmitArrowIcon(this.languageService.currentLang())
@@ -229,18 +221,8 @@ export class PlanSelectionComponent implements OnInit {
 
 
 
-  readonly prevIconPos = computed<'left' | 'right'>(() =>
-
-    this.languageService.currentLang() === 'ar' ? 'right' : 'left'
-
-  );
-
-
-
   readonly submitIconPos = computed<'left' | 'right'>(() =>
-
-    this.languageService.currentLang() === 'ar' ? 'left' : 'right'
-
+    getSubmitIconPos(this.languageService.currentLang())
   );
 
 
@@ -456,14 +438,6 @@ export class PlanSelectionComponent implements OnInit {
       });
     }
   }
-
-  onPrevious(): void {
-
-    void this.router.navigate(['/onboarding/setup']);
-
-  }
-
-
 
   onSubmit(): void {
     if (!this.canActivatePlan()) {

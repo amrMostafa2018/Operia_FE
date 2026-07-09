@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
+import { LanguageService } from '@core/services/language.service';
+import { getPrevArrowIcon, getPrevIconPos } from '@app/shared/utils/rtl.util';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -35,6 +37,8 @@ type TagSeverity = 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'co
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {
+  private readonly languageService = inject(LanguageService);
+
   readonly stats: StatCard[] = MOCK_STATS;
   readonly allBookings: BookingRow[] = MOCK_BOOKINGS;
 
@@ -72,6 +76,14 @@ export class DashboardComponent {
     }
     return result;
   });
+
+  readonly prevIcon = computed(() =>
+    getPrevArrowIcon(this.languageService.currentLang())
+  );
+
+  readonly prevIconPos = computed(() =>
+    getPrevIconPos(this.languageService.currentLang())
+  );
 
   readonly today = computed(() =>
     new Date().toLocaleDateString('ar-EG', {

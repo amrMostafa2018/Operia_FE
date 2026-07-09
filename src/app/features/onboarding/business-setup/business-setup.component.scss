@@ -830,8 +830,6 @@ $logo-upload-min-height: 7.5rem;
   padding: 1rem 2rem;
   background: #fff;
   border-top: 1px solid var(--surface-border);
-  // Keep Previous on the left and Submit on the right in both languages
-  direction: ltr;
 }
 
 .footer-start {
@@ -862,6 +860,24 @@ $logo-upload-min-height: 7.5rem;
   i { font-size: 0.7rem; }
 }
 
+::ng-deep .prev-btn,
+::ng-deep .submit-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  direction: ltr !important;
+
+  .p-button-icon {
+    margin: 0 !important;
+    font-size: 0.85rem;
+  }
+
+  .p-button-label {
+    flex: 0 1 auto;
+  }
+}
+
 ::ng-deep .prev-btn {
   padding: 0.65rem 1.25rem !important;
   font-size: 0.85rem !important;
@@ -882,7 +898,16 @@ $logo-upload-min-height: 7.5rem;
   margin-top: 0 !important;
   padding: 0.65rem 1.5rem !important;
   font-size: 0.9rem !important;
-  justify-content: flex-start !important;
+  font-weight: 600 !important;
+  border-radius: $border-radius !important;
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-dark) !important;
+    border-color: var(--color-primary-dark) !important;
+  }
 }
 
 @media (max-width: $bp-xl) {
@@ -950,10 +975,21 @@ $logo-upload-min-height: 7.5rem;
     .footer-end {
       justify-self: stretch;
       min-width: 0;
+      display: flex;
 
-      ::ng-deep .p-button {
-        width: 100%;
+      > p-button {
+        flex: 1 1 0;
+        min-width: 0;
+        display: block;
+      }
+
+      ::ng-deep .p-button,
+      ::ng-deep .prev-btn,
+      ::ng-deep .submit-btn {
+        width: 100% !important;
         justify-content: center !important;
+        padding: 0.65rem 1rem !important;
+        font-size: 0.85rem !important;
       }
     }
   }

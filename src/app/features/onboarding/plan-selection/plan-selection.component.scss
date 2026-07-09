@@ -435,20 +435,36 @@
   padding: 0.85rem 1rem;
   margin-bottom: 0.85rem;
 
+  > p-button {
+    display: block;
+    width: 100%;
+  }
+
   &__header {
+    width: 100%;
     display: flex;
-    align-items: center;
-    justify-content: inline-start;
-    gap: 0.45rem;
-    font-size: 0.72rem;
-    color: var(--text-secondary);
+    justify-content: center;
     margin-bottom: 0.55rem;
-    font-family: $font-ar;
-    text-align: start;
+  }
+
+  &__title-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    direction: ltr;
+
+    .balance-card__title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: $font-ar;
+      line-height: 1.2;
+    }
 
     i {
       color: var(--color-primary);
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       flex-shrink: 0;
     }
   }
@@ -545,9 +561,30 @@
   }
 }
 
+:host ::ng-deep .activate-btn,
+:host ::ng-deep .add-balance-btn,
+::ng-deep .submit-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+
+  .p-button-icon {
+    margin: 0 !important;
+    font-size: 0.85rem;
+  }
+
+  .p-button-label {
+    flex: 0 1 auto;
+    text-align: center;
+  }
+}
+
 :host ::ng-deep .activate-btn {
-  width: 100%;
+  width: 100% !important;
   margin-top: 0.65rem;
+  padding: 0.65rem 1rem !important;
+  font-size: 0.85rem !important;
 }
 
 .balance-top-up {
@@ -759,7 +796,6 @@
 :host ::ng-deep .add-balance-btn {
   width: 100%;
   margin-top: 1rem;
-  justify-content: center !important;
 }
 
 .payment-methods {
@@ -1155,28 +1191,22 @@
 // ─── Footer ───────────────────────────────────────────────────────────────────
 .plan-footer {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.75rem;
   background: #fff;
   border-top: 1px solid var(--surface-border);
-  direction: ltr;
   flex-shrink: 0;
 }
 
-.footer-start {
-  grid-column: 1;
-  justify-self: start;
-}
-
 .footer-end {
-  grid-column: 3;
+  grid-column: 2;
   justify-self: end;
 }
 
 .footer-note {
-  grid-column: 2;
+  grid-column: 1;
   font-size: 0.72rem;
   color: var(--text-secondary);
   margin: 0;
@@ -1190,27 +1220,11 @@
   i { font-size: 0.7rem; }
 }
 
-::ng-deep .prev-btn {
-  padding: 0.65rem 1.25rem !important;
-  font-size: 0.85rem !important;
-  font-weight: 600 !important;
-  border-radius: $border-radius !important;
-  background: #fff !important;
-  border: 1.5px solid var(--surface-border) !important;
-  color: var(--text-primary) !important;
-
-  &:hover:not(:disabled) {
-    background: var(--surface-hover) !important;
-    border-color: var(--text-secondary) !important;
-  }
-}
-
 ::ng-deep .submit-btn {
   width: auto !important;
   margin-top: 0 !important;
   padding: 0.65rem 1.5rem !important;
   font-size: 0.88rem !important;
-  justify-content: center !important;
 }
 
 @media (max-width: $bp-xxl) {
@@ -1407,33 +1421,35 @@
 
   .plan-footer {
     padding: 0.85rem;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 0.75rem;
 
     .footer-note {
-      grid-column: 1 / -1;
+      grid-column: 1;
       grid-row: 1;
       font-size: 0.68rem;
     }
 
-    .footer-start {
+    .footer-end {
       grid-column: 1;
       grid-row: 2;
-    }
-
-    .footer-end {
-      grid-column: 2;
-      grid-row: 2;
-    }
-
-    .footer-start,
-    .footer-end {
       justify-self: stretch;
       min-width: 0;
+      display: flex;
 
-      ::ng-deep .p-button {
+      > p-button {
+        flex: 1 1 0;
+        min-width: 0;
+        display: block;
         width: 100%;
+      }
+
+      ::ng-deep .p-button,
+      ::ng-deep .submit-btn {
+        width: 100% !important;
         justify-content: center !important;
+        padding: 0.65rem 1rem !important;
+        font-size: 0.85rem !important;
       }
     }
   }
