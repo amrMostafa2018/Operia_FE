@@ -53,7 +53,18 @@ export class OnboardingService {
   }
 
   setupBusiness(request: SetupBusinessRequest): Observable<SetupBusinessResultDto> {
-    return this.http.post<SetupBusinessResultDto>(`${this.baseUrl}/setup-business`, request).pipe(
+    const form = new FormData();
+    form.append('businessName', request.businessName);
+    form.append('businessType', String(request.businessType));
+    form.append('countryCode', request.countryCode);
+    form.append('city', request.city);
+    form.append('currencyCode', request.currencyCode);
+
+    if (request.logoFile) {
+      form.append('logo', request.logoFile);
+    }
+
+    return this.http.post<SetupBusinessResultDto>(`${this.baseUrl}/setup-business`, form).pipe(
       tap(() => this.invalidateStatus()),
     );
   }
@@ -71,7 +82,11 @@ export class OnboardingService {
   }
 
   addBalancePlatform(request: AddBalancePlatformRequest): Observable<AddBalancePlatformResultDto> {
-    return this.http.post<AddBalancePlatformResultDto>(`${this.baseUrl}/add-balance-platform`, request).pipe(
+    const form = new FormData();
+    form.append('amount', String(request.amount));
+    form.append('screenshot', request.screenshotFile);
+
+    return this.http.post<AddBalancePlatformResultDto>(`${this.baseUrl}/add-balance-platform`, form).pipe(
       tap(() => this.invalidateStatus()),
     );
   }

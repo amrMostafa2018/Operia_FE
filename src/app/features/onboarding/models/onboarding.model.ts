@@ -46,7 +46,7 @@ export interface PendingAddBalancePlatformDto {
 
 export interface AddBalancePlatformRequest {
   amount: number;
-  screenShotUrl: string;
+  screenshotFile: File;
 }
 
 export interface AddBalancePlatformResultDto {
@@ -71,7 +71,7 @@ export interface SetupBusinessRequest {
   countryCode: string;
   city: string;
   currencyCode: string;
-  logoUrl?: string | null;
+  logoFile?: File | null;
 }
 
 export interface SetupBusinessResultDto {
@@ -82,7 +82,6 @@ export interface SetupBusinessResultDto {
 export interface CompleteOnboardingRequest {
   planId: string;
   billingType: BillingType;
-  screenShotUrl: string;
 }
 
 export interface OnboardingResultDto {

@@ -264,6 +264,9 @@
         <div class="balance-top-up balance-top-up--pending">
           <h4>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_TITLE' | translate }}</h4>
           <p>{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_MESSAGE' | translate: { amount: pending.amount | number } }}</p>
+          @if (resolvedPendingScreenshotUrl(); as screenshotUrl) {
+            <img [src]="screenshotUrl" alt="" class="pending-screenshot-preview" />
+          }
         </div>
       }
     </aside>

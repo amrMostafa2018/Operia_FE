@@ -76,6 +76,7 @@ export class BusinessSetupComponent implements OnInit {
   submitError = signal<string | null>(null);
   selectedActivityId = signal<ActivityTypeId>('laser_clinic');
   logoPreview = signal<string | null>(null);
+  logoFile = signal<File | null>(null);
   isLogoDragOver = signal(false);
 
   private logoDragCounter = 0;
@@ -218,6 +219,7 @@ export class BusinessSetupComponent implements OnInit {
 
   onRemoveLogo(): void {
     this.logoPreview.set(null);
+    this.logoFile.set(null);
     const input = document.getElementById('logoInput') as HTMLInputElement | null;
     if (input) {
       input.value = '';
@@ -247,7 +249,7 @@ export class BusinessSetupComponent implements OnInit {
     this.submitError.set(null);
 
     const formValue = this.form.getRawValue();
-    const logoUrl = this.logoPreview();
+    const logoPreview = this.logoPreview();
 
     this.onboardingService.setupBusiness({
       businessName: formValue.businessName,
@@ -255,7 +257,7 @@ export class BusinessSetupComponent implements OnInit {
       countryCode: formValue.country,
       city: formValue.city,
       currencyCode: formValue.currency,
-      logoUrl,
+      logoFile: this.logoFile(),
     }).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
@@ -266,7 +268,7 @@ export class BusinessSetupComponent implements OnInit {
           country: formValue.country,
           city: formValue.city,
           currency: formValue.currency,
-          logoUrl,
+          logoUrl: logoPreview,
           tenantId: result.tenantId,
           businessId: result.businessId,
         });
@@ -284,6 +286,8 @@ export class BusinessSetupComponent implements OnInit {
     if (!file.type.startsWith('image/')) {
       return;
     }
+
+    this.logoFile.set(file);
 
     const reader = new FileReader();
     reader.onload = () => this.logoPreview.set(reader.result as string);

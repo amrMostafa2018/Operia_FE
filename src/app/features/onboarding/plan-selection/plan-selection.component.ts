@@ -36,6 +36,7 @@ import { OnboardingService } from '@core/services/onboarding.service';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
 
 import { extractApiError } from '@core/utils/api-error.util';
+import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
 
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 
@@ -62,9 +63,6 @@ const PLAN_FEATURE_KEYS: Record<string, string[]> = {
 
   pro: ['unlimited_branches', 'unlimited_employees', 'api_whatsapp', 'support_24_7'],
 };
-
-const PAYMENT_PLACEHOLDER =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 @Component({
 
@@ -102,8 +100,6 @@ export class PlanSelectionComponent implements OnInit {
   readonly selectedPlanId = signal<string | null>(null);
 
   readonly billingType = signal<BillingType>(BillingType.Monthly);
-
-  readonly screenShotPreview = signal<string | null>(null);
   readonly usableBalance = signal(0);
   readonly totalBalance = signal(0);
   readonly tenantId = signal<string | null>(null);
@@ -112,6 +108,7 @@ export class PlanSelectionComponent implements OnInit {
   readonly pendingAddBalancePlatform = signal<PendingAddBalancePlatformDto | null>(null);
   readonly addBalancePlatformAmount = signal<number | null>(null);
   readonly addBalancePlatformScreenshot = signal<string | null>(null);
+  readonly screenshotFile = signal<File | null>(null);
   readonly isSubmittingTopUp = signal(false);
   readonly topUpSubmitError = signal<string | null>(null);
   readonly topUpSubmitSuccess = signal<string | null>(null);
@@ -207,6 +204,11 @@ export class PlanSelectionComponent implements OnInit {
   });
 
   readonly hasPendingAddBalancePlatform = computed(() => !!this.pendingAddBalancePlatform());
+
+  readonly resolvedPendingScreenshotUrl = computed(() => {
+    const pending = this.pendingAddBalancePlatform();
+    return pending ? resolveUploadUrl(pending.screenShotUrl) : null;
+  });
 
   readonly suggestedTopUpAmount = computed(() => {
     if (!this.hasInsufficientBalance()) {
@@ -332,28 +334,6 @@ export class PlanSelectionComponent implements OnInit {
     this.billingType.set(type);
   }
 
-  onScreenshotSelected(event: Event): void {
-
-    const file = (event.target as HTMLInputElement).files?.[0];
-
-    if (!file?.type.startsWith('image/')) {
-
-      return;
-
-    }
-
-
-
-    const reader = new FileReader();
-
-    reader.onload = () => this.screenShotPreview.set(reader.result as string);
-
-    reader.readAsDataURL(file);
-
-  }
-
-
-
   onTopUpAmountChange(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     const amount = value === '' ? null : Number(value);
@@ -366,6 +346,8 @@ export class PlanSelectionComponent implements OnInit {
       return;
     }
 
+    this.screenshotFile.set(file);
+
     const reader = new FileReader();
     reader.onload = () => this.addBalancePlatformScreenshot.set(reader.result as string);
     reader.readAsDataURL(file);
@@ -373,14 +355,14 @@ export class PlanSelectionComponent implements OnInit {
 
   onSubmitAddBalancePlatform(): void {
     const amount = this.addBalancePlatformAmount() ?? this.suggestedTopUpAmount();
-    const screenShotUrl = this.addBalancePlatformScreenshot();
+    const screenshotFile = this.screenshotFile();
 
     if (!amount || amount <= 0) {
       this.topUpSubmitError.set(this.translate.instant('ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.INVALID_AMOUNT'));
       return;
     }
 
-    if (!screenShotUrl) {
+    if (!screenshotFile) {
       this.topUpSubmitError.set(this.translate.instant('ONBOARDING.PLAN_SELECTION.SCREENSHOT_REQUIRED'));
       return;
     }
@@ -389,13 +371,14 @@ export class PlanSelectionComponent implements OnInit {
     this.topUpSubmitError.set(null);
     this.topUpSubmitSuccess.set(null);
 
-    this.onboardingService.addBalancePlatform({ amount, screenShotUrl }).pipe(
+    this.onboardingService.addBalancePlatform({ amount, screenshotFile }).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
         this.isSubmittingTopUp.set(false);
         this.addBalancePlatformAmount.set(null);
         this.addBalancePlatformScreenshot.set(null);
+        this.screenshotFile.set(null);
         this.topUpSubmitSuccess.set(this.translate.instant('ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.SUBMITTED'));
         this.refreshOnboardingStatus();
       },
@@ -524,8 +507,6 @@ export class PlanSelectionComponent implements OnInit {
       planId,
 
       billingType: this.billingType(),
-
-      screenShotUrl: PAYMENT_PLACEHOLDER,
 
     }).pipe(
 
