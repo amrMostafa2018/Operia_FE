@@ -380,7 +380,6 @@ export class PlanSelectionComponent implements OnInit {
 
   onUserActivateSubscription(): void {
     this.activateSubscription(
-      () => undefined,
       err => this.submitError.set(err),
       () => this.isActivating.set(true),
       () => this.isActivating.set(false),
@@ -388,7 +387,6 @@ export class PlanSelectionComponent implements OnInit {
   }
 
   private activateSubscription(
-    onSuccess: (message: string) => void,
     onError: (message: string) => void,
     onStart: () => void,
     onEnd: () => void,
@@ -412,9 +410,11 @@ export class PlanSelectionComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
-        onEnd();
-        onSuccess(this.translate.instant('ONBOARDING.PLAN_SELECTION.SUBSCRIPTION_ACTIVATED'));
-        void this.router.navigate(['/dashboard']);
+        void this.router.navigate(['/dashboard']).then(navigated => {
+          if (!navigated) {
+            onEnd();
+          }
+        });
       },
       error: (err: HttpErrorResponse) => {
         onEnd();
@@ -504,14 +504,16 @@ export class PlanSelectionComponent implements OnInit {
     ).subscribe({
 
       next: (result) => {
-        this.isSubmitting.set(false);
         this.subscriptionId.set(result.subscriptionId);
         this.subscriptionAmount.set(this.displayPrice());
         this.refreshOnboardingStatus();
 
         if (this.usableBalance() >= this.displayPrice()) {
           this.onUserActivateSubscription();
+          return;
         }
+
+        this.isSubmitting.set(false);
       },
 
       error: (err: HttpErrorResponse) => {

@@ -331,6 +331,7 @@
       "BALANCE_OVERVIEW": "رصيدك",
       "ACTIVATE_SUBSCRIPTION": "تفعيل الاشتراك",
       "ACTIVATE_SYSTEM": "تفعيل النظام",
+      "ACTIVATING_SYSTEM": "جارى تفعيل النظام...",
       "INSUFFICIENT_BALANCE": "رصيدك غير كافٍ لهذه الباقة. سيتم إضافة الرصيد بعد مراجعة الدفع.",
       "NO_SUBSCRIPTION": "لا يوجد اشتراك معلق.",
       "SUBSCRIPTION_ACTIVATED": "تم تفعيل الاشتراك بنجاح.",

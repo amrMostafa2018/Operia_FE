@@ -331,6 +331,7 @@
       "BALANCE_OVERVIEW": "Your balance",
       "ACTIVATE_SUBSCRIPTION": "Activate subscription",
       "ACTIVATE_SYSTEM": "Activate system",
+      "ACTIVATING_SYSTEM": "Activating system...",
       "INSUFFICIENT_BALANCE": "Your balance is not enough for this plan. Balance will be added after payment review.",
       "NO_SUBSCRIPTION": "No pending subscription found.",
       "SUBSCRIPTION_ACTIVATED": "Subscription activated successfully.",

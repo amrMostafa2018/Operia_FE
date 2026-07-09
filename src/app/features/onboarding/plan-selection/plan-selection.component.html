@@ -1,4 +1,4 @@
-<div class="plan-page">
+<div class="plan-page" [class.plan-page--activating]="isActivating()" [attr.aria-busy]="isActivating()">
   <div class="plan-body" [class.is-arabic]="isArabic()" [class.is-english]="!isArabic()">
     <!-- Order summary: inline-start (right in AR, left in EN) -->
     <aside class="plan-promo">
@@ -156,7 +156,7 @@
             {{ 'ONBOARDING.PLAN_SELECTION.INSUFFICIENT_BALANCE' | translate }}
           </p>
         }
-        @if (canUserActivateSubscription()) {
+        @if (canUserActivateSubscription() && !isActivating()) {
           <p-button
             type="button"
             [label]="'ONBOARDING.PLAN_SELECTION.ACTIVATE_SYSTEM' | translate"
@@ -170,7 +170,7 @@
         }
       </div>
 
-      @if (!isFreeTrial() && !hasPendingAddBalancePlatform()) {
+      @if (!isFreeTrial() && !hasPendingAddBalancePlatform() && !isActivating()) {
         <section class="section payment-section payment-section--sidebar">
           <div class="section-header">
             <span class="section-icon"><i class="pi pi-wallet"></i></span>
@@ -257,7 +257,7 @@
         </section>
       }
 
-      @if (pendingAddBalancePlatform(); as pending) {
+      @if (!isActivating() && pendingAddBalancePlatform(); as pending) {
         <div class="balance-top-up balance-top-up--pending pending-card">
           <div class="pending-card__header">
             <div class="pending-card__icon" aria-hidden="true">
@@ -351,4 +351,15 @@
       />
     </div>
   </footer>
+
+  @if (isActivating()) {
+    <div class="activation-overlay" role="status" aria-live="polite">
+      <div class="activation-overlay__content">
+        <i class="pi pi-spin pi-spinner activation-overlay__spinner" aria-hidden="true"></i>
+        <p class="activation-overlay__message">
+          {{ 'ONBOARDING.PLAN_SELECTION.ACTIVATING_SYSTEM' | translate }}
+        </p>
+      </div>
+    </div>
+  }
 </div>
