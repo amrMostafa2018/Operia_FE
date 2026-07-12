@@ -38,6 +38,8 @@
     "PhoneInvalid": "رقم الهاتف غير صحيح",
     "PhoneAlreadyRegistered": "رقم الموبايل مسجل بالفعل",
     "ConfirmPasswordRequired": "تأكيد كلمة المرور مطلوب",
+    "FullNameRequired": "الاسم الكامل مطلوب",
+    "FullNameMinLength": "يجب أن يكون الاسم 3 أحرف على الأقل",
     "OtpPhoneRequired": "رقم الموبايل مطلوب لإرسال رمز التحقق",
     "OtpInvalid": "رمز التحقق غير صحيح",
     "OtpExpired": "انتهت صلاحية رمز التحقق",
@@ -45,17 +47,22 @@
     "InvalidCredentials": "رقم الموبايل أو كلمة المرور غير صحيحة"
   },
   "NAV": {
+    "SECTION": {
+      "MAIN": "الرئيسية"
+    },
     "DASHBOARD":     "لوحة التحكم",
     "BOOKINGS":      "الحجوزات",
     "CUSTOMERS":     "العملاء",
     "EMPLOYEES":     "الموظفون",
-    "PACKAGES":      "الباقات والعروض",
+    "PACKAGES":      "الباقات",
+    "OFFERS":        "العروض",
     "BRANCHES":      "الفروع",
     "FINANCE":       "المالية",
     "REPORTS":       "التقارير",
     "SETTINGS":      "الإعدادات",
     "PERMISSIONS":   "الصلاحيات",
-    "SUBSCRIPTION":  "اشتراك أوبيريا",
+    "SUBSCRIPTION":  "اشتراكاتك في OPERIA",
+    "ACTIVITY_REVENUE": "إيرادات النشاط",
     "PAYMENTS":      "المدفوعات",
     "SUPPORT":       "الدعم الفني",
     "SETTINGS_SECTION": {
@@ -68,6 +75,8 @@
   },
   "HEADER": {
     "NOTIFICATIONS": "الإشعارات",
+    "TOGGLE_SIDEBAR": "إظهار/إخفاء القائمة الجانبية",
+    "FULL_NAME":     "الاسم الكامل",
     "LOGOUT":        "تسجيل الخروج",
     "PROFILE":       "ملفي الشخصي"
   },
@@ -504,5 +513,52 @@
     "COMPARED_LAST_MONTH":      "من الشهر الماضي",
     "COMPARED_YESTERDAY":       "من أمس",
     "EGP":                      "جنيه مصري"
+  },
+  "OPERIA_SUBSCRIPTIONS": {
+    "TITLE":                    "اشتراكاتك في OPERIA",
+    "FROM_DATE":                "من تاريخ",
+    "TO_DATE":                  "إلى تاريخ",
+    "PLAN":                     "الباقة",
+    "ALL_PLANS":                "كل الباقات",
+    "SUBSCRIPTION_STATUS":      "حالة الاشتراك",
+    "ALL_STATUSES":             "كل الحالات",
+    "PAYMENT_METHOD":           "وسيلة الدفع",
+    "ALL_PAYMENT_METHODS":      "كل وسائل الدفع",
+    "COL_NUM":                  "#",
+    "COL_INVOICE_NUM":          "رقم الفاتورة",
+    "COL_PLAN":                 "الباقة",
+    "COL_AMOUNT":               "قيمة الاشتراك",
+    "COL_PAYMENT":              "وسيلة الدفع",
+    "COL_START":                "بداية الاشتراك",
+    "COL_END":                  "نهاية الاشتراك",
+    "COL_STATUS":               "حالة الاشتراك",
+    "COL_INVOICE":              "الفاتورة",
+    "VIEW_INVOICE":             "عرض الفاتورة",
+    "EXPORT_REPORT":            "تصدير التقرير",
+    "ROWS_LABEL":               "عدد العمليات",
+    "SHOWING":                  "عرض",
+    "TO":                       "إلى",
+    "OF":                       "من",
+    "OPERATIONS":               "عمليات",
+    "PREVIOUS":                 "السابق",
+    "NEXT":                     "التالي",
+    "BILLING": {
+      "YEARLY":                 "سنوياً",
+      "MONTHLY":                "شهرياً"
+    },
+    "STATUS": {
+      "ACTIVE":                 "مفعل",
+      "EXPIRED":                "منتهي",
+      "CANCELLED":              "ملغى"
+    },
+    "PAYMENT_METHODS": {
+      "BANK_TRANSFER":          "تحويل بنكي",
+      "INSTAPAY":               "Instapay",
+      "VISA":                   "Visa"
+    },
+    "PLANS": {
+      "GROWTH":                 "Growth",
+      "BASIC":                  "Basic"
+    }
   }
 }

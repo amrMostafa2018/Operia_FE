@@ -114,6 +114,7 @@ export class RegisterComponent implements OnInit {
 
     setupPasswordConfirmSync(this.form, this.destroyRef);
     setupServerErrorClearing(this.form, this.destroyRef, [
+      'name',
       'email',
       'phone',
       'password',
@@ -158,6 +159,7 @@ export class RegisterComponent implements OnInit {
     const phoneNumber = getE164PhoneNumber(phone);
 
     this.authService.initiateRegistration({
+      fullName: name,
       email,
       password,
       confirmPassword,

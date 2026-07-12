@@ -157,7 +157,9 @@ export class SessionService {
     const user = userFromAccessToken(token, displayName ?? storedUser?.name);
     const merged = {
       ...user,
+      name: this.resolveDisplayName(user, storedUser, displayName),
       tenantId: user.tenantId ?? storedUser?.tenantId,
+      businessName: user.businessName ?? storedUser?.businessName,
     };
     this.authStore.setUser(merged);
     this.updateStoredUser(merged);
@@ -188,5 +190,21 @@ export class SessionService {
     } catch {
       return null;
     }
+  }
+
+  private resolveDisplayName(
+    user: User,
+    storedUser: User | null,
+    displayName?: string
+  ): string {
+    const candidates = [displayName, storedUser?.name, user.name].filter(Boolean) as string[];
+
+    for (const candidate of candidates) {
+      if (candidate !== user.email) {
+        return candidate;
+      }
+    }
+
+    return candidates[0] ?? '';
   }
 }

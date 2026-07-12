@@ -67,13 +67,21 @@ export function userFromAccessToken(token: string, name?: string): User {
     'email',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
   );
+  const fullName = claim(
+    payload,
+    'name',
+    'full_name',
+    'fullName',
+    'unique_name',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+  );
   const activityTypeId = claim(payload, 'activity_type', 'activityTypeId');
   const tenantId = claim(payload, 'tenant_id', 'tenantId');
   const businessId = claim(payload, 'busineess_id', 'busineessId');
 
   return {
     id,
-    name: name ?? email,
+    name: (name ?? fullName)?.trim() || email,
     email,
     role: roleFromPayload(payload),
     permissions: claimValues(payload, PERMISSION_CLAIM_TYPE),

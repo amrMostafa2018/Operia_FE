@@ -38,6 +38,8 @@
     "PhoneInvalid": "Phone number is not valid.",
     "PhoneAlreadyRegistered": "This phone number is already registered.",
     "ConfirmPasswordRequired": "Confirm Password is required.",
+    "FullNameRequired": "Full name is required.",
+    "FullNameMinLength": "Full name must be at least 3 characters.",
     "OtpPhoneRequired": "User phone number is required for OTP delivery.",
     "OtpInvalid": "Invalid OTP code.",
     "OtpExpired": "OTP has expired.",
@@ -45,17 +47,22 @@
     "InvalidCredentials": "Invalid phone number or password."
   },
   "NAV": {
+    "SECTION": {
+      "MAIN": "Main"
+    },
     "DASHBOARD":     "Dashboard",
     "BOOKINGS":      "Bookings",
     "CUSTOMERS":     "Customers",
     "EMPLOYEES":     "Employees",
-    "PACKAGES":      "Packages & Offers",
+    "PACKAGES":      "Packages",
+    "OFFERS":        "Offers",
     "BRANCHES":      "Branches",
     "FINANCE":       "Finance",
     "REPORTS":       "Reports",
     "SETTINGS":      "Settings",
     "PERMISSIONS":   "Permissions",
-    "SUBSCRIPTION":  "OPERIA Subscription",
+    "SUBSCRIPTION":  "OPERIA Subscriptions",
+    "ACTIVITY_REVENUE": "Activity Revenue",
     "PAYMENTS":      "Payments",
     "SUPPORT":       "Technical Support",
     "SETTINGS_SECTION": {
@@ -68,6 +75,8 @@
   },
   "HEADER": {
     "NOTIFICATIONS": "Notifications",
+    "TOGGLE_SIDEBAR": "Toggle sidebar",
+    "FULL_NAME":     "Full Name",
     "LOGOUT":        "Sign Out",
     "PROFILE":       "My Profile"
   },
@@ -504,5 +513,52 @@
     "COMPARED_LAST_MONTH":      "compared to last month",
     "COMPARED_YESTERDAY":       "compared to yesterday",
     "EGP":                      "EGP"
+  },
+  "OPERIA_SUBSCRIPTIONS": {
+    "TITLE":                    "Your OPERIA Subscriptions",
+    "FROM_DATE":                "From date",
+    "TO_DATE":                  "To date",
+    "PLAN":                     "Plan",
+    "ALL_PLANS":                "All plans",
+    "SUBSCRIPTION_STATUS":      "Subscription status",
+    "ALL_STATUSES":             "All statuses",
+    "PAYMENT_METHOD":           "Payment method",
+    "ALL_PAYMENT_METHODS":      "All payment methods",
+    "COL_NUM":                  "#",
+    "COL_INVOICE_NUM":          "Invoice number",
+    "COL_PLAN":                 "Plan",
+    "COL_AMOUNT":               "Subscription value",
+    "COL_PAYMENT":              "Payment method",
+    "COL_START":                "Start date",
+    "COL_END":                  "End date",
+    "COL_STATUS":               "Subscription status",
+    "COL_INVOICE":              "Invoice",
+    "VIEW_INVOICE":             "View invoice",
+    "EXPORT_REPORT":            "Export report",
+    "ROWS_LABEL":               "Rows per page",
+    "SHOWING":                  "Showing",
+    "TO":                       "to",
+    "OF":                       "of",
+    "OPERATIONS":               "operations",
+    "PREVIOUS":                 "Previous",
+    "NEXT":                     "Next",
+    "BILLING": {
+      "YEARLY":                 "Yearly",
+      "MONTHLY":                "Monthly"
+    },
+    "STATUS": {
+      "ACTIVE":                 "Active",
+      "EXPIRED":                "Expired",
+      "CANCELLED":              "Cancelled"
+    },
+    "PAYMENT_METHODS": {
+      "BANK_TRANSFER":          "Bank transfer",
+      "INSTAPAY":               "Instapay",
+      "VISA":                   "Visa"
+    },
+    "PLANS": {
+      "GROWTH":                 "Growth",
+      "BASIC":                  "Basic"
+    }
   }
 }

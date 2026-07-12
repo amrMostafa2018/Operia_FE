@@ -9,6 +9,7 @@ export interface User {
   branchId?: string;
   tenantId?: string;
   businessId?: string;
+  businessName?: string;
   avatarUrl?: string;
   activityTypeId?: string;
   isActive: boolean;
@@ -37,6 +38,7 @@ export interface VerifyLoginOtpRequest {
 }
 
 export interface RegisterInitiateRequest {
+  fullName: string;
   email: string;
   password: string;
   confirmPassword: string;

@@ -12,6 +12,8 @@ export interface ApiErrorBody {
 const API_FIELD_MAP: Record<string, string> = {
   phoneNumber: 'phone',
   PhoneNumber: 'phone',
+  fullName: 'name',
+  FullName: 'name',
 };
 
 /** Maps legacy/global API fields to OTP form field names. */
