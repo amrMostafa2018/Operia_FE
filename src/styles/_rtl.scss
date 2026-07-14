@@ -12,6 +12,11 @@
     direction: rtl;
   }
 
+  .app-time-picker-host .p-inputtext {
+    direction: ltr !important;
+    text-align: center !important;
+  }
+
   // Flip horizontal spacing utilities
   .ms-auto { margin-inline-start: auto !important; margin-inline-end: unset !important; }
   .me-auto { margin-inline-end: auto !important; margin-inline-start: unset !important; }
@@ -40,6 +45,11 @@
   // Input group
   .p-inputgroup-addon:first-child { border-radius: 0 $border-radius $border-radius 0; }
   .p-inputgroup-addon:last-child  { border-radius: $border-radius 0 0 $border-radius; }
+
+  // Calendar / time picker: keep icon on the trailing edge (right in RTL)
+  .p-calendar-w-btn {
+    flex-direction: row-reverse;
+  }
 }
 
 [dir='ltr'] {
@@ -61,4 +71,80 @@
 
   .p-inputgroup-addon:first-child { border-radius: $border-radius 0 0 $border-radius; }
   .p-inputgroup-addon:last-child  { border-radius: 0 $border-radius $border-radius 0; }
+}
+
+// Time picker popup (rendered on body)
+.app-time-picker-panel.p-datepicker-timeonly {
+  margin-top: 0.25rem;
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
+
+  .p-timepicker {
+    direction: ltr;
+    padding: 0.5rem 0.25rem;
+
+    .p-hour-picker,
+    .p-minute-picker {
+      position: relative;
+    }
+
+    .app-time-picker-popup-native {
+      visibility: hidden;
+    }
+
+    .app-time-picker-popup-input {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2.75rem;
+      height: 1.75rem;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      text-align: center !important;
+      font-size: 1.25rem;
+      font-weight: 500;
+      line-height: 1;
+      padding: 0;
+      color: var(--text-primary);
+      direction: ltr !important;
+      cursor: text;
+
+      &:hover {
+        border-color: rgba($primary, 0.25);
+        background: var(--surface-card);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+        background: var(--surface-card);
+        box-shadow: 0 0 0 0.15rem var(--color-primary-focus-ring);
+      }
+    }
+  }
+}
+
+html[dir='rtl'] .app-time-picker-panel {
+  .p-timepicker .p-ampm-picker {
+    order: -1;
+  }
+
+  .p-ampm-picker span {
+    position: relative;
+    font-size: 0;
+    line-height: 1;
+
+    &::after {
+      content: 'ص';
+      font-size: 1.25rem;
+      line-height: normal;
+    }
+  }
+
+  &.app-time-picker-panel--pm .p-ampm-picker span::after {
+    content: 'م';
+  }
 }

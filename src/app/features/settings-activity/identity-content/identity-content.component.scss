@@ -607,4 +607,35 @@
   .secondary-photos {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .visible-info-actions {
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+  }
+
+  :host ::ng-deep {
+    .visible-save-btn {
+      flex: 1 1 auto;
+      min-width: 0;
+
+      .p-button {
+        width: 100%;
+        min-width: 0;
+        padding: 0.7rem 1rem;
+        font-size: 0.8125rem;
+      }
+    }
+
+    .visible-reset-btn {
+      flex: 0 1 auto;
+      min-width: 0;
+
+      .p-button {
+        min-width: 0;
+        padding: 0.7rem 0.875rem;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+      }
+    }
+  }
 }

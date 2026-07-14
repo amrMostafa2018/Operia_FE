@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
@@ -27,6 +28,7 @@ import {
   selector: 'app-payment-methods',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     FormsModule,
     TranslatePipe,
@@ -50,6 +52,14 @@ export class PaymentMethodsComponent implements OnInit {
   expandedIds = signal<Set<PaymentMethodId>>(new Set(['bank_transfer', 'instapay', 'e_wallet', 'fawry']));
   saving = signal(false);
 
+  private readonly detailsOrder: PaymentMethodId[] = [
+    'bank_transfer',
+    'instapay',
+    'e_wallet',
+    'fawry',
+    'cash',
+  ];
+
   bankOptions = MOCK_BANK_OPTIONS;
   walletOptions = MOCK_WALLET_OPTIONS;
 
@@ -69,8 +79,8 @@ export class PaymentMethodsComponent implements OnInit {
     });
 
     this.instapayForm = this.fb.group({
-      instapayId: ['ahmed@instapay', Validators.required],
-      accountHolder: ['أحمد محمد', Validators.required],
+      instapayId: ['01012345678', Validators.required],
+      accountHolder: ['عيادات الليزر المتخصصة', Validators.required],
     });
 
     this.walletForm = this.fb.group({
@@ -124,6 +134,10 @@ export class PaymentMethodsComponent implements OnInit {
     });
   }
 
+  onHeaderSwitchClick(event: Event): void {
+    event.stopPropagation();
+  }
+
   getFormForMethod(id: PaymentMethodId): FormGroup | null {
     switch (id) {
       case 'bank_transfer':
@@ -139,8 +153,10 @@ export class PaymentMethodsComponent implements OnInit {
     }
   }
 
-  activeMethodsWithForms(): PaymentMethodState[] {
-    return this.paymentMethods().filter(m => m.id !== 'cash' && m.enabled);
+  detailsMethods(): PaymentMethodState[] {
+    return this.detailsOrder
+      .map(id => this.paymentMethods().find(method => method.id === id))
+      .filter((method): method is PaymentMethodState => !!method && method.enabled);
   }
 
   onReset(): void {

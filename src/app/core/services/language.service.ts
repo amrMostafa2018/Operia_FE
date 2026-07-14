@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { PrimeNGConfig } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
 
 export type AppLanguage = 'en' | 'ar';
@@ -11,6 +12,7 @@ const STORAGE_KEY = 'operia_lang';
 export class LanguageService {
   private readonly document = inject(DOCUMENT);
   private readonly translate = inject(TranslateService);
+  private readonly primeConfig = inject(PrimeNGConfig);
 
   readonly supportedLanguages: AppLanguage[] = ['ar', 'en'];
   readonly currentLang = signal<AppLanguage>('ar');
@@ -46,7 +48,16 @@ export class LanguageService {
     const html = this.document.documentElement;
     html.lang = lang;
     html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    this.configurePrimeNg(lang);
 
     return firstValueFrom(this.translate.use(lang)).then(() => undefined);
+  }
+
+  private configurePrimeNg(lang: AppLanguage): void {
+    const isAr = lang === 'ar';
+    this.primeConfig.setTranslation({
+      am: isAr ? 'ص' : 'AM',
+      pm: isAr ? 'م' : 'PM',
+    });
   }
 }

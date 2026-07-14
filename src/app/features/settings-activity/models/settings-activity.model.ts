@@ -31,6 +31,12 @@ export interface PaymentMethodState {
   enabled: boolean;
   icon: string;
   labelKey: string;
+  iconClass?: string;
+  logoSrc?: string;
+  brandText?: string;
+  brandTextClass?: string;
+  brandLines?: string[];
+  hideLabel?: boolean;
 }
 
 export interface WorkingDay {
@@ -54,6 +60,7 @@ export const ACTIVITY_SETTINGS_TABS = [
   {
     route: 'identity',
     labelKey: 'SETTINGS_ACTIVITY.TABS.IDENTITY',
+    breadcrumbKey: 'NAV.SETTINGS_SECTION.ACTIVITY_IDENTITY',
     icon: 'pi pi-desktop',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.IDENTITY.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.IDENTITY.SUBTITLE',
@@ -61,6 +68,7 @@ export const ACTIVITY_SETTINGS_TABS = [
   {
     route: 'payments',
     labelKey: 'SETTINGS_ACTIVITY.TABS.PAYMENTS',
+    breadcrumbKey: 'NAV.SETTINGS_SECTION.ACTIVITY_PAYMENTS',
     icon: 'pi pi-credit-card',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.PAYMENTS.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.PAYMENTS.SUBTITLE',
@@ -68,6 +76,7 @@ export const ACTIVITY_SETTINGS_TABS = [
   {
     route: 'working-days',
     labelKey: 'SETTINGS_ACTIVITY.TABS.WORKING_DAYS',
+    breadcrumbKey: 'NAV.SETTINGS_SECTION.ACTIVITY_WORKING_DAYS',
     icon: 'pi pi-calendar',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.WORKING_DAYS.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.WORKING_DAYS.SUBTITLE',
@@ -75,6 +84,7 @@ export const ACTIVITY_SETTINGS_TABS = [
   {
     route: 'security',
     labelKey: 'SETTINGS_ACTIVITY.TABS.SECURITY',
+    breadcrumbKey: 'NAV.SETTINGS_SECTION.ACTIVITY_SECURITY',
     icon: 'pi pi-shield',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.SECURITY.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.SECURITY.SUBTITLE',
@@ -82,11 +92,11 @@ export const ACTIVITY_SETTINGS_TABS = [
 ] as const;
 
 export const MOCK_PAYMENT_METHODS: PaymentMethodState[] = [
-  { id: 'fawry', enabled: true, icon: 'pi pi-building', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.FAWRY' },
-  { id: 'e_wallet', enabled: true, icon: 'pi pi-wallet', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.E_WALLET' },
-  { id: 'instapay', enabled: true, icon: 'pi pi-send', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.INSTAPAY' },
-  { id: 'bank_transfer', enabled: true, icon: 'pi pi-building-columns', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.BANK_TRANSFER' },
-  { id: 'cash', enabled: true, icon: 'pi pi-money-bill', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.CASH' },
+  { id: 'cash', enabled: true, icon: 'pi pi-wallet', iconClass: 'method-icon--cash', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.CASH' },
+  { id: 'bank_transfer', enabled: true, icon: 'pi pi-building-columns', iconClass: 'method-icon--bank', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.BANK_TRANSFER' },
+  { id: 'instapay', enabled: true, icon: '', iconClass: 'method-icon--instapay', brandLines: ['INSTA', 'PAY'], brandTextClass: 'method-brand-lines--instapay', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.INSTAPAY' },
+  { id: 'e_wallet', enabled: true, icon: 'pi pi-wallet', iconClass: 'method-icon--wallet', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.E_WALLET' },
+  { id: 'fawry', enabled: true, icon: '', iconClass: 'method-icon--fawry', brandText: 'fawry', brandTextClass: 'method-brand-text--fawry', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.FAWRY' },
 ];
 
 export const MOCK_BANK_OPTIONS = [
@@ -109,12 +119,12 @@ function createTime(hours: number, minutes: number): Date {
 
 export const MOCK_WORKING_DAYS: WorkingDay[] = [
   { id: 'fri', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.FRI', enabled: false, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'sat', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SAT', enabled: true, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'sun', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SUN', enabled: true, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'mon', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.MON', enabled: true, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'tue', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.TUE', enabled: true, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'wed', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.WED', enabled: true, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'thu', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.THU', enabled: true, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
+  { id: 'sat', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SAT', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
+  { id: 'sun', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SUN', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
+  { id: 'mon', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.MON', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
+  { id: 'tue', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.TUE', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
+  { id: 'wed', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.WED', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
+  { id: 'thu', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.THU', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
 ];
 
 export const MOCK_ACCESS_USERS: AccessUser[] = [

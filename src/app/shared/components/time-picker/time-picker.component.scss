@@ -1,0 +1,10 @@
+:host ::ng-deep .p-inputtext {
+  cursor: pointer;
+}
+
+:host(.app-time-picker-host--ar) ::ng-deep .p-inputtext {
+  direction: ltr !important;
+  text-align: center !important;
+  unicode-bidi: plaintext;
+  cursor: pointer;
+}

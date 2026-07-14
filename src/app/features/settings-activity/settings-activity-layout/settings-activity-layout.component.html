@@ -13,7 +13,9 @@
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <span>{{ 'NAV.SETTINGS' | translate }}</span>
       <i class="pi pi-angle-left" aria-hidden="true"></i>
-      <span class="breadcrumb-current">{{ 'SETTINGS_ACTIVITY.BREADCRUMB_TITLE' | translate }}</span>
+      <span>{{ 'SETTINGS_ACTIVITY.BREADCRUMB_TITLE' | translate }}</span>
+      <i class="pi pi-angle-left" aria-hidden="true"></i>
+      <span class="breadcrumb-current">{{ activeTab().breadcrumbKey | translate }}</span>
     </nav>
   </header>
 

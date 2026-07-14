@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
-import { CalendarModule } from 'primeng/calendar';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputSwitchModule } from 'primeng/inputswitch';
 
+import { TimePickerComponent } from '@app/shared/components/time-picker/time-picker.component';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
 import { MOCK_WORKING_DAYS, WorkingDay } from '../models/settings-activity.model';
 
@@ -15,9 +15,9 @@ import { MOCK_WORKING_DAYS, WorkingDay } from '../models/settings-activity.model
   imports: [
     FormsModule,
     TranslatePipe,
-    CalendarModule,
     CheckboxModule,
     InputSwitchModule,
+    TimePickerComponent,
     SettingsFooterComponent,
   ],
   templateUrl: './working-days.component.html',
@@ -42,12 +42,6 @@ export class WorkingDaysComponent {
   toggleDayEnabled(dayId: string, enabled: boolean): void {
     this.workingDays.update(days =>
       days.map(d => (d.id === dayId ? { ...d, enabled } : d))
-    );
-  }
-
-  toggleDaySelected(dayId: string, selected: boolean): void {
-    this.workingDays.update(days =>
-      days.map(d => (d.id === dayId ? { ...d, selected } : d))
     );
   }
 

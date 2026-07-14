@@ -632,8 +632,13 @@
     "PAYMENTS": {
       "BANNER": "Activated payment methods are subject to manual review by management before appearing to customers.",
       "ACTIVATE_TITLE": "Activate Payment Methods",
+      "ACTIVATE_SUBTITLE": "Choose the payment methods available for your business.",
+      "TOGGLE_NOTE": "You can turn off or enable any payment method at any time, and changes will be saved automatically.",
+      "ENABLED": "Active",
+      "DISABLED": "Inactive",
       "DETAILS_TITLE": "Payment Method Details",
       "REVIEW_TITLE": "Payment Review",
+      "REVIEW_SUBTITLE": "All payments are manually reviewed by activity management.",
       "METHODS": {
         "CASH": "Cash",
         "BANK_TRANSFER": "Bank Transfer",
@@ -649,7 +654,7 @@
       },
       "INSTAPAY": {
         "ID": "Instapay ID",
-        "HOLDER": "Account Holder Name"
+        "HOLDER": "Instapay"
       },
       "WALLET": {
         "TYPE": "Wallet Type",
@@ -658,17 +663,23 @@
       },
       "FAWRY": {
         "CODE": "Service Code / Payment Number",
-        "NOTES": "Notes for Customers (optional)"
+        "NOTES": "Notes for customers (optional)"
       },
+      "CASH_NO_DETAILS": "No additional details are required for cash payments.",
       "REVIEW": {
         "PENDING": "Under Review",
+        "PENDING_HINT": "Waiting for payment review and approval",
         "PAID": "Paid",
-        "CANCELLED": "Cancelled"
+        "PAID_HINT": "Payment has been approved",
+        "CANCELLED": "Cancelled",
+        "CANCELLED_HINT": "Payment has been cancelled"
       }
     },
     "WORKING_DAYS": {
-      "BANNER": "The working hours you set will be visible to customers when booking.",
+      "BANNER_LINE_1": "Set the days of the week and available working hours for receiving customers and bookings.",
+      "BANNER_LINE_2": "These times will be shown to customers when choosing a suitable appointment.",
       "SCHEDULE_TITLE": "Select Working Days",
+      "SCHEDULE_SUBTITLE": "Choose the days when your activity is available for booking.",
       "EXTRA_TITLE": "Additional Settings",
       "WORKING_DAY": "Working Day",
       "DAY_OFF": "Day Off",

@@ -1,71 +1,63 @@
 <div class="working-days">
   <div class="info-banner">
-    <i class="pi pi-info-circle" aria-hidden="true"></i>
-    <p>{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.BANNER' | translate }}</p>
+    <div class="info-banner-content">
+      <div class="info-banner-first-line">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <p>{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.BANNER_LINE_1' | translate }}</p>
+      </div>
+      <p class="info-banner-second-line">{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.BANNER_LINE_2' | translate }}</p>
+    </div>
   </div>
 
   <section class="card section-card">
-    <h2 class="section-title">
-      <span class="section-num">1.</span>
-      {{ 'SETTINGS_ACTIVITY.WORKING_DAYS.SCHEDULE_TITLE' | translate }}
-    </h2>
+    <div class="section-heading">
+      <h2 class="section-title">
+        <span class="section-num">1.</span>
+        {{ 'SETTINGS_ACTIVITY.WORKING_DAYS.SCHEDULE_TITLE' | translate }}
+      </h2>
+      <p class="section-subtitle">{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.SCHEDULE_SUBTITLE' | translate }}</p>
+    </div>
 
     <div class="days-list">
       @for (day of workingDays(); track day.id) {
         <div class="day-row" [class.disabled]="!day.enabled">
-          <p-checkbox
-            [ngModel]="day.selected"
-            (ngModelChange)="toggleDaySelected(day.id, $event)"
-            [binary]="true"
-            [inputId]="'select-' + day.id"
-          />
-
-          <span class="day-name">{{ day.dayKey | translate }}</span>
-
-          <span class="day-badge" [class.working]="day.enabled" [class.off]="!day.enabled">
-            {{ (day.enabled ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY' : 'SETTINGS_ACTIVITY.WORKING_DAYS.DAY_OFF') | translate }}
-          </span>
-
-          <div class="time-fields">
-            <div class="time-field">
-              <label [for]="'from-' + day.id">{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.FROM' | translate }}</label>
-              <p-calendar
-                [inputId]="'from-' + day.id"
-                [ngModel]="day.fromTime"
-                (ngModelChange)="updateFromTime(day.id, $event)"
-                [timeOnly]="true"
-                [showIcon]="true"
-                [disabled]="!day.enabled"
-                hourFormat="12"
-                styleClass="time-picker"
-              />
-            </div>
-            <div class="time-field">
-              <label [for]="'to-' + day.id">{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.TO' | translate }}</label>
-              <p-calendar
-                [inputId]="'to-' + day.id"
-                [ngModel]="day.toTime"
-                (ngModelChange)="updateToTime(day.id, $event)"
-                [timeOnly]="true"
-                [showIcon]="true"
-                [disabled]="!day.enabled"
-                hourFormat="12"
-                styleClass="time-picker"
-              />
-            </div>
-          </div>
-
           <p-inputSwitch
             [ngModel]="day.enabled"
             (ngModelChange)="toggleDayEnabled(day.id, $event)"
           />
+
+          <span class="day-name">{{ day.dayKey | translate }}</span>
+
+          <div class="time-fields">
+            <app-time-picker
+              [inputId]="'from-' + day.id"
+              [ngModel]="day.fromTime"
+              (ngModelChange)="updateFromTime(day.id, $event)"
+              [disabled]="!day.enabled"
+              [placeholder]="!day.enabled ? '--:--' : ''"
+              styleClass="time-picker time-picker--inline"
+            />
+            <span class="time-separator" aria-hidden="true">-</span>
+            <app-time-picker
+              [inputId]="'to-' + day.id"
+              [ngModel]="day.toTime"
+              (ngModelChange)="updateToTime(day.id, $event)"
+              [disabled]="!day.enabled"
+              [placeholder]="!day.enabled ? '--:--' : ''"
+              styleClass="time-picker time-picker--inline"
+            />
+          </div>
+
+          <span class="day-status" [class.working]="day.enabled" [class.off]="!day.enabled">
+            {{ (day.enabled ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY' : 'SETTINGS_ACTIVITY.WORKING_DAYS.DAY_OFF') | translate }}
+          </span>
         </div>
       }
     </div>
   </section>
 
   <section class="card section-card">
-    <h2 class="section-title">
+    <h2 class="section-title section-title--spaced">
       <span class="section-num">2.</span>
       {{ 'SETTINGS_ACTIVITY.WORKING_DAYS.EXTRA_TITLE' | translate }}
     </h2>

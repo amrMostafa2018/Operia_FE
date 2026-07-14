@@ -1,0 +1,23 @@
+<p-calendar
+  #calendar
+  [inputId]="inputId()"
+  [ngModel]="value()"
+  (ngModelChange)="onModelChange($event)"
+  [timeOnly]="true"
+  [showIcon]="true"
+  iconDisplay="input"
+  icon="pi pi-clock"
+  [showOnFocus]="true"
+  [readonlyInput]="true"
+  [disabled]="disabled()"
+  [hideOnDateTimeSelect]="false"
+  [placeholder]="placeholder()"
+  appendTo="body"
+  hourFormat="12"
+  [styleClass]="styleClass()"
+  [panelStyleClass]="panelStyleClass()"
+  (onSelect)="onTimeSelected()"
+  (onClose)="onPickerClosed()"
+  (onShow)="onPickerOpened()"
+  (onBlur)="onBlur()"
+/>

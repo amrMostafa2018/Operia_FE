@@ -1,54 +1,82 @@
 <div class="payment-methods">
-  <div class="info-banner">
-    <i class="pi pi-info-circle" aria-hidden="true"></i>
-    <p>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANNER' | translate }}</p>
-  </div>
-
   <!-- Section 1: Activate methods -->
-  <section class="card section-card">
-    <h2 class="section-title">
-      <span class="section-num">1.</span>
-      {{ 'SETTINGS_ACTIVITY.PAYMENTS.ACTIVATE_TITLE' | translate }}
-    </h2>
+  <section class="card section-card activate-section">
+    <div class="section-heading">
+      <h2 class="section-title">
+        <span class="section-num">1.</span>
+        {{ 'SETTINGS_ACTIVITY.PAYMENTS.ACTIVATE_TITLE' | translate }}
+      </h2>
+      <p class="section-subtitle">{{ 'SETTINGS_ACTIVITY.PAYMENTS.ACTIVATE_SUBTITLE' | translate }}</p>
+    </div>
 
     <div class="method-cards">
       @for (method of paymentMethods(); track method.id) {
         <div class="method-card" [class.enabled]="method.enabled">
-          <i [class]="method.icon" aria-hidden="true"></i>
-          <span class="method-label">{{ method.labelKey | translate }}</span>
+          <div
+            class="method-icon"
+            [class]="method.iconClass"
+            [class.method-icon--brand]="!!method.logoSrc || !!method.brandText || !!method.brandLines?.length"
+          >
+            <ng-container *ngTemplateOutlet="methodBrand; context: { $implicit: method }" />
+          </div>
+          @if (!method.hideLabel) {
+            <span class="method-label" [class.method-label--en]="method.id === 'instapay'">
+              {{ method.labelKey | translate }}
+            </span>
+          }
           <p-inputSwitch
             [ngModel]="method.enabled"
             (ngModelChange)="toggleMethod(method.id, $event)"
           />
+          <span class="method-status" [class.is-active]="method.enabled">
+            {{ (method.enabled ? 'SETTINGS_ACTIVITY.PAYMENTS.ENABLED' : 'SETTINGS_ACTIVITY.PAYMENTS.DISABLED') | translate }}
+          </span>
         </div>
       }
+    </div>
+
+    <div class="section-footer-note">
+      <i class="pi pi-cog" aria-hidden="true"></i>
+      <span>{{ 'SETTINGS_ACTIVITY.PAYMENTS.TOGGLE_NOTE' | translate }}</span>
     </div>
   </section>
 
   <!-- Section 2: Method details -->
-  <section class="card section-card">
-    <h2 class="section-title">
+  <section class="card section-card details-section">
+    <h2 class="section-title section-title--spaced">
       <span class="section-num">2.</span>
       {{ 'SETTINGS_ACTIVITY.PAYMENTS.DETAILS_TITLE' | translate }}
     </h2>
 
     <div class="accordion-list">
-      @for (method of activeMethodsWithForms(); track method.id) {
+      @for (method of detailsMethods(); track method.id) {
         <div class="accordion-item" [class.expanded]="isExpanded(method.id)">
-          <button
-            type="button"
+          <div
             class="accordion-header"
+            role="button"
+            tabindex="0"
             (click)="toggleExpanded(method.id)"
+            (keydown.enter)="toggleExpanded(method.id)"
+            (keydown.space)="$event.preventDefault(); toggleExpanded(method.id)"
           >
-            <i [class]="method.icon" aria-hidden="true"></i>
-            <span>{{ method.labelKey | translate }}</span>
-            <i
-              class="pi toggle-icon"
-              [class.pi-chevron-up]="isExpanded(method.id)"
-              [class.pi-chevron-down]="!isExpanded(method.id)"
-              aria-hidden="true"
-            ></i>
-          </button>
+            <div class="accordion-header-start">
+              <div
+                class="accordion-method-icon"
+                [class]="method.iconClass"
+                [class.accordion-method-icon--brand]="!!method.logoSrc || !!method.brandText || !!method.brandLines?.length"
+              >
+                <ng-container *ngTemplateOutlet="methodBrand; context: { $implicit: method }" />
+              </div>
+              <span class="accordion-method-name">{{ method.labelKey | translate }}</span>
+            </div>
+
+            <div class="accordion-header-end" (click)="onHeaderSwitchClick($event)">
+              <p-inputSwitch
+                [ngModel]="method.enabled"
+                (ngModelChange)="toggleMethod(method.id, $event)"
+              />
+            </div>
+          </div>
 
           @if (isExpanded(method.id)) {
             <div class="accordion-body">
@@ -68,15 +96,15 @@
                       </div>
                       <div class="field">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.HOLDER' | translate }} <span class="required">*</span></label>
-                        <input pInputText formControlName="accountHolder" />
+                        <input pInputText formControlName="accountHolder" class="field-input" />
                       </div>
                       <div class="field">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.ACCOUNT' | translate }} <span class="required">*</span></label>
-                        <input pInputText formControlName="accountNumber" />
+                        <input pInputText formControlName="accountNumber" class="field-input" />
                       </div>
                       <div class="field">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.IBAN' | translate }}</label>
-                        <input pInputText formControlName="iban" />
+                        <input pInputText formControlName="iban" class="field-input" />
                       </div>
                     </div>
                   </form>
@@ -85,12 +113,12 @@
                   <form [formGroup]="instapayForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.ID' | translate }} <span class="required">*</span></label>
-                        <input pInputText formControlName="instapayId" />
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.HOLDER' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="accountHolder" class="field-input" />
                       </div>
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.HOLDER' | translate }} <span class="required">*</span></label>
-                        <input pInputText formControlName="accountHolder" />
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.ID' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="instapayId" class="field-input" />
                       </div>
                     </div>
                   </form>
@@ -109,12 +137,12 @@
                         />
                       </div>
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.HOLDER' | translate }} <span class="required">*</span></label>
-                        <input pInputText formControlName="holderName" />
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.NUMBER' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="walletNumber" class="field-input" />
                       </div>
                       <div class="field full-width">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.NUMBER' | translate }} <span class="required">*</span></label>
-                        <input pInputText formControlName="walletNumber" />
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.HOLDER' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="holderName" class="field-input" />
                       </div>
                     </div>
                   </form>
@@ -124,14 +152,17 @@
                     <div class="form-grid">
                       <div class="field">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.CODE' | translate }} <span class="required">*</span></label>
-                        <input pInputText formControlName="serviceCode" />
+                        <input pInputText formControlName="serviceCode" class="field-input" />
                       </div>
                       <div class="field full-width">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.NOTES' | translate }}</label>
-                        <textarea pInputTextarea formControlName="notes" rows="3"></textarea>
+                        <textarea pInputTextarea formControlName="notes" rows="3" class="field-textarea"></textarea>
                       </div>
                     </div>
                   </form>
+                }
+                @case ('cash') {
+                  <p class="cash-empty-note">{{ 'SETTINGS_ACTIVITY.PAYMENTS.CASH_NO_DETAILS' | translate }}</p>
                 }
               }
             </div>
@@ -142,25 +173,50 @@
   </section>
 
   <!-- Section 3: Review workflow -->
-  <section class="card section-card">
-    <h2 class="section-title">
-      <span class="section-num">3.</span>
-      {{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW_TITLE' | translate }}
-    </h2>
+  <section class="card section-card review-section">
+    <div class="section-heading">
+      <h2 class="section-title">
+        <span class="section-num">3.</span>
+        {{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW_TITLE' | translate }}
+      </h2>
+      <p class="section-subtitle">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW_SUBTITLE' | translate }}</p>
+    </div>
 
     <div class="review-flow">
       <div class="review-step pending">
-        <div class="step-icon"><i class="pi pi-clock"></i></div>
-        <span>{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING' | translate }}</span>
+        <div class="step-row">
+          <div class="step-icon"><i class="pi pi-clock" aria-hidden="true"></i></div>
+          <div class="step-text">
+            <span class="step-title">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING' | translate }}</span>
+            <span class="step-hint">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING_HINT' | translate }}</span>
+          </div>
+        </div>
       </div>
-      <div class="flow-arrow"><i class="pi pi-arrow-left"></i></div>
+      <div class="flow-arrow" aria-hidden="true">
+        <span class="flow-arrow__line"></span>
+        <span class="flow-arrow__head"></span>
+      </div>
       <div class="review-step success">
-        <div class="step-icon"><i class="pi pi-check"></i></div>
-        <span>{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID' | translate }}</span>
+        <div class="step-row">
+          <div class="step-icon"><i class="pi pi-check" aria-hidden="true"></i></div>
+          <div class="step-text">
+            <span class="step-title">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID' | translate }}</span>
+            <span class="step-hint">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID_HINT' | translate }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">
+        <span class="flow-arrow__line"></span>
+        <span class="flow-arrow__head"></span>
       </div>
       <div class="review-step danger">
-        <div class="step-icon"><i class="pi pi-times"></i></div>
-        <span>{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED' | translate }}</span>
+        <div class="step-row">
+          <div class="step-icon"><i class="pi pi-times" aria-hidden="true"></i></div>
+          <div class="step-text">
+            <span class="step-title">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED' | translate }}</span>
+            <span class="step-hint">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED_HINT' | translate }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -171,3 +227,19 @@
     (save)="onSave()"
   />
 </div>
+
+<ng-template #methodBrand let-method>
+  @if (method.brandLines?.length) {
+    <div class="method-brand-lines" [class]="method.brandTextClass">
+      @for (line of method.brandLines; track line) {
+        <span>{{ line }}</span>
+      }
+    </div>
+  } @else if (method.brandText) {
+    <span class="method-brand-text" [class]="method.brandTextClass">{{ method.brandText }}</span>
+  } @else if (method.logoSrc) {
+    <img class="method-brand-image" [src]="method.logoSrc" [alt]="method.labelKey | translate" />
+  } @else {
+    <i [class]="method.icon" aria-hidden="true"></i>
+  }
+</ng-template>

@@ -1,22 +1,5 @@
 <div class="settings-footer">
-  @if (noteKey()) {
-    <p class="footer-note">
-      <i class="pi pi-lock" aria-hidden="true"></i>
-      {{ noteKey()! | translate }}
-    </p>
-  }
-
   <div class="footer-actions">
-    @if (showReset()) {
-      <p-button
-        [label]="'SETTINGS_ACTIVITY.FOOTER.RESET' | translate"
-        icon="pi pi-refresh"
-        [outlined]="true"
-        styleClass="reset-btn"
-        (onClick)="reset.emit()"
-        [disabled]="saving()"
-      />
-    }
     <p-button
       [label]="'SETTINGS_ACTIVITY.FOOTER.SAVE' | translate"
       icon="pi pi-check"
@@ -25,5 +8,23 @@
       (onClick)="save.emit()"
       [loading]="saving()"
     />
+    @if (showReset()) {
+      <p-button
+        [label]="'SETTINGS_ACTIVITY.FOOTER.RESET' | translate"
+        icon="pi pi-refresh"
+        iconPos="right"
+        [outlined]="true"
+        styleClass="reset-btn"
+        (onClick)="reset.emit()"
+        [disabled]="saving()"
+      />
+    }
   </div>
+
+  @if (noteKey()) {
+    <div class="footer-note">
+      <i class="pi pi-info-circle" aria-hidden="true"></i>
+      <span>{{ noteKey()! | translate }}</span>
+    </div>
+  }
 </div>
