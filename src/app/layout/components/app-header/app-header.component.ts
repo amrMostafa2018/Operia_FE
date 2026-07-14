@@ -1,14 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
+import { catchError, of } from 'rxjs';
 
 import { AuthStore } from '@core/store/auth.store';
 import { AuthService } from '@core/services/auth.service';
 import { LanguageService } from '@core/services/language.service';
+import { OnboardingService } from '@core/services/onboarding.service';
+import { OnboardingStateService } from '@core/services/onboarding-state.service';
+import { LanguageSwitcherComponent } from '@app/shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,14 +21,25 @@ import { LanguageService } from '@core/services/language.service';
 export class AppHeaderComponent {
   private readonly authService = inject(AuthService);
   private readonly languageService = inject(LanguageService);
+  private readonly onboardingService = inject(OnboardingService);
+  private readonly onboardingState = inject(OnboardingStateService);
   readonly authStore = inject(AuthStore);
 
   toggleSidebar = output<void>();
 
-  readonly userName = computed(() => {
-    const user = this.authStore.currentUser();
-    return user?.name ?? user?.email ?? '';
-  });
+  private readonly onboardingStatus = toSignal(
+    this.onboardingService.getStatus().pipe(catchError(() => of(null))),
+    { initialValue: null }
+  );
+
+  readonly businessName = computed(() =>
+    this.authStore.currentUser()?.businessName
+    ?? this.onboardingStatus()?.business?.businessName
+    ?? this.onboardingState.businessSetup()?.businessName
+    ?? ''
+  );
+
+  readonly userName = computed(() => this.authStore.currentUser()?.name?.trim() ?? '');
 
   readonly userInitials = computed(() =>
     this.userName()

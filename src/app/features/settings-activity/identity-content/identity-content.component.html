@@ -1,0 +1,328 @@
+<form class="identity-content" [formGroup]="form" (ngSubmit)="onSave()">
+  <!-- Section 1: Basic Information -->
+  <section class="card section-card">
+    <h2 class="section-title section-title--with-icon">
+      <span class="section-title-icon" aria-hidden="true">
+        <i class="pi pi-user"></i>
+      </span>
+      {{ 'SETTINGS_ACTIVITY.IDENTITY.BASIC_INFO.TITLE' | translate }}
+    </h2>
+
+    <div class="basic-info-grid">
+      <div class="field">
+        <label for="activityName">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.BASIC_INFO.ACTIVITY_NAME' | translate }}
+          <span class="required">*</span>
+        </label>
+        <input
+          pInputText
+          id="activityName"
+          formControlName="activityName"
+          class="field-input"
+          [class.ng-invalid]="isInvalid('activityName')"
+        />
+      </div>
+
+      <div class="field field--phone">
+        <label for="contactPhone">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.BASIC_INFO.CONTACT_PHONE' | translate }}
+          <span class="required">*</span>
+        </label>
+        <div
+          class="phone-row phone-row--intl"
+          [class.error]="isPhoneInvalid('contactPhone')"
+          dir="ltr"
+        >
+          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+          <ngx-intl-tel-input
+            [cssClass]="phoneInputCssClass"
+            [onlyCountries]="onlyCountries"
+            [selectedCountryISO]="selectedCountryISO"
+            [enableAutoCountrySelect]="false"
+            [enablePlaceholder]="true"
+            [customPlaceholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
+            [searchCountryFlag]="false"
+            [selectFirstCountry]="false"
+            [separateDialCode]="true"
+            [phoneValidation]="true"
+            inputId="contactPhone"
+            formControlName="contactPhone"
+          />
+        </div>
+        @if (getPhoneError('contactPhone'); as err) {
+          <small class="field-error">{{ err }}</small>
+        }
+      </div>
+
+      <div class="field field--phone">
+        <label for="whatsappPhone">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.BASIC_INFO.WHATSAPP' | translate }}
+        </label>
+        <div
+          class="phone-row phone-row--intl phone-row--whatsapp"
+          [class.error]="isPhoneInvalid('whatsappPhone')"
+          dir="ltr"
+        >
+          <i class="pi pi-whatsapp phone-row-icon" aria-hidden="true"></i>
+          <ngx-intl-tel-input
+            [cssClass]="phoneInputCssClass"
+            [onlyCountries]="onlyCountries"
+            [selectedCountryISO]="selectedCountryISO"
+            [enableAutoCountrySelect]="false"
+            [enablePlaceholder]="true"
+            [customPlaceholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
+            [searchCountryFlag]="false"
+            [selectFirstCountry]="false"
+            [separateDialCode]="true"
+            [phoneValidation]="true"
+            inputId="whatsappPhone"
+            formControlName="whatsappPhone"
+          />
+        </div>
+        @if (getPhoneError('whatsappPhone'); as err) {
+          <small class="field-error">{{ err }}</small>
+        }
+      </div>
+
+      <div class="field field-email-span">
+        <label for="email">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.BASIC_INFO.EMAIL' | translate }}
+          <span class="required">*</span>
+        </label>
+        <input
+          pInputText
+          id="email"
+          type="email"
+          formControlName="email"
+          class="field-input"
+          [class.ng-invalid]="isInvalid('email')"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Activity Photos -->
+  <section class="card section-card">
+    <div class="section-heading">
+      <h2 class="section-title section-title--with-icon">
+        <span class="section-title-icon" aria-hidden="true">
+          <i class="pi pi-images"></i>
+        </span>
+        {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.TITLE' | translate }}
+      </h2>
+      <p class="section-subtitle visually-hidden">{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.SUBTITLE' | translate }}</p>
+    </div>
+
+    <div class="photos-info-banner">
+      <i class="pi pi-info-circle" aria-hidden="true"></i>
+      <span>{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.SUBTITLE' | translate }}</span>
+    </div>
+
+    <div class="photos-layout">
+      <div class="photos-gallery">
+        <div
+          class="primary-photo"
+          [class.is-drag-over]="isPhotoDragOver(primaryPhoto().id)"
+          (dragenter)="onPhotoDragEnter($event, primaryPhoto().id)"
+          (dragover)="onPhotoDragOver($event)"
+          (dragleave)="onPhotoDragLeave($event, primaryPhoto().id)"
+          (drop)="onPhotoDrop($event, primaryPhoto().id)"
+        >
+          @if (primaryPhoto().previewUrl) {
+            <img
+              [src]="primaryPhoto().previewUrl"
+              [alt]="'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PRIMARY' | translate"
+              (error)="onPhotoError(primaryPhoto().id)"
+            />
+            <label class="replace-overlay" [attr.for]="'photo-replace-' + primaryPhoto().id">
+              <input
+                type="file"
+                [id]="'photo-replace-' + primaryPhoto().id"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                (change)="onPhotoSelected($event, primaryPhoto().id)"
+              />
+              <span class="replace-hint">
+                <i class="pi pi-upload" aria-hidden="true"></i>
+                {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.REPLACE' | translate }}
+              </span>
+            </label>
+          } @else {
+            <label class="photo-placeholder upload-slot" [attr.for]="'photo-' + primaryPhoto().id">
+              <i class="pi pi-image" aria-hidden="true"></i>
+              <input
+                type="file"
+                [id]="'photo-' + primaryPhoto().id"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                (change)="onPhotoSelected($event, primaryPhoto().id)"
+              />
+            </label>
+          }
+          <span class="primary-badge">
+            <i class="pi pi-star-fill" aria-hidden="true"></i>
+            {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PRIMARY' | translate }}
+          </span>
+          @if (!primaryPhoto().previewUrl) {
+            <label class="upload-overlay" [attr.for]="'photo-' + primaryPhoto().id">
+              <input
+                type="file"
+                [id]="'photo-upload-' + primaryPhoto().id"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                (change)="onPhotoSelected($event, primaryPhoto().id)"
+              />
+            </label>
+          }
+          @if (primaryPhoto().previewUrl) {
+            <button
+              type="button"
+              class="delete-btn delete-btn--primary"
+              (click)="removePhoto(primaryPhoto().id)"
+              [attr.aria-label]="'COMMON.DELETE' | translate"
+            >
+              <i class="pi pi-trash"></i>
+            </button>
+          }
+        </div>
+
+        <div class="secondary-photos">
+          @for (photo of secondaryPhotos(); track photo.id) {
+            <div
+              class="secondary-photo"
+              [class.has-image]="photo.previewUrl"
+              [class.is-drag-over]="isPhotoDragOver(photo.id)"
+              (dragenter)="onPhotoDragEnter($event, photo.id)"
+              (dragover)="onPhotoDragOver($event)"
+              (dragleave)="onPhotoDragLeave($event, photo.id)"
+              (drop)="onPhotoDrop($event, photo.id)"
+            >
+              @if (photo.previewUrl) {
+                <img [src]="photo.previewUrl" alt="" (error)="onPhotoError(photo.id)" />
+                <span class="photo-label">
+                  {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PHOTO_LABEL' | translate: { num: photo.displayIndex } }}
+                </span>
+              } @else {
+                <label class="upload-slot" [attr.for]="'photo-' + photo.id">
+                  <i class="pi pi-plus" aria-hidden="true"></i>
+                  <span class="photo-label muted">
+                    {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PHOTO_LABEL' | translate: { num: photo.displayIndex } }}
+                  </span>
+                  <input
+                    type="file"
+                    [id]="'photo-' + photo.id"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                    (change)="onPhotoSelected($event, photo.id)"
+                  />
+                </label>
+              }
+              @if (photo.previewUrl) {
+                <button
+                  type="button"
+                  class="delete-btn delete-btn--secondary"
+                  (click)="removePhoto(photo.id)"
+                  [attr.aria-label]="'COMMON.DELETE' | translate"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="photos-instructions">
+        <h3>
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INSTRUCTIONS_TITLE' | translate }}
+        </h3>
+        <ul>
+          <li>{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.RULE_1' | translate }}</li>
+          <li>{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.RULE_2' | translate }}</li>
+          <li>{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.RULE_3' | translate }}</li>
+          <li>{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.RULE_4' | translate }}</li>
+          <li>{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.RULE_5' | translate }}</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Customer-visible info -->
+  <section class="card section-card visible-info-section">
+    <div class="section-heading section-heading--icon-text">
+      <div class="section-title-icon" aria-hidden="true">
+        <i class="pi pi-id-card"></i>
+      </div>
+      <div class="section-heading-text">
+        <h2 class="section-title">{{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.TITLE' | translate }}</h2>
+        <p class="section-subtitle">{{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.SUBTITLE' | translate }}</p>
+      </div>
+    </div>
+
+    <div class="visible-info-grid">
+      <div class="field field-address">
+        <label for="mainAddress">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.ADDRESS' | translate }}
+          <span class="required">*</span>
+        </label>
+        <input
+          pInputText
+          id="mainAddress"
+          formControlName="mainAddress"
+          class="field-input"
+          [class.ng-invalid]="isInvalid('mainAddress')"
+        />
+      </div>
+
+      <div class="field field-about">
+        <label for="about">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.ABOUT' | translate }}
+          <span class="required">*</span>
+        </label>
+        <div class="textarea-wrap">
+          <textarea
+            pInputTextarea
+            id="about"
+            formControlName="about"
+            rows="5"
+            class="field-textarea"
+            [class.ng-invalid]="isInvalid('about')"
+          ></textarea>
+          <div class="char-counter" [class.over-limit]="aboutCharCount() > maxAboutChars">
+            {{ aboutCharCount() }}/{{ maxAboutChars }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="visible-info-footer">
+      <div class="visible-info-actions">
+        <p-button
+          type="button"
+          [label]="'SETTINGS_ACTIVITY.FOOTER.SAVE' | translate"
+          icon="pi pi-check"
+          iconPos="right"
+          styleClass="visible-save-btn"
+          [loading]="saving()"
+          (onClick)="onSave()"
+        />
+        <p-button
+          type="button"
+          [label]="'SETTINGS_ACTIVITY.FOOTER.RESET' | translate"
+          icon="pi pi-refresh"
+          iconPos="right"
+          [outlined]="true"
+          styleClass="visible-reset-btn"
+          [disabled]="saving()"
+          (onClick)="onResetVisibleInfo()"
+        />
+      </div>
+
+      <div class="visible-info-banner">
+        <i class="pi pi-lock" aria-hidden="true"></i>
+        <span>{{ 'SETTINGS_ACTIVITY.IDENTITY.FOOTER_NOTE' | translate }}</span>
+      </div>
+    </div>
+  </section>
+</form>

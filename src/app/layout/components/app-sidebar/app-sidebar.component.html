@@ -2,69 +2,174 @@
 
   <!-- Logo -->
   <div class="sidebar-logo">
-    <div class="logo-icon">
-      <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-        <path d="M16 2L4 8v16l12 6 12-6V8L16 2z" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="1.5"/>
-        <path d="M16 8L10 11v10l6 3 6-3V11L16 8z" fill="rgba(255,255,255,0.5)" stroke="white" stroke-width="1.5"/>
-        <circle cx="16" cy="16" r="3" fill="white"/>
-      </svg>
+    <div class="logo-brand">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <path d="M16 2L4 8v16l12 6 12-6V8L16 2z" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="1.5"/>
+          <path d="M16 8L10 11v10l6 3 6-3V11L16 8z" fill="rgba(255,255,255,0.5)" stroke="white" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="3" fill="white"/>
+        </svg>
+      </div>
+      @if (!collapsed()) {
+        <span class="logo-name">{{ 'APP.NAME' | translate }}</span>
+      }
     </div>
-    @if (!collapsed()) {
-      <span class="logo-name">{{ 'APP.NAME' | translate }}</span>
-    }
+
+    <button
+      type="button"
+      class="sidebar-toggle-btn"
+      (click)="onToggleSidebar()"
+      [attr.aria-label]="'HEADER.TOGGLE_SIDEBAR' | translate"
+      [attr.aria-expanded]="!collapsed()"
+    >
+      <i [class]="toggleIcon()"></i>
+    </button>
   </div>
 
-  <!-- Main navigation -->
-  <nav class="sidebar-nav">
-    @for (item of visibleMainNavItems(); track item.route) {
-      <a
-        class="nav-item"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-        (click)="onLinkClick()"
-      >
-        <i [class]="item.icon" class="nav-icon"></i>
-        @if (!collapsed()) {
-          <span class="nav-label">{{ item.labelKey | translate }}</span>
-          @if (item.badge) {
-            <span class="nav-badge">{{ item.badge }}</span>
-          }
-        }
-      </a>
-    }
-  </nav>
-
-  <!-- Settings section -->
-  @if (showSettingsSection()) {
-  <div class="sidebar-section">
-    @if (!collapsed()) {
-      <button class="settings-toggle" (click)="toggleSettings()">
-        <i class="pi pi-cog nav-icon"></i>
-        <span class="nav-label">{{ 'NAV.SETTINGS' | translate }}</span>
-        <i class="pi toggle-arrow" [class.pi-chevron-down]="!settingsOpen()" [class.pi-chevron-up]="settingsOpen()"></i>
-      </button>
-    } @else {
-      <button class="settings-toggle collapsed-icon" (click)="toggleSettings()">
-        <i class="pi pi-cog nav-icon"></i>
-      </button>
-    }
-
-    @if (settingsOpen() && !collapsed()) {
-      <div class="settings-items">
-        @for (item of visibleSettingsNavItems(); track item.route) {
-          <a class="nav-item sub-item" [routerLink]="item.route" (click)="onLinkClick()">
-            <i [class]="item.icon" class="nav-icon small"></i>
+  <!-- Scrollable menu -->
+  <div class="sidebar-menu">
+    <nav class="sidebar-nav">
+      <span class="section-label">{{ 'NAV.SECTION.MAIN' | translate }}</span>
+      @for (item of visibleMainNavItems(); track item.route) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="onLinkClick()"
+        >
+          <i [class]="item.icon" class="nav-icon"></i>
+          @if (!collapsed()) {
             <span class="nav-label">{{ item.labelKey | translate }}</span>
-          </a>
+            @if (item.badge) {
+              <span class="nav-badge">{{ item.badge }}</span>
+            }
+          }
+        </a>
+      }
+
+      <!-- Finance section -->
+      @if (showFinanceSection()) {
+        <div
+          class="sidebar-section sidebar-section--finance"
+          [class.is-expanded]="financeOpen()"
+          [class.is-active]="isFinanceSectionActive()"
+        >
+          @if (!collapsed()) {
+            <button
+              type="button"
+              class="section-toggle section-toggle--finance"
+              [class.active]="isFinanceSectionActive()"
+              (click)="toggleFinance()"
+              [attr.aria-expanded]="financeOpen()"
+            >
+              <i class="pi pi-dollar nav-icon"></i>
+              <span class="nav-label">{{ 'NAV.FINANCE' | translate }}</span>
+              <i
+                class="pi toggle-arrow"
+                [class.pi-chevron-down]="!financeOpen()"
+                [class.pi-chevron-up]="financeOpen()"
+              ></i>
+            </button>
+          } @else {
+            <button type="button" class="section-toggle collapsed-icon" (click)="toggleFinance()">
+              <i class="pi pi-dollar nav-icon"></i>
+            </button>
+          }
+
+          @if (financeOpen() && !collapsed()) {
+            <div class="section-items section-items--finance">
+              @for (item of visibleFinanceNavItems(); track item.route) {
+                <a
+                  class="nav-item sub-item sub-item--text"
+                  [routerLink]="item.route"
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="onLinkClick()"
+                >
+                  <span class="nav-label">{{ item.labelKey | translate }}</span>
+                  <span class="active-dot" aria-hidden="true"></span>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Reports -->
+      @if (visibleReportsNavItem(); as reportsItem) {
+        <a
+          class="nav-item"
+          [routerLink]="reportsItem.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="onLinkClick()"
+        >
+          <i [class]="reportsItem.icon" class="nav-icon"></i>
+          @if (!collapsed()) {
+            <span class="nav-label">{{ reportsItem.labelKey | translate }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <!-- Settings section -->
+    @if (showSettingsSection()) {
+      <div
+        class="sidebar-section sidebar-section--settings"
+        [class.is-expanded]="settingsOpen()"
+        [class.is-active]="isSettingsSectionActive()"
+      >
+        @if (!collapsed()) {
+          <button
+            type="button"
+            class="section-toggle section-toggle--settings"
+            [class.active]="isSettingsSectionActive()"
+            (click)="toggleSettings()"
+            [attr.aria-expanded]="settingsOpen()"
+          >
+            <i class="pi pi-cog nav-icon"></i>
+            <span class="nav-label">{{ 'NAV.SETTINGS' | translate }}</span>
+            <i
+              class="pi toggle-arrow"
+              [class.pi-chevron-down]="!settingsOpen()"
+              [class.pi-chevron-up]="settingsOpen()"
+            ></i>
+          </button>
+        } @else {
+          <button type="button" class="section-toggle collapsed-icon" (click)="toggleSettings()">
+            <i class="pi pi-cog nav-icon"></i>
+          </button>
+        }
+
+        @if (settingsOpen() && !collapsed()) {
+          <div class="section-items section-items--settings">
+            @for (item of visibleSettingsNavItems(); track item.route) {
+              <a
+                class="nav-item sub-item sub-item--text sub-item--settings"
+                [routerLink]="item.route"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                (click)="onLinkClick()"
+              >
+                <span class="nav-label">{{ item.labelKey | translate }}</span>
+              </a>
+            }
+          </div>
         }
       </div>
     }
   </div>
-  }
 
   <!-- Support link -->
   <div class="sidebar-footer">
-    <a class="nav-item support-item" routerLink="/support" (click)="onLinkClick()">
+    <a
+      class="nav-item support-item"
+      routerLink="/support"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      (click)="onLinkClick()"
+    >
       <i class="pi pi-headphones nav-icon"></i>
       @if (!collapsed()) {
         <span class="nav-label">{{ 'NAV.SUPPORT' | translate }}</span>

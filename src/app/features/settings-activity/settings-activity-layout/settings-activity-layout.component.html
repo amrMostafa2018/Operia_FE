@@ -1,0 +1,37 @@
+<div class="settings-activity-page">
+  <header class="page-header-block">
+    <div class="title-row">
+      <div class="title-icon" aria-hidden="true">
+        <i [class]="activeTab().icon"></i>
+      </div>
+      <div class="title-text">
+        <h1>{{ activeTab().titleKey | translate }}</h1>
+        <p>{{ activeTab().subtitleKey | translate }}</p>
+      </div>
+    </div>
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <span>{{ 'NAV.SETTINGS' | translate }}</span>
+      <i class="pi pi-angle-left" aria-hidden="true"></i>
+      <span class="breadcrumb-current">{{ 'SETTINGS_ACTIVITY.BREADCRUMB_TITLE' | translate }}</span>
+    </nav>
+  </header>
+
+  <nav class="tab-bar" aria-label="Activity settings tabs">
+    @for (tab of tabs; track tab.route) {
+      <a
+        class="tab-item"
+        [routerLink]="['/settings/activity', tab.route]"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <i [class]="tab.icon" aria-hidden="true"></i>
+        <span>{{ tab.labelKey | translate }}</span>
+      </a>
+    }
+  </nav>
+
+  <main class="tab-content">
+    <router-outlet />
+  </main>
+</div>

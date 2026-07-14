@@ -1,0 +1,202 @@
+<div class="account-security">
+  <!-- Section 1: Change Password -->
+  <section class="card section-card">
+    <h2 class="section-title">
+      <span class="section-num">1.</span>
+      {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.TITLE' | translate }}
+    </h2>
+
+    <div class="password-layout">
+      <form class="password-form" [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+        <div class="field">
+          <label for="currentPassword">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CURRENT' | translate }}
+            <span class="required">*</span>
+          </label>
+          <input
+            pInputText
+            id="currentPassword"
+            type="password"
+            formControlName="currentPassword"
+            [class.ng-invalid]="isInvalid('currentPassword')"
+          />
+        </div>
+
+        <div class="field">
+          <label for="newPassword">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.NEW' | translate }}
+            <span class="required">*</span>
+          </label>
+          <input
+            pInputText
+            id="newPassword"
+            type="password"
+            formControlName="newPassword"
+            [class.ng-invalid]="isInvalid('newPassword')"
+          />
+        </div>
+
+        <div class="field">
+          <label for="confirmPassword">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CONFIRM' | translate }}
+            <span class="required">*</span>
+          </label>
+          <input
+            pInputText
+            id="confirmPassword"
+            type="password"
+            formControlName="confirmPassword"
+            [class.ng-invalid]="isInvalid('confirmPassword') || hasPasswordMismatch()"
+          />
+          @if (hasPasswordMismatch()) {
+            <small class="field-error">{{ 'ERRORS.PasswordMismatch' | translate }}</small>
+          }
+        </div>
+
+        <div class="otp-section">
+          <p class="otp-hint">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_HINT' | translate: { phone: maskedPhone } }}
+          </p>
+          <div class="otp-row">
+            <input
+              pInputText
+              class="otp-input"
+              [ngModel]="otpCode()"
+              (ngModelChange)="otpCode.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_PLACEHOLDER' | translate"
+              maxlength="6"
+            />
+            <p-button
+              [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.RESEND_OTP' | translate"
+              icon="pi pi-refresh"
+              [outlined]="true"
+              [loading]="sendingOtp()"
+              (onClick)="onSendOtp()"
+            />
+          </div>
+        </div>
+
+        <p-button
+          type="submit"
+          [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CHANGE_BTN' | translate"
+          styleClass="change-password-btn"
+        />
+      </form>
+
+      <div class="password-illustration" aria-hidden="true">
+        <div class="phone-mock">
+          <i class="pi pi-lock"></i>
+          <span class="otp-display">123456</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Security Options -->
+  <section class="card section-card">
+    <h2 class="section-title">
+      <span class="section-num">2.</span>
+      {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TITLE' | translate }}
+    </h2>
+
+    <div class="options-list">
+      <div class="option-row">
+        <div class="option-info">
+          <i class="pi pi-shield" aria-hidden="true"></i>
+          <span>{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TWO_FA' | translate }}</span>
+        </div>
+        <p-inputSwitch [ngModel]="enable2fa()" (ngModelChange)="enable2fa.set($event)" />
+      </div>
+
+      <div class="option-row">
+        <div class="option-info">
+          <i class="pi pi-bell" aria-hidden="true"></i>
+          <span>{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS' | translate }}</span>
+        </div>
+        <p-inputSwitch [ngModel]="loginAlerts()" (ngModelChange)="loginAlerts.set($event)" />
+      </div>
+
+      <div class="option-row">
+        <div class="option-info">
+          <i class="pi pi-desktop" aria-hidden="true"></i>
+          <span>{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS' | translate }}</span>
+        </div>
+        <p-button
+          [label]="'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_BTN' | translate"
+          [outlined]="true"
+          size="small"
+          (onClick)="onLogoutOtherDevices()"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Access Users -->
+  <section class="card section-card">
+    <div class="section-header-row">
+      <h2 class="section-title">
+        <span class="section-num">3.</span>
+        {{ 'SETTINGS_ACTIVITY.SECURITY.USERS.TITLE' | translate }}
+      </h2>
+      <span class="users-count">
+        {{ users().length }} {{ 'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate }}
+      </span>
+    </div>
+
+    <p-table [value]="users()" styleClass="users-table" [paginator]="true" [rows]="5">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.NAME' | translate }}</th>
+          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.EMAIL' | translate }}</th>
+          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.LAST_LOGIN' | translate }}</th>
+          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.DEVICE' | translate }}</th>
+          <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user let-i="rowIndex">
+        <tr>
+          <td>{{ i + 1 }}</td>
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.lastLogin }}</td>
+          <td>
+            <i [class]="getDeviceIcon(user.device)" aria-hidden="true"></i>
+          </td>
+          <td>
+            <p-button
+              [label]="'SETTINGS_ACTIVITY.SECURITY.USERS.BLOCK' | translate"
+              [outlined]="true"
+              severity="danger"
+              size="small"
+              (onClick)="openMenu($event, actionMenu, user.id)"
+            />
+            <p-menu #actionMenu [model]="menuItems" [popup]="true" />
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <!-- Section 4: Deactivate Account -->
+  <section class="card section-card warning-card">
+    <h2 class="section-title warning">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      {{ 'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.TITLE' | translate }}
+    </h2>
+    <p class="deactivate-text">{{ 'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.DESCRIPTION' | translate }}</p>
+    <p-button
+      [label]="'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.BTN' | translate"
+      severity="warning"
+      [outlined]="true"
+      (onClick)="onDeactivateAccount()"
+    />
+  </section>
+
+  <app-settings-footer
+    [showReset]="false"
+    [saving]="saving()"
+    (save)="onSave()"
+  />
+</div>

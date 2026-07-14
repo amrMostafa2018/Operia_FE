@@ -1,0 +1,50 @@
+@use '../../../../../styles/variables' as *;
+
+.settings-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.footer-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+
+  .pi {
+    font-size: 0.875rem;
+  }
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+:host ::ng-deep {
+  .save-btn {
+    flex: 1;
+    min-width: 200px;
+
+    .p-button {
+      width: 100%;
+      justify-content: center;
+      background: $primary;
+      border-color: $primary;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+    }
+  }
+
+  .reset-btn .p-button {
+    padding: 0.75rem 1.25rem;
+    color: var(--text-secondary);
+    border-color: var(--surface-border);
+  }
+}

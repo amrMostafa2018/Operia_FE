@@ -67,6 +67,10 @@
     "SUPPORT":       "Technical Support",
     "SETTINGS_SECTION": {
       "BUSINESS_IDENTITY": "Business Identity",
+      "ACTIVITY_IDENTITY": "Activity Identity",
+      "ACTIVITY_PAYMENTS": "Payment Methods",
+      "ACTIVITY_WORKING_DAYS": "Working Days",
+      "ACTIVITY_SECURITY": "Account & Security",
       "PAYMENT_METHODS":   "Payment Methods",
       "NOTIFICATIONS":     "Notifications",
       "LANGUAGE":          "Language & Region",
@@ -559,6 +563,169 @@
     "PLANS": {
       "GROWTH":                 "Growth",
       "BASIC":                  "Basic"
+    }
+  },
+  "SETTINGS_ACTIVITY": {
+    "BREADCRUMB_TITLE": "Activity Settings",
+    "TABS": {
+      "IDENTITY": "Activity Identity & Customer Content",
+      "PAYMENTS": "Payment Methods",
+      "WORKING_DAYS": "Working Days",
+      "SECURITY": "Account & Security"
+    },
+    "PAGES": {
+      "IDENTITY": {
+        "TITLE": "Activity Settings",
+        "SUBTITLE": "Manage your business profile and customer-facing content"
+      },
+      "PAYMENTS": {
+        "TITLE": "Payment Methods",
+        "SUBTITLE": "Enable payment methods and manage their details for customers"
+      },
+      "WORKING_DAYS": {
+        "TITLE": "Working Days",
+        "SUBTITLE": "Set working days and hours visible to your customers"
+      },
+      "SECURITY": {
+        "TITLE": "Account & Security",
+        "SUBTITLE": "Manage password, security options, and user access"
+      }
+    },
+    "FOOTER": {
+      "RESET": "Reset",
+      "SAVE": "Save Changes",
+      "SAVED_TITLE": "Saved",
+      "SAVED_DETAIL": "Changes saved successfully"
+    },
+    "IDENTITY": {
+      "FOOTER_NOTE": "Changes you save will appear immediately on your customer-facing activity page.",
+      "BASIC_INFO": {
+        "TITLE": "Basic Information (Required)",
+        "ACTIVITY_NAME": "Activity Name",
+        "CONTACT_PHONE": "Contact Number (Mobile)",
+        "WHATSAPP": "WhatsApp",
+        "EMAIL": "Email Address"
+      },
+      "PHOTOS": {
+        "TITLE": "Activity Photos",
+        "SUBTITLE": "These photos appear on the activity landing page for customers",
+        "INSTRUCTIONS_TITLE": "Photo Instructions",
+        "RULE_1": "Main photo is required",
+        "RULE_2": "Maximum of 6 photos (1 main + 5 additional)",
+        "RULE_3": "Supported formats: JPG, PNG, WEBP",
+        "RULE_4": "Maximum file size: 5MB",
+        "RULE_5": "High-quality images are recommended",
+        "PRIMARY": "Main",
+        "PHOTO_LABEL": "Photo {{num}}",
+        "REPLACE": "Update image",
+        "SET_PRIMARY": "Set as main photo",
+        "INVALID_TYPE": "Unsupported image format",
+        "INVALID_SIZE": "Image exceeds 5 MB limit"
+      },
+      "VISIBLE_INFO": {
+        "TITLE": "Customer-Visible Activity Info",
+        "SUBTITLE": "This information appears on the activity landing page",
+        "ADDRESS": "Main Branch Address",
+        "ABOUT": "About the Activity"
+      }
+    },
+    "PAYMENTS": {
+      "BANNER": "Activated payment methods are subject to manual review by management before appearing to customers.",
+      "ACTIVATE_TITLE": "Activate Payment Methods",
+      "DETAILS_TITLE": "Payment Method Details",
+      "REVIEW_TITLE": "Payment Review",
+      "METHODS": {
+        "CASH": "Cash",
+        "BANK_TRANSFER": "Bank Transfer",
+        "INSTAPAY": "Instapay",
+        "E_WALLET": "E-Wallet",
+        "FAWRY": "Fawry"
+      },
+      "BANK": {
+        "BANK": "Bank Name",
+        "HOLDER": "Account Holder Name",
+        "ACCOUNT": "Account Number",
+        "IBAN": "IBAN (optional)"
+      },
+      "INSTAPAY": {
+        "ID": "Instapay ID",
+        "HOLDER": "Account Holder Name"
+      },
+      "WALLET": {
+        "TYPE": "Wallet Type",
+        "HOLDER": "Wallet Holder Name",
+        "NUMBER": "Wallet Number"
+      },
+      "FAWRY": {
+        "CODE": "Service Code / Payment Number",
+        "NOTES": "Notes for Customers (optional)"
+      },
+      "REVIEW": {
+        "PENDING": "Under Review",
+        "PAID": "Paid",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "WORKING_DAYS": {
+      "BANNER": "The working hours you set will be visible to customers when booking.",
+      "SCHEDULE_TITLE": "Select Working Days",
+      "EXTRA_TITLE": "Additional Settings",
+      "WORKING_DAY": "Working Day",
+      "DAY_OFF": "Day Off",
+      "FROM": "From",
+      "TO": "To",
+      "ALLOW_OUTSIDE": "Allow booking outside working hours",
+      "ALLOW_OUTSIDE_HINT": "Bookings outside working hours will be held for review.",
+      "FOOTER_NOTE": "Note: The specified working hours will be applied to your customers' booking page.",
+      "DAYS": {
+        "FRI": "Friday",
+        "SAT": "Saturday",
+        "SUN": "Sunday",
+        "MON": "Monday",
+        "TUE": "Tuesday",
+        "WED": "Wednesday",
+        "THU": "Thursday"
+      }
+    },
+    "SECURITY": {
+      "PASSWORD": {
+        "TITLE": "Change Password",
+        "CURRENT": "Current Password",
+        "NEW": "New Password",
+        "CONFIRM": "Confirm New Password",
+        "OTP_HINT": "Verification code sent to {{phone}}",
+        "OTP_PLACEHOLDER": "Enter verification code",
+        "RESEND_OTP": "Send new code",
+        "OTP_SENT": "Code sent",
+        "CHANGE_BTN": "Change Password",
+        "CHANGED": "Password changed successfully"
+      },
+      "OPTIONS": {
+        "TITLE": "Security Options",
+        "TWO_FA": "Enable Two-Factor Authentication (2FA)",
+        "LOGIN_ALERTS": "Login Notifications",
+        "LOGOUT_OTHERS": "Log out from other devices",
+        "LOGOUT_BTN": "Log Out",
+        "LOGOUT_DONE": "Logged out from other devices"
+      },
+      "USERS": {
+        "TITLE": "Users with Access",
+        "TOTAL": "total users",
+        "NAME": "User Name",
+        "EMAIL": "Email",
+        "LAST_LOGIN": "Last Login",
+        "DEVICE": "Browser / Device",
+        "BLOCK": "Block",
+        "BAN": "Ban User",
+        "DELETE": "Delete User",
+        "DELETED": "User deleted"
+      },
+      "DEACTIVATE": {
+        "TITLE": "Temporarily Deactivate Account",
+        "DESCRIPTION": "Your activity will be paused and customers won't be able to book until reactivated.",
+        "BTN": "Deactivate account temporarily",
+        "STUB": "This feature is not available in demo mode"
+      }
     }
   }
 }

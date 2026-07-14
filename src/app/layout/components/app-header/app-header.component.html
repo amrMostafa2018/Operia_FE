@@ -1,14 +1,23 @@
 <header class="app-header">
 
-  <!-- Start: hamburger + breadcrumb -->
+  <!-- Mobile menu only -->
   <div class="header-start">
-    <button class="hamburger" (click)="onToggleSidebar()" [attr.aria-label]="'NAV.DASHBOARD' | translate">
+    <button
+      class="mobile-menu-btn"
+      type="button"
+      (click)="onToggleSidebar()"
+      [attr.aria-label]="'HEADER.TOGGLE_SIDEBAR' | translate"
+    >
       <i class="pi pi-bars"></i>
     </button>
   </div>
 
-  <!-- End: notifications + user -->
+  <!-- End: language + notifications + user -->
   <div class="header-end">
+    <div class="header-actions">
+      <app-language-switcher />
+    </div>
+
     <!-- Notification bell -->
     <button class="icon-btn notif-btn" [attr.aria-label]="'HEADER.NOTIFICATIONS' | translate">
       <i class="pi pi-bell"></i>
@@ -17,12 +26,14 @@
 
     <!-- User block -->
     <div class="user-block">
-      <div class="user-info">
-        <span class="user-name">{{ userName() }}</span>
-        <span class="user-role">{{ authStore.userRole() }}</span>
-      </div>
       <div class="user-avatar" [attr.aria-label]="userName()">
         {{ userInitials() }}
+      </div>
+      <div class="user-info">
+        @if (businessName()) {
+          <span class="business-name">{{ businessName() }}</span>
+        }
+        <span class="user-name">{{ userName() }}</span>
       </div>
     </div>
 

@@ -14,8 +14,8 @@
   gap: 1rem;
 }
 
-// ─── Hamburger ────────────────────────────────────────────────────────────────
-.hamburger {
+// ─── Mobile menu (sidebar hidden on small screens) ────────────────────────────
+.mobile-menu-btn {
   display: none;
   align-items: center;
   justify-content: center;
@@ -27,15 +27,25 @@
   cursor: pointer;
   color: var(--text-secondary);
   font-size: 1.1rem;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 
-  &:hover { background: var(--surface-hover); }
+  &:hover {
+    background: var(--surface-hover);
+    color: var(--color-primary);
+  }
 
-  @media (max-width: $bp-lg) { display: flex; }
+  @media (max-width: $bp-lg) {
+    display: flex;
+  }
 }
 
 .header-start { display: flex; align-items: center; gap: 0.75rem; }
 .header-end   { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
 
 // ─── Icon buttons ─────────────────────────────────────────────────────────────
 .icon-btn {
@@ -84,27 +94,40 @@
   cursor: pointer;
 
   &:hover { background: var(--surface-hover); }
+
+  :host-context([dir='ltr']) & { flex-direction: row-reverse; }
 }
 
 .user-info {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  line-height: 1.2;
+  line-height: 1.35;
+  gap: 0.05rem;
 
   @media (max-width: $bp-md) { display: none; }
+
+  :host-context([dir='rtl']) & { align-items: flex-start; text-align: start; }
+  :host-context([dir='ltr']) & { align-items: flex-end; text-align: end; }
+}
+
+.business-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.user-role {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--text-secondary);
-  text-transform: capitalize;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-avatar {

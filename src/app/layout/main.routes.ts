@@ -76,24 +76,52 @@ export const mainRoutes: Routes = [
         title: 'Branches - Operia',
       },
       {
-        path: 'settings/identity',
-        loadComponent: placeholder,
-        canActivate: [permissionGuard],
+        path: 'finance/operia-subscriptions',
+        loadComponent: () =>
+          import('@app/features/operia-subscriptions/operia-subscriptions.component').then(
+            m => m.OperiaSubscriptionsComponent
+          ),
         data: {
-          permissions: [Permissions.Admin.SettingsRead],
-          featureKey: 'NAV.SETTINGS_SECTION.BUSINESS_IDENTITY',
+          featureKey: 'NAV.SUBSCRIPTION',
         },
-        title: 'Business Identity - Operia',
+        title: 'Operia Subscriptions - Operia',
       },
       {
-        path: 'settings/payments',
+        path: 'finance/activity-revenue',
         loadComponent: placeholder,
+        data: {
+          featureKey: 'NAV.ACTIVITY_REVENUE',
+        },
+        title: 'Activity Revenue - Operia',
+      },
+      {
+        path: 'reports',
+        loadComponent: placeholder,
+        data: {
+          featureKey: 'NAV.REPORTS',
+        },
+        title: 'Reports - Operia',
+      },
+      {
+        path: 'settings/activity',
+        loadChildren: () =>
+          import('@app/features/settings-activity/settings-activity.routes').then(
+            m => m.settingsActivityRoutes
+          ),
         canActivate: [permissionGuard],
         data: {
           permissions: [Permissions.Admin.SettingsRead],
-          featureKey: 'NAV.SETTINGS_SECTION.PAYMENT_METHODS',
         },
-        title: 'Payment Methods - Operia',
+      },
+      {
+        path: 'settings/offers',
+        loadComponent: placeholder,
+        canActivate: [permissionGuard],
+        data: {
+          permissions: [Permissions.Admin.PackagesRead],
+          featureKey: 'NAV.OFFERS',
+        },
+        title: 'Offers - Operia',
       },
       {
         path: 'settings/notifications',

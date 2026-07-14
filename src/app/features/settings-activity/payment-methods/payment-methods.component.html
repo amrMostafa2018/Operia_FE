@@ -1,0 +1,173 @@
+<div class="payment-methods">
+  <div class="info-banner">
+    <i class="pi pi-info-circle" aria-hidden="true"></i>
+    <p>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANNER' | translate }}</p>
+  </div>
+
+  <!-- Section 1: Activate methods -->
+  <section class="card section-card">
+    <h2 class="section-title">
+      <span class="section-num">1.</span>
+      {{ 'SETTINGS_ACTIVITY.PAYMENTS.ACTIVATE_TITLE' | translate }}
+    </h2>
+
+    <div class="method-cards">
+      @for (method of paymentMethods(); track method.id) {
+        <div class="method-card" [class.enabled]="method.enabled">
+          <i [class]="method.icon" aria-hidden="true"></i>
+          <span class="method-label">{{ method.labelKey | translate }}</span>
+          <p-inputSwitch
+            [ngModel]="method.enabled"
+            (ngModelChange)="toggleMethod(method.id, $event)"
+          />
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Section 2: Method details -->
+  <section class="card section-card">
+    <h2 class="section-title">
+      <span class="section-num">2.</span>
+      {{ 'SETTINGS_ACTIVITY.PAYMENTS.DETAILS_TITLE' | translate }}
+    </h2>
+
+    <div class="accordion-list">
+      @for (method of activeMethodsWithForms(); track method.id) {
+        <div class="accordion-item" [class.expanded]="isExpanded(method.id)">
+          <button
+            type="button"
+            class="accordion-header"
+            (click)="toggleExpanded(method.id)"
+          >
+            <i [class]="method.icon" aria-hidden="true"></i>
+            <span>{{ method.labelKey | translate }}</span>
+            <i
+              class="pi toggle-icon"
+              [class.pi-chevron-up]="isExpanded(method.id)"
+              [class.pi-chevron-down]="!isExpanded(method.id)"
+              aria-hidden="true"
+            ></i>
+          </button>
+
+          @if (isExpanded(method.id)) {
+            <div class="accordion-body">
+              @switch (method.id) {
+                @case ('bank_transfer') {
+                  <form [formGroup]="bankForm" class="method-form">
+                    <div class="form-grid">
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.BANK' | translate }} <span class="required">*</span></label>
+                        <p-dropdown
+                          formControlName="bank"
+                          [options]="bankOptions"
+                          optionLabel="label"
+                          optionValue="value"
+                          styleClass="w-full"
+                        />
+                      </div>
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.HOLDER' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="accountHolder" />
+                      </div>
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.ACCOUNT' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="accountNumber" />
+                      </div>
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.IBAN' | translate }}</label>
+                        <input pInputText formControlName="iban" />
+                      </div>
+                    </div>
+                  </form>
+                }
+                @case ('instapay') {
+                  <form [formGroup]="instapayForm" class="method-form">
+                    <div class="form-grid">
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.ID' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="instapayId" />
+                      </div>
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.HOLDER' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="accountHolder" />
+                      </div>
+                    </div>
+                  </form>
+                }
+                @case ('e_wallet') {
+                  <form [formGroup]="walletForm" class="method-form">
+                    <div class="form-grid">
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.TYPE' | translate }} <span class="required">*</span></label>
+                        <p-dropdown
+                          formControlName="walletType"
+                          [options]="walletOptions"
+                          optionLabel="label"
+                          optionValue="value"
+                          styleClass="w-full"
+                        />
+                      </div>
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.HOLDER' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="holderName" />
+                      </div>
+                      <div class="field full-width">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.NUMBER' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="walletNumber" />
+                      </div>
+                    </div>
+                  </form>
+                }
+                @case ('fawry') {
+                  <form [formGroup]="fawryForm" class="method-form">
+                    <div class="form-grid">
+                      <div class="field">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.CODE' | translate }} <span class="required">*</span></label>
+                        <input pInputText formControlName="serviceCode" />
+                      </div>
+                      <div class="field full-width">
+                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.NOTES' | translate }}</label>
+                        <textarea pInputTextarea formControlName="notes" rows="3"></textarea>
+                      </div>
+                    </div>
+                  </form>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Section 3: Review workflow -->
+  <section class="card section-card">
+    <h2 class="section-title">
+      <span class="section-num">3.</span>
+      {{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW_TITLE' | translate }}
+    </h2>
+
+    <div class="review-flow">
+      <div class="review-step pending">
+        <div class="step-icon"><i class="pi pi-clock"></i></div>
+        <span>{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING' | translate }}</span>
+      </div>
+      <div class="flow-arrow"><i class="pi pi-arrow-left"></i></div>
+      <div class="review-step success">
+        <div class="step-icon"><i class="pi pi-check"></i></div>
+        <span>{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID' | translate }}</span>
+      </div>
+      <div class="review-step danger">
+        <div class="step-icon"><i class="pi pi-times"></i></div>
+        <span>{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED' | translate }}</span>
+      </div>
+    </div>
+  </section>
+
+  <app-settings-footer
+    [saving]="saving()"
+    (reset)="onReset()"
+    (save)="onSave()"
+  />
+</div>

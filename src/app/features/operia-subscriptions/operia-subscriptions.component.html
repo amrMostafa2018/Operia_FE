@@ -1,0 +1,244 @@
+<div class="subs-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-title">
+      <i class="pi pi-calendar"></i>
+      <h1>{{ 'OPERIA_SUBSCRIPTIONS.TITLE' | translate }}</h1>
+    </div>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <span>{{ 'NAV.FINANCE' | translate }}</span>
+      <i class="pi pi-angle-left" aria-hidden="true"></i>
+      <span class="breadcrumb-current">{{ 'OPERIA_SUBSCRIPTIONS.TITLE' | translate }}</span>
+    </nav>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-fields">
+      <div class="filter-field">
+        <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.FROM_DATE' | translate }}</span>
+        <p-calendar
+          [ngModel]="dateFrom()"
+          (ngModelChange)="dateFrom.set($event)"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'OPERIA_SUBSCRIPTIONS.FROM_DATE' | translate"
+          styleClass="date-picker"
+        />
+      </div>
+      <div class="filter-field">
+        <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.TO_DATE' | translate }}</span>
+        <p-calendar
+          [ngModel]="dateTo()"
+          (ngModelChange)="dateTo.set($event)"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'OPERIA_SUBSCRIPTIONS.TO_DATE' | translate"
+          styleClass="date-picker"
+        />
+      </div>
+      <div class="filter-field">
+        <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.PLAN' | translate }}</span>
+        <p-dropdown
+          [options]="planOptions"
+          optionLabel="labelKey"
+          optionValue="value"
+          [ngModel]="selectedPlan()"
+          (ngModelChange)="selectedPlan.set($event)"
+          [placeholder]="'OPERIA_SUBSCRIPTIONS.ALL_PLANS' | translate"
+          styleClass="filter-drop"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.labelKey | translate }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.labelKey | translate }}
+          </ng-template>
+        </p-dropdown>
+      </div>
+      <div class="filter-field">
+        <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.SUBSCRIPTION_STATUS' | translate }}</span>
+        <p-dropdown
+          [options]="statusOptions"
+          optionLabel="labelKey"
+          optionValue="value"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+          [placeholder]="'OPERIA_SUBSCRIPTIONS.ALL_STATUSES' | translate"
+          styleClass="filter-drop"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.labelKey | translate }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.labelKey | translate }}
+          </ng-template>
+        </p-dropdown>
+      </div>
+      <div class="filter-field">
+        <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.PAYMENT_METHOD' | translate }}</span>
+        <p-dropdown
+          [options]="paymentMethodOptions"
+          optionLabel="labelKey"
+          optionValue="value"
+          [ngModel]="selectedPaymentMethod()"
+          (ngModelChange)="selectedPaymentMethod.set($event)"
+          [placeholder]="'OPERIA_SUBSCRIPTIONS.ALL_PAYMENT_METHODS' | translate"
+          styleClass="filter-drop"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.labelKey | translate }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.labelKey | translate }}
+          </ng-template>
+        </p-dropdown>
+      </div>
+    </div>
+    <p-button
+      [label]="'COMMON.SEARCH' | translate"
+      icon="pi pi-search"
+      iconPos="right"
+      styleClass="search-btn"
+      (onClick)="onSearch()"
+    />
+  </div>
+
+  <!-- Table -->
+  <div class="table-section">
+    <p-table
+      [value]="filteredSubscriptions()"
+      [rows]="rows()"
+      [first]="first()"
+      [paginator]="false"
+      styleClass="subs-table"
+      [scrollable]="true"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_NUM' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_INVOICE_NUM' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_PLAN' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_AMOUNT' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_PAYMENT' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_START' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_END' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_STATUS' | translate }}</th>
+          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_INVOICE' | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row let-i="rowIndex">
+        <tr>
+          <td>{{ i + 1 }}</td>
+          <td class="mono">{{ row.invoiceNumber }}</td>
+          <td>
+            <div class="plan-cell">
+              <span class="plan-name">{{ row.planNameKey | translate }}</span>
+              <span class="plan-desc">{{ row.planDescriptionKey | translate }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="amount-cell">
+              <span class="amount-value">{{ row.amount | number }} {{ 'DASHBOARD.EGP' | translate }}</span>
+              <span class="amount-period">{{ billingPeriodKey(row.billingPeriod) | translate }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="payment-cell">
+              @if (paymentMethodIcon(row.paymentMethod); as icon) {
+                <i [class]="icon"></i>
+              }
+              <span>{{ paymentMethodKey(row.paymentMethod) | translate }}</span>
+            </div>
+          </td>
+          <td>{{ row.startDate }}</td>
+          <td>{{ row.endDate }}</td>
+          <td>
+            <p-tag
+              [value]="statusKey(row.status) | translate"
+              [severity]="statusSeverity(row.status)"
+              styleClass="status-tag"
+            />
+          </td>
+          <td>
+            <p-button
+              [label]="'OPERIA_SUBSCRIPTIONS.VIEW_INVOICE' | translate"
+              styleClass="invoice-btn"
+              [outlined]="true"
+              (onClick)="onViewInvoice(row)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'COMMON.NO_DATA' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <!-- Footer -->
+    <div class="table-footer">
+      <div class="rows-selector">
+        <span class="rows-label">{{ 'OPERIA_SUBSCRIPTIONS.ROWS_LABEL' | translate }}</span>
+        <p-dropdown
+          [options]="rowOptions"
+          [ngModel]="rows()"
+          (ngModelChange)="onRowsChange($event)"
+          styleClass="rows-drop"
+        />
+      </div>
+
+      <div class="footer-center">
+        <span class="records-info">
+          {{ 'OPERIA_SUBSCRIPTIONS.SHOWING' | translate }}
+          {{ totalRecords() > 0 ? 1 : 0 }}
+          {{ 'OPERIA_SUBSCRIPTIONS.TO' | translate }}
+          {{ totalRecords() }}
+          {{ 'OPERIA_SUBSCRIPTIONS.OF' | translate }}
+          {{ totalRecords() }}
+          {{ 'OPERIA_SUBSCRIPTIONS.OPERATIONS' | translate }}
+        </span>
+        <div class="paginator">
+          <button class="page-btn page-btn--nav" type="button">
+            @if (prevIconPos() === 'left') {
+              <i [class]="prevIcon()" aria-hidden="true"></i>
+            }
+            <span>{{ 'OPERIA_SUBSCRIPTIONS.PREVIOUS' | translate }}</span>
+            @if (prevIconPos() === 'right') {
+              <i [class]="prevIcon()" aria-hidden="true"></i>
+            }
+          </button>
+          <button class="page-btn active" type="button">1</button>
+          <button class="page-btn page-btn--nav" type="button">
+            <span>{{ 'OPERIA_SUBSCRIPTIONS.NEXT' | translate }}</span>
+          </button>
+        </div>
+      </div>
+
+      <p-button
+        [label]="'OPERIA_SUBSCRIPTIONS.EXPORT_REPORT' | translate"
+        icon="pi pi-download"
+        iconPos="right"
+        styleClass="export-btn"
+        [outlined]="true"
+        (onClick)="exportReport()"
+      />
+    </div>
+  </div>
+
+</div>

@@ -15,16 +15,35 @@ import { AppHeaderComponent } from '@app/layout/components/app-header/app-header
 export class MainLayoutComponent {
   sidebarCollapsed = signal(false);
   mobileOpen = signal(false);
+  private readonly isMobileView = signal(this.getIsMobileView());
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => {
+        const isMobile = this.getIsMobileView();
+        this.isMobileView.set(isMobile);
+
+        if (!isMobile) {
+          this.mobileOpen.set(false);
+        }
+      });
+    }
+  }
 
   toggleSidebar(): void {
-    if (window.innerWidth <= 992) {
+    if (this.getIsMobileView()) {
       this.mobileOpen.update(v => !v);
-    } else {
-      this.sidebarCollapsed.update(v => !v);
+      return;
     }
+
+    this.sidebarCollapsed.update(v => !v);
   }
 
   closeMobileSidebar(): void {
     this.mobileOpen.set(false);
+  }
+
+  private getIsMobileView(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth <= 992;
   }
 }
