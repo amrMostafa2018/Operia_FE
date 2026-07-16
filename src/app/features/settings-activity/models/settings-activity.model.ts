@@ -128,12 +128,12 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
 ];
 
 export const MOCK_ACCESS_USERS: AccessUser[] = [
-  { id: '1', name: 'أحمد محمد', email: 'ahmed@clinic.com', lastLogin: '2026-07-14 10:30', device: 'windows' },
-  { id: '2', name: 'سارة علي', email: 'sara@clinic.com', lastLogin: '2026-07-13 16:45', device: 'chrome' },
-  { id: '3', name: 'محمد حسن', email: 'mohamed@clinic.com', lastLogin: '2026-07-12 09:15', device: 'android' },
-  { id: '4', name: 'نور إبراهيم', email: 'nour@clinic.com', lastLogin: '2026-07-11 14:20', device: 'safari' },
-  { id: '5', name: 'كريم يوسف', email: 'karim@clinic.com', lastLogin: '2026-07-10 11:00', device: 'mac' },
-  { id: '6', name: 'ليلى أحمد', email: 'layla@clinic.com', lastLogin: '2026-07-09 08:30', device: 'chrome' },
+  { id: '1', name: 'أحمد محمد', email: 'ahmed@clinic.com', lastLogin: '10:30 2026-07-14', device: 'windows' },
+  { id: '2', name: 'سارة علي', email: 'sara@clinic.com', lastLogin: '16:45 2026-07-13', device: 'chrome' },
+  { id: '3', name: 'محمد حسن', email: 'mohamed@clinic.com', lastLogin: '09:15 2026-07-12', device: 'android' },
+  { id: '4', name: 'نور إبراهيم', email: 'nour@clinic.com', lastLogin: '14:20 2026-07-11', device: 'safari' },
+  { id: '5', name: 'كريم يوسف', email: 'karim@clinic.com', lastLogin: '11:00 2026-07-10', device: 'mac' },
+  { id: '6', name: 'ليلى أحمد', email: 'layla@clinic.com', lastLogin: '08:30 2026-07-09', device: 'chrome' },
 ];
 
 export const DEVICE_ICONS: Record<AccessUser['device'], string> = {

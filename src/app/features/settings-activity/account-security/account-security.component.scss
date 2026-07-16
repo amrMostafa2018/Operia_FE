@@ -346,6 +346,10 @@
   font-size: 0.875rem;
 }
 
+.users-table-wrap {
+  overflow-x: auto;
+}
+
 :host ::ng-deep {
   .password-input,
   .otp-input {
@@ -425,16 +429,101 @@
   }
 
   .users-table {
+    .p-datatable-table-container,
+    .p-datatable-wrapper {
+      border: 1px solid var(--surface-border);
+      border-radius: $border-radius;
+      overflow: hidden;
+    }
+
     .p-datatable-thead > tr > th {
-      padding: 0.75rem 0.875rem;
+      padding: 0.75rem 1rem;
       font-size: 0.8125rem;
       font-weight: 600;
+      color: var(--text-primary);
       background: $gray-50;
+      border-bottom: 1px solid var(--surface-border);
+      white-space: nowrap;
     }
 
     .p-datatable-tbody > tr > td {
-      padding: 0.75rem 0.875rem;
+      padding: 0.875rem 1rem;
       font-size: 0.8125rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--surface-border);
+      vertical-align: middle;
+    }
+
+    .p-datatable-tbody > tr:last-child > td {
+      border-bottom: none;
+    }
+
+    .col-index,
+    .col-device {
+      width: 4rem;
+      text-align: center;
+    }
+
+    .col-device .pi {
+      font-size: 1rem;
+      color: $gray-700;
+    }
+
+    .col-email,
+    .col-last-login {
+      white-space: nowrap;
+    }
+
+    .col-actions {
+      width: 6.5rem;
+      text-align: center;
+    }
+  }
+
+  .users-table-paginator.p-paginator {
+    justify-content: center;
+    margin-top: 1rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    gap: 0.25rem;
+
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last,
+    .p-paginator-page {
+      min-width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      color: var(--text-secondary);
+    }
+
+    .p-paginator-page.p-paginator-page-selected,
+    .p-paginator-page.p-highlight {
+      background: $primary-light;
+      border-color: transparent;
+      color: $primary;
+      font-weight: 600;
+    }
+  }
+
+  .block-user-btn.p-button {
+    min-width: 4.5rem;
+    height: 2rem;
+    padding-inline: 1rem;
+    border: 1px solid $danger;
+    border-radius: $border-radius;
+    background: #fff;
+    color: $danger;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    box-shadow: none;
+
+    &:enabled:hover {
+      background: rgba($danger, 0.05);
+      border-color: $danger;
+      color: $danger;
     }
   }
 
@@ -556,5 +645,13 @@
   :host ::ng-deep .form-actions .save-btn.p-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .users-table-wrap {
+    overflow-x: auto;
+  }
+
+  :host ::ng-deep .users-table table {
+    min-width: 42rem;
   }
 }

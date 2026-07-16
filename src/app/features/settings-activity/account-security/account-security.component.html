@@ -218,39 +218,49 @@
       </aside>
     </div>
 
-    <p-table [value]="users()" styleClass="users-table" [paginator]="true" [rows]="5">
+    <div class="users-table-wrap">
+      <p-menu #actionMenu [model]="menuItems" [popup]="true" />
+
+      <p-table
+        [value]="users()"
+        styleClass="users-table"
+        [paginator]="true"
+        [rows]="5"
+        [showFirstLastIcon]="true"
+        paginatorStyleClass="users-table-paginator"
+      >
       <ng-template pTemplate="header">
         <tr>
-          <th>#</th>
+          <th class="col-index">#</th>
           <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.NAME' | translate }}</th>
           <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.EMAIL' | translate }}</th>
           <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.LAST_LOGIN' | translate }}</th>
-          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.DEVICE' | translate }}</th>
-          <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+          <th class="col-device">{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.DEVICE' | translate }}</th>
+          <th class="col-actions">{{ 'COMMON.ACTIONS' | translate }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-user let-i="rowIndex">
         <tr>
-          <td>{{ i + 1 }}</td>
+          <td class="col-index">{{ i + 1 }}</td>
           <td>{{ user.name }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.lastLogin }}</td>
-          <td>
+          <td class="col-email" dir="ltr">{{ user.email }}</td>
+          <td class="col-last-login" dir="ltr">{{ user.lastLogin }}</td>
+          <td class="col-device">
             <i [class]="getDeviceIcon(user.device)" aria-hidden="true"></i>
           </td>
-          <td>
+          <td class="col-actions">
             <p-button
               [label]="'SETTINGS_ACTIVITY.SECURITY.USERS.BLOCK' | translate"
               [outlined]="true"
-              severity="danger"
               size="small"
+              styleClass="block-user-btn"
               (onClick)="openMenu($event, actionMenu, user.id)"
             />
-            <p-menu #actionMenu [model]="menuItems" [popup]="true" />
           </td>
         </tr>
       </ng-template>
-    </p-table>
+      </p-table>
+    </div>
   </section>
 
   <!-- Section 4: Deactivate Account -->
