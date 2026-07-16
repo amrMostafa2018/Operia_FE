@@ -58,8 +58,9 @@ export class AccountSecurityComponent implements OnInit {
   passwordForm!: FormGroup;
   otpCode = signal('');
   users = signal<AccessUser[]>(structuredClone(MOCK_ACCESS_USERS));
-  enable2fa = signal(false);
+  enable2fa = signal(true);
   loginAlerts = signal(true);
+  logoutOthers = signal(true);
   saving = signal(false);
   sendingOtp = signal(false);
 
@@ -126,11 +127,14 @@ export class AccountSecurityComponent implements OnInit {
     this.otpCode.set('');
   }
 
-  onLogoutOtherDevices(): void {
-    this.messageService.add({
-      severity: 'success',
-      summary: this.translate.instant('SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_DONE'),
-    });
+  onLogoutOthersChange(enabled: boolean): void {
+    this.logoutOthers.set(enabled);
+    if (enabled) {
+      this.messageService.add({
+        severity: 'success',
+        summary: this.translate.instant('SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_DONE'),
+      });
+    }
   }
 
   onBanUser(): void {

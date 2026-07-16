@@ -1,133 +1,200 @@
 <div class="account-security">
   <!-- Section 1: Change Password -->
-  <section class="card section-card">
-    <h2 class="section-title">
-      <span class="section-num">1.</span>
-      {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.TITLE' | translate }}
-    </h2>
+  <section class="card section-card password-card">
+    <div class="section-heading">
+      <h2 class="section-title">
+        <span class="section-num">1.</span>
+        {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.TITLE' | translate }}
+      </h2>
+      <p class="section-description">
+        {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.DESCRIPTION' | translate }}
+      </p>
+    </div>
 
-    <div class="password-layout">
-      <form class="password-form" [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
-        <div class="field">
-          <label for="currentPassword">
-            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CURRENT' | translate }}
-            <span class="required">*</span>
-          </label>
-          <input
-            pInputText
-            id="currentPassword"
-            type="password"
-            formControlName="currentPassword"
-            [class.ng-invalid]="isInvalid('currentPassword')"
-          />
-        </div>
+    <form class="password-form" [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+      <div class="password-layout">
+        <aside class="password-illustration" aria-hidden="true">
+          <svg
+            class="phone-illustration"
+            viewBox="0 0 132 172"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <defs>
+              <filter id="otp-soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#6C63FF" flood-opacity="0.18" />
+              </filter>
+            </defs>
 
-        <div class="field">
-          <label for="newPassword">
-            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.NEW' | translate }}
-            <span class="required">*</span>
-          </label>
-          <input
-            pInputText
-            id="newPassword"
-            type="password"
-            formControlName="newPassword"
-            [class.ng-invalid]="isInvalid('newPassword')"
-          />
-        </div>
+            <rect class="phone-body" x="34" y="18" width="64" height="122" rx="14" />
+            <rect class="phone-notch" x="52" y="24" width="28" height="4" rx="2" />
 
-        <div class="field">
-          <label for="confirmPassword">
-            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CONFIRM' | translate }}
-            <span class="required">*</span>
-          </label>
-          <input
-            pInputText
-            id="confirmPassword"
-            type="password"
-            formControlName="confirmPassword"
-            [class.ng-invalid]="isInvalid('confirmPassword') || hasPasswordMismatch()"
-          />
-          @if (hasPasswordMismatch()) {
-            <small class="field-error">{{ 'ERRORS.PasswordMismatch' | translate }}</small>
-          }
-        </div>
+            <g filter="url(#otp-soft-shadow)">
+              <path
+                class="phone-bubble"
+                d="M48 38C48 32.477 52.477 28 58 28H104C109.523 28 114 32.477 114 38V48C114 53.523 109.523 58 104 58H70L62 68L64 58H58C52.477 58 48 53.523 48 48V38Z"
+              />
+              <text class="phone-bubble-text" x="81" y="45" text-anchor="middle">123456</text>
+            </g>
 
-        <div class="otp-section">
-          <p class="otp-hint">
-            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_HINT' | translate: { phone: maskedPhone } }}
+            <g class="phone-lock-group" filter="url(#otp-soft-shadow)">
+              <path
+                class="phone-lock-shackle"
+                d="M53.5 114V101.5C53.5 94.44 59.19 88.75 66.25 88.75C73.31 88.75 79 94.44 79 101.5V114"
+              />
+              <rect class="phone-lock-body" x="47" y="114" width="38" height="33" rx="8" />
+              <rect class="phone-keyhole" x="58" y="125.5" width="16" height="5" rx="2.5" />
+            </g>
+          </svg>
+          <p class="otp-send-label">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_SEND_TO' | translate }}
           </p>
-          <div class="otp-row">
-            <input
-              pInputText
-              class="otp-input"
-              [ngModel]="otpCode()"
-              (ngModelChange)="otpCode.set($event)"
-              [ngModelOptions]="{ standalone: true }"
-              [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_PLACEHOLDER' | translate"
-              maxlength="6"
-            />
-            <p-button
-              [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.RESEND_OTP' | translate"
-              icon="pi pi-refresh"
-              [outlined]="true"
-              [loading]="sendingOtp()"
-              (onClick)="onSendOtp()"
-            />
+          <p class="otp-phone" dir="ltr">{{ maskedPhone }}</p>
+        </aside>
+
+        <div class="password-body">
+          <div class="password-fields">
+            <div class="field">
+              <label for="currentPassword">
+                {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CURRENT' | translate }}
+              </label>
+              <input
+                pInputText
+                id="currentPassword"
+                type="password"
+                class="password-input"
+                formControlName="currentPassword"
+                [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate"
+                [class.ng-invalid]="isInvalid('currentPassword')"
+              />
+            </div>
+
+            <div class="field">
+              <label for="newPassword">
+                {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.NEW' | translate }}
+              </label>
+              <input
+                pInputText
+                id="newPassword"
+                type="password"
+                class="password-input"
+                formControlName="newPassword"
+                [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate"
+                [class.ng-invalid]="isInvalid('newPassword')"
+              />
+            </div>
+
+            <div class="field">
+              <label for="confirmPassword">
+                {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CONFIRM' | translate }}
+              </label>
+              <input
+                pInputText
+                id="confirmPassword"
+                type="password"
+                class="password-input"
+                formControlName="confirmPassword"
+                [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate"
+                [class.ng-invalid]="isInvalid('confirmPassword') || hasPasswordMismatch()"
+              />
+              @if (hasPasswordMismatch()) {
+                <small class="field-error">{{ 'ERRORS.PasswordMismatch' | translate }}</small>
+              }
+            </div>
+          </div>
+
+          <div class="otp-section">
+            <label class="otp-label" for="otpCode">
+              {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_LABEL' | translate }}
+            </label>
+            <p class="otp-instruction">
+              {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_INSTRUCTION' | translate }}
+            </p>
+            <div class="otp-row">
+              <input
+                pInputText
+                id="otpCode"
+                class="otp-input"
+                [ngModel]="otpCode()"
+                (ngModelChange)="otpCode.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+                [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_PLACEHOLDER' | translate"
+                maxlength="6"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+              />
+              <p-button
+                type="button"
+                styleClass="resend-otp-btn"
+                [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.RESEND_OTP' | translate"
+                icon="pi pi-refresh"
+                [outlined]="true"
+                [loading]="sendingOtp()"
+                (onClick)="onSendOtp()"
+              />
+            </div>
           </div>
         </div>
+      </div>
 
+      <div class="form-actions">
         <p-button
           type="submit"
           [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CHANGE_BTN' | translate"
           styleClass="change-password-btn"
         />
-      </form>
-
-      <div class="password-illustration" aria-hidden="true">
-        <div class="phone-mock">
-          <i class="pi pi-lock"></i>
-          <span class="otp-display">123456</span>
-        </div>
       </div>
-    </div>
+    </form>
   </section>
 
   <!-- Section 2: Security Options -->
   <section class="card section-card">
-    <h2 class="section-title">
-      <span class="section-num">2.</span>
-      {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TITLE' | translate }}
-    </h2>
+    <div class="section-heading">
+      <h2 class="section-title">
+        <span class="section-num">2.</span>
+        {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TITLE' | translate }}
+      </h2>
+      <p class="section-description">
+        {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.DESCRIPTION' | translate }}
+      </p>
+    </div>
 
     <div class="options-list">
       <div class="option-row">
-        <div class="option-info">
-          <i class="pi pi-shield" aria-hidden="true"></i>
-          <span>{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TWO_FA' | translate }}</span>
-        </div>
         <p-inputSwitch [ngModel]="enable2fa()" (ngModelChange)="enable2fa.set($event)" />
+        <div class="option-content">
+          <p class="option-title">{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TWO_FA' | translate }}</p>
+          <p class="option-description">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TWO_FA_DESC' | translate }}
+          </p>
+        </div>
+        <i class="pi pi-shield option-icon" aria-hidden="true"></i>
       </div>
 
       <div class="option-row">
-        <div class="option-info">
-          <i class="pi pi-bell" aria-hidden="true"></i>
-          <span>{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS' | translate }}</span>
-        </div>
         <p-inputSwitch [ngModel]="loginAlerts()" (ngModelChange)="loginAlerts.set($event)" />
+        <div class="option-content">
+          <p class="option-title">{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS' | translate }}</p>
+          <p class="option-description">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS_DESC' | translate }}
+          </p>
+        </div>
+        <i class="pi pi-bell option-icon" aria-hidden="true"></i>
       </div>
 
       <div class="option-row">
-        <div class="option-info">
-          <i class="pi pi-desktop" aria-hidden="true"></i>
-          <span>{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS' | translate }}</span>
-        </div>
-        <p-button
-          [label]="'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_BTN' | translate"
-          [outlined]="true"
-          size="small"
-          (onClick)="onLogoutOtherDevices()"
+        <p-inputSwitch
+          [ngModel]="logoutOthers()"
+          (ngModelChange)="onLogoutOthersChange($event)"
         />
+        <div class="option-content">
+          <p class="option-title">{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS' | translate }}</p>
+          <p class="option-description">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS_DESC' | translate }}
+          </p>
+        </div>
+        <i class="pi pi-desktop option-icon" aria-hidden="true"></i>
       </div>
     </div>
   </section>
@@ -180,18 +247,27 @@
   </section>
 
   <!-- Section 4: Deactivate Account -->
-  <section class="card section-card warning-card">
-    <h2 class="section-title warning">
-      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-      {{ 'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.TITLE' | translate }}
-    </h2>
-    <p class="deactivate-text">{{ 'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.DESCRIPTION' | translate }}</p>
-    <p-button
-      [label]="'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.BTN' | translate"
-      severity="warning"
-      [outlined]="true"
-      (onClick)="onDeactivateAccount()"
-    />
+  <section class="card section-card deactivate-card">
+    <div class="deactivate-row">
+      <div class="deactivate-content">
+        <h2 class="section-title">
+          <span class="section-num">4.</span>
+          {{ 'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.TITLE' | translate }}
+        </h2>
+        <p class="deactivate-text">
+          <i class="pi pi-exclamation-triangle deactivate-warning-icon" aria-hidden="true"></i>
+          <span>{{ 'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.DESCRIPTION' | translate }}</span>
+        </p>
+      </div>
+      <p-button
+        [label]="'SETTINGS_ACTIVITY.SECURITY.DEACTIVATE.BTN' | translate"
+        icon="pi pi-pause-circle"
+        iconPos="right"
+        styleClass="deactivate-btn"
+        [outlined]="true"
+        (onClick)="onDeactivateAccount()"
+      />
+    </div>
   </section>
 
   <app-settings-footer

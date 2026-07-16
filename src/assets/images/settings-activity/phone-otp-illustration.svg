@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="132" height="172" viewBox="0 0 132 172" fill="none">
+  <defs>
+    <filter id="otp-soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#6C63FF" flood-opacity="0.18" />
+    </filter>
+  </defs>
+
+  <rect x="34" y="18" width="64" height="122" rx="14" fill="#FFFFFF" stroke="#212529" stroke-width="2"/>
+  <rect x="52" y="24" width="28" height="4" rx="2" fill="#212529"/>
+
+  <g filter="url(#otp-soft-shadow)">
+    <path
+      d="M48 38C48 32.477 52.477 28 58 28H104C109.523 28 114 32.477 114 38V48C114 53.523 109.523 58 104 58H70L62 68L64 58H58C52.477 58 48 53.523 48 48V38Z"
+      fill="#A7A3FF"
+    />
+    <text
+      x="81"
+      y="45"
+      fill="#FFFFFF"
+      font-family="Inter, 'Segoe UI', Arial, sans-serif"
+      font-size="10"
+      font-weight="700"
+      letter-spacing="0.8"
+      text-anchor="middle"
+      dominant-baseline="central"
+    >123456</text>
+  </g>
+
+  <g filter="url(#otp-soft-shadow)">
+    <path
+      d="M53.5 114V101.5C53.5 94.44 59.19 88.75 66.25 88.75C73.31 88.75 79 94.44 79 101.5V114"
+      fill="none"
+      stroke="#635BFF"
+      stroke-width="6.5"
+      stroke-linecap="round"
+    />
+    <rect x="47" y="114" width="38" height="33" rx="8" fill="#635BFF"/>
+    <rect x="58" y="125.5" width="16" height="5" rx="2.5" fill="#FFFFFF"/>
+  </g>
+</svg>

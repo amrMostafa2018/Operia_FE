@@ -10,13 +10,22 @@
   padding: 1.5rem;
 }
 
+.password-card {
+  padding: 1.75rem 2rem;
+}
+
+.section-heading {
+  margin-bottom: 1.5rem;
+}
+
 .section-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.625rem;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text-primary);
 
   .section-num {
     color: $primary;
@@ -29,6 +38,14 @@
       color: $warning;
     }
   }
+}
+
+.section-description {
+  margin: 0;
+  max-width: 52rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
 }
 
 .section-header-row {
@@ -53,49 +70,68 @@
   font-weight: 600;
 }
 
-.password-layout {
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  gap: 2rem;
-  align-items: start;
-}
-
 .password-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-width: 480px;
+  gap: 1.75rem;
+}
+
+.password-layout {
+  display: grid;
+  grid-template-columns: minmax(170px, 210px) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.password-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  min-width: 0;
+}
+
+.password-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
 }
 
 .field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
+  display: grid;
+  grid-template-columns: minmax(9.5rem, max-content) minmax(0, 1fr);
+  gap: 0.75rem 1rem;
+  align-items: center;
 
   label {
+    justify-self: end;
+    text-align: end;
+    white-space: nowrap;
     font-size: 0.8125rem;
     font-weight: 500;
-  }
-
-  .required {
-    color: $danger;
+    color: var(--text-primary);
   }
 }
 
 .field-error {
+  grid-column: 1 / -1;
   color: $danger;
   font-size: 0.75rem;
 }
 
 .otp-section {
-  padding: 1rem;
-  border-radius: $border-radius;
-  background: $gray-50;
-  border: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
 }
 
-.otp-hint {
-  margin: 0 0 0.75rem;
+.otp-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.otp-instruction {
+  margin: 0 0 0.375rem;
   font-size: 0.8125rem;
   color: var(--text-secondary);
 }
@@ -103,103 +139,251 @@
 .otp-row {
   display: flex;
   gap: 0.75rem;
-  align-items: center;
-  flex-wrap: wrap;
+  align-items: stretch;
 }
 
 .otp-input {
   flex: 1;
-  min-width: 140px;
-  letter-spacing: 0.25em;
+  min-width: 0;
+  letter-spacing: 0.3em;
   text-align: center;
   font-weight: 600;
 }
 
 .password-illustration {
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.phone-mock {
-  display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  width: 140px;
-  height: 200px;
-  border-radius: 20px;
-  border: 3px solid $gray-300;
-  background: linear-gradient(180deg, $gray-100 0%, white 100%);
+  justify-content: flex-start;
+  text-align: center;
+  gap: 0.875rem;
+  padding-top: 0.25rem;
+}
 
-  .pi-lock {
-    font-size: 2rem;
-    color: $primary;
-  }
+.phone-illustration {
+  width: 132px;
+  height: auto;
+  display: block;
+}
 
-  .otp-display {
-    padding: 0.375rem 0.75rem;
-    border-radius: 6px;
-    background: $primary-light;
-    color: $primary;
-    font-size: 1.125rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-  }
+.phone-body {
+  fill: #fff;
+  stroke: $gray-900;
+  stroke-width: 2;
+}
+
+.phone-notch {
+  fill: $gray-900;
+  stroke: none;
+}
+
+.phone-bubble {
+  fill: #a7a3ff;
+}
+
+.phone-lock-body {
+  fill: #635bff;
+}
+
+.phone-lock-shackle {
+  fill: none;
+  stroke: #635bff;
+  stroke-width: 6.5;
+  stroke-linecap: round;
+}
+
+.phone-keyhole {
+  fill: #fff;
+}
+
+.phone-bubble-text {
+  fill: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: $font-en;
+  dominant-baseline: central;
+}
+
+.otp-send-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: $primary;
+  line-height: 1.5;
+}
+
+.otp-phone {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: $primary;
+  letter-spacing: 0.02em;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .options-list {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border: 1px solid var(--surface-border);
-  border-radius: $border-radius;
-  overflow: hidden;
+  gap: 0.75rem;
 }
 
 .option-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--surface-border);
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius;
   background: var(--surface-card);
+}
 
-  &:last-child {
-    border-bottom: none;
+.option-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.option-title {
+  margin: 0 0 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.option-description {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.option-icon {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: $primary;
+  font-size: 1.25rem;
+}
+
+:host-context([dir='rtl']) {
+  .option-row {
+    flex-direction: row-reverse;
   }
 }
 
-.option-info {
+.deactivate-card {
+  padding: 1.5rem 2rem;
+}
+
+.deactivate-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-
-  .pi {
-    color: $primary;
-    font-size: 1.125rem;
-  }
+  justify-content: space-between;
+  gap: 1.5rem;
 }
 
-.warning-card {
-  border-color: rgba($warning, 0.3);
-  background: rgba($warning, 0.04);
+.deactivate-content {
+  flex: 1;
+  min-width: 0;
+
+  .section-title {
+    margin-bottom: 0.625rem;
+  }
 }
 
 .deactivate-text {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  max-width: 42rem;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.7;
+}
+
+.deactivate-warning-icon {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: #e8884a;
+  font-size: 0.875rem;
 }
 
 :host ::ng-deep {
-  .change-password-btn .p-button {
+  .password-input,
+  .otp-input {
+    width: 100%;
+    height: 2.75rem;
+    padding-inline: 1rem;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius;
+    background: #fff;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    box-shadow: none;
+
+    &::placeholder {
+      color: $gray-400;
+      letter-spacing: 0.2em;
+      opacity: 1;
+    }
+
+    &:enabled:focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.12);
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: $danger;
+    }
+  }
+
+  .password-input::placeholder {
+    letter-spacing: 0.15em;
+  }
+
+  .resend-otp-btn.p-button {
+    flex-shrink: 0;
+    height: 2.75rem;
+    padding-inline: 1rem;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius;
+    background: #fff;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: none;
+
+    .p-button-icon {
+      color: $gray-600;
+      font-size: 0.875rem;
+    }
+
+    &:enabled:hover {
+      background: $gray-50;
+      border-color: $gray-400;
+      color: var(--text-primary);
+    }
+  }
+
+  .change-password-btn.p-button {
+    min-width: 11rem;
+    height: 2.75rem;
+    padding-inline: 1.5rem;
+    border-radius: $border-radius;
     background: $primary;
     border-color: $primary;
+    font-size: 0.875rem;
+    font-weight: 600;
+
+    &:enabled:hover {
+      background: $primary-dark;
+      border-color: $primary-dark;
+    }
   }
 
   .users-table {
@@ -217,14 +401,91 @@
   .danger-item {
     color: $danger !important;
   }
+
+  .deactivate-btn.p-button {
+    flex-shrink: 0;
+    height: 2.75rem;
+    padding-inline: 1.25rem;
+    border: 1px solid #e8884a;
+    border-radius: 999px;
+    background: #fff;
+    color: #e8884a;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: none;
+
+    .p-button-icon {
+      color: #e8884a;
+      font-size: 0.875rem;
+    }
+
+    &:enabled:hover {
+      background: rgba(#e8884a, 0.06);
+      border-color: #d97a3f;
+      color: #d97a3f;
+
+      .p-button-icon {
+        color: #d97a3f;
+      }
+    }
+  }
+}
+
+:host-context([dir='rtl']) ::ng-deep .deactivate-btn.p-button {
+  gap: 0.5rem;
+
+  .p-button-icon {
+    margin: 0 !important;
+  }
 }
 
 @media (max-width: $bp-md) {
+  .password-card {
+    padding: 1.25rem;
+  }
+
+  .deactivate-card {
+    padding: 1.25rem;
+  }
+
+  .deactivate-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  :host ::ng-deep .deactivate-btn.p-button {
+    width: 100%;
+    justify-content: center;
+  }
+
   .password-layout {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 
   .password-illustration {
-    display: none;
+    order: -1;
+    padding-top: 0;
+  }
+
+  .field {
+    grid-template-columns: 1fr;
+    gap: 0.375rem;
+
+    label {
+      justify-self: start;
+      text-align: start;
+    }
+  }
+
+  .otp-row {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  :host ::ng-deep .resend-otp-btn.p-button {
+    width: 100%;
+    justify-content: center;
   }
 }

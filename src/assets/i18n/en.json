@@ -701,11 +701,16 @@
     "SECURITY": {
       "PASSWORD": {
         "TITLE": "Change Password",
+        "DESCRIPTION": "To keep your account secure, a verification code (OTP) will be sent to your registered phone number to confirm the password change.",
         "CURRENT": "Current Password",
         "NEW": "New Password",
         "CONFIRM": "Confirm New Password",
+        "OTP_LABEL": "Verification Code (OTP)",
+        "OTP_INSTRUCTION": "Enter the verification code sent to your phone number",
+        "OTP_SEND_TO": "Verification code will be sent to",
         "OTP_HINT": "Verification code sent to {{phone}}",
-        "OTP_PLACEHOLDER": "Enter verification code",
+        "OTP_PLACEHOLDER": "······",
+        "PASSWORD_PLACEHOLDER": "········",
         "RESEND_OTP": "Send new code",
         "OTP_SENT": "Code sent",
         "CHANGE_BTN": "Change Password",
@@ -713,10 +718,13 @@
       },
       "OPTIONS": {
         "TITLE": "Security Options",
+        "DESCRIPTION": "Additional settings to protect your account and enhance security.",
         "TWO_FA": "Enable Two-Factor Authentication (2FA)",
-        "LOGIN_ALERTS": "Login Notifications",
+        "TWO_FA_DESC": "Enable an extra layer of security when logging in using a code sent to your phone number.",
+        "LOGIN_ALERTS": "Login Alerts",
+        "LOGIN_ALERTS_DESC": "Send an alert when logging in from a new device or browser.",
         "LOGOUT_OTHERS": "Log out from other devices",
-        "LOGOUT_BTN": "Log Out",
+        "LOGOUT_OTHERS_DESC": "Log out from all other devices and browsers connected to your account.",
         "LOGOUT_DONE": "Logged out from other devices"
       },
       "USERS": {
@@ -733,7 +741,7 @@
       },
       "DEACTIVATE": {
         "TITLE": "Temporarily Deactivate Account",
-        "DESCRIPTION": "Your activity will be paused and customers won't be able to book until reactivated.",
+        "DESCRIPTION": "You can temporarily disable your account. You will not be able to log in or access your data during the deactivation period.",
         "BTN": "Deactivate account temporarily",
         "STUB": "This feature is not available in demo mode"
       }
