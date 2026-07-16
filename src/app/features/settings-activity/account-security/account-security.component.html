@@ -1,6 +1,6 @@
 <div class="account-security">
   <!-- Section 1: Change Password -->
-  <section class="card section-card password-card">
+  <section class="card section-card">
     <div class="section-heading">
       <h2 class="section-title">
         <span class="section-num">1.</span>
@@ -111,7 +111,7 @@
             <p class="otp-instruction">
               {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_INSTRUCTION' | translate }}
             </p>
-            <div class="otp-row">
+            <div class="otp-controls">
               <input
                 pInputText
                 id="otpCode"
@@ -124,15 +124,18 @@
                 inputmode="numeric"
                 autocomplete="one-time-code"
               />
-              <p-button
-                type="button"
-                styleClass="resend-otp-btn"
-                [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.RESEND_OTP' | translate"
-                icon="pi pi-refresh"
-                [outlined]="true"
-                [loading]="sendingOtp()"
-                (onClick)="onSendOtp()"
-              />
+              <div class="otp-resend-wrap">
+                <p-button
+                  type="button"
+                  styleClass="resend-otp-btn"
+                  [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.RESEND_OTP' | translate"
+                  icon="pi pi-refresh"
+                  iconPos="right"
+                  [text]="true"
+                  [loading]="sendingOtp()"
+                  (onClick)="onSendOtp()"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -142,7 +145,7 @@
         <p-button
           type="submit"
           [label]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.CHANGE_BTN' | translate"
-          styleClass="change-password-btn"
+          styleClass="save-btn"
         />
       </div>
     </form>
@@ -206,9 +209,13 @@
         <span class="section-num">3.</span>
         {{ 'SETTINGS_ACTIVITY.SECURITY.USERS.TITLE' | translate }}
       </h2>
-      <span class="users-count">
-        {{ users().length }} {{ 'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate }}
-      </span>
+      <aside class="users-summary" dir="ltr" [attr.aria-label]="'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate">
+        <i class="pi pi-users users-summary-icon" aria-hidden="true"></i>
+        <div class="users-summary-content">
+          <span class="users-summary-label">{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate }}</span>
+          <span class="users-summary-value">{{ users().length }}</span>
+        </div>
+      </aside>
     </div>
 
     <p-table [value]="users()" styleClass="users-table" [paginator]="true" [rows]="5">
@@ -247,7 +254,7 @@
   </section>
 
   <!-- Section 4: Deactivate Account -->
-  <section class="card section-card deactivate-card">
+  <section class="card section-card">
     <div class="deactivate-row">
       <div class="deactivate-content">
         <h2 class="section-title">
