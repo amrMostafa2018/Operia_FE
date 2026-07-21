@@ -50,7 +50,16 @@
           (ngModelChange)="selectedPlan.set($event)"
           [placeholder]="'OPERIA_SUBSCRIPTIONS.ALL_PLANS' | translate"
           styleClass="filter-drop"
-        />
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.labelKey ? (item.labelKey | translate) : item.label }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.labelKey ? (item.labelKey | translate) : item.label }}
+          </ng-template>
+        </p-dropdown>
       </div>
       <div class="filter-field">
         <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.SUBSCRIPTION_STATUS' | translate }}</span>

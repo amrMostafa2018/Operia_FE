@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   OnInit,
@@ -30,7 +31,8 @@ import {
 type TagSeverity = 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast';
 
 interface PlanFilterOption {
-  label: string;
+  labelKey?: string;
+  label?: string;
   value: string | null;
 }
 
@@ -69,8 +71,13 @@ export class OperiaSubscriptionsComponent implements OnInit {
   first = signal(0);
 
   readonly statusOptions = SUBSCRIPTION_STATUS_OPTIONS;
-  readonly planOptions = signal<PlanFilterOption[]>([
-    { label: '', value: null },
+  private readonly availablePlans = signal<{ name: string; code: string }[]>([]);
+  readonly planOptions = computed<PlanFilterOption[]>(() => [
+    { labelKey: 'OPERIA_SUBSCRIPTIONS.ALL_PLANS', value: null },
+    ...this.availablePlans().map(plan => ({
+      label: plan.name,
+      value: plan.code,
+    })),
   ]);
   readonly rowsPerPageOptions = [10, 20, 50];
   readonly pageReportTemplate = signal(
@@ -145,16 +152,12 @@ export class OperiaSubscriptionsComponent implements OnInit {
       .getPlans()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(plans => {
-        this.planOptions.set([
-          {
-            label: this.translate.instant('OPERIA_SUBSCRIPTIONS.ALL_PLANS'),
-            value: null,
-          },
-          ...plans.map(plan => ({
-            label: plan.name,
-            value: plan.code,
+        this.availablePlans.set(
+          plans.map(plan => ({
+            name: plan.name,
+            code: plan.code,
           })),
-        ]);
+        );
       });
   }
 

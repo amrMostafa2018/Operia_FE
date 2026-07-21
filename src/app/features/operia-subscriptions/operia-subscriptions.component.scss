@@ -66,6 +66,7 @@
   border-radius: $border-radius-lg;
   padding: 1rem 1.25rem;
   box-shadow: $shadow-sm;
+  overflow: visible;
 }
 
 .filter-fields {
@@ -74,6 +75,7 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   flex: 1;
+  overflow: visible;
 }
 
 .filter-field {
@@ -81,6 +83,12 @@
   flex-direction: column;
   gap: 0.25rem;
   min-width: 140px;
+  overflow: visible;
+
+  ::ng-deep .date-picker.p-calendar {
+    display: inline-flex;
+    width: 100%;
+  }
 }
 
 .filter-label {
@@ -98,6 +106,11 @@
   .date-picker .p-inputtext {
     font-size: 0.875rem;
     padding: 0.45rem 0.75rem;
+    min-width: 9.5rem;
+  }
+
+  .date-picker.p-calendar {
+    width: 100%;
   }
 
   .search-btn .p-button {

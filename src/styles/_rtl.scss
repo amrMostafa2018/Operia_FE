@@ -58,9 +58,91 @@
   .p-inputgroup-addon:first-child { border-radius: 0 $border-radius $border-radius 0; }
   .p-inputgroup-addon:last-child  { border-radius: $border-radius 0 0 $border-radius; }
 
-  // Calendar / time picker: keep icon on the trailing edge (right in RTL)
-  .p-calendar-w-btn {
-    flex-direction: row-reverse;
+  // Calendar: consistent icon on the left in RTL (matches dropdown chevron placement)
+  .p-calendar.p-calendar-w-btn {
+    direction: ltr;
+    flex-direction: row-reverse !important;
+    width: 100%;
+
+    .p-inputtext {
+      direction: rtl;
+      text-align: right;
+      border-top-right-radius: $border-radius !important;
+      border-bottom-right-radius: $border-radius !important;
+      border-top-left-radius: 0 !important;
+      border-bottom-left-radius: 0 !important;
+    }
+
+    .p-datepicker-trigger {
+      border-top-left-radius: $border-radius !important;
+      border-bottom-left-radius: $border-radius !important;
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+    }
+  }
+
+  .p-calendar.p-input-icon-right {
+    direction: ltr;
+
+    .p-inputtext {
+      direction: rtl;
+      text-align: right;
+      padding-inline-end: 2.5rem;
+      padding-inline-start: 0.75rem;
+    }
+
+    .p-datepicker-icon,
+    .p-icon {
+      inset-inline-end: auto;
+      inset-inline-start: 0.75rem;
+    }
+  }
+
+  // Inline calendar popup: anchor to the input's right edge
+  .p-calendar {
+    position: relative;
+    overflow: visible;
+
+    .p-datepicker {
+      left: auto !important;
+      right: 0 !important;
+      direction: rtl;
+      margin-top: 0.25rem;
+
+      .p-datepicker-header {
+        direction: rtl;
+      }
+
+      .p-datepicker-prev,
+      .p-datepicker-next {
+        svg,
+        .p-icon {
+          transform: scaleX(-1);
+        }
+      }
+
+      table th,
+      table td {
+        text-align: center;
+      }
+    }
+  }
+}
+
+// Body-appended overlays (dropdowns, etc.)
+html[dir='rtl'] .p-datepicker {
+  direction: rtl;
+
+  .p-datepicker-header {
+    direction: rtl;
+  }
+
+  .p-datepicker-prev,
+  .p-datepicker-next {
+    svg,
+    .p-icon {
+      transform: scaleX(-1);
+    }
   }
 }
 

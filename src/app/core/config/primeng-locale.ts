@@ -1,0 +1,95 @@
+import { Translation } from 'primeng/api';
+
+import { AppLanguage } from '@core/services/language.service';
+
+const EN_LOCALE: Translation = {
+  dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  dayNamesMin: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+  monthNames: [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ],
+  monthNamesShort: [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ],
+  today: 'Today',
+  clear: 'Clear',
+  weekHeader: 'Wk',
+  firstDayOfWeek: 0,
+  am: 'AM',
+  pm: 'PM',
+};
+
+const AR_LOCALE: Translation = {
+  dayNames: [
+    'الأحد',
+    'الاثنين',
+    'الثلاثاء',
+    'الأربعاء',
+    'الخميس',
+    'الجمعة',
+    'السبت',
+  ],
+  dayNamesShort: ['أحد', 'اثن', 'ثلث', 'أرب', 'خمي', 'جمع', 'سبت'],
+  dayNamesMin: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'],
+  monthNames: [
+    'يناير',
+    'فبراير',
+    'مارس',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'أغسطس',
+    'سبتمبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ],
+  monthNamesShort: [
+    'ينا',
+    'فبر',
+    'مار',
+    'أبر',
+    'ماي',
+    'يون',
+    'يول',
+    'أغس',
+    'سبت',
+    'أكت',
+    'نوف',
+    'ديس',
+  ],
+  today: 'اليوم',
+  clear: 'مسح',
+  weekHeader: 'أسبوع',
+  firstDayOfWeek: 6,
+  am: 'ص',
+  pm: 'م',
+};
+
+export function getPrimeNgLocale(lang: AppLanguage): Translation {
+  return lang === 'ar' ? AR_LOCALE : EN_LOCALE;
+}
