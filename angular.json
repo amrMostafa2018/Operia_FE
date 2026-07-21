@@ -47,6 +47,7 @@
               "node_modules/primeicons/primeicons.css",
               "node_modules/primeng/resources/themes/lara-light-purple/theme.css",
               "node_modules/primeng/resources/primeng.min.css",
+              "node_modules/leaflet/dist/leaflet.css",
               "node_modules/intl-tel-input/build/css/intlTelInput.css",
               "src/styles.scss"
             ],
@@ -118,6 +119,7 @@
               "node_modules/primeicons/primeicons.css",
               "node_modules/primeng/resources/themes/lara-light-purple/theme.css",
               "node_modules/primeng/resources/primeng.min.css",
+              "node_modules/leaflet/dist/leaflet.css",
               "node_modules/intl-tel-input/build/css/intlTelInput.css",
               "src/styles.scss"
             ],

@@ -67,7 +67,8 @@ export const mainRoutes: Routes = [
       },
       {
         path: 'branches',
-        loadComponent: placeholder,
+        loadComponent: () =>
+          import('@app/features/branches/branches.component').then(m => m.BranchesComponent),
         canActivate: [permissionGuard],
         data: {
           permissions: [Permissions.Admin.BranchesRead],

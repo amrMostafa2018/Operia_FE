@@ -1,0 +1,183 @@
+<section class="branches-page">
+  <header class="page-head">
+    <div>
+      <h1><i class="pi pi-shop"></i>{{ 'BRANCHES.TITLE' | translate }}</h1>
+      <p>{{ 'BRANCHES.SUBTITLE' | translate }}</p>
+      <strong>{{ 'BRANCHES.TOTAL' | translate: { count: total() } }}</strong>
+    </div>
+    @if (canManage()) {
+      <p-button [label]="'BRANCHES.ADD' | translate" icon="pi pi-plus" (onClick)="openCreate()" />
+    }
+  </header>
+  <div class="table-card">
+    <div class="filters">
+      <button type="button" class="clear" (click)="clear()">
+        <i class="pi pi-replay"></i>{{ 'BRANCHES.CLEAR' | translate }}</button
+      ><span class="p-input-icon-right"
+        ><i class="pi pi-search"></i
+        ><input
+          #searchBox
+          pInputText
+          [value]="search()"
+          (keyup.enter)="applySearch(searchBox.value)"
+          [placeholder]="'BRANCHES.SEARCH' | translate"
+      /></span>
+    </div>
+    <p-table [value]="branches()" [loading]="loading()"
+      ><ng-template pTemplate="header"
+        ><tr>
+          <th>{{ 'BRANCHES.NAME' | translate }}</th>
+          <th>{{ 'BRANCHES.ADDRESS' | translate }}</th>
+          <th>{{ 'BRANCHES.PHONE' | translate }}</th>
+          <th>{{ 'BRANCHES.LOCATION' | translate }}</th>
+          <th>{{ 'BRANCHES.ACTIONS' | translate }}</th>
+        </tr></ng-template
+      ><ng-template pTemplate="body" let-branch
+        ><tr>
+          <td><span class="dot"></span>{{ branch.name }}</td>
+          <td>{{ branch.address }}</td>
+          <td dir="ltr">{{ branch.phoneNumber }}</td>
+          <td>
+            <a [href]="branch.googleMapsUrl" target="_blank" rel="noopener"
+              ><i class="pi pi-map-marker"></i
+            ></a>
+          </td>
+          <td>
+            @if (canManage()) {
+              <button class="icon edit" (click)="openEdit(branch)">
+                <i class="pi pi-pencil"></i></button
+              ><button class="icon delete" (click)="requestDelete(branch)">
+                <i class="pi pi-trash"></i>
+              </button>
+            }
+          </td></tr></ng-template
+    ></p-table>
+    <footer>
+      {{ 'BRANCHES.SHOWING' | translate: { count: branches().length, total: total() } }}
+    </footer>
+  </div>
+</section>
+<p-dialog
+  [visible]="!!branchPendingDelete()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '420px' }"
+  styleClass="delete-branch-dialog"
+>
+  <ng-template pTemplate="header"
+    ><div class="delete-title">
+      <i class="pi pi-exclamation-triangle"></i>
+      <div>
+        <b>{{ 'BRANCHES.DELETE_TITLE' | translate }}</b
+        ><small>{{ 'BRANCHES.DELETE_HINT' | translate }}</small>
+      </div>
+    </div></ng-template
+  >
+  @if (branchPendingDelete(); as branch) {
+    <p class="delete-copy">{{ 'BRANCHES.DELETE_CONFIRM' | translate: { name: branch.name } }}</p>
+  }
+  <ng-template pTemplate="footer"
+    ><div class="delete-actions">
+      <button type="button" class="cancel" (click)="cancelDelete()">
+        {{ 'BRANCHES.CANCEL' | translate }}</button
+      ><button type="button" class="delete-confirm" (click)="confirmDelete()">
+        <i class="pi pi-trash"></i>{{ 'BRANCHES.DELETE' | translate }}
+      </button>
+    </div></ng-template
+  >
+</p-dialog>
+<p-dialog
+  [visible]="dialogOpen()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '540px' }"
+  styleClass="branch-dialog"
+  ><ng-template pTemplate="header"
+    ><div class="dialog-title">
+      <i class="pi pi-shop"></i>
+      <div>
+        <b>{{ (editing() ? 'BRANCHES.EDIT' : 'BRANCHES.ADD') | translate }}</b
+        ><small>{{ 'BRANCHES.FORM_HINT' | translate }}</small>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="close"
+      (click)="close()"
+      [attr.aria-label]="'BRANCHES.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i></button
+  ></ng-template>
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <label
+      ><span class="field-label"
+        >{{ 'BRANCHES.NAME' | translate }} <span class="required">*</span></span
+      ><input
+        pInputText
+        formControlName="name"
+        [placeholder]="'BRANCHES.NAME_PLACEHOLDER' | translate"
+        [class.ng-invalid]="form.controls.name.touched && form.controls.name.invalid"
+      /><small
+        class="field-error"
+        *ngIf="form.controls.name.touched && form.controls.name.invalid"
+        >{{
+          form.controls.name.errors?.['server'] || ('BRANCHES.NAME_REQUIRED' | translate)
+        }}</small
+      ></label
+    >
+    <label
+      ><span class="field-label"
+        >{{ 'BRANCHES.ADDRESS' | translate }} <span class="required">*</span></span
+      ><input
+        pInputText
+        formControlName="address"
+        [placeholder]="'BRANCHES.ADDRESS_PLACEHOLDER' | translate"
+        [class.ng-invalid]="form.controls.address.touched && form.controls.address.invalid"
+      /><small
+        class="field-error"
+        *ngIf="form.controls.address.touched && form.controls.address.invalid"
+        >{{
+          form.controls.address.errors?.['server'] || ('BRANCHES.ADDRESS_REQUIRED' | translate)
+        }}</small
+      ></label
+    >
+    <div class="two">
+      <label
+        ><span class="field-label"
+          >{{ 'BRANCHES.PHONE' | translate }} <span class="required">*</span></span
+        ><input
+          pInputText
+          dir="ltr"
+          formControlName="phoneNumber"
+          [placeholder]="'BRANCHES.PHONE_PLACEHOLDER' | translate"
+          [class.ng-invalid]="
+            form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid
+          "
+        /><small
+          class="field-error"
+          *ngIf="form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid"
+          >{{
+            form.controls.phoneNumber.errors?.['server'] || ('BRANCHES.PHONE_INVALID' | translate)
+          }}</small
+        ></label
+      ><label
+        ><span class="field-label"
+          >{{ 'BRANCHES.LOCATION' | translate }} <span class="required">*</span></span
+        ><button type="button" class="location-picker" (click)="locateMe()">
+          <i class="pi pi-map-marker"></i>{{ 'BRANCHES.PICK_LOCATION' | translate }}</button
+        ><small
+          class="field-error"
+          *ngIf="form.controls.locationSelected.touched && form.controls.locationSelected.invalid"
+          >{{ 'BRANCHES.LOCATION_REQUIRED' | translate }}</small
+        ></label
+      >
+    </div>
+    <div id="branch-map"></div>
+    <p class="map-note"><i class="pi pi-info-circle"></i>{{ 'BRANCHES.MAP_NOTE' | translate }}</p>
+    <p class="save-error" *ngIf="saveError()">{{ saveError() }}</p>
+    <div class="actions">
+      <button type="button" class="cancel" (click)="close()">
+        {{ 'BRANCHES.CANCEL' | translate }}</button
+      ><p-button type="submit" [label]="'BRANCHES.SAVE' | translate" icon="pi pi-save" />
+    </div></form
+></p-dialog>

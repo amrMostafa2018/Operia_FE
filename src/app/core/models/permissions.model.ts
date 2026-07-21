@@ -6,6 +6,7 @@ export const Permissions = {
     BookingRead: 'Admins:Booking:read',
     CustomersRead: 'Admins:Customers:read',
     BranchesRead: 'Admins:Branches:read',
+    BranchesManage: 'Admins:Branches:manage',
     EmployeesRead: 'Admins:Employees:read',
     PackagesRead: 'Admins:Packages:read',
     SettingsRead: 'Admins:Settings:read'

@@ -1,0 +1,248 @@
+.branches-page {
+  padding: 1.5rem;
+}
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.page-head h1 {
+  margin: 0;
+  color: #191a4d;
+  font-size: 2rem;
+}
+.page-head h1 i {
+  margin-inline-end: 0.6rem;
+  color: #3f18e8;
+}
+.page-head p,
+.page-head strong {
+  display: block;
+  margin: 0.35rem 0 0;
+  color: #73758a;
+}
+.table-card {
+  background: #fff;
+  border: 1px solid #ececf4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.filters {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.15rem;
+}
+.filters input {
+  width: 280px;
+}
+.clear {
+  background: #fff;
+  border: 1px solid #ececf4;
+  color: #4521dd;
+  border-radius: 7px;
+  padding: 0.55rem 0.8rem;
+}
+.clear i {
+  margin-inline-end: 0.4rem;
+}
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #6b31ee;
+  border-radius: 50%;
+  margin-inline-end: 0.65rem;
+}
+.icon {
+  border: 1px solid #eee;
+  background: #fff;
+  border-radius: 7px;
+  padding: 0.48rem;
+  margin-inline-end: 0.4rem;
+}
+.edit,
+a {
+  color: #4b28e8;
+}
+.delete {
+  color: #ef4444;
+}
+footer {
+  padding: 1rem;
+  color: #777;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #4c5567;
+}
+.field-label {
+  display: inline-block;
+}
+.required {
+  color: #ef4444;
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+input {
+  width: 100%;
+}
+.ng-invalid.ng-touched {
+  border-color: #ef4444;
+}
+.field-error,
+.save-error {
+  color: #d92d20;
+  font-weight: 400;
+  font-size: 0.78rem;
+}
+.save-error {
+  margin: 0.75rem 0;
+  background: #fff1f0;
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+}
+.location-picker {
+  height: 42px;
+  border: 1px solid #d7d9e5;
+  border-radius: 7px;
+  background: #fff;
+  color: #596174;
+  cursor: pointer;
+  font: inherit;
+}
+.location-picker i {
+  color: #4b28e8;
+  margin-inline-end: 0.5rem;
+}
+.location-picker:hover {
+  border-color: #4b28e8;
+}
+#branch-map {
+  height: 185px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid #e6e6f0;
+}
+.map-note {
+  background: #f2f0ff;
+  color: #6154a0;
+  padding: 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.map-note i {
+  margin-inline-end: 0.4rem;
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+.cancel,
+.close {
+  background: #fff;
+  border: 1px solid #dedee8;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+}
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.dialog-title > i {
+  padding: 0.7rem;
+  background: #4b20e8;
+  color: #fff;
+  border-radius: 7px;
+}
+.dialog-title small {
+  display: block;
+  color: #8a8a99;
+  margin-top: 0.2rem;
+}
+:host ::ng-deep .branch-dialog .p-dialog-header {
+  position: relative;
+  padding-left: 5.5rem;
+}
+.close {
+  position: absolute;
+  left: 1.5rem;
+  right: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 54px;
+  min-height: 44px;
+  font-size: 1.2rem;
+}
+:host ::ng-deep .delete-branch-dialog .p-dialog-footer {
+  border-top: 0;
+}
+.delete-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.delete-title > i {
+  color: #b42318;
+  background: #fee4e2;
+  border-radius: 50%;
+  padding: 0.7rem;
+}
+.delete-title small {
+  display: block;
+  color: #767b8d;
+  margin-top: 0.2rem;
+}
+.delete-copy {
+  color: #4c5567;
+  line-height: 1.7;
+}
+.delete-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.75rem;
+}
+.delete-confirm {
+  border: 0;
+  border-radius: 6px;
+  background: #d92d20;
+  color: #fff;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+}
+.delete-confirm i {
+  margin-inline-end: 0.45rem;
+}
+:host ::ng-deep .branch-pin {
+  background: transparent;
+  border: 0;
+}
+.branch-pin i {
+  color: #4b20e8;
+  font-size: 2.2rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+@media (max-width: 600px) {
+  .page-head,
+  .filters {
+    align-items: flex-start;
+    gap: 1rem;
+    flex-direction: column;
+  }
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .filters input {
+    width: 100%;
+  }
+}

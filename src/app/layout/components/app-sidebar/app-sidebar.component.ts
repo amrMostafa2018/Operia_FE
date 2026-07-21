@@ -163,6 +163,12 @@ export class AppSidebarComponent {
       permissions: [Permissions.Admin.PackagesRead],
     },
     {
+      labelKey: 'NAV.BRANCHES',
+      icon: '',
+      route: '/branches',
+      permissions: [Permissions.Admin.BranchesRead],
+    },
+    {
       labelKey: 'NAV.OFFERS',
       icon: '',
       route: '/settings/offers',
