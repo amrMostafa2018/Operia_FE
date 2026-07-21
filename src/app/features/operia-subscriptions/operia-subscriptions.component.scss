@@ -113,11 +113,19 @@
     width: 100%;
   }
 
-  .search-btn .p-button {
+  .search-btn.p-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     background: var(--color-primary) !important;
     border-color: var(--color-primary) !important;
     font-size: 0.875rem !important;
     padding: 0.5rem 1.25rem !important;
+
+    .p-button-icon-left,
+    .p-button-icon-right {
+      margin: 0 !important;
+    }
   }
 }
 
@@ -167,26 +175,85 @@
     font-weight: 600;
   }
 
-  .export-btn .p-button {
+  .export-btn.p-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.82rem !important;
-    padding: 0.4rem 0.85rem !important;
+    padding: 0.45rem 0.9rem !important;
+
+    .p-button-icon-left,
+    .p-button-icon-right {
+      margin: 0 !important;
+    }
   }
 
+  .subs-paginator.p-paginator,
   .subs-table .p-paginator {
+    justify-content: flex-start;
+    gap: 0.35rem 0.65rem;
     border-top: 1px solid var(--surface-border);
-    padding: 0.75rem 1.25rem;
+    padding: 0.85rem 1.25rem;
     background: var(--surface-card);
     font-size: 0.82rem;
-  }
 
-  .subs-table .p-paginator .p-paginator-current {
-    color: var(--text-secondary);
-  }
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      margin: 0 !important;
+    }
 
-  .subs-table .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #fff;
+    .p-paginator-left-content {
+      margin-inline-end: 0.75rem !important;
+      flex-shrink: 0;
+    }
+
+    .p-paginator-current {
+      margin-inline-start: auto !important;
+      margin-inline-end: 0.75rem !important;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last,
+    .p-paginator-page {
+      min-width: 2rem;
+      height: 2rem;
+      border-radius: $border-radius;
+    }
+
+    .p-paginator-pages .p-paginator-page.p-highlight {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    .p-paginator-rpp-options {
+      margin-inline-start: 0.35rem;
+
+      .p-dropdown {
+        min-width: 5.25rem;
+        height: 2rem;
+        align-items: center;
+        border-radius: $border-radius;
+      }
+
+      .p-dropdown-label {
+        padding-inline: 0.75rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .p-dropdown-trigger {
+        width: 2rem;
+      }
+    }
   }
 }
 

@@ -86,7 +86,7 @@
     <p-button
       [label]="'COMMON.SEARCH' | translate"
       icon="pi pi-search"
-      iconPos="right"
+      [iconPos]="leadingIconPos()"
       styleClass="search-btn"
       (onClick)="onSearch()"
     />
@@ -106,8 +106,8 @@
       [showCurrentPageReport]="true"
       [currentPageReportTemplate]="pageReportTemplate()"
       paginatorDropdownAppendTo="body"
+      paginatorStyleClass="subs-paginator"
       styleClass="subs-table"
-      [scrollable]="true"
       (onLazyLoad)="onLazyLoad($event)"
     >
       <ng-template pTemplate="header">
@@ -156,11 +156,11 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="paginatorright">
+      <ng-template pTemplate="paginatorleft">
         <p-button
           [label]="'OPERIA_SUBSCRIPTIONS.EXPORT_REPORT' | translate"
           icon="pi pi-download"
-          iconPos="right"
+          [iconPos]="leadingIconPos()"
           styleClass="export-btn"
           [outlined]="true"
           (onClick)="exportReport()"

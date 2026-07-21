@@ -51,6 +51,17 @@
     text-align: right;
   }
 
+  .p-paginator-rpp-options .p-dropdown {
+    .p-dropdown-label {
+      padding-inline: 0.75rem 2rem;
+      text-align: center;
+    }
+
+    .p-dropdown-trigger {
+      width: 2rem;
+    }
+  }
+
   // Badge / chip placement
   .p-badge { direction: ltr; }
 

@@ -19,7 +19,9 @@ import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs';
 
 import { FinanceService } from '@core/services/finance.service';
+import { LanguageService } from '@core/services/language.service';
 import { OnboardingService } from '@core/services/onboarding.service';
+import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import {
   BillingPeriod,
   SUBSCRIPTION_STATUS_OPTIONS,
@@ -56,8 +58,13 @@ interface PlanFilterOption {
 export class OperiaSubscriptionsComponent implements OnInit {
   private readonly financeService = inject(FinanceService);
   private readonly onboardingService = inject(OnboardingService);
+  private readonly languageService = inject(LanguageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly leadingIconPos = computed(() =>
+    getLeadingIconPos(this.languageService.currentLang()),
+  );
 
   readonly subscriptions = signal<SubscriptionRow[]>([]);
   readonly loading = signal(false);
