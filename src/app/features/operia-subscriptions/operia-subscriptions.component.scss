@@ -154,27 +154,39 @@
     font-weight: 600;
   }
 
-  .invoice-btn .p-button {
-    font-size: 0.78rem !important;
-    padding: 0.35rem 0.75rem !important;
-    white-space: nowrap;
-  }
-
-  .rows-drop .p-dropdown {
-    font-size: 0.82rem;
-    min-width: 80px;
-  }
-
   .export-btn .p-button {
     font-size: 0.82rem !important;
     padding: 0.4rem 0.85rem !important;
   }
+
+  .subs-table .p-paginator {
+    border-top: 1px solid var(--surface-border);
+    padding: 0.75rem 1.25rem;
+    background: var(--surface-card);
+    font-size: 0.82rem;
+  }
+
+  .subs-table .p-paginator .p-paginator-current {
+    color: var(--text-secondary);
+  }
+
+  .subs-table .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
 }
 
-.mono {
-  font-family: monospace;
-  font-size: 0.8rem;
+.empty-msg {
+  text-align: center;
   color: var(--text-secondary);
+  padding: 2.5rem !important;
+
+  i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .plan-cell {
@@ -186,11 +198,6 @@
 .plan-name {
   font-weight: 600;
   font-size: 0.85rem;
-}
-
-.plan-desc {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
 }
 
 .amount-cell {
@@ -222,106 +229,8 @@
   }
 }
 
-.empty-msg {
-  text-align: center;
-  color: var(--text-secondary);
-  padding: 2.5rem !important;
-
-  i {
-    display: block;
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-  }
-}
-
-// ─── Table footer ─────────────────────────────────────────────────────────────
-.table-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0.75rem 1.25rem;
-  border-top: 1px solid var(--surface-border);
-}
-
-.rows-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.rows-label {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.footer-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.records-info {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-}
-
-.paginator {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.page-btn--nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-
-  i {
-    font-size: 0.75rem;
-  }
-}
-
-.page-btn {
-  min-width: 32px;
-  height: 32px;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  border-radius: $border-radius;
-  font-size: 0.82rem;
-  cursor: pointer;
-  padding: 0 0.5rem;
-  transition: all 0.15s;
-
-  &:hover {
-    background: var(--color-primary-light);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-  }
-
-  &.active {
-    background: var(--color-primary);
-    color: #fff;
-    border-color: var(--color-primary);
-    font-weight: 600;
-  }
-}
-
 @media (max-width: $bp-md) {
   .filter-field {
     min-width: 120px;
-  }
-
-  .table-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .footer-center {
-    order: -1;
   }
 }

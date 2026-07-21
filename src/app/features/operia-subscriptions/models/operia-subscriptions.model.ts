@@ -1,92 +1,57 @@
-export type SubscriptionStatus = 'active' | 'expired' | 'cancelled';
-
-export type PaymentMethod = 'bank_transfer' | 'instapay' | 'visa';
+export type SubscriptionStatus = 'active' | 'expired' | 'cancelled' | 'pending';
 
 export type BillingPeriod = 'yearly' | 'monthly';
 
-export type PlanCode = 'growth' | 'basic';
-
 export interface SubscriptionRow {
-  id: number;
-  invoiceNumber: string;
-  planCode: PlanCode;
-  planNameKey: string;
-  planDescriptionKey: string;
+  id: string;
+  planCode: string;
+  planName: string;
   billingPeriod: BillingPeriod;
   amount: number;
-  paymentMethod: PaymentMethod;
+  currency: string;
   startDate: string;
   endDate: string;
   status: SubscriptionStatus;
 }
 
-export const MOCK_SUBSCRIPTIONS: SubscriptionRow[] = [
-  {
-    id: 1,
-    invoiceNumber: 'SUB-250610-001',
-    planCode: 'growth',
-    planNameKey: 'OPERIA_SUBSCRIPTIONS.PLANS.GROWTH',
-    planDescriptionKey: 'ONBOARDING.PLAN_SELECTION.PLANS.GROWTH.DESCRIPTION',
-    billingPeriod: 'yearly',
-    amount: 12500,
-    paymentMethod: 'bank_transfer',
-    startDate: '10/06/2025',
-    endDate: '09/06/2026',
-    status: 'active',
-  },
-  {
-    id: 2,
-    invoiceNumber: 'SUB-240610-002',
-    planCode: 'basic',
-    planNameKey: 'OPERIA_SUBSCRIPTIONS.PLANS.BASIC',
-    planDescriptionKey: 'ONBOARDING.PLAN_SELECTION.PLANS.STARTER.DESCRIPTION',
-    billingPeriod: 'yearly',
-    amount: 8500,
-    paymentMethod: 'instapay',
-    startDate: '10/06/2024',
-    endDate: '09/06/2025',
-    status: 'expired',
-  },
-  {
-    id: 3,
-    invoiceNumber: 'SUB-250410-003',
-    planCode: 'growth',
-    planNameKey: 'OPERIA_SUBSCRIPTIONS.PLANS.GROWTH',
-    planDescriptionKey: 'ONBOARDING.PLAN_SELECTION.PLANS.GROWTH.DESCRIPTION',
-    billingPeriod: 'yearly',
-    amount: 12500,
-    paymentMethod: 'visa',
-    startDate: '10/04/2025',
-    endDate: '09/04/2026',
-    status: 'active',
-  },
-  {
-    id: 4,
-    invoiceNumber: 'SUB-250303-004',
-    planCode: 'growth',
-    planNameKey: 'OPERIA_SUBSCRIPTIONS.PLANS.GROWTH',
-    planDescriptionKey: 'ONBOARDING.PLAN_SELECTION.PLANS.GROWTH.DESCRIPTION',
-    billingPeriod: 'yearly',
-    amount: 12500,
-    paymentMethod: 'bank_transfer',
-    startDate: '03/03/2025',
-    endDate: '02/03/2026',
-    status: 'cancelled',
-  },
-  {
-    id: 5,
-    invoiceNumber: 'SUB-231210-011',
-    planCode: 'basic',
-    planNameKey: 'OPERIA_SUBSCRIPTIONS.PLANS.BASIC',
-    planDescriptionKey: 'ONBOARDING.PLAN_SELECTION.PLANS.STARTER.DESCRIPTION',
-    billingPeriod: 'yearly',
-    amount: 8500,
-    paymentMethod: 'visa',
-    startDate: '10/12/2023',
-    endDate: '09/12/2024',
-    status: 'expired',
-  },
-];
+export interface SubscriptionFilters {
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  planCode: string | null;
+  status: SubscriptionStatus | null;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface TenantSubscriptionApiDto {
+  id: string;
+  planCode: string;
+  planName: string;
+  billingType: string;
+  amount: number;
+  currency: string;
+  startDate: string | null;
+  endDate: string | null;
+  status: string;
+}
+
+export interface PagedResultApiDto<T> {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
 
 export const SUBSCRIPTION_STATUS_OPTIONS: {
   labelKey: string;
@@ -98,21 +63,29 @@ export const SUBSCRIPTION_STATUS_OPTIONS: {
   { labelKey: 'OPERIA_SUBSCRIPTIONS.STATUS.CANCELLED', value: 'cancelled' },
 ];
 
-export const PLAN_OPTIONS: { labelKey: string; value: PlanCode | null }[] = [
-  { labelKey: 'OPERIA_SUBSCRIPTIONS.ALL_PLANS', value: null },
-  { labelKey: 'OPERIA_SUBSCRIPTIONS.PLANS.GROWTH', value: 'growth' },
-  { labelKey: 'OPERIA_SUBSCRIPTIONS.PLANS.BASIC', value: 'basic' },
-];
+export function mapSubscriptionDto(dto: TenantSubscriptionApiDto): SubscriptionRow {
+  return {
+    id: dto.id,
+    planCode: dto.planCode,
+    planName: dto.planName,
+    billingPeriod: dto.billingType === 'monthly' ? 'monthly' : 'yearly',
+    amount: dto.amount,
+    currency: dto.currency,
+    startDate: formatApiDate(dto.startDate),
+    endDate: formatApiDate(dto.endDate),
+    status: dto.status as SubscriptionStatus,
+  };
+}
 
-export const PAYMENT_METHOD_OPTIONS: {
-  labelKey: string;
-  value: PaymentMethod | null;
-}[] = [
-  { labelKey: 'OPERIA_SUBSCRIPTIONS.ALL_PAYMENT_METHODS', value: null },
-  {
-    labelKey: 'OPERIA_SUBSCRIPTIONS.PAYMENT_METHODS.BANK_TRANSFER',
-    value: 'bank_transfer',
-  },
-  { labelKey: 'OPERIA_SUBSCRIPTIONS.PAYMENT_METHODS.INSTAPAY', value: 'instapay' },
-  { labelKey: 'OPERIA_SUBSCRIPTIONS.PAYMENT_METHODS.VISA', value: 'visa' },
-];
+function formatApiDate(value: string | null): string {
+  if (!value) {
+    return '';
+  }
+
+  const [year, month, day] = value.split('-');
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}/${month}/${year}`;
+}

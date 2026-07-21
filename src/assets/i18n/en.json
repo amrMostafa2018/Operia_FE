@@ -526,26 +526,14 @@
     "ALL_PLANS":                "All plans",
     "SUBSCRIPTION_STATUS":      "Subscription status",
     "ALL_STATUSES":             "All statuses",
-    "PAYMENT_METHOD":           "Payment method",
-    "ALL_PAYMENT_METHODS":      "All payment methods",
     "COL_NUM":                  "#",
-    "COL_INVOICE_NUM":          "Invoice number",
     "COL_PLAN":                 "Plan",
     "COL_AMOUNT":               "Subscription value",
-    "COL_PAYMENT":              "Payment method",
     "COL_START":                "Start date",
     "COL_END":                  "End date",
     "COL_STATUS":               "Subscription status",
-    "COL_INVOICE":              "Invoice",
-    "VIEW_INVOICE":             "View invoice",
     "EXPORT_REPORT":            "Export report",
-    "ROWS_LABEL":               "Rows per page",
-    "SHOWING":                  "Showing",
-    "TO":                       "to",
-    "OF":                       "of",
-    "OPERATIONS":               "operations",
-    "PREVIOUS":                 "Previous",
-    "NEXT":                     "Next",
+    "PAGE_REPORT":              "Showing {first} to {last} of {totalRecords} operations",
     "BILLING": {
       "YEARLY":                 "Yearly",
       "MONTHLY":                "Monthly"
@@ -553,16 +541,8 @@
     "STATUS": {
       "ACTIVE":                 "Active",
       "EXPIRED":                "Expired",
-      "CANCELLED":              "Cancelled"
-    },
-    "PAYMENT_METHODS": {
-      "BANK_TRANSFER":          "Bank transfer",
-      "INSTAPAY":               "Instapay",
-      "VISA":                   "Visa"
-    },
-    "PLANS": {
-      "GROWTH":                 "Growth",
-      "BASIC":                  "Basic"
+      "CANCELLED":              "Cancelled",
+      "PENDING":                "Pending"
     }
   },
   "SETTINGS_ACTIVITY": {
