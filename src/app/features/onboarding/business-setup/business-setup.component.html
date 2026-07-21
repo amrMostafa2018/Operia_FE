@@ -161,7 +161,7 @@
               <input
                 id="logoInput"
                 type="file"
-                accept="image/*"
+                [accept]="acceptedImageAccept"
                 class="sr-only"
                 (change)="onLogoSelected($event)"
               />

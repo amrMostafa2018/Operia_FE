@@ -226,7 +226,7 @@
           <input
             id="addBalancePlatformScreenshotInput"
             type="file"
-            accept="image/*"
+            [accept]="acceptedImageAccept"
             hidden
             (change)="onAddBalancePlatformScreenshotSelected($event)"
           />

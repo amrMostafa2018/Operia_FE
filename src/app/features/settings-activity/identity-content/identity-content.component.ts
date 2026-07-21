@@ -25,12 +25,11 @@ import {
   PHONE_INPUT_DEFAULT_COUNTRY,
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '@app/shared/constants/phone-input.config';
+import { AppConfigService } from '@core/services/app-config.service';
 import { getPhoneFieldError } from '@app/shared/utils/phone-number.util';
 import { MOCK_IDENTITY_PHOTOS, PhotoSlot } from '../models/settings-activity.model';
 
 const MAX_ABOUT_CHARS = 500;
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const PRIMARY_IMAGE_MAX = { width: 960, height: 280 };
 const SECONDARY_IMAGE_MAX = { width: 240, height: 96 };
 
@@ -101,11 +100,13 @@ export class IdentityContentComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly appConfig = inject(AppConfigService);
 
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly maxAboutChars = MAX_ABOUT_CHARS;
+  readonly acceptedImageAccept = this.appConfig.allowedMimeTypesAccept;
 
   form!: FormGroup;
   photos = signal<PhotoSlot[]>(structuredClone(MOCK_IDENTITY_PHOTOS));
@@ -223,12 +224,12 @@ export class IdentityContentComponent implements OnInit {
   }
 
   private processPhotoFile(file: File, photoId: string): void {
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    if (!this.appConfig.isAllowedMimeType(file.type)) {
       this.showToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE');
       return;
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (!this.appConfig.isValidFileSize(file.size)) {
       this.showToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_SIZE');
       return;
     }

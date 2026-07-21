@@ -17,6 +17,7 @@ import { MessageService } from 'primeng/api';
 
 import { routes } from '@app/app.routes';
 import { AuthService } from '@core/services/auth.service';
+import { AppConfigService } from '@core/services/app-config.service';
 import { LanguageService } from '@core/services/language.service';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
 import { jwtInterceptor } from '@core/interceptors/jwt.interceptor';
@@ -29,6 +30,10 @@ function initAuth(authService: AuthService): () => Promise<boolean> {
 
 function initLanguage(languageService: LanguageService): () => Promise<void> {
   return () => languageService.init();
+}
+
+function initAppConfig(appConfigService: AppConfigService): () => Promise<void> {
+  return () => appConfigService.init();
 }
 
 export const appConfig: ApplicationConfig = {
@@ -50,6 +55,12 @@ export const appConfig: ApplicationConfig = {
       useHttpBackend: true,
     }),
     MessageService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initAppConfig,
+      deps: [AppConfigService],
+      multi: true,
+    },
     {
       provide: APP_INITIALIZER,
       useFactory: initLanguage,

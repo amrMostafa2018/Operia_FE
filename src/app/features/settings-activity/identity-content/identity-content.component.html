@@ -138,7 +138,7 @@
               <input
                 type="file"
                 [id]="'photo-replace-' + primaryPhoto().id"
-                accept="image/jpeg,image/png,image/webp"
+                [accept]="acceptedImageAccept"
                 hidden
                 (change)="onPhotoSelected($event, primaryPhoto().id)"
               />
@@ -153,7 +153,7 @@
               <input
                 type="file"
                 [id]="'photo-' + primaryPhoto().id"
-                accept="image/jpeg,image/png,image/webp"
+                [accept]="acceptedImageAccept"
                 hidden
                 (change)="onPhotoSelected($event, primaryPhoto().id)"
               />
@@ -168,7 +168,7 @@
               <input
                 type="file"
                 [id]="'photo-upload-' + primaryPhoto().id"
-                accept="image/jpeg,image/png,image/webp"
+                [accept]="acceptedImageAccept"
                 hidden
                 (change)="onPhotoSelected($event, primaryPhoto().id)"
               />
@@ -211,7 +211,7 @@
                   <input
                     type="file"
                     [id]="'photo-' + photo.id"
-                    accept="image/jpeg,image/png,image/webp"
+                    [accept]="acceptedImageAccept"
                     hidden
                     (change)="onPhotoSelected($event, photo.id)"
                   />

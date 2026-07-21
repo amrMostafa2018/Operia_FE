@@ -27,11 +27,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-
-
+import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 
 import { LanguageService } from '@core/services/language.service';
+import { AppConfigService } from '@core/services/app-config.service';
 import { OnboardingService } from '@core/services/onboarding.service';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
 
@@ -92,6 +92,8 @@ export class PlanSelectionComponent implements OnInit {
   private readonly translate = inject(TranslateService);
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly appConfig = inject(AppConfigService);
+  private readonly messageService = inject(MessageService);
 
 
 
@@ -122,6 +124,7 @@ export class PlanSelectionComponent implements OnInit {
 
 
   readonly billingTypeEnum = BillingType;
+  readonly acceptedImageAccept = this.appConfig.allowedMimeTypesAccept;
 
   readonly businessSetup = computed(() => this.onboardingState.businessSetup());
 
@@ -304,10 +307,21 @@ export class PlanSelectionComponent implements OnInit {
 
   onAddBalancePlatformScreenshotSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file?.type.startsWith('image/')) {
+    if (!file) {
       return;
     }
 
+    if (!this.appConfig.isAllowedMimeType(file.type)) {
+      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE');
+      return;
+    }
+
+    if (!this.appConfig.isValidFileSize(file.size)) {
+      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_SIZE');
+      return;
+    }
+
+    this.topUpSubmitError.set(null);
     this.screenshotFile.set(file);
 
     const reader = new FileReader();
@@ -562,6 +576,14 @@ export class PlanSelectionComponent implements OnInit {
 
     return code.replace(/-/g, '_').toUpperCase();
 
+  }
+
+  private showUploadToast(key: string): void {
+    this.messageService.add({
+      severity: 'warn',
+      summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
+      detail: this.translate.instant(key),
+    });
   }
 
 }

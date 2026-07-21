@@ -11,12 +11,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MessageService } from 'primeng/api';
 
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 
 import { AuthService } from '@core/services/auth.service';
+import { AppConfigService } from '@core/services/app-config.service';
 import { OnboardingService } from '@core/services/onboarding.service';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
 import { LanguageService } from '@core/services/language.service';
@@ -75,6 +77,8 @@ export class BusinessSetupComponent implements OnInit {
   private readonly languageService = inject(LanguageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly appConfig = inject(AppConfigService);
+  private readonly messageService = inject(MessageService);
 
   form!: FormGroup;
   isSubmitting = signal(false);
@@ -87,6 +91,7 @@ export class BusinessSetupComponent implements OnInit {
   private logoDragCounter = 0;
 
   readonly activityTypes = ACTIVITY_TYPES;
+  readonly acceptedImageAccept = this.appConfig.allowedMimeTypesAccept;
 
   readonly selectedActivity = computed(() =>
     this.activityTypes.find(a => a.id === this.selectedActivityId()) ?? this.activityTypes[0]
@@ -288,14 +293,29 @@ export class BusinessSetupComponent implements OnInit {
   }
 
   private setLogoFile(file: File): void {
-    if (!file.type.startsWith('image/')) {
+    if (!this.appConfig.isAllowedMimeType(file.type)) {
+      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE');
       return;
     }
 
+    if (!this.appConfig.isValidFileSize(file.size)) {
+      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_SIZE');
+      return;
+    }
+
+    this.submitError.set(null);
     this.logoFile.set(file);
 
     const reader = new FileReader();
     reader.onload = () => this.logoPreview.set(reader.result as string);
     reader.readAsDataURL(file);
+  }
+
+  private showUploadToast(key: string): void {
+    this.messageService.add({
+      severity: 'warn',
+      summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
+      detail: this.translate.instant(key),
+    });
   }
 }
