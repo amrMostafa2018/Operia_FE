@@ -131,7 +131,7 @@
           </td>
           <td>
             <div class="amount-cell">
-              <span class="amount-value">{{ row.amount | number }} {{ row.currency }}</span>
+              <span class="amount-value">{{ row.amount | number }} {{ currencyKey(row.currency) | translate }}</span>
               <span class="amount-period">{{ billingPeriodKey(row.billingPeriod) | translate }}</span>
             </div>
           </td>
@@ -163,6 +163,8 @@
           [iconPos]="leadingIconPos()"
           styleClass="export-btn"
           [outlined]="true"
+          [loading]="exportLoading()"
+          [disabled]="exportLoading()"
           (onClick)="exportReport()"
         />
       </ng-template>

@@ -543,6 +543,12 @@
       "EXPIRED":                "Expired",
       "CANCELLED":              "Cancelled",
       "PENDING":                "Pending"
+    },
+    "CURRENCIES": {
+      "EGP":                    "EGP",
+      "SAR":                    "SAR",
+      "AED":                    "AED",
+      "USD":                    "USD"
     }
   },
   "SETTINGS_ACTIVITY": {

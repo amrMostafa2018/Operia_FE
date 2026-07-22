@@ -68,6 +68,7 @@ export class OperiaSubscriptionsComponent implements OnInit {
 
   readonly subscriptions = signal<SubscriptionRow[]>([]);
   readonly loading = signal(false);
+  readonly exportLoading = signal(false);
   readonly totalRecords = signal(0);
 
   dateFrom = signal<Date | null>(null);
@@ -129,6 +130,10 @@ export class OperiaSubscriptionsComponent implements OnInit {
       : 'OPERIA_SUBSCRIPTIONS.BILLING.MONTHLY';
   }
 
+  currencyKey(currency: string): string {
+    return `OPERIA_SUBSCRIPTIONS.CURRENCIES.${currency}`;
+  }
+
   rowNumber(index: number): number {
     return this.first() + index + 1;
   }
@@ -148,10 +153,14 @@ export class OperiaSubscriptionsComponent implements OnInit {
   }
 
   exportReport(): void {
+    this.exportLoading.set(true);
     this.financeService
       .exportSubscriptions(this.currentFilters())
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(blob => this.downloadBlob(blob, 'operia-subscriptions.csv'));
+      .pipe(
+        finalize(() => this.exportLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(blob => this.downloadBlob(blob, 'operia-subscriptions.xlsx'));
   }
 
   private loadPlanOptions(): void {

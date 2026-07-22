@@ -543,6 +543,12 @@
       "EXPIRED":                "منتهي",
       "CANCELLED":              "ملغى",
       "PENDING":                "قيد الانتظار"
+    },
+    "CURRENCIES": {
+      "EGP":                    "جنيه مصري",
+      "SAR":                    "ريال سعودي",
+      "AED":                    "درهم إماراتي",
+      "USD":                    "دولار أمريكي"
     }
   },
   "SETTINGS_ACTIVITY": {
