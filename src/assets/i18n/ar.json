@@ -533,6 +533,8 @@
     "COL_END":                  "نهاية الاشتراك",
     "COL_STATUS":               "حالة الاشتراك",
     "EXPORT_REPORT":            "تصدير التقرير",
+    "EXPORT_EXCEL":             "تصدير Excel",
+    "EXPORT_PDF":               "تصدير PDF",
     "PAGE_REPORT":              "عرض {first} إلى {last} من {totalRecords} عمليات",
     "BILLING": {
       "YEARLY":                 "سنوياً",

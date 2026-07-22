@@ -157,16 +157,59 @@
       </ng-template>
 
       <ng-template pTemplate="paginatorleft">
-        <p-button
-          [label]="'OPERIA_SUBSCRIPTIONS.EXPORT_REPORT' | translate"
-          icon="pi pi-download"
-          [iconPos]="leadingIconPos()"
-          styleClass="export-btn"
-          [outlined]="true"
-          [loading]="exportLoading()"
-          [disabled]="exportLoading()"
-          (onClick)="exportReport()"
-        />
+        <div class="export-action">
+          <p-button
+            #exportButton
+            [label]="'OPERIA_SUBSCRIPTIONS.EXPORT_REPORT' | translate"
+            [icon]="exportLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-download'"
+            [iconPos]="leadingIconPos()"
+            styleClass="export-btn"
+            [outlined]="true"
+            [disabled]="exportLoading()"
+            (onClick)="openExportMenu($event)"
+          />
+          <p-overlayPanel
+            #exportPanel
+            styleClass="export-menu-panel"
+            appendTo="body"
+            [dismissable]="true"
+            (onShow)="alignExportPanel()"
+          >
+            <div class="export-options" role="menu">
+              @for (option of exportMenuOptions(); track option.format) {
+                <button
+                  type="button"
+                  class="export-option"
+                  role="menuitem"
+                  (click)="selectExport(option.format)"
+                >
+                  <span
+                    class="export-option-icon"
+                    [class.export-option-icon--excel]="option.format === 'excel'"
+                    [class.export-option-icon--pdf]="option.format === 'pdf'"
+                  >
+                    @if (option.format === 'excel') {
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <rect x="2" y="2" width="16" height="16" rx="2.5" fill="currentColor" />
+                        <path d="M6 6h8M6 10h8M6 14h5M10 6v8" stroke="#fff" stroke-width="1.1" stroke-linecap="round" />
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path
+                          d="M5.5 2.5h6.8L16.5 6.2v10.3a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z"
+                          fill="currentColor"
+                        />
+                        <path d="M12.3 2.5v3.7h3.7" stroke="#fff" stroke-width="1" stroke-linejoin="round" />
+                        <path d="M6.2 11h7.6M6.2 13.4h5.4" stroke="#fff" stroke-width="1.1" stroke-linecap="round" />
+                      </svg>
+                    }
+                  </span>
+                  <span class="export-option-label">{{ option.label }}</span>
+                </button>
+              }
+            </div>
+          </p-overlayPanel>
+        </div>
       </ng-template>
     </p-table>
   </div>

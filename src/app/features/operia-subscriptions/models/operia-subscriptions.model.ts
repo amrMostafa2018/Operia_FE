@@ -2,6 +2,8 @@ export type SubscriptionStatus = 'active' | 'expired' | 'cancelled' | 'pending';
 
 export type BillingPeriod = 'yearly' | 'monthly';
 
+export type SubscriptionExportFormat = 'excel' | 'pdf';
+
 export interface SubscriptionRow {
   id: string;
   planCode: string;

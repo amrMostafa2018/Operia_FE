@@ -7,6 +7,7 @@ import {
   mapSubscriptionDto,
   PagedResult,
   PagedResultApiDto,
+  SubscriptionExportFormat,
   SubscriptionFilters,
   SubscriptionRow,
   TenantSubscriptionApiDto,
@@ -45,8 +46,11 @@ export class FinanceService {
       );
   }
 
-  exportSubscriptions(filters: SubscriptionFilters): Observable<Blob> {
-    const params = this.appendFilters(new HttpParams(), filters);
+  exportSubscriptions(
+    filters: SubscriptionFilters,
+    format: SubscriptionExportFormat = 'excel',
+  ): Observable<Blob> {
+    const params = this.appendFilters(new HttpParams(), filters).set('format', format);
 
     return this.http.get(`${this.baseUrl}/subscriptions/export`, {
       params,

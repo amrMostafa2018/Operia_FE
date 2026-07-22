@@ -175,17 +175,124 @@
     font-weight: 600;
   }
 
+  .export-action {
+    display: inline-flex;
+    flex-shrink: 0;
+    position: relative;
+  }
+
   .export-btn.p-button {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.82rem !important;
-    padding: 0.45rem 0.9rem !important;
+    padding: 0.5rem 0.95rem !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    background: transparent !important;
+
+    &:enabled:hover {
+      background: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-primary) !important;
+    }
 
     .p-button-icon-left,
     .p-button-icon-right {
       margin: 0 !important;
     }
+  }
+
+  .export-menu-panel.p-overlaypanel {
+    margin-top: 0.35rem !important;
+    border: 1px solid var(--surface-border);
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow-sm;
+    background: var(--surface-card);
+    overflow: hidden;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+
+    .p-overlaypanel-content {
+      padding: 0.35rem;
+    }
+  }
+
+  .export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 9.5rem;
+  }
+
+  .export-option {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 0;
+    border-radius: $border-radius;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-family: inherit;
+    text-align: start;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: var(--surface-hover);
+
+      .export-option-icon--excel {
+        background: #d8efe2;
+      }
+
+      .export-option-icon--pdf {
+        background: #f9d9d7;
+      }
+    }
+
+    &:active {
+      background: color-mix(in srgb, var(--color-primary) 10%, var(--surface-hover));
+    }
+
+    & + .export-option {
+      border-top: 1px solid var(--surface-hover);
+    }
+  }
+
+  .export-option-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.45rem;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+
+    svg {
+      width: 1.05rem;
+      height: 1.05rem;
+    }
+
+    &--excel {
+      background: #e7f4ec;
+      color: #1d6f42;
+    }
+
+    &--pdf {
+      background: #fdecec;
+      color: #d92d20;
+    }
+  }
+
+  .export-option-label {
+    font-weight: 500;
   }
 
   .subs-paginator.p-paginator,

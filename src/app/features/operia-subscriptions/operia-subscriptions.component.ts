@@ -6,14 +6,16 @@ import {
   inject,
   OnInit,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ButtonModule } from 'primeng/button';
+import { Button, ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
+import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs';
@@ -25,6 +27,7 @@ import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import {
   BillingPeriod,
   SUBSCRIPTION_STATUS_OPTIONS,
+  SubscriptionExportFormat,
   SubscriptionFilters,
   SubscriptionRow,
   SubscriptionStatus,
@@ -36,6 +39,11 @@ interface PlanFilterOption {
   labelKey?: string;
   label?: string;
   value: string | null;
+}
+
+interface ExportMenuOption {
+  label: string;
+  format: SubscriptionExportFormat;
 }
 
 @Component({
@@ -50,6 +58,7 @@ interface PlanFilterOption {
     TagModule,
     DropdownModule,
     CalendarModule,
+    OverlayPanelModule,
   ],
   templateUrl: './operia-subscriptions.component.html',
   styleUrl: './operia-subscriptions.component.scss',
@@ -61,6 +70,9 @@ export class OperiaSubscriptionsComponent implements OnInit {
   private readonly languageService = inject(LanguageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+
+  private readonly exportButton = viewChild<Button>('exportButton');
+  private readonly exportPanel = viewChild<OverlayPanel>('exportPanel');
 
   readonly leadingIconPos = computed(() =>
     getLeadingIconPos(this.languageService.currentLang()),
@@ -91,6 +103,20 @@ export class OperiaSubscriptionsComponent implements OnInit {
   readonly pageReportTemplate = signal(
     this.translate.instant('OPERIA_SUBSCRIPTIONS.PAGE_REPORT'),
   );
+  readonly exportMenuOptions = computed<ExportMenuOption[]>(() => {
+    this.languageService.currentLang();
+
+    return [
+      {
+        label: this.translate.instant('OPERIA_SUBSCRIPTIONS.EXPORT_EXCEL'),
+        format: 'excel',
+      },
+      {
+        label: this.translate.instant('OPERIA_SUBSCRIPTIONS.EXPORT_PDF'),
+        format: 'pdf',
+      },
+    ];
+  });
 
   ngOnInit(): void {
     this.translate.onLangChange
@@ -152,15 +178,60 @@ export class OperiaSubscriptionsComponent implements OnInit {
     this.loadSubscriptions();
   }
 
-  exportReport(): void {
+  openExportMenu(event: Event): void {
+    if (this.exportLoading()) {
+      return;
+    }
+
+    const button = this.exportButton()?.el?.nativeElement as HTMLElement | undefined;
+    this.exportPanel()?.toggle(event, button ?? event.currentTarget);
+  }
+
+  alignExportPanel(): void {
+    queueMicrotask(() => {
+      const panel = this.exportPanel();
+      const button = this.exportButton()?.el?.nativeElement as HTMLElement | undefined;
+      if (!panel || !button) {
+        return;
+      }
+
+      panel.align();
+
+      if (this.languageService.currentLang() !== 'ar') {
+        return;
+      }
+
+      const panelElement = document.querySelector(
+        '.export-menu-panel.p-overlaypanel',
+      ) as HTMLElement | null;
+
+      if (!panelElement) {
+        return;
+      }
+
+      const buttonRect = button.getBoundingClientRect();
+      panelElement.style.left = `${buttonRect.right - panelElement.offsetWidth}px`;
+      panelElement.style.top = `${buttonRect.bottom + 6}px`;
+    });
+  }
+
+  selectExport(format: SubscriptionExportFormat): void {
+    this.exportPanel()?.hide();
+    this.exportReport(format);
+  }
+
+  exportReport(format: SubscriptionExportFormat = 'excel'): void {
     this.exportLoading.set(true);
     this.financeService
-      .exportSubscriptions(this.currentFilters())
+      .exportSubscriptions(this.currentFilters(), format)
       .pipe(
         finalize(() => this.exportLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(blob => this.downloadBlob(blob, 'operia-subscriptions.xlsx'));
+      .subscribe(blob => {
+        const extension = format === 'pdf' ? 'pdf' : 'xlsx';
+        this.downloadBlob(blob, `operia-subscriptions.${extension}`);
+      });
   }
 
   private loadPlanOptions(): void {

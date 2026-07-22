@@ -93,7 +93,6 @@
     "FORGOT_PASSWORD":"Forgot password?",
     "INVALID_CREDENTIALS": "Invalid email or password",
     "SESSION_EXPIRED": "Session expired. Please sign in again.",
-    "ERROR":          "Error",
     "LOGIN_ERROR":    "Sign in failed",
     "REGISTER_ERROR": "An error occurred while creating your account",
     "ERROR": {
@@ -206,7 +205,6 @@
       "EMAIL_INVALID":        "Invalid email address",
       "PHONE_REQUIRED":       "Mobile number is required",
       "OTP_PHONE_REQUIRED":   "Phone number is required for OTP delivery",
-      "OTP_INVALID":          "Invalid verification code",
       "OTP_EXPIRED":          "Verification code has expired",
       "OTP_TITLE":        "Verify your number",
       "OTP_SUBTITLE":     "Enter the 6-digit code sent to your WhatsApp number",
@@ -389,7 +387,6 @@
         "TITLE": "Add balance via Instapay",
         "HINT": "Transfer the amount using Instapay, then upload your payment screenshot.",
         "AMOUNT": "Amount to add",
-        "ADD_BALANCE_BTN": "Add balance",
         "SUBMIT": "Submit balance request",
         "ADD_BALANCE_BTN": "Add balance",
         "SUBMITTED": "Balance request submitted. It will be reviewed shortly.",
@@ -533,6 +530,8 @@
     "COL_END":                  "End date",
     "COL_STATUS":               "Subscription status",
     "EXPORT_REPORT":            "Export report",
+    "EXPORT_EXCEL":             "Export Excel",
+    "EXPORT_PDF":               "Export PDF",
     "PAGE_REPORT":              "Showing {first} to {last} of {totalRecords} operations",
     "BILLING": {
       "YEARLY":                 "Yearly",
