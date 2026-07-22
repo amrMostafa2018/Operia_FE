@@ -14,11 +14,9 @@ import {
   VerifyForgotPasswordOtpResponse,
   VerifyLoginOtpRequest,
   VerifyRegisterOtpRequest,
+  VerifyLoginOtpResponse,
 } from '@core/models/user.model';
-import {
-  AuthApiEndpoint,
-  buildAuthApiUrl,
-} from '@core/constants/auth-api-endpoint.enum';
+import { AuthApiEndpoint, buildAuthApiUrl } from '@core/constants/auth-api-endpoint.enum';
 
 @Injectable({ providedIn: 'root' })
 export class AuthHttpService {
@@ -32,10 +30,21 @@ export class AuthHttpService {
     });
   }
 
-  verifyLoginOtp(request: VerifyLoginOtpRequest): Observable<ApiAuthResponse> {
-    return this.http.post<ApiAuthResponse>(
+  verifyLoginOtp(request: VerifyLoginOtpRequest): Observable<VerifyLoginOtpResponse> {
+    return this.http.post<VerifyLoginOtpResponse>(
       buildAuthApiUrl(this.api, AuthApiEndpoint.VerifyOtp),
       request
+    );
+  }
+
+  completeFirstLogin(
+    userId: string,
+    resetToken: string,
+    newPassword: string
+  ): Observable<ApiAuthResponse> {
+    return this.http.post<ApiAuthResponse>(
+      buildAuthApiUrl(this.api, AuthApiEndpoint.CompleteFirstLogin),
+      { userId, resetToken, newPassword }
     );
   }
 
@@ -54,10 +63,7 @@ export class AuthHttpService {
   }
 
   resendLoginOtp(request: ResendLoginOtpRequest): Observable<void> {
-    return this.http.post<void>(
-      buildAuthApiUrl(this.api, AuthApiEndpoint.ResendLoginOtp),
-      request
-    );
+    return this.http.post<void>(buildAuthApiUrl(this.api, AuthApiEndpoint.ResendLoginOtp), request);
   }
 
   resendRegisterOtp(request: ResendRegisterOtpRequest): Observable<void> {

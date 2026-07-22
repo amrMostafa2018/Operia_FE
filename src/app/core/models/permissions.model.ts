@@ -8,6 +8,7 @@ export const Permissions = {
     BranchesRead: 'Admins:Branches:read',
     BranchesManage: 'Admins:Branches:manage',
     EmployeesRead: 'Admins:Employees:read',
+    EmployeesManage: 'Admins:Employees:manage',
     PackagesRead: 'Admins:Packages:read',
     SettingsRead: 'Admins:Settings:read'
   },

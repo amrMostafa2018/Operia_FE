@@ -2,6 +2,7 @@ export enum AuthApiEndpoint {
   Login = '/auth/login',
   Register = '/auth/register',
   VerifyOtp = '/auth/verify-otp',
+  CompleteFirstLogin = '/auth/complete-first-login',
   VerifyRegisterOtp = '/auth/verify-register-otp',
   ResendLoginOtp = '/auth/resend-login-otp',
   ResendRegisterOtp = '/auth/resend-register-otp',
@@ -18,6 +19,7 @@ export const PUBLIC_AUTH_API_ENDPOINTS: readonly AuthApiEndpoint[] = [
   AuthApiEndpoint.Login,
   AuthApiEndpoint.Register,
   AuthApiEndpoint.VerifyOtp,
+  AuthApiEndpoint.CompleteFirstLogin,
   AuthApiEndpoint.VerifyRegisterOtp,
   AuthApiEndpoint.ResendLoginOtp,
   AuthApiEndpoint.ResendRegisterOtp,
@@ -25,6 +27,7 @@ export const PUBLIC_AUTH_API_ENDPOINTS: readonly AuthApiEndpoint[] = [
   AuthApiEndpoint.ForgotPassword,
   AuthApiEndpoint.VerifyForgotPasswordOtp,
   AuthApiEndpoint.ResetPassword,
+  AuthApiEndpoint.CompleteFirstLogin,
   AuthApiEndpoint.ResendForgotPasswordOtp,
 ];
 

@@ -1,15 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import {
-  catchError,
-  finalize,
-  map,
-  Observable,
-  of,
-  tap,
-  throwError,
-} from 'rxjs';
+import { catchError, finalize, map, Observable, of, tap, throwError } from 'rxjs';
 
 import {
   LoginInitiateResponse,
@@ -21,6 +13,7 @@ import {
   VerifyForgotPasswordOtpResponse,
   VerifyLoginOtpRequest,
   VerifyRegisterOtpRequest,
+  VerifyLoginOtpResponse,
 } from '@core/models/user.model';
 import { AuthStore } from '@core/store/auth.store';
 import { extractApiError } from '@core/utils/api-error.util';
@@ -36,15 +29,34 @@ export class AuthService {
   private loggingOut = false;
 
   initiateLogin(request: LoginRequest): Observable<LoginInitiateResponse> {
+    return this.withAuthState(this.authHttp.initiateLogin(request.phoneNumber, request.password));
+  }
+
+  verifyLoginOtp(
+    request: VerifyLoginOtpRequest,
+    rememberMe = false
+  ): Observable<VerifyLoginOtpResponse> {
     return this.withAuthState(
-      this.authHttp.initiateLogin(request.phoneNumber, request.password)
+      this.authHttp.verifyLoginOtp(request).pipe(
+        tap(res => {
+          if (!res.requiresPasswordChange && res.accessToken && res.refreshToken) {
+            this.session.applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe);
+            this.session.navigateAfterAuth('login');
+          }
+        })
+      )
     );
   }
 
-  verifyLoginOtp(request: VerifyLoginOtpRequest, rememberMe = false): Observable<void> {
+  completeFirstLogin(
+    userId: string,
+    resetToken: string,
+    newPassword: string,
+    rememberMe = false
+  ): Observable<void> {
     return this.withAuthState(
-      this.authHttp.verifyLoginOtp(request).pipe(
-        tap((res) => {
+      this.authHttp.completeFirstLogin(userId, resetToken, newPassword).pipe(
+        tap(res => {
           this.session.applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe);
           this.session.navigateAfterAuth('login');
         }),
@@ -57,13 +69,10 @@ export class AuthService {
     return this.withAuthState(this.authHttp.initiateRegistration(request));
   }
 
-  verifyRegisterOtp(
-    request: VerifyRegisterOtpRequest,
-    displayName?: string
-  ): Observable<void> {
+  verifyRegisterOtp(request: VerifyRegisterOtpRequest, displayName?: string): Observable<void> {
     return this.withAuthState(
       this.authHttp.verifyRegisterOtp(request).pipe(
-        tap((res) => {
+        tap(res => {
           this.session.applyAuthenticatedSession(
             res.accessToken,
             res.refreshToken,

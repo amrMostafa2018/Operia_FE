@@ -88,3 +88,11 @@ export interface ApiAuthResponse {
   refreshToken: string;
   expiresAt: string;
 }
+
+export interface VerifyLoginOtpResponse {
+  requiresPasswordChange: boolean;
+  resetToken?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: string;
+}

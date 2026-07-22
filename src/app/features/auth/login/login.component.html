@@ -1,15 +1,14 @@
-
 <div class="login-page">
-
   <!-- Top link -->
   <div class="page-top-link">
     <span>{{ 'AUTH.LOGIN_PAGE.NO_ACCOUNT' | translate }}</span>
-    <a routerLink="/auth/register" class="link-btn">{{ 'AUTH.LOGIN_PAGE.CREATE_ACCOUNT' | translate }}</a>
+    <a routerLink="/auth/register" class="link-btn">{{
+      'AUTH.LOGIN_PAGE.CREATE_ACCOUNT' | translate
+    }}</a>
   </div>
 
   <!-- Form card -->
   <div class="form-card">
-
     @if (step() === 'form') {
       <div class="form-title">
         <span class="title-icon"><i class="pi pi-sign-in"></i></span>
@@ -19,101 +18,108 @@
     }
 
     <div class="auth-step-panel" [class.auth-step-panel--hidden]="step() !== 'form'">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-
-      <!-- Mobile Number -->
-      <div class="field field--phone">
-        <label for="loginPhone">{{ 'AUTH.LOGIN_PAGE.PHONE' | translate }} <span class="required">*</span></label>
-        <div class="phone-row phone-row--intl" [class.error]="isFieldInvalid(form, 'phone')" dir="ltr">
-          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
-          <ngx-intl-tel-input
-            [cssClass]="phoneInputCssClass"
-            [onlyCountries]="onlyCountries"
-            [selectedCountryISO]="selectedCountryISO"
-            [enableAutoCountrySelect]="false"
-            [enablePlaceholder]="true"
-            [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
-            [searchCountryFlag]="false"
-            [selectFirstCountry]="false"
-            [separateDialCode]="true"
-            [phoneValidation]="true"
-            inputId="loginPhone"
-            formControlName="phone"
-          />
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <div class="field field--phone">
+          <label for="loginPhone"
+            >{{ 'AUTH.LOGIN_PAGE.PHONE' | translate }} <span class="required">*</span></label
+          >
+          <div class="phone-row phone-row--intl" [class.error]="isFieldInvalid(form, 'phone')" dir="ltr">
+            <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+            <ngx-intl-tel-input
+              [cssClass]="phoneInputCssClass"
+              [onlyCountries]="onlyCountries"
+              [selectedCountryISO]="selectedCountryISO"
+              [enableAutoCountrySelect]="false"
+              [enablePlaceholder]="true"
+              [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+              [searchCountryFlag]="false"
+              [selectFirstCountry]="false"
+              [separateDialCode]="true"
+              [phoneValidation]="true"
+              inputId="loginPhone"
+              formControlName="phone"
+            />
+          </div>
+          @if (isFieldInvalid(form, 'phone') && getPhoneError()) {
+            <small class="error-msg">{{ getPhoneError() }}</small>
+          }
         </div>
-        @if (isFieldInvalid(form, 'phone') && getPhoneError()) {
-          <small class="error-msg">{{ getPhoneError() }}</small>
-        }
-      </div>
 
-      <!-- Password -->
-      <div class="field">
-        <div class="field-header">
-          <label for="password">{{ 'AUTH.PASSWORD' | translate }} <span class="required">*</span></label>
-          <a routerLink="/auth/forgot-password" class="forgot-link">{{ 'AUTH.FORGOT_PASSWORD' | translate }}</a>
+        <!-- Password -->
+        <div class="field">
+          <div class="field-header">
+            <label for="password"
+              >{{ 'AUTH.PASSWORD' | translate }} <span class="required">*</span></label
+            >
+            <a routerLink="/auth/forgot-password" class="forgot-link">{{
+              'AUTH.FORGOT_PASSWORD' | translate
+            }}</a>
+          </div>
+          <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'password')">
+            <i class="pi pi-lock input-icon"></i>
+            <input
+              id="password"
+              pInputText
+              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
+              class="p-inputtext-custom has-toggle"
+            />
+            <button type="button" class="toggle-btn" (click)="togglePassword()">
+              <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+            </button>
+          </div>
+          @if (isFieldInvalid(form, 'password')) {
+            <small class="error-msg">
+              @if (form.get('password')?.errors?.['server']) {
+                {{ getFieldServerError(form, 'password') }}
+              } @else if (form.get('password')?.errors?.['required']) {
+                {{ 'AUTH.LOGIN_PAGE.PASSWORD_REQUIRED' | translate }}
+              } @else if (form.get('password')?.errors?.['minlength']) {
+                {{ 'AUTH.LOGIN_PAGE.PASSWORD_MIN' | translate }}
+              }
+            </small>
+          }
         </div>
-        <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'password')">
-          <i class="pi pi-lock input-icon"></i>
-          <input
-            id="password"
-            pInputText
-            formControlName="password"
-            [type]="showPassword() ? 'text' : 'password'"
-            [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
-            class="p-inputtext-custom has-toggle"
-          />
-          <button type="button" class="toggle-btn" (click)="togglePassword()">
-            <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
-          </button>
-        </div>
-        @if (isFieldInvalid(form, 'password')) {
-          <small class="error-msg">
-            @if (form.get('password')?.errors?.['server']) { {{ getFieldServerError(form, 'password') }} }
-            @else if (form.get('password')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.PASSWORD_REQUIRED' | translate }} }
-            @else if (form.get('password')?.errors?.['minlength']) { {{ 'AUTH.LOGIN_PAGE.PASSWORD_MIN' | translate }} }
-          </small>
-        }
-      </div>
 
-      <!-- Remember Me -->
-      <div class="remember-row">
-        <p-checkbox
-          formControlName="rememberMe"
-          [binary]="true"
-          inputId="rememberMe"
+        <!-- Remember Me -->
+        <div class="remember-row">
+          <p-checkbox formControlName="rememberMe" [binary]="true" inputId="rememberMe" />
+          <label for="rememberMe" class="remember-label">{{
+            'AUTH.REMEMBER_ME' | translate
+          }}</label>
+        </div>
+
+        <!-- Submit -->
+        <p-button
+          type="submit"
+          [label]="'AUTH.LOGIN' | translate"
+          [icon]="submitIcon()"
+          iconPos="right"
+          styleClass="submit-btn"
+          [loading]="isLoading()"
+          [disabled]="isLoading()"
         />
-        <label for="rememberMe" class="remember-label">{{ 'AUTH.REMEMBER_ME' | translate }}</label>
-      </div>
 
-      <!-- Submit -->
-      <p-button
-        type="submit"
-        [label]="'AUTH.LOGIN' | translate"
-        [icon]="submitIcon()"
-        iconPos="right"
-        styleClass="submit-btn"
-        [loading]="isLoading()"
-        [disabled]="isLoading()"
-      />
+        <!-- Divider -->
+        <div class="divider">
+          <span>{{ 'AUTH.LOGIN_PAGE.OR' | translate }}</span>
+        </div>
 
-      <!-- Divider -->
-      <div class="divider">
-        <span>{{ 'AUTH.LOGIN_PAGE.OR' | translate }}</span>
-      </div>
+        <!-- Register link -->
+        <div class="register-cta">
+          <span>{{ 'AUTH.LOGIN_PAGE.NO_ACCOUNT' | translate }}</span>
+          <a routerLink="/auth/register" class="link-btn">{{
+            'AUTH.LOGIN_PAGE.NEW_ACCOUNT' | translate
+          }}</a>
+        </div>
 
-      <!-- Register link -->
-      <div class="register-cta">
-        <span>{{ 'AUTH.LOGIN_PAGE.NO_ACCOUNT' | translate }}</span>
-        <a routerLink="/auth/register" class="link-btn">{{ 'AUTH.LOGIN_PAGE.NEW_ACCOUNT' | translate }}</a>
-      </div>
-
-      <!-- Footer note -->
-      <p class="form-footer-note">
-        <i class="pi pi-lock"></i>
-        {{ 'AUTH.PRIVACY_NOTE' | translate }}
-      </p>
-
-    </form>
+        <!-- Footer note -->
+        <p class="form-footer-note">
+          <i class="pi pi-lock"></i>
+          {{ 'AUTH.PRIVACY_NOTE' | translate }}
+        </p>
+      </form>
     </div>
 
     @if (step() === 'otp') {
@@ -128,6 +134,52 @@
         (resend)="onResendOtp()"
         (back)="backToForm()"
       />
+    }
+    @if (step() === 'password') {
+      <div class="form-title">
+        <span class="title-icon"><i class="pi pi-key"></i></span>
+        <h2>{{ 'AUTH.LOGIN_PAGE.FIRST_PASSWORD_TITLE' | translate }}</h2>
+      </div>
+      <p class="form-subtitle">{{ 'AUTH.LOGIN_PAGE.FIRST_PASSWORD_SUBTITLE' | translate }}</p>
+      <form [formGroup]="passwordForm" (ngSubmit)="completeFirstLogin()" novalidate>
+        <div class="field">
+          <label for="firstLoginPassword">{{ 'AUTH.LOGIN_PAGE.NEW_PASSWORD' | translate }}</label>
+          <div class="input-wrapper">
+            <i class="pi pi-lock input-icon"></i
+            ><input
+              pInputText
+              id="firstLoginPassword"
+              type="password"
+              formControlName="newPassword"
+              class="p-inputtext-custom"
+            />
+          </div>
+        </div>
+        <div class="field">
+          <label for="firstLoginPasswordConfirm">{{
+            'AUTH.LOGIN_PAGE.CONFIRM_PASSWORD' | translate
+          }}</label>
+          <div class="input-wrapper">
+            <i class="pi pi-lock input-icon"></i
+            ><input
+              pInputText
+              id="firstLoginPasswordConfirm"
+              type="password"
+              formControlName="confirmPassword"
+              class="p-inputtext-custom"
+            />
+          </div>
+          @if (passwordForm.controls.confirmPassword.errors?.['mismatch']) {
+            <small class="error-msg">{{ 'AUTH.LOGIN_PAGE.PASSWORDS_MISMATCH' | translate }}</small>
+          }
+        </div>
+        <p-button
+          type="submit"
+          [label]="'AUTH.LOGIN_PAGE.SET_PASSWORD' | translate"
+          styleClass="submit-btn"
+          [loading]="isLoading()"
+        ></p-button>
+      </form>
     }
   </div>
 </div>

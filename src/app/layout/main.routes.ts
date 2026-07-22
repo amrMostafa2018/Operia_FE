@@ -47,7 +47,7 @@ export const mainRoutes: Routes = [
       },
       {
         path: 'employees',
-        loadComponent: placeholder,
+        loadComponent: () => import('@app/features/employees/employees.component').then(m => m.EmployeesComponent),
         canActivate: [permissionGuard],
         data: {
           permissions: [Permissions.Admin.EmployeesRead],
