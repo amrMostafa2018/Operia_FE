@@ -3,9 +3,17 @@ import { PERMISSION_CLAIM_TYPE } from '@core/models/permissions.model';
 
 const ROLE_MAP: Record<string, UserRole> = {
   Admin: 'admin',
+  admin: 'admin',
   SuperAdmin: 'super_admin',
+  super_admin: 'super_admin',
+  superadmin: 'super_admin',
   Reception: 'reception',
+  reception: 'reception',
   Staff: 'staff',
+  staff: 'staff',
+  PlatformAdmin: 'platform_admin',
+  platform_admin: 'platform_admin',
+  platformadmin: 'platform_admin',
 };
 
 function claim(payload: Record<string, unknown>, ...keys: string[]): string {
@@ -49,7 +57,7 @@ function roleFromPayload(payload: Record<string, unknown>): UserRole {
     return ROLE_MAP[roleName];
   }
 
-  return 'staff';
+  return 'unknown';
 }
 
 export function userFromAccessToken(token: string, name?: string): User {

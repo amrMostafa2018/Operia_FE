@@ -19,7 +19,7 @@ import { MessageService } from 'primeng/api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
 import { PermissionService } from '@core/services/permission.service';
-import { Permissions } from '@core/models/permissions.model';
+import { Permissions, Policies } from '@core/models/permissions.model';
 import { Branch, BranchPayload, BranchService } from './branch.service';
 import { applyServerFieldErrors, extractApiFieldErrors } from '@core/utils/api-error.util';
 
@@ -45,9 +45,7 @@ export class BranchesComponent implements AfterViewInit {
   private readonly toast = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
-  readonly canManage = computed(() =>
-    this.permissions.hasPermission(Permissions.Admin.BranchesManage)
-  );
+  readonly canManage = computed(() => this.permissions.hasPermission(Policies.BranchesManage));
   readonly branches = signal<Branch[]>([]);
   readonly total = signal(0);
   readonly loading = signal(false);

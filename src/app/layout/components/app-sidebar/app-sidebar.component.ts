@@ -13,7 +13,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { TranslatePipe } from '@ngx-translate/core';
 import { filter, map, startWith } from 'rxjs';
 
-import { Permissions } from '@core/models/permissions.model';
+import { Permissions, Policies } from '@core/models/permissions.model';
 import { PermissionService } from '@core/services/permission.service';
 import { LanguageService } from '@core/services/language.service';
 
@@ -23,6 +23,7 @@ interface NavItem {
   route: string;
   badge?: number;
   permissions?: string[];
+  policies?: string[];
 }
 
 @Component({
@@ -115,6 +116,7 @@ export class AppSidebarComponent {
     labelKey: 'NAV.REPORTS',
     icon: 'pi pi-chart-bar',
     route: '/reports',
+    permissions: [Policies.ReportsRead],
   };
 
   private readonly financeNavItems: NavItem[] = [
@@ -122,11 +124,13 @@ export class AppSidebarComponent {
       labelKey: 'NAV.ACTIVITY_REVENUE',
       icon: '',
       route: '/finance/activity-revenue',
+      permissions: [Policies.RevenueRead],
     },
     {
       labelKey: 'NAV.SUBSCRIPTION',
       icon: '',
       route: '/finance/operia-subscriptions',
+      permissions: [Policies.SubscriptionsManage],
     },
   ];
 
@@ -213,11 +217,12 @@ export class AppSidebarComponent {
 
   private filterByPermission(items: NavItem[]): NavItem[] {
     return items.filter(item => {
-      if (!item.permissions?.length) {
+      const requirements = item.permissions ?? item.policies;
+      if (!requirements?.length) {
         return true;
       }
 
-      return this.permissionService.hasAnyPermission(...item.permissions);
+      return this.permissionService.hasAnyPermission(...requirements);
     });
   }
 }

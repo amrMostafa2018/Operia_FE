@@ -20,7 +20,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { MessageService } from 'primeng/api';
 import { Branch, BranchService } from '@app/features/branches/branch.service';
 import { PermissionService } from '@core/services/permission.service';
-import { Permissions } from '@core/models/permissions.model';
+import { Permissions, Policies } from '@core/models/permissions.model';
 import {
   Employee,
   EmployeePayload,
@@ -81,9 +81,7 @@ export class EmployeesComponent implements OnInit {
   readonly schedule = signal<EmployeeWorkingDay[]>(this.defaultSchedule());
   readonly scheduleLoading = signal(false);
   readonly scheduleError = signal<string | null>(null);
-  readonly canManage = computed(() =>
-    this.permissions.hasPermission(Permissions.Admin.EmployeesManage)
-  );
+  readonly canManage = computed(() => this.permissions.hasPermission(Policies.EmployeesManage));
   page = 1;
   pageSize = 10;
   search = '';

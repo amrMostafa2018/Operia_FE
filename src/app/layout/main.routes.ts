@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { Permissions } from '@core/models/permissions.model';
+import { Permissions, Policies } from '@core/models/permissions.model';
 import { permissionGuard } from '@core/guards/permission.guard';
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 
@@ -83,7 +83,9 @@ export const mainRoutes: Routes = [
           import('@app/features/operia-subscriptions/operia-subscriptions.component').then(
             m => m.OperiaSubscriptionsComponent
           ),
+        canActivate: [permissionGuard],
         data: {
+          permissions: [Policies.SubscriptionsManage],
           featureKey: 'NAV.SUBSCRIPTION',
         },
         title: 'Operia Subscriptions - Operia',
@@ -91,7 +93,9 @@ export const mainRoutes: Routes = [
       {
         path: 'finance/activity-revenue',
         loadComponent: placeholder,
+        canActivate: [permissionGuard],
         data: {
+          permissions: [Policies.RevenueRead],
           featureKey: 'NAV.ACTIVITY_REVENUE',
         },
         title: 'Activity Revenue - Operia',
@@ -99,7 +103,9 @@ export const mainRoutes: Routes = [
       {
         path: 'reports',
         loadComponent: placeholder,
+        canActivate: [permissionGuard],
         data: {
+          permissions: [Policies.ReportsRead],
           featureKey: 'NAV.REPORTS',
         },
         title: 'Reports - Operia',

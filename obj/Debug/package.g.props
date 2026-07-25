@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <PackageJsonName Condition="$(PackageJsonName) == ''">operia</PackageJsonName>
+    <PackageJsonVersion Condition="$(PackageJsonVersion) == ''">0.0.0</PackageJsonVersion>
+    <PackageJsonScriptsNg Condition="$(PackageJsonScriptsNg) == ''">ng</PackageJsonScriptsNg>
+    <PackageJsonScriptsStart Condition="$(PackageJsonScriptsStart) == ''">ng serve</PackageJsonScriptsStart>
+    <PackageJsonScriptsBuild Condition="$(PackageJsonScriptsBuild) == ''">ng build</PackageJsonScriptsBuild>
+    <PackageJsonScriptsWatch Condition="$(PackageJsonScriptsWatch) == ''">ng build --watch --configuration development</PackageJsonScriptsWatch>
+    <PackageJsonScriptsTest Condition="$(PackageJsonScriptsTest) == ''">ng test</PackageJsonScriptsTest>
+    <PackageJsonScriptsLint Condition="$(PackageJsonScriptsLint) == ''">ng lint</PackageJsonScriptsLint>
+    <PackageJsonScriptsFormat Condition="$(PackageJsonScriptsFormat) == ''">prettier --write "src/**/*.{ts,html,scss,json}"</PackageJsonScriptsFormat>
+    <PackageJsonScriptsPrepare Condition="$(PackageJsonScriptsPrepare) == ''">husky</PackageJsonScriptsPrepare>
+    <PackageJsonPrivate Condition="$(PackageJsonPrivate) == ''">true</PackageJsonPrivate>
+    <PackageJsonDependenciesAngularAnimations Condition="$(PackageJsonDependenciesAngularAnimations) == ''">^18.2.0</PackageJsonDependenciesAngularAnimations>
+    <PackageJsonDependenciesAngularCommon Condition="$(PackageJsonDependenciesAngularCommon) == ''">^18.2.0</PackageJsonDependenciesAngularCommon>
+    <PackageJsonDependenciesAngularCompiler Condition="$(PackageJsonDependenciesAngularCompiler) == ''">^18.2.0</PackageJsonDependenciesAngularCompiler>
+    <PackageJsonDependenciesAngularCore Condition="$(PackageJsonDependenciesAngularCore) == ''">^18.2.0</PackageJsonDependenciesAngularCore>
+    <PackageJsonDependenciesAngularForms Condition="$(PackageJsonDependenciesAngularForms) == ''">^18.2.0</PackageJsonDependenciesAngularForms>
+    <PackageJsonDependenciesAngularPlatformBrowser Condition="$(PackageJsonDependenciesAngularPlatformBrowser) == ''">^18.2.0</PackageJsonDependenciesAngularPlatformBrowser>
+    <PackageJsonDependenciesAngularPlatformBrowserDynamic Condition="$(PackageJsonDependenciesAngularPlatformBrowserDynamic) == ''">^18.2.0</PackageJsonDependenciesAngularPlatformBrowserDynamic>
+    <PackageJsonDependenciesAngularRouter Condition="$(PackageJsonDependenciesAngularRouter) == ''">^18.2.0</PackageJsonDependenciesAngularRouter>
+    <PackageJsonDependenciesNgrxSignals Condition="$(PackageJsonDependenciesNgrxSignals) == ''">^18.1.1</PackageJsonDependenciesNgrxSignals>
+    <PackageJsonDependenciesNgxTranslateCore Condition="$(PackageJsonDependenciesNgxTranslateCore) == ''">^18.0.0</PackageJsonDependenciesNgxTranslateCore>
+    <PackageJsonDependenciesNgxTranslateHttpLoader Condition="$(PackageJsonDependenciesNgxTranslateHttpLoader) == ''">^18.0.0</PackageJsonDependenciesNgxTranslateHttpLoader>
+    <PackageJsonDependenciesTypesLeaflet Condition="$(PackageJsonDependenciesTypesLeaflet) == ''">^1.9.16</PackageJsonDependenciesTypesLeaflet>
+    <PackageJsonDependenciesGoogleLibphonenumber Condition="$(PackageJsonDependenciesGoogleLibphonenumber) == ''">^3.2.44</PackageJsonDependenciesGoogleLibphonenumber>
+    <PackageJsonDependenciesIntlTelInput Condition="$(PackageJsonDependenciesIntlTelInput) == ''">^19.5.7</PackageJsonDependenciesIntlTelInput>
+    <PackageJsonDependenciesLeaflet Condition="$(PackageJsonDependenciesLeaflet) == ''">^1.9.4</PackageJsonDependenciesLeaflet>
+    <PackageJsonDependenciesNgxIntlTelInput Condition="$(PackageJsonDependenciesNgxIntlTelInput) == ''">^17.0.0</PackageJsonDependenciesNgxIntlTelInput>
+    <PackageJsonDependenciesPrimeicons Condition="$(PackageJsonDependenciesPrimeicons) == ''">^7.0.0</PackageJsonDependenciesPrimeicons>
+    <PackageJsonDependenciesPrimeng Condition="$(PackageJsonDependenciesPrimeng) == ''">^17.18.15</PackageJsonDependenciesPrimeng>
+    <PackageJsonDependenciesRxjs Condition="$(PackageJsonDependenciesRxjs) == ''">~7.8.0</PackageJsonDependenciesRxjs>
+    <PackageJsonDependenciesTslib Condition="$(PackageJsonDependenciesTslib) == ''">^2.3.0</PackageJsonDependenciesTslib>
+    <PackageJsonDependenciesZoneJs Condition="$(PackageJsonDependenciesZoneJs) == ''">~0.14.10</PackageJsonDependenciesZoneJs>
+    <PackageJsonDevdependenciesAngularDevkitBuildAngular Condition="$(PackageJsonDevdependenciesAngularDevkitBuildAngular) == ''">^18.2.21</PackageJsonDevdependenciesAngularDevkitBuildAngular>
+    <PackageJsonDevdependenciesAngularCli Condition="$(PackageJsonDevdependenciesAngularCli) == ''">^18.2.21</PackageJsonDevdependenciesAngularCli>
+    <PackageJsonDevdependenciesAngularCompilerCli Condition="$(PackageJsonDevdependenciesAngularCompilerCli) == ''">^18.2.0</PackageJsonDevdependenciesAngularCompilerCli>
+    <PackageJsonDevdependenciesTypesJasmine Condition="$(PackageJsonDevdependenciesTypesJasmine) == ''">~5.1.0</PackageJsonDevdependenciesTypesJasmine>
+    <PackageJsonDevdependenciesAngularEslint Condition="$(PackageJsonDevdependenciesAngularEslint) == ''">21.0.1</PackageJsonDevdependenciesAngularEslint>
+    <PackageJsonDevdependenciesEslint Condition="$(PackageJsonDevdependenciesEslint) == ''">^9.39.1</PackageJsonDevdependenciesEslint>
+    <PackageJsonDevdependenciesEslintConfigPrettier Condition="$(PackageJsonDevdependenciesEslintConfigPrettier) == ''">^10.1.5</PackageJsonDevdependenciesEslintConfigPrettier>
+    <PackageJsonDevdependenciesHusky Condition="$(PackageJsonDevdependenciesHusky) == ''">^9.1.7</PackageJsonDevdependenciesHusky>
+    <PackageJsonDevdependenciesJasmineCore Condition="$(PackageJsonDevdependenciesJasmineCore) == ''">~5.2.0</PackageJsonDevdependenciesJasmineCore>
+    <PackageJsonDevdependenciesKarma Condition="$(PackageJsonDevdependenciesKarma) == ''">~6.4.0</PackageJsonDevdependenciesKarma>
+    <PackageJsonDevdependenciesKarmaChromeLauncher Condition="$(PackageJsonDevdependenciesKarmaChromeLauncher) == ''">~3.2.0</PackageJsonDevdependenciesKarmaChromeLauncher>
+    <PackageJsonDevdependenciesKarmaCoverage Condition="$(PackageJsonDevdependenciesKarmaCoverage) == ''">~2.2.0</PackageJsonDevdependenciesKarmaCoverage>
+    <PackageJsonDevdependenciesKarmaJasmine Condition="$(PackageJsonDevdependenciesKarmaJasmine) == ''">~5.1.0</PackageJsonDevdependenciesKarmaJasmine>
+    <PackageJsonDevdependenciesKarmaJasmineHtmlReporter Condition="$(PackageJsonDevdependenciesKarmaJasmineHtmlReporter) == ''">~2.1.0</PackageJsonDevdependenciesKarmaJasmineHtmlReporter>
+    <PackageJsonDevdependenciesLintStaged Condition="$(PackageJsonDevdependenciesLintStaged) == ''">^16.1.2</PackageJsonDevdependenciesLintStaged>
+    <PackageJsonDevdependenciesPrettier Condition="$(PackageJsonDevdependenciesPrettier) == ''">^3.6.2</PackageJsonDevdependenciesPrettier>
+    <PackageJsonDevdependenciesTypescript Condition="$(PackageJsonDevdependenciesTypescript) == ''">~5.5.2</PackageJsonDevdependenciesTypescript>
+    <PackageJsonDevdependenciesTypescriptEslint Condition="$(PackageJsonDevdependenciesTypescriptEslint) == ''">8.46.4</PackageJsonDevdependenciesTypescriptEslint>
+  </PropertyGroup>
+</Project>
