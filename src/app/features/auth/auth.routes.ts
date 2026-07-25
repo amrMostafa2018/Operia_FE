@@ -8,20 +8,20 @@ export const authRoutes: Routes = [
     children: [
       {
         path: 'login',
-        loadComponent: () =>
-          import('./login/login.component').then(m => m.LoginComponent),
+        loadComponent: () => import('./login/login.component').then(m => m.LoginComponent),
         title: 'Sign In - Operia',
       },
       {
         path: 'register',
-        loadComponent: () =>
-          import('./register/register.component').then(m => m.RegisterComponent),
+        loadComponent: () => import('./register/register.component').then(m => m.RegisterComponent),
         title: 'Create Account - Operia',
       },
       {
         path: 'forgot-password',
         loadComponent: () =>
-          import('./forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+          import('./forgot-password/forgot-password.component').then(
+            m => m.ForgotPasswordComponent
+          ),
         title: 'Forgot Password - Operia',
       },
       {

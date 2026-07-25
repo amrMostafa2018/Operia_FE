@@ -5,7 +5,9 @@
         <i class="pi pi-info-circle" aria-hidden="true"></i>
         <p>{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.BANNER_LINE_1' | translate }}</p>
       </div>
-      <p class="info-banner-second-line">{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.BANNER_LINE_2' | translate }}</p>
+      <p class="info-banner-second-line">
+        {{ 'SETTINGS_ACTIVITY.WORKING_DAYS.BANNER_LINE_2' | translate }}
+      </p>
     </div>
   </div>
 
@@ -15,7 +17,9 @@
         <span class="section-num">1.</span>
         {{ 'SETTINGS_ACTIVITY.WORKING_DAYS.SCHEDULE_TITLE' | translate }}
       </h2>
-      <p class="section-subtitle">{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.SCHEDULE_SUBTITLE' | translate }}</p>
+      <p class="section-subtitle">
+        {{ 'SETTINGS_ACTIVITY.WORKING_DAYS.SCHEDULE_SUBTITLE' | translate }}
+      </p>
     </div>
 
     <div class="days-list">
@@ -49,7 +53,12 @@
           </div>
 
           <span class="day-status" [class.working]="day.enabled" [class.off]="!day.enabled">
-            {{ (day.enabled ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY' : 'SETTINGS_ACTIVITY.WORKING_DAYS.DAY_OFF') | translate }}
+            {{
+              (day.enabled
+                ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY'
+                : 'SETTINGS_ACTIVITY.WORKING_DAYS.DAY_OFF'
+              ) | translate
+            }}
           </span>
         </div>
       }
@@ -70,7 +79,9 @@
         inputId="allowOutside"
       />
       <div class="extra-text">
-        <label for="allowOutside">{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.ALLOW_OUTSIDE' | translate }}</label>
+        <label for="allowOutside">{{
+          'SETTINGS_ACTIVITY.WORKING_DAYS.ALLOW_OUTSIDE' | translate
+        }}</label>
         <p>{{ 'SETTINGS_ACTIVITY.WORKING_DAYS.ALLOW_OUTSIDE_HINT' | translate }}</p>
       </div>
     </div>

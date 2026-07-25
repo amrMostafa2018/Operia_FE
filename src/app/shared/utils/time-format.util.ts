@@ -5,10 +5,7 @@ const localeByLang: Record<AppLanguage, string> = {
   en: 'en-US',
 };
 
-export function formatAppTime(
-  date: Date | null | undefined,
-  lang: AppLanguage
-): string {
+export function formatAppTime(date: Date | null | undefined, lang: AppLanguage): string {
   if (!date) {
     return '';
   }
@@ -31,10 +28,7 @@ export function formatAppTime(
   }).format(date);
 }
 
-export function parseAppTimeInput(
-  text: string,
-  fallbackPm = false
-): Date | null {
+export function parseAppTimeInput(text: string, fallbackPm = false): Date | null {
   const trimmed = text.trim();
   if (!trimmed || trimmed === '--:--') {
     return null;
@@ -42,9 +36,7 @@ export function parseAppTimeInput(
 
   const meridiemMatch = trimmed.match(/\s*(ص|م|AM|PM|am|pm)\s*$/);
   const meridiemToken = meridiemMatch?.[1];
-  const timePart = meridiemToken
-    ? trimmed.slice(0, meridiemMatch!.index).trim()
-    : trimmed;
+  const timePart = meridiemToken ? trimmed.slice(0, meridiemMatch!.index).trim() : trimmed;
 
   const timeMatch = timePart.match(/^(\d{1,2}):(\d{2})$/);
   if (!timeMatch) {

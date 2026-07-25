@@ -35,12 +35,24 @@ export class BranchService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/branches`;
 
-  list(query: { pageNumber: number; pageSize: number; search: string; sortBy: string; sortDirection: string }): Observable<BranchListResult> {
+  list(query: {
+    pageNumber: number;
+    pageSize: number;
+    search: string;
+    sortBy: string;
+    sortDirection: string;
+  }): Observable<BranchListResult> {
     const params = new HttpParams({ fromObject: query });
     return this.http.get<BranchListResult>(this.url, { params });
   }
 
-  create(payload: BranchPayload): Observable<Branch> { return this.http.post<Branch>(this.url, payload); }
-  update(id: string, payload: BranchPayload): Observable<Branch> { return this.http.put<Branch>(`${this.url}/${id}`, payload); }
-  delete(id: string): Observable<void> { return this.http.delete<void>(`${this.url}/${id}`); }
+  create(payload: BranchPayload): Observable<Branch> {
+    return this.http.post<Branch>(this.url, payload);
+  }
+  update(id: string, payload: BranchPayload): Observable<Branch> {
+    return this.http.put<Branch>(`${this.url}/${id}`, payload);
+  }
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
+  }
 }

@@ -19,8 +19,12 @@ $logo-upload-min-height: 7.5rem;
   padding: 1.5rem 2rem;
   align-items: start;
 
-  .setup-sidebar { grid-column: 1; }
-  .setup-main { grid-column: 2; }
+  .setup-sidebar {
+    grid-column: 1;
+  }
+  .setup-main {
+    grid-column: 2;
+  }
 
   // English: summary left, main right
   &.is-english {
@@ -131,8 +135,8 @@ $logo-upload-min-height: 7.5rem;
   display: flex;
   gap: 0.75rem;
   padding: 0.85rem 1rem;
-  background: #FFFBEB;
-  border: 1px solid #FDE68A;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
   border-radius: $border-radius;
   margin-bottom: 1.25rem;
 
@@ -251,7 +255,7 @@ $logo-upload-min-height: 7.5rem;
   }
 
   > i {
-    color: #D97706;
+    color: #d97706;
     font-size: 1rem;
     margin-top: 2px;
     flex-shrink: 0;
@@ -260,14 +264,14 @@ $logo-upload-min-height: 7.5rem;
   strong {
     display: block;
     font-size: 0.82rem;
-    color: #92400E;
+    color: #92400e;
     margin-bottom: 0.2rem;
     font-family: $font-ar;
   }
 
   p {
     font-size: 0.78rem;
-    color: #A16207;
+    color: #a16207;
     margin: 0;
     line-height: 1.6;
     font-family: $font-ar;
@@ -306,7 +310,9 @@ $logo-upload-min-height: 7.5rem;
   border: 2px solid var(--surface-border);
   border-radius: $border-radius-lg;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   width: 100%;
   outline: none;
   height: 100%;
@@ -530,7 +536,9 @@ $logo-upload-min-height: 7.5rem;
   border-radius: $border-radius;
   background: var(--surface-hover);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
   margin: 0;
   text-align: center;
 
@@ -857,7 +865,9 @@ $logo-upload-min-height: 7.5rem;
   font-family: $font-ar;
   text-align: center;
 
-  i { font-size: 0.7rem; }
+  i {
+    font-size: 0.7rem;
+  }
 }
 
 ::ng-deep .prev-btn,

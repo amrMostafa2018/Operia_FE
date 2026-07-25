@@ -1,5 +1,4 @@
 <div class="subs-page">
-
   <!-- Page header -->
   <div class="page-header">
     <div class="page-title">
@@ -62,7 +61,9 @@
         </p-dropdown>
       </div>
       <div class="filter-field">
-        <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.SUBSCRIPTION_STATUS' | translate }}</span>
+        <span class="filter-label">{{
+          'OPERIA_SUBSCRIPTIONS.SUBSCRIPTION_STATUS' | translate
+        }}</span>
         <p-dropdown
           [options]="statusOptions"
           optionLabel="labelKey"
@@ -149,8 +150,12 @@
           </td>
           <td>
             <div class="amount-cell">
-              <span class="amount-value">{{ row.amount | number }} {{ 'DASHBOARD.EGP' | translate }}</span>
-              <span class="amount-period">{{ billingPeriodKey(row.billingPeriod) | translate }}</span>
+              <span class="amount-value"
+                >{{ row.amount | number }} {{ 'DASHBOARD.EGP' | translate }}</span
+              >
+              <span class="amount-period">{{
+                billingPeriodKey(row.billingPeriod) | translate
+              }}</span>
             </div>
           </td>
           <td>
@@ -240,5 +245,4 @@
       />
     </div>
   </div>
-
 </div>

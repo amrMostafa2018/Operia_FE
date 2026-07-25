@@ -77,13 +77,9 @@ export class DashboardComponent {
     return result;
   });
 
-  readonly prevIcon = computed(() =>
-    getPrevArrowIcon(this.languageService.currentLang())
-  );
+  readonly prevIcon = computed(() => getPrevArrowIcon(this.languageService.currentLang()));
 
-  readonly prevIconPos = computed(() =>
-    getPrevIconPos(this.languageService.currentLang())
-  );
+  readonly prevIconPos = computed(() => getPrevIconPos(this.languageService.currentLang()));
 
   readonly today = computed(() =>
     new Date().toLocaleDateString('ar-EG', {

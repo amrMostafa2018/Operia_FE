@@ -1,5 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
@@ -23,6 +31,7 @@ import {
   PaymentMethodId,
   PaymentMethodState,
 } from '../models/settings-activity.model';
+import { PaymentMethodsDto, SettingsActivityService } from '../services/settings-activity.service';
 
 @Component({
   selector: 'app-payment-methods',
@@ -47,9 +56,13 @@ export class PaymentMethodsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
+  private readonly settingsService = inject(SettingsActivityService);
+  private readonly destroyRef = inject(DestroyRef);
 
   paymentMethods = signal<PaymentMethodState[]>(structuredClone(MOCK_PAYMENT_METHODS));
-  expandedIds = signal<Set<PaymentMethodId>>(new Set(['bank_transfer', 'instapay', 'e_wallet', 'fawry']));
+  expandedIds = signal<Set<PaymentMethodId>>(
+    new Set(['bank_transfer', 'instapay', 'e_wallet', 'fawry'])
+  );
   saving = signal(false);
 
   private readonly detailsOrder: PaymentMethodId[] = [
@@ -73,28 +86,73 @@ export class PaymentMethodsComponent implements OnInit {
   ngOnInit(): void {
     this.bankForm = this.fb.group({
       bank: ['nbe', Validators.required],
-      accountHolder: ['أحمد محمد', Validators.required],
-      accountNumber: ['1234567890', Validators.required],
+      accountHolder: ['', Validators.required],
+      accountNumber: ['', Validators.required],
       iban: [''],
     });
 
     this.instapayForm = this.fb.group({
-      instapayId: ['01012345678', Validators.required],
-      accountHolder: ['عيادات الليزر المتخصصة', Validators.required],
+      instapayId: ['', Validators.required],
+      accountHolder: ['', Validators.required],
     });
 
     this.walletForm = this.fb.group({
       walletType: ['vodafone', Validators.required],
-      holderName: ['أحمد محمد', Validators.required],
-      walletNumber: ['01012345678', Validators.required],
+      holderName: ['', Validators.required],
+      walletNumber: ['', Validators.required],
     });
 
     this.fawryForm = this.fb.group({
-      serviceCode: ['12345', Validators.required],
+      serviceCode: ['', Validators.required],
       notes: [''],
     });
 
-    this.snapshotInitialState();
+    this.loadPaymentMethods();
+  }
+
+  private loadPaymentMethods(): void {
+    this.settingsService
+      .getPaymentMethods()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.paymentMethods.update(methods =>
+            methods.map(m => {
+              if (m.id === 'cash') return { ...m, enabled: res.cashEnabled };
+              if (m.id === 'bank_transfer') return { ...m, enabled: res.bankTransferEnabled };
+              if (m.id === 'instapay') return { ...m, enabled: res.instapayEnabled };
+              if (m.id === 'e_wallet') return { ...m, enabled: res.eWalletEnabled };
+              if (m.id === 'fawry') return { ...m, enabled: res.fawryEnabled };
+              return m;
+            })
+          );
+
+          this.bankForm.patchValue({
+            bank: res.bank || 'nbe',
+            accountHolder: res.bankAccountHolder || '',
+            accountNumber: res.bankAccountNumber || '',
+            iban: res.iban || '',
+          });
+          this.instapayForm.patchValue({
+            instapayId: res.instapayId || '',
+            accountHolder: res.instapayAccountHolder || '',
+          });
+          this.walletForm.patchValue({
+            walletType: res.walletType || 'vodafone',
+            holderName: res.walletHolderName || '',
+            walletNumber: res.walletNumber || '',
+          });
+          this.fawryForm.patchValue({
+            serviceCode: res.fawryServiceCode || '',
+            notes: res.fawryNotes || '',
+          });
+
+          this.snapshotInitialState();
+        },
+        error: () => {
+          this.snapshotInitialState();
+        },
+      });
   }
 
   isEnabled(id: PaymentMethodId): boolean {
@@ -102,9 +160,7 @@ export class PaymentMethodsComponent implements OnInit {
   }
 
   toggleMethod(id: PaymentMethodId, enabled: boolean): void {
-    this.paymentMethods.update(methods =>
-      methods.map(m => (m.id === id ? { ...m, enabled } : m))
-    );
+    this.paymentMethods.update(methods => methods.map(m => (m.id === id ? { ...m, enabled } : m)));
 
     if (!enabled) {
       this.expandedIds.update(set => {
@@ -160,12 +216,19 @@ export class PaymentMethodsComponent implements OnInit {
   }
 
   onReset(): void {
-    this.paymentMethods.set(structuredClone(MOCK_PAYMENT_METHODS));
+    if (this.initialState['methods']) {
+      this.paymentMethods.set(
+        structuredClone(this.initialState['methods'] as PaymentMethodState[])
+      );
+    } else {
+      this.paymentMethods.set(structuredClone(MOCK_PAYMENT_METHODS));
+    }
     this.expandedIds.set(new Set(['bank_transfer', 'instapay', 'e_wallet', 'fawry']));
-    this.bankForm.reset(this.initialState['bank'] as object);
-    this.instapayForm.reset(this.initialState['instapay'] as object);
-    this.walletForm.reset(this.initialState['wallet'] as object);
-    this.fawryForm.reset(this.initialState['fawry'] as object);
+    if (this.initialState['bank']) this.bankForm.reset(this.initialState['bank'] as object);
+    if (this.initialState['instapay'])
+      this.instapayForm.reset(this.initialState['instapay'] as object);
+    if (this.initialState['wallet']) this.walletForm.reset(this.initialState['wallet'] as object);
+    if (this.initialState['fawry']) this.fawryForm.reset(this.initialState['fawry'] as object);
   }
 
   onSave(): void {
@@ -184,15 +247,58 @@ export class PaymentMethodsComponent implements OnInit {
     }
 
     this.saving.set(true);
-    setTimeout(() => {
-      this.snapshotInitialState();
-      this.saving.set(false);
-      this.messageService.add({
-        severity: 'success',
-        summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
-        detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
+
+    const payload: PaymentMethodsDto = {
+      cashEnabled: this.isEnabled('cash'),
+      bankTransferEnabled: this.isEnabled('bank_transfer'),
+      bank: this.bankForm.value.bank,
+      bankAccountHolder: this.bankForm.value.accountHolder,
+      bankAccountNumber: this.bankForm.value.accountNumber,
+      iban: this.bankForm.value.iban,
+      instapayEnabled: this.isEnabled('instapay'),
+      instapayId: this.instapayForm.value.instapayId,
+      instapayAccountHolder: this.instapayForm.value.accountHolder,
+      eWalletEnabled: this.isEnabled('e_wallet'),
+      walletType: this.walletForm.value.walletType,
+      walletHolderName: this.walletForm.value.holderName,
+      walletNumber: this.walletForm.value.walletNumber,
+      fawryEnabled: this.isEnabled('fawry'),
+      fawryServiceCode: this.fawryForm.value.serviceCode,
+      fawryNotes: this.fawryForm.value.notes,
+    };
+
+    this.settingsService
+      .updatePaymentMethods(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.saving.set(false);
+          this.paymentMethods.update(methods =>
+            methods.map(m => {
+              if (m.id === 'cash') return { ...m, enabled: res.cashEnabled };
+              if (m.id === 'bank_transfer') return { ...m, enabled: res.bankTransferEnabled };
+              if (m.id === 'instapay') return { ...m, enabled: res.instapayEnabled };
+              if (m.id === 'e_wallet') return { ...m, enabled: res.eWalletEnabled };
+              if (m.id === 'fawry') return { ...m, enabled: res.fawryEnabled };
+              return m;
+            })
+          );
+          this.snapshotInitialState();
+          this.messageService.add({
+            severity: 'success',
+            summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
+            detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
+          });
+        },
+        error: () => {
+          this.saving.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
+            detail: 'Failed to save payment methods.',
+          });
+        },
       });
-    }, 400);
   }
 
   private isFormActive(form: FormGroup): boolean {

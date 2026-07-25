@@ -25,8 +25,9 @@ export function setupPasswordConfirmSync(
   passwordField = 'password',
   confirmField = 'confirmPassword'
 ): void {
-  form.get(passwordField)?.valueChanges
-    .pipe(takeUntilDestroyed(destroyRef))
+  form
+    .get(passwordField)
+    ?.valueChanges.pipe(takeUntilDestroyed(destroyRef))
     .subscribe(() => {
       form.get(confirmField)?.updateValueAndValidity();
     });
@@ -38,8 +39,9 @@ export function setupServerErrorClearing(
   fields: string[]
 ): void {
   for (const field of fields) {
-    form.get(field)?.valueChanges
-      .pipe(takeUntilDestroyed(destroyRef))
+    form
+      .get(field)
+      ?.valueChanges.pipe(takeUntilDestroyed(destroyRef))
       .subscribe(() => {
         clearServerFieldError(form, field);
       });

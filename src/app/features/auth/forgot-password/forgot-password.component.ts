@@ -1,11 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -29,7 +32,10 @@ import {
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '@app/shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '@app/shared/components/otp-verification/otp-verification.component';
-import { buildOtpLabels, handleOtpVerifyError as resolveOtpVerifyError } from '@app/shared/utils/otp.util';
+import {
+  buildOtpLabels,
+  handleOtpVerifyError as resolveOtpVerifyError,
+} from '@app/shared/utils/otp.util';
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
 import { createPasswordToggle, isFieldInvalid } from '../auth-form.utils';
@@ -87,9 +93,7 @@ export class ForgotPasswordComponent implements OnInit {
 
   readonly otpLabels = buildOtpLabels('AUTH.FORGOT_PASSWORD_PAGE');
 
-  readonly submitIcon = computed(() =>
-    getSubmitArrowIcon(this.languageService.currentLang())
-  );
+  readonly submitIcon = computed(() => getSubmitArrowIcon(this.languageService.currentLang()));
 
   ngOnInit(): void {
     this.phoneForm = this.fb.group({
@@ -126,20 +130,21 @@ export class ForgotPasswordComponent implements OnInit {
     const phone = getE164PhoneNumber(this.phoneForm.get('phone')?.value);
     this.phoneNumber.set(phone);
 
-    this.authService.forgotPassword(phone).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: () => {
-        this.otpServerError.set(null);
-        this.step.set('otp');
-        this.messageService.add({
-          severity: 'success',
-          summary: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_TITLE'),
-          detail: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_DETAIL'),
-          life: 5000,
-        });
-      },
-    });
+    this.authService
+      .forgotPassword(phone)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.otpServerError.set(null);
+          this.step.set('otp');
+          this.messageService.add({
+            severity: 'success',
+            summary: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_TITLE'),
+            detail: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_DETAIL'),
+            life: 5000,
+          });
+        },
+      });
   }
 
   onVerifyOtp(code: string): void {
@@ -151,15 +156,16 @@ export class ForgotPasswordComponent implements OnInit {
 
     this.otpServerError.set(null);
 
-    this.authService.verifyForgotPasswordOtp(phone, code).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (res) => {
-        this.resetToken.set(res.resetToken);
-        this.step.set('reset');
-      },
-      error: (err: HttpErrorResponse) => this.handleOtpVerifyError(err),
-    });
+    this.authService
+      .verifyForgotPasswordOtp(phone, code)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.resetToken.set(res.resetToken);
+          this.step.set('reset');
+        },
+        error: (err: HttpErrorResponse) => this.handleOtpVerifyError(err),
+      });
   }
 
   onResendOtp(): void {
@@ -172,20 +178,21 @@ export class ForgotPasswordComponent implements OnInit {
     this.isResendingOtp.set(true);
     this.otpServerError.set(null);
 
-    this.authService.resendForgotPasswordOtp(phone).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: () => {
-        this.isResendingOtp.set(false);
-        this.messageService.add({
-          severity: 'success',
-          summary: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_TITLE'),
-          detail: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_DETAIL'),
-          life: 5000,
-        });
-      },
-      error: () => this.isResendingOtp.set(false),
-    });
+    this.authService
+      .resendForgotPasswordOtp(phone)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.isResendingOtp.set(false);
+          this.messageService.add({
+            severity: 'success',
+            summary: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_TITLE'),
+            detail: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.OTP_SENT_DETAIL'),
+            life: 5000,
+          });
+        },
+        error: () => this.isResendingOtp.set(false),
+      });
   }
 
   onSubmitReset(): void {
@@ -203,24 +210,23 @@ export class ForgotPasswordComponent implements OnInit {
 
     const { password, confirmPassword } = this.resetForm.value;
 
-    this.authService.resetPassword(phone, token, password, confirmPassword).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.RESET_SUCCESS'),
-          detail: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.RESET_SUCCESS_DETAIL'),
-          life: 5000,
-        });
-        this.router.navigate(['/auth/login']);
-      },
-    });
+    this.authService
+      .resetPassword(phone, token, password, confirmPassword)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.RESET_SUCCESS'),
+            detail: this.translate.instant('AUTH.FORGOT_PASSWORD_PAGE.RESET_SUCCESS_DETAIL'),
+            life: 5000,
+          });
+          this.router.navigate(['/auth/login']);
+        },
+      });
   }
 
   private handleOtpVerifyError(err: HttpErrorResponse): void {
-    this.otpServerError.set(
-      resolveOtpVerifyError(err, key => this.translate.instant(key))
-    );
+    this.otpServerError.set(resolveOtpVerifyError(err, key => this.translate.instant(key)));
   }
 }

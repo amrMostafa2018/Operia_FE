@@ -5,9 +5,7 @@ import { map, Observable, shareReplay, tap } from 'rxjs';
 import { environment } from '@env/environment';
 import { AuthStore } from '@core/store/auth.store';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
-import {
-  ActivityTypeId,
-} from '@app/features/onboarding/models/activity-type.model';
+import { ActivityTypeId } from '@app/features/onboarding/models/activity-type.model';
 import {
   AddBalancePlatformRequest,
   AddBalancePlatformResultDto,
@@ -43,7 +41,7 @@ export class OnboardingService {
         tap(status => {
           this.syncBusinessSetupFromStatus(status);
         }),
-        shareReplay({ bufferSize: 1, refCount: false }),
+        shareReplay({ bufferSize: 1, refCount: false })
       );
     }
 
@@ -66,21 +64,21 @@ export class OnboardingService {
       form.append('logo', request.logoFile);
     }
 
-    return this.http.post<SetupBusinessResultDto>(`${this.baseUrl}/setup-business`, form).pipe(
-      tap(() => this.invalidateStatus()),
-    );
+    return this.http
+      .post<SetupBusinessResultDto>(`${this.baseUrl}/setup-business`, form)
+      .pipe(tap(() => this.invalidateStatus()));
   }
 
   complete(request: CompleteOnboardingRequest): Observable<OnboardingResultDto> {
-    return this.http.post<OnboardingResultDto>(`${this.baseUrl}/complete`, request).pipe(
-      tap(() => this.invalidateStatus()),
-    );
+    return this.http
+      .post<OnboardingResultDto>(`${this.baseUrl}/complete`, request)
+      .pipe(tap(() => this.invalidateStatus()));
   }
 
   activateSubscription(subscriptionId: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/activate`, { subscriptionId }).pipe(
-      tap(() => this.invalidateStatus()),
-    );
+    return this.http
+      .post<void>(`${this.baseUrl}/activate`, { subscriptionId })
+      .pipe(tap(() => this.invalidateStatus()));
   }
 
   addBalancePlatform(request: AddBalancePlatformRequest): Observable<AddBalancePlatformResultDto> {
@@ -88,9 +86,9 @@ export class OnboardingService {
     form.append('amount', String(request.amount));
     form.append('screenshot', request.screenshotFile);
 
-    return this.http.post<AddBalancePlatformResultDto>(`${this.baseUrl}/add-balance-platform`, form).pipe(
-      tap(() => this.invalidateStatus()),
-    );
+    return this.http
+      .post<AddBalancePlatformResultDto>(`${this.baseUrl}/add-balance-platform`, form)
+      .pipe(tap(() => this.invalidateStatus()));
   }
 
   invalidateStatus(): void {

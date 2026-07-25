@@ -1,23 +1,35 @@
-<div class="plan-page" [class.plan-page--activating]="isActivating()" [attr.aria-busy]="isActivating()">
+<div
+  class="plan-page"
+  [class.plan-page--activating]="isActivating()"
+  [attr.aria-busy]="isActivating()"
+>
   <div class="plan-body" [class.is-arabic]="isArabic()" [class.is-english]="!isArabic()">
     <!-- Order summary: inline-start (right in AR, left in EN) -->
     <aside class="plan-promo">
-      <h3 class="plan-promo__summary-title">{{ 'ONBOARDING.PLAN_SELECTION.SUMMARY_TITLE' | translate }}</h3>
+      <h3 class="plan-promo__summary-title">
+        {{ 'ONBOARDING.PLAN_SELECTION.SUMMARY_TITLE' | translate }}
+      </h3>
 
       <div class="summary-card">
         <div class="summary-row">
-          <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.BUSINESS_TYPE' | translate }}</span>
+          <span class="summary-label">{{
+            'ONBOARDING.PLAN_SELECTION.BUSINESS_TYPE' | translate
+          }}</span>
           <strong>{{ selectedActivity().titleKey | translate }}</strong>
         </div>
 
         @if (selectedPlan(); as plan) {
           <div class="summary-row">
-            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.SELECTED_PLAN' | translate }}</span>
+            <span class="summary-label">{{
+              'ONBOARDING.PLAN_SELECTION.SELECTED_PLAN' | translate
+            }}</span>
             <strong>{{ plan.name }}</strong>
           </div>
 
           <div class="summary-row">
-            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.BILLING_PERIOD' | translate }}</span>
+            <span class="summary-label">{{
+              'ONBOARDING.PLAN_SELECTION.BILLING_PERIOD' | translate
+            }}</span>
             <strong>
               {{
                 billingType() === billingTypeEnum.Monthly
@@ -30,7 +42,9 @@
           <div class="summary-divider"></div>
 
           <div class="summary-row summary-row--price">
-            <span class="summary-label">{{ 'ONBOARDING.PLAN_SELECTION.TOTAL_BALANCE' | translate }}</span>
+            <span class="summary-label">{{
+              'ONBOARDING.PLAN_SELECTION.TOTAL_BALANCE' | translate
+            }}</span>
             <strong class="money-amount">
               <span class="money-amount__value" dir="ltr">{{ usableBalance() | number }}</span>
               <span class="money-amount__currency">{{ currencyLabel() }}</span>
@@ -98,16 +112,24 @@
                 role="button"
               >
                 @if (plan.code === 'growth') {
-                  <span class="popular-badge">{{ 'ONBOARDING.PLAN_SELECTION.MOST_SELECTED' | translate }}</span>
+                  <span class="popular-badge">{{
+                    'ONBOARDING.PLAN_SELECTION.MOST_SELECTED' | translate
+                  }}</span>
                 }
 
                 <h3>{{ plan.name }}</h3>
 
                 @if (plan.code === 'free-trial') {
-                  <p class="plan-trial-label">{{ 'ONBOARDING.PLAN_SELECTION.TRIAL_DAYS' | translate: { days: plan.trialDays } }}</p>
+                  <p class="plan-trial-label">
+                    {{
+                      'ONBOARDING.PLAN_SELECTION.TRIAL_DAYS' | translate: { days: plan.trialDays }
+                    }}
+                  </p>
                 } @else {
                   <p class="plan-price">
-                    <span class="money-amount__value" dir="ltr">{{ planPrice(plan) | number }}</span>
+                    <span class="money-amount__value" dir="ltr">{{
+                      planPrice(plan) | number
+                    }}</span>
                     <span class="plan-currency">{{ currencyLabel() }}</span>
                     <span class="plan-period">/ {{ billingPeriodLabel() | translate }}</span>
                   </p>
@@ -133,7 +155,6 @@
           <span>{{ 'ONBOARDING.PLAN_SELECTION.CANCEL_NOTE' | translate }}</span>
         </div>
       </section>
-
     </div>
 
     <!-- Order summary & payment: inline-end (left in AR, right in EN) -->
@@ -141,12 +162,16 @@
       <div class="balance-card">
         <div class="balance-card__header">
           <div class="balance-card__title-row">
-            <span class="balance-card__title">{{ 'ONBOARDING.PLAN_SELECTION.BALANCE_OVERVIEW' | translate }}</span>
+            <span class="balance-card__title">{{
+              'ONBOARDING.PLAN_SELECTION.BALANCE_OVERVIEW' | translate
+            }}</span>
             <i class="pi pi-wallet" aria-hidden="true"></i>
           </div>
         </div>
         <div class="balance-row balance-row--usable">
-          <span class="balance-row__label">{{ 'ONBOARDING.PLAN_SELECTION.TOTAL_BALANCE' | translate }}</span>
+          <span class="balance-row__label">{{
+            'ONBOARDING.PLAN_SELECTION.TOTAL_BALANCE' | translate
+          }}</span>
           <strong class="balance-row__amount money-amount">
             <span class="money-amount__value" dir="ltr">{{ usableBalance() | number }}</span>
             <span class="money-amount__currency">{{ currencyLabel() }}</span>
@@ -196,16 +221,15 @@
 
           <div class="payment-methods payment-methods--end">
             <label class="payment-option selected">
-              <span class="payment-option__label">{{ 'ONBOARDING.PLAN_SELECTION.PAYMENT_METHODS.INSTAPAY' | translate }}</span>
+              <span class="payment-option__label">{{
+                'ONBOARDING.PLAN_SELECTION.PAYMENT_METHODS.INSTAPAY' | translate
+              }}</span>
               <span class="payment-option__icon"><i class="pi pi-wallet"></i></span>
               <input type="radio" name="addBalancePlatformMethod" checked disabled />
             </label>
           </div>
 
-          <div
-            class="upload-box"
-            [class.has-preview]="!!addBalancePlatformScreenshot()"
-          >
+          <div class="upload-box" [class.has-preview]="!!addBalancePlatformScreenshot()">
             @if (addBalancePlatformScreenshot(); as preview) {
               <img [src]="preview" alt="" class="screenshot-preview" />
               <button
@@ -309,7 +333,9 @@
                 [href]="screenshotUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                [attr.aria-label]="'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_SCREENSHOT' | translate"
+                [attr.aria-label]="
+                  'ONBOARDING.PLAN_SELECTION.BALANCE_TOP_UP.PENDING_SCREENSHOT' | translate
+                "
               >
                 <img [src]="screenshotUrl" alt="" class="pending-screenshot__image" />
                 <span class="pending-screenshot__zoom" aria-hidden="true">

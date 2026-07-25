@@ -28,10 +28,12 @@ import {
   getSubmitArrowIcon,
   getSubmitIconPos,
 } from '@app/shared/utils/rtl.util';
-import { ACTIVITY_TYPES, ActivityType, ActivityTypeId } from '@app/features/onboarding/models/activity-type.model';
 import {
-  ACTIVITY_TO_BUSINESS_TYPE,
-} from '@app/features/onboarding/models/onboarding.model';
+  ACTIVITY_TYPES,
+  ActivityType,
+  ActivityTypeId,
+} from '@app/features/onboarding/models/activity-type.model';
+import { ACTIVITY_TO_BUSINESS_TYPE } from '@app/features/onboarding/models/onboarding.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { extractApiError } from '@core/utils/api-error.util';
 
@@ -57,13 +59,7 @@ const CITIES_BY_COUNTRY: Record<string, string[]> = {
 @Component({
   selector: 'app-business-setup',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    DropdownModule,
-    InputTextModule,
-    TranslatePipe,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TranslatePipe],
   templateUrl: './business-setup.component.html',
   styleUrl: './business-setup.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,19 +89,15 @@ export class BusinessSetupComponent implements OnInit {
   readonly activityTypes = ACTIVITY_TYPES;
   readonly acceptedImageAccept = this.appConfig.allowedMimeTypesAccept;
 
-  readonly selectedActivity = computed(() =>
-    this.activityTypes.find(a => a.id === this.selectedActivityId()) ?? this.activityTypes[0]
+  readonly selectedActivity = computed(
+    () => this.activityTypes.find(a => a.id === this.selectedActivityId()) ?? this.activityTypes[0]
   );
 
   readonly isArabic = computed(() => this.languageService.currentLang() === 'ar');
 
-  readonly prevIcon = computed(() =>
-    getPrevArrowIcon(this.languageService.currentLang())
-  );
+  readonly prevIcon = computed(() => getPrevArrowIcon(this.languageService.currentLang()));
 
-  readonly submitIcon = computed(() =>
-    getSubmitArrowIcon(this.languageService.currentLang())
-  );
+  readonly submitIcon = computed(() => getSubmitArrowIcon(this.languageService.currentLang()));
 
   readonly prevIconPos = computed<'left' | 'right'>(() =>
     getPrevIconPos(this.languageService.currentLang())
@@ -141,8 +133,9 @@ export class BusinessSetupComponent implements OnInit {
       currency: ['EGP', Validators.required],
     });
 
-    this.form.get('country')?.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.form
+      .get('country')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(country => {
         const cityOptions = this.buildCityOptions(country);
         this.cities.set(cityOptions);
@@ -261,35 +254,36 @@ export class BusinessSetupComponent implements OnInit {
     const formValue = this.form.getRawValue();
     const logoPreview = this.logoPreview();
 
-    this.onboardingService.setupBusiness({
-      businessName: formValue.businessName,
-      businessType: ACTIVITY_TO_BUSINESS_TYPE[this.selectedActivityId()],
-      countryCode: formValue.country,
-      city: formValue.city,
-      currencyCode: formValue.currency,
-      logoFile: this.logoFile(),
-    }).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: result => {
-        this.onboardingState.setBusinessSetup({
-          activityTypeId: this.selectedActivityId(),
-          businessName: formValue.businessName,
-          country: formValue.country,
-          city: formValue.city,
-          currency: formValue.currency,
-          logoUrl: logoPreview,
-          tenantId: result.tenantId,
-          businessId: result.businessId,
-        });
-        this.isSubmitting.set(false);
-        void this.router.navigate(['/onboarding/plan']);
-      },
-      error: (err: unknown) => {
-        this.isSubmitting.set(false);
-        this.submitError.set(extractApiError(err as HttpErrorResponse));
-      },
-    });
+    this.onboardingService
+      .setupBusiness({
+        businessName: formValue.businessName,
+        businessType: ACTIVITY_TO_BUSINESS_TYPE[this.selectedActivityId()],
+        countryCode: formValue.country,
+        city: formValue.city,
+        currencyCode: formValue.currency,
+        logoFile: this.logoFile(),
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          this.onboardingState.setBusinessSetup({
+            activityTypeId: this.selectedActivityId(),
+            businessName: formValue.businessName,
+            country: formValue.country,
+            city: formValue.city,
+            currency: formValue.currency,
+            logoUrl: logoPreview,
+            tenantId: result.tenantId,
+            businessId: result.businessId,
+          });
+          this.isSubmitting.set(false);
+          void this.router.navigate(['/onboarding/plan']);
+        },
+        error: (err: unknown) => {
+          this.isSubmitting.set(false);
+          this.submitError.set(extractApiError(err as HttpErrorResponse));
+        },
+      });
   }
 
   private setLogoFile(file: File): void {

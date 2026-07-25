@@ -32,11 +32,12 @@ export class AppHeaderComponent {
     { initialValue: null }
   );
 
-  readonly businessName = computed(() =>
-    this.authStore.currentUser()?.businessName
-    ?? this.onboardingStatus()?.business?.businessName
-    ?? this.onboardingState.businessSetup()?.businessName
-    ?? ''
+  readonly businessName = computed(
+    () =>
+      this.authStore.currentUser()?.businessName ??
+      this.onboardingStatus()?.business?.businessName ??
+      this.onboardingState.businessSetup()?.businessName ??
+      ''
   );
 
   readonly userName = computed(() => this.authStore.currentUser()?.name?.trim() ?? '');
@@ -53,10 +54,11 @@ export class AppHeaderComponent {
   readonly currentDate = computed(() => {
     this.languageService.currentLang();
     const now = new Date();
-    return now.toLocaleDateString(
-      this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-GB',
-      { day: '2-digit', month: '2-digit', year: 'numeric' }
-    );
+    return now.toLocaleDateString(this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   });
 
   logout(): void {

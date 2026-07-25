@@ -94,7 +94,9 @@
     border: 2px solid var(--surface-border);
     transition: all 0.2s;
 
-    i { font-size: 0.75rem; }
+    i {
+      font-size: 0.75rem;
+    }
   }
 
   .step-label {

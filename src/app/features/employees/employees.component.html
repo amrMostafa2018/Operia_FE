@@ -232,110 +232,110 @@
         </button>
       </div>
       @if (activeTab() === 'personal') {
-      <div class="editor-body">
-        <aside>
-          <h3><i class="pi pi-shield"></i>{{ 'EMPLOYEES.ROLE_SUMMARY' | translate }}</h3>
-          <div class="selected-role">{{ roleLabel(roleValue()) }}</div>
-          <p>{{ 'EMPLOYEES.ROLE_DESC.' + roleValue() | translate }}</p>
-          <hr />
-          <b>{{ 'EMPLOYEES.CAN_ACCESS' | translate }}</b>
-          <ul>
-            <li>{{ 'EMPLOYEES.ACCESS.' + roleValue() + '.0' | translate }}</li>
-            <li>{{ 'EMPLOYEES.ACCESS.' + roleValue() + '.1' | translate }}</li>
-            <li>{{ 'EMPLOYEES.ACCESS.' + roleValue() + '.2' | translate }}</li>
-          </ul>
-          <div class="permission-note">
-            <i class="pi pi-info-circle"></i>{{ 'EMPLOYEES.PERMISSION_NOTE' | translate }}
-          </div>
-        </aside>
-        <div class="form-area">
-          <div class="photo">
-            <b>{{ 'EMPLOYEES.PERSONAL_PHOTO' | translate }}</b
-            ><span>
+        <div class="editor-body">
+          <aside>
+            <h3><i class="pi pi-shield"></i>{{ 'EMPLOYEES.ROLE_SUMMARY' | translate }}</h3>
+            <div class="selected-role">{{ roleLabel(roleValue()) }}</div>
+            <p>{{ 'EMPLOYEES.ROLE_DESC.' + roleValue() | translate }}</p>
+            <hr />
+            <b>{{ 'EMPLOYEES.CAN_ACCESS' | translate }}</b>
+            <ul>
+              <li>{{ 'EMPLOYEES.ACCESS.' + roleValue() + '.0' | translate }}</li>
+              <li>{{ 'EMPLOYEES.ACCESS.' + roleValue() + '.1' | translate }}</li>
+              <li>{{ 'EMPLOYEES.ACCESS.' + roleValue() + '.2' | translate }}</li>
+            </ul>
+            <div class="permission-note">
+              <i class="pi pi-info-circle"></i>{{ 'EMPLOYEES.PERMISSION_NOTE' | translate }}
+            </div>
+          </aside>
+          <div class="form-area">
+            <div class="photo">
+              <b>{{ 'EMPLOYEES.PERSONAL_PHOTO' | translate }}</b
+              ><span>
+                @if (photoPreview()) {
+                  <img [src]="photoPreview()!" alt="" />
+                } @else {
+                  <i class="pi pi-user"></i>
+                }</span
+              ><label class="upload"
+                ><i class="pi pi-upload"></i>{{ 'EMPLOYEES.UPLOAD' | translate
+                }}<input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  (change)="choosePhoto($event)"
+              /></label>
               @if (photoPreview()) {
-                <img [src]="photoPreview()!" alt="" />
-              } @else {
-                <i class="pi pi-user"></i>
-              }</span
-            ><label class="upload"
-              ><i class="pi pi-upload"></i>{{ 'EMPLOYEES.UPLOAD' | translate
-              }}<input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                (change)="choosePhoto($event)"
-            /></label>
-            @if (photoPreview()) {
-              <button type="button" class="remove-photo" (click)="removeSelectedPhoto()">
-                {{ 'EMPLOYEES.REMOVE_PHOTO' | translate }}
-              </button>
-            }
-            <small>JPG / PNG / WEBP · 2MB</small>
-          </div>
-          <div class="form-grid">
-            <label>
-              <span class="field-label">{{ 'EMPLOYEES.FULL_NAME' | translate }} <em>*</em></span>
-              <input pInputText formControlName="fullName" />
-            </label>
-            <label>
-              <span class="field-label">{{ 'EMPLOYEES.EMAIL' | translate }} <em>*</em></span>
-              <input pInputText type="email" formControlName="email" dir="ltr" />
-            </label>
-            <label>
-              <span class="field-label">{{ 'EMPLOYEES.MOBILE' | translate }} <em>*</em></span>
-              <input pInputText formControlName="mobileNumber" dir="ltr" />
-            </label>
-            <div class="form-field">
-              <span class="field-label">{{ 'EMPLOYEES.BRANCH' | translate }} <em>*</em></span>
-              <p-multiSelect
-                [options]="branches()"
-                optionLabel="name"
-                optionValue="id"
-                formControlName="branchIds"
-                display="chip"
-              ></p-multiSelect>
+                <button type="button" class="remove-photo" (click)="removeSelectedPhoto()">
+                  {{ 'EMPLOYEES.REMOVE_PHOTO' | translate }}
+                </button>
+              }
+              <small>JPG / PNG / WEBP · 2MB</small>
             </div>
-            <label>
-              <span class="field-label">{{ 'EMPLOYEES.JOB_TITLE' | translate }}</span>
-              <input pInputText formControlName="jobTitle" />
-            </label>
-            <label>
-              <span class="field-label">{{ 'EMPLOYEES.SPECIALTY' | translate }}</span>
-              <input pInputText formControlName="specialty" />
-            </label>
-            <label>
-              <span class="field-label">{{ 'EMPLOYEES.USERNAME' | translate }} <em>*</em></span>
-              <input pInputText formControlName="userName" dir="ltr" />
-            </label>
-            @if (!editing()) {
+            <div class="form-grid">
               <label>
-                <span class="field-label">{{ 'EMPLOYEES.PASSWORD' | translate }} <em>*</em></span>
-                <input pInputText type="password" formControlName="temporaryPassword" dir="ltr" />
-                <small>{{ 'EMPLOYEES.PASSWORD_HINT' | translate }}</small>
+                <span class="field-label">{{ 'EMPLOYEES.FULL_NAME' | translate }} <em>*</em></span>
+                <input pInputText formControlName="fullName" />
               </label>
-            }
-            <div class="form-field">
-              <span class="field-label">{{ 'EMPLOYEES.ROLE' | translate }} <em>*</em></span>
-              <p-dropdown [options]="roles" formControlName="role"></p-dropdown>
+              <label>
+                <span class="field-label">{{ 'EMPLOYEES.EMAIL' | translate }} <em>*</em></span>
+                <input pInputText type="email" formControlName="email" dir="ltr" />
+              </label>
+              <label>
+                <span class="field-label">{{ 'EMPLOYEES.MOBILE' | translate }} <em>*</em></span>
+                <input pInputText formControlName="mobileNumber" dir="ltr" />
+              </label>
+              <div class="form-field">
+                <span class="field-label">{{ 'EMPLOYEES.BRANCH' | translate }} <em>*</em></span>
+                <p-multiSelect
+                  [options]="branches()"
+                  optionLabel="name"
+                  optionValue="id"
+                  formControlName="branchIds"
+                  display="chip"
+                ></p-multiSelect>
+              </div>
+              <label>
+                <span class="field-label">{{ 'EMPLOYEES.JOB_TITLE' | translate }}</span>
+                <input pInputText formControlName="jobTitle" />
+              </label>
+              <label>
+                <span class="field-label">{{ 'EMPLOYEES.SPECIALTY' | translate }}</span>
+                <input pInputText formControlName="specialty" />
+              </label>
+              <label>
+                <span class="field-label">{{ 'EMPLOYEES.USERNAME' | translate }} <em>*</em></span>
+                <input pInputText formControlName="userName" dir="ltr" />
+              </label>
+              @if (!editing()) {
+                <label>
+                  <span class="field-label">{{ 'EMPLOYEES.PASSWORD' | translate }} <em>*</em></span>
+                  <input pInputText type="password" formControlName="temporaryPassword" dir="ltr" />
+                  <small>{{ 'EMPLOYEES.PASSWORD_HINT' | translate }}</small>
+                </label>
+              }
+              <div class="form-field">
+                <span class="field-label">{{ 'EMPLOYEES.ROLE' | translate }} <em>*</em></span>
+                <p-dropdown [options]="roles" formControlName="role"></p-dropdown>
+              </div>
+              <label>
+                <span class="field-label">{{ 'EMPLOYEES.DATE' | translate }} <em>*</em></span>
+                <input pInputText type="date" formControlName="joiningDate" />
+              </label>
+              <fieldset>
+                <legend>{{ 'EMPLOYEES.STATUS' | translate }}</legend>
+                <label class="radio"
+                  ><input type="radio" [value]="true" formControlName="isActive" />{{
+                    'EMPLOYEES.ACTIVE' | translate
+                  }}</label
+                ><label class="radio"
+                  ><input type="radio" [value]="false" formControlName="isActive" />{{
+                    'EMPLOYEES.INACTIVE' | translate
+                  }}</label
+                >
+              </fieldset>
             </div>
-            <label>
-              <span class="field-label">{{ 'EMPLOYEES.DATE' | translate }} <em>*</em></span>
-              <input pInputText type="date" formControlName="joiningDate" />
-            </label>
-            <fieldset>
-              <legend>{{ 'EMPLOYEES.STATUS' | translate }}</legend>
-              <label class="radio"
-                ><input type="radio" [value]="true" formControlName="isActive" />{{
-                  'EMPLOYEES.ACTIVE' | translate
-                }}</label
-              ><label class="radio"
-                ><input type="radio" [value]="false" formControlName="isActive" />{{
-                  'EMPLOYEES.INACTIVE' | translate
-                }}</label
-              >
-            </fieldset>
           </div>
         </div>
-      </div>
       } @else {
         <section class="schedule-panel" [attr.aria-busy]="scheduleLoading()">
           <div class="schedule-note">
@@ -346,7 +346,9 @@
             </div>
           </div>
           @if (scheduleError(); as error) {
-            <p class="schedule-error" role="alert"><i class="pi pi-exclamation-circle"></i>{{ error }}</p>
+            <p class="schedule-error" role="alert">
+              <i class="pi pi-exclamation-circle"></i>{{ error }}
+            </p>
           }
           <div class="schedule-table-wrap">
             <table class="schedule-table">
@@ -361,7 +363,9 @@
               <tbody>
                 @for (day of schedule(); track day.day) {
                   <tr [class.day-off]="!day.enabled">
-                    <td><b>{{ 'EMPLOYEES.SCHEDULE_DAYS.' + day.day.toUpperCase() | translate }}</b></td>
+                    <td>
+                      <b>{{ 'EMPLOYEES.SCHEDULE_DAYS.' + day.day.toUpperCase() | translate }}</b>
+                    </td>
                     <td>
                       <label class="schedule-toggle">
                         <input
@@ -371,7 +375,10 @@
                           [attr.aria-label]="'EMPLOYEES.SCHEDULE_WORKING' | translate"
                         />
                         <span></span>
-                        <em>{{ (day.enabled ? 'EMPLOYEES.SCHEDULE_ON' : 'EMPLOYEES.SCHEDULE_OFF') | translate }}</em>
+                        <em>{{
+                          (day.enabled ? 'EMPLOYEES.SCHEDULE_ON' : 'EMPLOYEES.SCHEDULE_OFF')
+                            | translate
+                        }}</em>
                       </label>
                     </td>
                     <td>
@@ -403,7 +410,9 @@
         ><p-button
           type="submit"
           [loading]="saving()"
-          [label]="(activeTab() === 'schedule' ? 'EMPLOYEES.SAVE_SCHEDULE' : 'EMPLOYEES.SAVE') | translate"
+          [label]="
+            (activeTab() === 'schedule' ? 'EMPLOYEES.SAVE_SCHEDULE' : 'EMPLOYEES.SAVE') | translate
+          "
           icon="pi pi-save"
         />
       </footer>
@@ -436,9 +445,7 @@
       <p-button
         type="button"
         (onClick)="pendingStatus.set(null)"
-        [label]="
-          'EMPLOYEES.CANCEL' | translate
-        "
+        [label]="'EMPLOYEES.CANCEL' | translate"
       />
       <p-button
         type="button"

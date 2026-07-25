@@ -2,59 +2,59 @@
 
 :root {
   // Surface
-  --surface-bg:         #FFFFFF;
-  --surface-card:       #FFFFFF;
-  --surface-overlay:    #FFFFFF;
-  --surface-border:     #DEE2E6;
-  --surface-hover:      #F8F9FA;
+  --surface-bg: #ffffff;
+  --surface-card: #ffffff;
+  --surface-overlay: #ffffff;
+  --surface-border: #dee2e6;
+  --surface-hover: #f8f9fa;
 
   // Text
-  --text-primary:       #212529;
-  --text-secondary:     #6C757D;
-  --text-disabled:      #ADB5BD;
-  --text-inverse:       #FFFFFF;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-disabled: #adb5bd;
+  --text-inverse: #ffffff;
 
   // Brand
-  --color-primary:      #6C63FF;
-  --color-primary-dark: #4B44CC;
-  --color-primary-light:#EAE9FF;
-  --color-secondary:    #FF6584;
-  --color-accent:       #43CEA2;
+  --color-primary: #6c63ff;
+  --color-primary-dark: #4b44cc;
+  --color-primary-light: #eae9ff;
+  --color-secondary: #ff6584;
+  --color-accent: #43cea2;
 
   // Semantic
-  --color-success:      #28A745;
-  --color-warning:      #FFC107;
-  --color-danger:       #DC3545;
-  --color-info:         #17A2B8;
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+  --color-info: #17a2b8;
 
   // Focus rings
   --color-primary-focus-ring: rgba(108, 99, 255, 0.1);
-  --color-danger-focus-ring:  rgba(220, 53, 69, 0.1);
+  --color-danger-focus-ring: rgba(220, 53, 69, 0.1);
 
   // Sidebar
-  --sidebar-bg:         #1E1B4B;
-  --sidebar-text:       rgba(255,255,255,.75);
-  --sidebar-text-active:#FFFFFF;
-  --sidebar-item-active:rgba(108,99,255,.25);
-  --sidebar-icon:       rgba(255,255,255,.55);
+  --sidebar-bg: #1e1b4b;
+  --sidebar-text: rgba(255, 255, 255, 0.75);
+  --sidebar-text-active: #ffffff;
+  --sidebar-item-active: rgba(108, 99, 255, 0.25);
+  --sidebar-icon: rgba(255, 255, 255, 0.55);
 
   // Header
-  --header-bg:          #FFFFFF;
-  --header-border:      #DEE2E6;
+  --header-bg: #ffffff;
+  --header-border: #dee2e6;
 }
 
 // ─── Dark Theme ───────────────────────────────────────────────────────────────
 [data-theme='dark'] {
-  --surface-bg:         #0F0F23;
-  --surface-card:       #1A1A2E;
-  --surface-overlay:    #16213E;
-  --surface-border:     #2A2A4A;
-  --surface-hover:      #1E1E3F;
+  --surface-bg: #0f0f23;
+  --surface-card: #1a1a2e;
+  --surface-overlay: #16213e;
+  --surface-border: #2a2a4a;
+  --surface-hover: #1e1e3f;
 
-  --text-primary:       #E8E8F0;
-  --text-secondary:     #9999BB;
-  --text-disabled:      #555577;
+  --text-primary: #e8e8f0;
+  --text-secondary: #9999bb;
+  --text-disabled: #555577;
 
-  --header-bg:          #1A1A2E;
-  --header-border:      #2A2A4A;
+  --header-bg: #1a1a2e;
+  --header-border: #2a2a4a;
 }

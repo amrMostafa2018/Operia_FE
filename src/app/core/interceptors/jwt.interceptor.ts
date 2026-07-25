@@ -5,14 +5,7 @@ import {
   HttpInterceptorFn,
   HttpRequest,
 } from '@angular/common/http';
-import {
-  BehaviorSubject,
-  catchError,
-  filter,
-  switchMap,
-  take,
-  throwError,
-} from 'rxjs';
+import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
 
 import {
   AuthApiEndpoint,
@@ -43,11 +36,7 @@ function attachToken<T>(req: HttpRequest<T>, token: string): HttpRequest<T> {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 }
 
-function handle401<T>(
-  req: HttpRequest<T>,
-  next: HttpHandlerFn,
-  authService: AuthService
-) {
+function handle401<T>(req: HttpRequest<T>, next: HttpHandlerFn, authService: AuthService) {
   if (!isRefreshing) {
     isRefreshing = true;
     refreshSubject$.next(null);
@@ -62,7 +51,7 @@ function handle401<T>(
         refreshSubject$.next(accessToken);
         return next(attachToken(req, accessToken));
       }),
-      catchError((err) => {
+      catchError(err => {
         isRefreshing = false;
         refreshSubject$.next(null);
         return throwError(() => err);
@@ -74,7 +63,7 @@ function handle401<T>(
   return refreshSubject$.pipe(
     filter((token): token is string => token !== null),
     take(1),
-    switchMap((token) => next(attachToken(req, token)))
+    switchMap(token => next(attachToken(req, token)))
   );
 }
 
@@ -84,11 +73,10 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const token = authService.getAccessToken();
   const isPublicAuth = isPublicAuthUrl(req.url);
 
-  const outgoingReq =
-    token && !isPublicAuth ? attachToken(req, token) : req;
+  const outgoingReq = token && !isPublicAuth ? attachToken(req, token) : req;
 
   return next(outgoingReq).pipe(
-    catchError((error) => {
+    catchError(error => {
       if (
         error instanceof HttpErrorResponse &&
         error.status === 401 &&

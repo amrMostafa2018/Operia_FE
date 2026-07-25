@@ -110,7 +110,9 @@
         </span>
         {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.TITLE' | translate }}
       </h2>
-      <p class="section-subtitle visually-hidden">{{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.SUBTITLE' | translate }}</p>
+      <p class="section-subtitle visually-hidden">
+        {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.SUBTITLE' | translate }}
+      </p>
     </div>
 
     <div class="photos-info-banner">
@@ -200,13 +202,19 @@
               @if (photo.previewUrl) {
                 <img [src]="photo.previewUrl" alt="" (error)="onPhotoError(photo.id)" />
                 <span class="photo-label">
-                  {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PHOTO_LABEL' | translate: { num: photo.displayIndex } }}
+                  {{
+                    'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PHOTO_LABEL'
+                      | translate: { num: photo.displayIndex }
+                  }}
                 </span>
               } @else {
                 <label class="upload-slot" [attr.for]="'photo-' + photo.id">
                   <i class="pi pi-plus" aria-hidden="true"></i>
                   <span class="photo-label muted">
-                    {{ 'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PHOTO_LABEL' | translate: { num: photo.displayIndex } }}
+                    {{
+                      'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.PHOTO_LABEL'
+                        | translate: { num: photo.displayIndex }
+                    }}
                   </span>
                   <input
                     type="file"
@@ -255,8 +263,12 @@
         <i class="pi pi-id-card"></i>
       </div>
       <div class="section-heading-text">
-        <h2 class="section-title">{{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.TITLE' | translate }}</h2>
-        <p class="section-subtitle">{{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.SUBTITLE' | translate }}</p>
+        <h2 class="section-title">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.TITLE' | translate }}
+        </h2>
+        <p class="section-subtitle">
+          {{ 'SETTINGS_ACTIVITY.IDENTITY.VISIBLE_INFO.SUBTITLE' | translate }}
+        </p>
       </div>
     </div>
 

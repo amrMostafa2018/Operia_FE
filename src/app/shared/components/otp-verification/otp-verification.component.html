@@ -41,12 +41,7 @@
 
     <div class="resend-row">
       @if (canResend()) {
-        <button
-          type="button"
-          class="resend-btn"
-          [disabled]="isResending()"
-          (click)="onResend()"
-        >
+        <button type="button" class="resend-btn" [disabled]="isResending()" (click)="onResend()">
           @if (isResending()) {
             <i class="pi pi-spin pi-spinner"></i>
           }

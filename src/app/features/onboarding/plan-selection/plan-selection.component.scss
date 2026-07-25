@@ -73,9 +73,15 @@
   // Keep column order fixed: summary | main | balance (summary always on the left)
   direction: ltr;
 
-  .plan-promo { grid-column: 1; }
-  .plan-main { grid-column: 2; }
-  .plan-summary { grid-column: 3; }
+  .plan-promo {
+    grid-column: 1;
+  }
+  .plan-main {
+    grid-column: 2;
+  }
+  .plan-summary {
+    grid-column: 3;
+  }
 
   &.is-arabic {
     .plan-promo,
@@ -86,7 +92,9 @@
 
     // In Arabic, radio button should be at inline-start (right), label at end (left)
     .payment-option {
-      .payment-option__label { order: 3; }
+      .payment-option__label {
+        order: 3;
+      }
 
       input[type='radio'] {
         order: 1;
@@ -226,7 +234,10 @@
   font-weight: 600;
   color: var(--text-secondary);
   font-family: $font-ar;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
   white-space: nowrap;
 
   &.active {
@@ -269,7 +280,9 @@
   padding: 1rem 0.85rem 0.85rem;
   cursor: pointer;
   background: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   outline: none;
 
   &:hover {
@@ -823,7 +836,9 @@
   border: 1.5px solid var(--surface-border);
   border-radius: $border-radius;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 
   input {
     accent-color: var(--color-primary);
@@ -1091,7 +1106,9 @@
     background: #fff;
     box-shadow: $shadow-sm;
     cursor: zoom-in;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
 
     &:hover {
       border-color: rgba(108, 99, 255, 0.45);
@@ -1217,7 +1234,9 @@
   font-family: $font-ar;
   text-align: center;
 
-  i { font-size: 0.7rem; }
+  i {
+    font-size: 0.7rem;
+  }
 }
 
 ::ng-deep .submit-btn {
@@ -1268,7 +1287,9 @@
       }
 
       .payment-option {
-        .payment-option__label { order: 3; }
+        .payment-option__label {
+          order: 3;
+        }
 
         input[type='radio'] {
           order: 1;

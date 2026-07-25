@@ -6,7 +6,9 @@
         <span class="section-num">1.</span>
         {{ 'SETTINGS_ACTIVITY.PAYMENTS.ACTIVATE_TITLE' | translate }}
       </h2>
-      <p class="section-subtitle">{{ 'SETTINGS_ACTIVITY.PAYMENTS.ACTIVATE_SUBTITLE' | translate }}</p>
+      <p class="section-subtitle">
+        {{ 'SETTINGS_ACTIVITY.PAYMENTS.ACTIVATE_SUBTITLE' | translate }}
+      </p>
     </div>
 
     <div class="method-cards">
@@ -15,7 +17,9 @@
           <div
             class="method-icon"
             [class]="method.iconClass"
-            [class.method-icon--brand]="!!method.logoSrc || !!method.brandText || !!method.brandLines?.length"
+            [class.method-icon--brand]="
+              !!method.logoSrc || !!method.brandText || !!method.brandLines?.length
+            "
           >
             <ng-container *ngTemplateOutlet="methodBrand; context: { $implicit: method }" />
           </div>
@@ -29,7 +33,12 @@
             (ngModelChange)="toggleMethod(method.id, $event)"
           />
           <span class="method-status" [class.is-active]="method.enabled">
-            {{ (method.enabled ? 'SETTINGS_ACTIVITY.PAYMENTS.ENABLED' : 'SETTINGS_ACTIVITY.PAYMENTS.DISABLED') | translate }}
+            {{
+              (method.enabled
+                ? 'SETTINGS_ACTIVITY.PAYMENTS.ENABLED'
+                : 'SETTINGS_ACTIVITY.PAYMENTS.DISABLED'
+              ) | translate
+            }}
           </span>
         </div>
       }
@@ -63,7 +72,9 @@
               <div
                 class="accordion-method-icon"
                 [class]="method.iconClass"
-                [class.accordion-method-icon--brand]="!!method.logoSrc || !!method.brandText || !!method.brandLines?.length"
+                [class.accordion-method-icon--brand]="
+                  !!method.logoSrc || !!method.brandText || !!method.brandLines?.length
+                "
               >
                 <ng-container *ngTemplateOutlet="methodBrand; context: { $implicit: method }" />
               </div>
@@ -85,7 +96,10 @@
                   <form [formGroup]="bankForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.BANK' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.BANK' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <p-dropdown
                           formControlName="bank"
                           [options]="bankOptions"
@@ -95,11 +109,17 @@
                         />
                       </div>
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.HOLDER' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.HOLDER' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <input pInputText formControlName="accountHolder" class="field-input" />
                       </div>
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.ACCOUNT' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.ACCOUNT' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <input pInputText formControlName="accountNumber" class="field-input" />
                       </div>
                       <div class="field">
@@ -113,11 +133,17 @@
                   <form [formGroup]="instapayForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.HOLDER' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.HOLDER' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <input pInputText formControlName="accountHolder" class="field-input" />
                       </div>
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.ID' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.ID' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <input pInputText formControlName="instapayId" class="field-input" />
                       </div>
                     </div>
@@ -127,7 +153,10 @@
                   <form [formGroup]="walletForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.TYPE' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.TYPE' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <p-dropdown
                           formControlName="walletType"
                           [options]="walletOptions"
@@ -137,11 +166,17 @@
                         />
                       </div>
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.NUMBER' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.NUMBER' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <input pInputText formControlName="walletNumber" class="field-input" />
                       </div>
                       <div class="field full-width">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.HOLDER' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.HOLDER' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <input pInputText formControlName="holderName" class="field-input" />
                       </div>
                     </div>
@@ -151,18 +186,28 @@
                   <form [formGroup]="fawryForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.CODE' | translate }} <span class="required">*</span></label>
+                        <label
+                          >{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.CODE' | translate }}
+                          <span class="required">*</span></label
+                        >
                         <input pInputText formControlName="serviceCode" class="field-input" />
                       </div>
                       <div class="field full-width">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.NOTES' | translate }}</label>
-                        <textarea pInputTextarea formControlName="notes" rows="3" class="field-textarea"></textarea>
+                        <textarea
+                          pInputTextarea
+                          formControlName="notes"
+                          rows="3"
+                          class="field-textarea"
+                        ></textarea>
                       </div>
                     </div>
                   </form>
                 }
                 @case ('cash') {
-                  <p class="cash-empty-note">{{ 'SETTINGS_ACTIVITY.PAYMENTS.CASH_NO_DETAILS' | translate }}</p>
+                  <p class="cash-empty-note">
+                    {{ 'SETTINGS_ACTIVITY.PAYMENTS.CASH_NO_DETAILS' | translate }}
+                  </p>
                 }
               }
             </div>
@@ -187,8 +232,12 @@
         <div class="step-row">
           <div class="step-icon"><i class="pi pi-clock" aria-hidden="true"></i></div>
           <div class="step-text">
-            <span class="step-title">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING' | translate }}</span>
-            <span class="step-hint">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING_HINT' | translate }}</span>
+            <span class="step-title">{{
+              'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING' | translate
+            }}</span>
+            <span class="step-hint">{{
+              'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PENDING_HINT' | translate
+            }}</span>
           </div>
         </div>
       </div>
@@ -200,8 +249,12 @@
         <div class="step-row">
           <div class="step-icon"><i class="pi pi-check" aria-hidden="true"></i></div>
           <div class="step-text">
-            <span class="step-title">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID' | translate }}</span>
-            <span class="step-hint">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID_HINT' | translate }}</span>
+            <span class="step-title">{{
+              'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID' | translate
+            }}</span>
+            <span class="step-hint">{{
+              'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.PAID_HINT' | translate
+            }}</span>
           </div>
         </div>
       </div>
@@ -213,19 +266,19 @@
         <div class="step-row">
           <div class="step-icon"><i class="pi pi-times" aria-hidden="true"></i></div>
           <div class="step-text">
-            <span class="step-title">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED' | translate }}</span>
-            <span class="step-hint">{{ 'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED_HINT' | translate }}</span>
+            <span class="step-title">{{
+              'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED' | translate
+            }}</span>
+            <span class="step-hint">{{
+              'SETTINGS_ACTIVITY.PAYMENTS.REVIEW.CANCELLED_HINT' | translate
+            }}</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <app-settings-footer
-    [saving]="saving()"
-    (reset)="onReset()"
-    (save)="onSave()"
-  />
+  <app-settings-footer [saving]="saving()" (reset)="onReset()" (save)="onSave()" />
 </div>
 
 <ng-template #methodBrand let-method>

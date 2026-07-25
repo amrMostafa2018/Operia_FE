@@ -24,19 +24,36 @@ describe('EmployeeService', () => {
       .subscribe();
 
     const request = http.expectOne(
-      request => request.url === `${environment.apiUrl}/employees` && request.params.get('pageNumber') === '2'
+      request =>
+        request.url === `${environment.apiUrl}/employees` &&
+        request.params.get('pageNumber') === '2'
     );
     expect(request.request.params.get('search')).toBe('EMP-0002');
     expect(request.request.params.get('role')).toBe('Admin');
     expect(request.request.params.get('isActive')).toBe('true');
-    request.flush({ items: [], pageNumber: 2, pageSize: 10, totalCount: 0, totalPages: 0, roleCounts: [] });
+    request.flush({
+      items: [],
+      pageNumber: 2,
+      pageSize: 10,
+      totalCount: 0,
+      totalPages: 0,
+      roleCounts: [],
+    });
   });
 
   it('creates an employee as multipart data with every branch', () => {
     const payload: EmployeePayload = {
-      fullName: 'Test Employee', email: 'employee@example.com', mobileNumber: '+201001234567',
-      userName: 'test.employee', specialty: 'Laser', jobTitle: 'Specialist', joiningDate: '2026-07-22',
-      isActive: true, role: 'Staff', branchIds: ['branch-1', 'branch-2'], temporaryPassword: 'Temp@1234',
+      fullName: 'Test Employee',
+      email: 'employee@example.com',
+      mobileNumber: '+201001234567',
+      userName: 'test.employee',
+      specialty: 'Laser',
+      jobTitle: 'Specialist',
+      joiningDate: '2026-07-22',
+      isActive: true,
+      role: 'Staff',
+      branchIds: ['branch-1', 'branch-2'],
+      temporaryPassword: 'Temp@1234',
     };
 
     service.create(payload).subscribe();

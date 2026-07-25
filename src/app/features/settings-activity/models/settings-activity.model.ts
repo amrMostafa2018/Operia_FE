@@ -19,11 +19,41 @@ const CLINIC_MOCK_IMAGES = [
 
 export const MOCK_IDENTITY_PHOTOS: PhotoSlot[] = [
   { id: 'primary', isPrimary: true, previewUrl: CLINIC_MOCK_IMAGES[0], file: null },
-  { id: 'photo-1', isPrimary: false, previewUrl: CLINIC_MOCK_IMAGES[1], file: null, displayIndex: 2 },
-  { id: 'photo-2', isPrimary: false, previewUrl: CLINIC_MOCK_IMAGES[2], file: null, displayIndex: 3 },
-  { id: 'photo-3', isPrimary: false, previewUrl: CLINIC_MOCK_IMAGES[3], file: null, displayIndex: 4 },
-  { id: 'photo-4', isPrimary: false, previewUrl: CLINIC_MOCK_IMAGES[4], file: null, displayIndex: 5 },
-  { id: 'photo-5', isPrimary: false, previewUrl: CLINIC_MOCK_IMAGES[5], file: null, displayIndex: 6 },
+  {
+    id: 'photo-1',
+    isPrimary: false,
+    previewUrl: CLINIC_MOCK_IMAGES[1],
+    file: null,
+    displayIndex: 2,
+  },
+  {
+    id: 'photo-2',
+    isPrimary: false,
+    previewUrl: CLINIC_MOCK_IMAGES[2],
+    file: null,
+    displayIndex: 3,
+  },
+  {
+    id: 'photo-3',
+    isPrimary: false,
+    previewUrl: CLINIC_MOCK_IMAGES[3],
+    file: null,
+    displayIndex: 4,
+  },
+  {
+    id: 'photo-4',
+    isPrimary: false,
+    previewUrl: CLINIC_MOCK_IMAGES[4],
+    file: null,
+    displayIndex: 5,
+  },
+  {
+    id: 'photo-5',
+    isPrimary: false,
+    previewUrl: CLINIC_MOCK_IMAGES[5],
+    file: null,
+    displayIndex: 6,
+  },
 ];
 
 export interface PaymentMethodState {
@@ -54,6 +84,7 @@ export interface AccessUser {
   email: string;
   lastLogin: string;
   device: 'windows' | 'chrome' | 'android' | 'safari' | 'mac';
+  isBanned?: boolean;
 }
 
 export const ACTIVITY_SETTINGS_TABS = [
@@ -92,11 +123,45 @@ export const ACTIVITY_SETTINGS_TABS = [
 ] as const;
 
 export const MOCK_PAYMENT_METHODS: PaymentMethodState[] = [
-  { id: 'cash', enabled: true, icon: 'pi pi-wallet', iconClass: 'method-icon--cash', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.CASH' },
-  { id: 'bank_transfer', enabled: true, icon: 'pi pi-building-columns', iconClass: 'method-icon--bank', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.BANK_TRANSFER' },
-  { id: 'instapay', enabled: true, icon: '', iconClass: 'method-icon--instapay', brandLines: ['INSTA', 'PAY'], brandTextClass: 'method-brand-lines--instapay', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.INSTAPAY' },
-  { id: 'e_wallet', enabled: true, icon: 'pi pi-wallet', iconClass: 'method-icon--wallet', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.E_WALLET' },
-  { id: 'fawry', enabled: true, icon: '', iconClass: 'method-icon--fawry', brandText: 'fawry', brandTextClass: 'method-brand-text--fawry', labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.FAWRY' },
+  {
+    id: 'cash',
+    enabled: true,
+    icon: 'pi pi-wallet',
+    iconClass: 'method-icon--cash',
+    labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.CASH',
+  },
+  {
+    id: 'bank_transfer',
+    enabled: true,
+    icon: 'pi pi-building-columns',
+    iconClass: 'method-icon--bank',
+    labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.BANK_TRANSFER',
+  },
+  {
+    id: 'instapay',
+    enabled: true,
+    icon: '',
+    iconClass: 'method-icon--instapay',
+    brandLines: ['INSTA', 'PAY'],
+    brandTextClass: 'method-brand-lines--instapay',
+    labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.INSTAPAY',
+  },
+  {
+    id: 'e_wallet',
+    enabled: true,
+    icon: 'pi pi-wallet',
+    iconClass: 'method-icon--wallet',
+    labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.E_WALLET',
+  },
+  {
+    id: 'fawry',
+    enabled: true,
+    icon: '',
+    iconClass: 'method-icon--fawry',
+    brandText: 'fawry',
+    brandTextClass: 'method-brand-text--fawry',
+    labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.FAWRY',
+  },
 ];
 
 export const MOCK_BANK_OPTIONS = [
@@ -118,22 +183,107 @@ function createTime(hours: number, minutes: number): Date {
 }
 
 export const MOCK_WORKING_DAYS: WorkingDay[] = [
-  { id: 'fri', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.FRI', enabled: false, selected: false, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'sat', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SAT', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'sun', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SUN', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'mon', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.MON', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'tue', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.TUE', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'wed', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.WED', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
-  { id: 'thu', dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.THU', enabled: true, selected: true, fromTime: createTime(9, 0), toTime: createTime(21, 0) },
+  {
+    id: 'fri',
+    dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.FRI',
+    enabled: false,
+    selected: false,
+    fromTime: createTime(9, 0),
+    toTime: createTime(21, 0),
+  },
+  {
+    id: 'sat',
+    dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SAT',
+    enabled: true,
+    selected: true,
+    fromTime: createTime(9, 0),
+    toTime: createTime(21, 0),
+  },
+  {
+    id: 'sun',
+    dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SUN',
+    enabled: true,
+    selected: true,
+    fromTime: createTime(9, 0),
+    toTime: createTime(21, 0),
+  },
+  {
+    id: 'mon',
+    dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.MON',
+    enabled: true,
+    selected: true,
+    fromTime: createTime(9, 0),
+    toTime: createTime(21, 0),
+  },
+  {
+    id: 'tue',
+    dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.TUE',
+    enabled: true,
+    selected: true,
+    fromTime: createTime(9, 0),
+    toTime: createTime(21, 0),
+  },
+  {
+    id: 'wed',
+    dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.WED',
+    enabled: true,
+    selected: true,
+    fromTime: createTime(9, 0),
+    toTime: createTime(21, 0),
+  },
+  {
+    id: 'thu',
+    dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.THU',
+    enabled: true,
+    selected: true,
+    fromTime: createTime(9, 0),
+    toTime: createTime(21, 0),
+  },
 ];
 
 export const MOCK_ACCESS_USERS: AccessUser[] = [
-  { id: '1', name: 'أحمد محمد', email: 'ahmed@clinic.com', lastLogin: '10:30 2026-07-14', device: 'windows' },
-  { id: '2', name: 'سارة علي', email: 'sara@clinic.com', lastLogin: '16:45 2026-07-13', device: 'chrome' },
-  { id: '3', name: 'محمد حسن', email: 'mohamed@clinic.com', lastLogin: '09:15 2026-07-12', device: 'android' },
-  { id: '4', name: 'نور إبراهيم', email: 'nour@clinic.com', lastLogin: '14:20 2026-07-11', device: 'safari' },
-  { id: '5', name: 'كريم يوسف', email: 'karim@clinic.com', lastLogin: '11:00 2026-07-10', device: 'mac' },
-  { id: '6', name: 'ليلى أحمد', email: 'layla@clinic.com', lastLogin: '08:30 2026-07-09', device: 'chrome' },
+  {
+    id: '1',
+    name: 'أحمد محمد',
+    email: 'ahmed@clinic.com',
+    lastLogin: '10:30 2026-07-14',
+    device: 'windows',
+  },
+  {
+    id: '2',
+    name: 'سارة علي',
+    email: 'sara@clinic.com',
+    lastLogin: '16:45 2026-07-13',
+    device: 'chrome',
+  },
+  {
+    id: '3',
+    name: 'محمد حسن',
+    email: 'mohamed@clinic.com',
+    lastLogin: '09:15 2026-07-12',
+    device: 'android',
+  },
+  {
+    id: '4',
+    name: 'نور إبراهيم',
+    email: 'nour@clinic.com',
+    lastLogin: '14:20 2026-07-11',
+    device: 'safari',
+  },
+  {
+    id: '5',
+    name: 'كريم يوسف',
+    email: 'karim@clinic.com',
+    lastLogin: '11:00 2026-07-10',
+    device: 'mac',
+  },
+  {
+    id: '6',
+    name: 'ليلى أحمد',
+    email: 'layla@clinic.com',
+    lastLogin: '08:30 2026-07-09',
+    device: 'chrome',
+  },
 ];
 
 export const DEVICE_ICONS: Record<AccessUser['device'], string> = {

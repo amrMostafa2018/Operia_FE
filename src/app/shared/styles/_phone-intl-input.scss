@@ -11,7 +11,9 @@
   border: 1.5px solid var(--surface-border);
   border-radius: $border-radius;
   background: var(--surface-card);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 
   &:focus-within {
     border-color: var(--color-primary);
@@ -124,12 +126,15 @@
       overflow: hidden;
     }
 
-    @each $iso, $asset in (
-      'eg': '/assets/flags/eg.svg',
-      'sa': '/assets/flags/sa.svg',
-      'ae': '/assets/flags/ae.svg',
-      'kw': '/assets/flags/kw.svg'
-    ) {
+    @each $iso,
+      $asset
+        in (
+          'eg': '/assets/flags/eg.svg',
+          'sa': '/assets/flags/sa.svg',
+          'ae': '/assets/flags/ae.svg',
+          'kw': '/assets/flags/kw.svg'
+        )
+    {
       .iti__flag.iti__#{$iso} {
         background-image: url(#{$asset}) !important;
       }
@@ -333,10 +338,18 @@ html[dir='rtl'] .phone-row--intl {
       }
     }
 
-    [id$='__item-eg'] .iti__country-name::after { content: 'مصر'; }
-    [id$='__item-sa'] .iti__country-name::after { content: 'السعودية'; }
-    [id$='__item-ae'] .iti__country-name::after { content: 'الإمارات'; }
-    [id$='__item-kw'] .iti__country-name::after { content: 'الكويت'; }
+    [id$='__item-eg'] .iti__country-name::after {
+      content: 'مصر';
+    }
+    [id$='__item-sa'] .iti__country-name::after {
+      content: 'السعودية';
+    }
+    [id$='__item-ae'] .iti__country-name::after {
+      content: 'الإمارات';
+    }
+    [id$='__item-kw'] .iti__country-name::after {
+      content: 'الكويت';
+    }
 
     li.iti__country {
       direction: rtl;

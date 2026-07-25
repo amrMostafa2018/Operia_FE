@@ -130,16 +130,14 @@ type OnboardingStatusApi = OnboardingStatusDto & {
 };
 
 export function normalizeOnboardingStatus(status: OnboardingStatusApi): OnboardingStatusDto {
-  const usableBalance =
-    status.usableBalance ?? status.UsableBalance ?? status.balance ?? 0;
-  const totalBalance =
-    status.totalBalance ?? status.TotalBalance ?? usableBalance;
+  const usableBalance = status.usableBalance ?? status.UsableBalance ?? status.balance ?? 0;
+  const totalBalance = status.totalBalance ?? status.TotalBalance ?? usableBalance;
   const pendingAddBalancePlatform =
-    status.pendingAddBalancePlatform
-    ?? status.PendingAddBalancePlatform
-    ?? status.pendingBalanceTopUp
-    ?? status.PendingBalanceTopUp
-    ?? null;
+    status.pendingAddBalancePlatform ??
+    status.PendingAddBalancePlatform ??
+    status.pendingBalanceTopUp ??
+    status.PendingBalanceTopUp ??
+    null;
 
   return {
     ...status,

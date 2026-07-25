@@ -1,5 +1,4 @@
 <div class="dashboard">
-
   <!-- ═══ Date + Quick Actions bar ═══ -->
   <div class="top-bar">
     <div class="date-filters">
@@ -45,15 +44,16 @@
           <span class="stat-label">{{ stat.labelKey | translate }}</span>
           <div class="stat-row">
             <span class="stat-value">{{ stat.value }}</span>
-            <span class="stat-change up">
-              <i class="pi pi-arrow-up"></i> {{ stat.change }}%
-            </span>
+            <span class="stat-change up"> <i class="pi pi-arrow-up"></i> {{ stat.change }}% </span>
           </div>
           <span class="stat-compare">
             {{ stat.change }}%
-            {{ (stat.changeType === 'vs_yesterday'
+            {{
+              (stat.changeType === 'vs_yesterday'
                 ? 'DASHBOARD.COMPARED_YESTERDAY'
-                : 'DASHBOARD.COMPARED_LAST_MONTH') | translate }}
+                : 'DASHBOARD.COMPARED_LAST_MONTH'
+              ) | translate
+            }}
           </span>
         </div>
         <!-- Mini sparkline -->
@@ -95,11 +95,7 @@
           [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
           styleClass="filter-drop"
         />
-        <p-button
-          icon="pi pi-search"
-          styleClass="search-btn"
-          [outlined]="true"
-        />
+        <p-button icon="pi pi-search" styleClass="search-btn" [outlined]="true" />
       </div>
     </div>
 
@@ -113,15 +109,15 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th>{{ 'DASHBOARD.TABLE_NUM'        | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_CUSTOMER'   | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_BOOKING_NUM'| translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_EMPLOYEE'   | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_SERVICE'    | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_FROM'       | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_TO'         | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_STATUS'     | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_ACTIONS'    | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_NUM' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_CUSTOMER' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_BOOKING_NUM' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_EMPLOYEE' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_SERVICE' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_FROM' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_TO' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_STATUS' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_ACTIONS' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -206,5 +202,4 @@
       />
     </div>
   </div>
-
 </div>

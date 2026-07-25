@@ -1,9 +1,7 @@
 import { AbstractControl } from '@angular/forms';
 import { ChangeData } from 'ngx-intl-tel-input';
 
-export function getE164PhoneNumber(
-  value: ChangeData | string | null | undefined
-): string {
+export function getE164PhoneNumber(value: ChangeData | string | null | undefined): string {
   if (!value) {
     return '';
   }
@@ -12,8 +10,7 @@ export function getE164PhoneNumber(
     return value.replace(/\s/g, '');
   }
 
-  return (value.e164Number ?? value.internationalNumber ?? value.number ?? '')
-    .replace(/\s/g, '');
+  return (value.e164Number ?? value.internationalNumber ?? value.number ?? '').replace(/\s/g, '');
 }
 
 export function getPhoneFieldError(

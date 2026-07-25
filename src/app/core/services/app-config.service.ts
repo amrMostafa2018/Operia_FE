@@ -25,9 +25,7 @@ export class AppConfigService {
 
   async init(): Promise<void> {
     try {
-      const loaded = await firstValueFrom(
-        this.http.get<AppSettings>('/assets/appsettings.json')
-      );
+      const loaded = await firstValueFrom(this.http.get<AppSettings>('/assets/appsettings.json'));
 
       this.settings = {
         fileStorage: {

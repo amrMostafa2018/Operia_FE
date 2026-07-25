@@ -292,7 +292,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
 
   &.is-drag-over {
     border-color: var(--color-primary);
@@ -389,7 +392,9 @@
   padding: 0;
   border: none;
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
 
   &--primary {
     position: absolute;
@@ -444,7 +449,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
 
   &.is-drag-over {
     border-color: var(--color-primary);
@@ -507,23 +515,25 @@
 
 :host ::ng-deep {
   .field-input.p-inputtext {
-  width: 100%;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.875rem;
-  border: 1.5px solid var(--surface-border);
-  border-radius: $border-radius;
-  background: var(--surface-card);
-  transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    border: 1.5px solid var(--surface-border);
+    border-radius: $border-radius;
+    background: var(--surface-card);
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
 
-  &:enabled:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-focus-ring);
-  }
+    &:enabled:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-focus-ring);
+    }
 
-  &.ng-invalid.ng-touched {
-    border-color: var(--color-danger);
+    &.ng-invalid.ng-touched {
+      border-color: var(--color-danger);
+    }
   }
-}
 
   .field-textarea.p-inputtextarea {
     width: 100%;
@@ -535,7 +545,9 @@
     resize: vertical;
     min-height: 140px;
     line-height: 1.6;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
 
     &:enabled:focus {
       border-color: var(--color-primary);

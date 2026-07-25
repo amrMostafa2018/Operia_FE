@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -92,13 +86,9 @@ export class OperiaSubscriptionsComponent {
 
   readonly totalRecords = computed(() => this.filteredSubscriptions().length);
 
-  readonly prevIcon = computed(() =>
-    getPrevArrowIcon(this.languageService.currentLang())
-  );
+  readonly prevIcon = computed(() => getPrevArrowIcon(this.languageService.currentLang()));
 
-  readonly prevIconPos = computed(() =>
-    getPrevIconPos(this.languageService.currentLang())
-  );
+  readonly prevIconPos = computed(() => getPrevIconPos(this.languageService.currentLang()));
 
   statusSeverity(status: SubscriptionStatus): TagSeverity {
     const map: Record<SubscriptionStatus, TagSeverity> = {

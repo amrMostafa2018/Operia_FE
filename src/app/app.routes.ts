@@ -5,8 +5,7 @@ import { onboardingCompleteGuard } from '@core/guards/onboarding-complete.guard'
 export const routes: Routes = [
   {
     path: 'auth',
-    loadChildren: () =>
-      import('@app/features/auth/auth.routes').then(m => m.authRoutes),
+    loadChildren: () => import('@app/features/auth/auth.routes').then(m => m.authRoutes),
   },
   {
     path: 'onboarding',
@@ -17,13 +16,14 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [authGuard, onboardingCompleteGuard],
-    loadChildren: () =>
-      import('@app/layout/main.routes').then(m => m.mainRoutes),
+    loadChildren: () => import('@app/layout/main.routes').then(m => m.mainRoutes),
   },
   {
     path: 'unauthorized',
     loadComponent: () =>
-      import('@app/features/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent),
+      import('@app/features/unauthorized/unauthorized.component').then(
+        m => m.UnauthorizedComponent
+      ),
     title: 'Unauthorized - Operia',
   },
   {

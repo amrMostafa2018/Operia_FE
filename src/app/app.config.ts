@@ -1,14 +1,6 @@
-import {
-  APP_INITIALIZER,
-  ApplicationConfig,
-  provideZoneChangeDetection,
-} from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -24,8 +16,7 @@ import { jwtInterceptor } from '@core/interceptors/jwt.interceptor';
 import { languageInterceptor } from '@core/interceptors/language.interceptor';
 
 function initAuth(authService: AuthService): () => Promise<boolean> {
-  return () =>
-    firstValueFrom(authService.restoreSession().pipe(catchError(() => of(false))));
+  return () => firstValueFrom(authService.restoreSession().pipe(catchError(() => of(false))));
 }
 
 function initLanguage(languageService: LanguageService): () => Promise<void> {

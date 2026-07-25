@@ -227,8 +227,8 @@ export class EmployeesComponent implements OnInit {
           ? {
               ...item,
               enabled,
-              fromTime: enabled ? item.fromTime ?? '09:00:00' : null,
-              toTime: enabled ? item.toTime ?? '17:00:00' : null,
+              fromTime: enabled ? (item.fromTime ?? '09:00:00') : null,
+              toTime: enabled ? (item.toTime ?? '17:00:00') : null,
             }
           : item
       )
@@ -238,7 +238,9 @@ export class EmployeesComponent implements OnInit {
   setScheduleTime(day: string, field: 'fromTime' | 'toTime', event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.schedule.update(days =>
-      days.map(item => (item.day === day ? { ...item, [field]: value ? `${value}:00` : null } : item))
+      days.map(item =>
+        item.day === day ? { ...item, [field]: value ? `${value}:00` : null } : item
+      )
     );
     this.scheduleError.set(null);
   }
@@ -291,16 +293,16 @@ export class EmployeesComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.close();
-        this.load();
-        this.toast.add({
-          severity: 'success',
-          summary: 'OPERIA',
-          detail: this.translate.instant('EMPLOYEES.SAVED'),
-        });
-      },
+        next: () => {
+          this.saving.set(false);
+          this.close();
+          this.load();
+          this.toast.add({
+            severity: 'success',
+            summary: 'OPERIA',
+            detail: this.translate.instant('EMPLOYEES.SAVED'),
+          });
+        },
         error: error => {
           this.saving.set(false);
           const message = this.scheduleErrorMessage(error);
@@ -353,13 +355,18 @@ export class EmployeesComponent implements OnInit {
         error: () => this.scheduleLoading.set(false),
       });
   }
-  private scheduleErrorMessage(error: { error?: { errorCodes?: Record<string, string[]>; errors?: Record<string, string[]> } }): string {
+  private scheduleErrorMessage(error: {
+    error?: { errorCodes?: Record<string, string[]>; errors?: Record<string, string[]> };
+  }): string {
     const code = Object.values(error.error?.errorCodes ?? {}).flat()[0];
     if (code) {
       const translated = this.translate.instant(`ERRORS.${code}`);
       return translated === `ERRORS.${code}` ? code : translated;
     }
-    return Object.values(error.error?.errors ?? {}).flat()[0] ?? this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED');
+    return (
+      Object.values(error.error?.errors ?? {}).flat()[0] ??
+      this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED')
+    );
   }
   private defaultSchedule(): EmployeeWorkingDay[] {
     return ['fri', 'sat', 'sun', 'mon', 'tue', 'wed', 'thu'].map(day => ({

@@ -76,8 +76,8 @@
     "OtpInvalid": "رمز التحقق غير صحيح",
     "OtpExpired": "انتهت صلاحية رمز التحقق",
     "IdentityError": "حدث خطأ في إنشاء الحساب. يرجى المحاولة مرة أخرى",
-    "InvalidCredentials": "رقم الموبايل أو كلمة المرور غير صحيحة"
-    ,"EmployeeScheduleOutsideBusinessHours": "يجب أن تكون ساعات عمل الموظف ضمن ساعات عمل النشاط المفعلة لذلك اليوم."
+    "InvalidCredentials": "رقم الموبايل أو كلمة المرور غير صحيحة",
+    "EmployeeScheduleOutsideBusinessHours": "يجب أن تكون ساعات عمل الموظف ضمن ساعات عمل النشاط المفعلة لذلك اليوم."
   },
   "NAV": {
     "SECTION": {

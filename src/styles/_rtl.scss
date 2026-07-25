@@ -4,10 +4,19 @@
 
 [dir='rtl'] {
   // Text alignment
-  body, p, span, label, td, th { text-align: right; }
+  body,
+  p,
+  span,
+  label,
+  td,
+  th {
+    text-align: right;
+  }
 
   // Form inputs
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     text-align: right;
     direction: rtl;
   }
@@ -18,11 +27,19 @@
   }
 
   // Flip horizontal spacing utilities
-  .ms-auto { margin-inline-start: auto !important; margin-inline-end: unset !important; }
-  .me-auto { margin-inline-end: auto !important; margin-inline-start: unset !important; }
+  .ms-auto {
+    margin-inline-start: auto !important;
+    margin-inline-end: unset !important;
+  }
+  .me-auto {
+    margin-inline-end: auto !important;
+    margin-inline-start: unset !important;
+  }
 
   // Flip icons/chevrons
-  .rtl-flip { transform: scaleX(-1); }
+  .rtl-flip {
+    transform: scaleX(-1);
+  }
 
   .p-paginator {
     .p-paginator-first,
@@ -52,11 +69,17 @@
   }
 
   // Badge / chip placement
-  .p-badge { direction: ltr; }
+  .p-badge {
+    direction: ltr;
+  }
 
   // Input group
-  .p-inputgroup-addon:first-child { border-radius: 0 $border-radius $border-radius 0; }
-  .p-inputgroup-addon:last-child  { border-radius: $border-radius 0 0 $border-radius; }
+  .p-inputgroup-addon:first-child {
+    border-radius: 0 $border-radius $border-radius 0;
+  }
+  .p-inputgroup-addon:last-child {
+    border-radius: $border-radius 0 0 $border-radius;
+  }
 
   // Calendar / time picker: keep icon on the trailing edge (right in RTL)
   .p-calendar-w-btn {
@@ -65,9 +88,18 @@
 }
 
 [dir='ltr'] {
-  body, p, span, label, td, th { text-align: left; }
+  body,
+  p,
+  span,
+  label,
+  td,
+  th {
+    text-align: left;
+  }
 
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     text-align: left;
     direction: ltr;
   }
@@ -81,8 +113,12 @@
     text-align: left;
   }
 
-  .p-inputgroup-addon:first-child { border-radius: $border-radius 0 0 $border-radius; }
-  .p-inputgroup-addon:last-child  { border-radius: 0 $border-radius $border-radius 0; }
+  .p-inputgroup-addon:first-child {
+    border-radius: $border-radius 0 0 $border-radius;
+  }
+  .p-inputgroup-addon:last-child {
+    border-radius: 0 $border-radius $border-radius 0;
+  }
 }
 
 // Time picker popup (rendered on body)

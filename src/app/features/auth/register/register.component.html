@@ -1,6 +1,4 @@
-
 <div class="register-page">
-
   <!-- Top link -->
   <div class="page-top-link">
     <span>{{ 'AUTH.REGISTER_PAGE.HAS_ACCOUNT' | translate }}</span>
@@ -9,7 +7,6 @@
 
   <!-- Form card -->
   <div class="form-card">
-
     @if (step() === 'form') {
       <div class="form-title">
         <span class="title-icon"><i class="pi pi-user-plus"></i></span>
@@ -19,168 +16,192 @@
     }
 
     <div class="auth-step-panel" [class.auth-step-panel--hidden]="step() !== 'form'">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-      <div class="field">
-        <label for="name">{{ 'AUTH.REGISTER_PAGE.FULL_NAME' | translate }} <span class="required">*</span></label>
-        <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'name')">
-          <i class="pi pi-user input-icon"></i>
-          <input
-            id="name"
-            pInputText
-            formControlName="name"
-            [placeholder]="'AUTH.REGISTER_PAGE.NAME_PLACEHOLDER' | translate"
-            class="p-inputtext-custom"
-          />
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <div class="field">
+          <label for="name"
+            >{{ 'AUTH.REGISTER_PAGE.FULL_NAME' | translate }} <span class="required">*</span></label
+          >
+          <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'name')">
+            <i class="pi pi-user input-icon"></i>
+            <input
+              id="name"
+              pInputText
+              formControlName="name"
+              [placeholder]="'AUTH.REGISTER_PAGE.NAME_PLACEHOLDER' | translate"
+              class="p-inputtext-custom"
+            />
+          </div>
+          @if (isFieldInvalid(form, 'name')) {
+            <small class="error-msg">
+              @if (form.get('name')?.errors?.['required']) {
+                {{ 'AUTH.REGISTER_PAGE.NAME_REQUIRED' | translate }}
+              } @else if (form.get('name')?.errors?.['minlength']) {
+                {{ 'AUTH.REGISTER_PAGE.NAME_MIN' | translate }}
+              }
+            </small>
+          }
         </div>
-        @if (isFieldInvalid(form, 'name')) {
-          <small class="error-msg">
-            @if (form.get('name')?.errors?.['required']) { {{ 'AUTH.REGISTER_PAGE.NAME_REQUIRED' | translate }} }
-            @else if (form.get('name')?.errors?.['minlength']) { {{ 'AUTH.REGISTER_PAGE.NAME_MIN' | translate }} }
+
+        <!-- Phone -->
+        <div class="field field--phone">
+          <label for="registerPhone"
+            >{{ 'AUTH.REGISTER_PAGE.PHONE' | translate }} <span class="required">*</span></label
+          >
+          <div
+            class="phone-row phone-row--intl"
+            [class.error]="isFieldInvalid(form, 'phone')"
+            dir="ltr"
+          >
+            <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+            <ngx-intl-tel-input
+              [cssClass]="phoneInputCssClass"
+              [onlyCountries]="onlyCountries"
+              [selectedCountryISO]="selectedCountryISO"
+              [enableAutoCountrySelect]="false"
+              [enablePlaceholder]="true"
+              [customPlaceholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
+              [searchCountryFlag]="false"
+              [selectFirstCountry]="false"
+              [separateDialCode]="true"
+              [phoneValidation]="true"
+              inputId="registerPhone"
+              formControlName="phone"
+            />
+          </div>
+          <small class="whatsapp-hint">
+            <i class="pi pi-whatsapp"></i>
+            {{ 'AUTH.REGISTER_PAGE.WHATSAPP_HINT' | translate }}
           </small>
-        }
-      </div>
-
-      <!-- Phone -->
-      <div class="field field--phone">
-        <label for="registerPhone">{{ 'AUTH.REGISTER_PAGE.PHONE' | translate }} <span class="required">*</span></label>
-        <div class="phone-row phone-row--intl" [class.error]="isFieldInvalid(form, 'phone')" dir="ltr">
-          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
-          <ngx-intl-tel-input
-            [cssClass]="phoneInputCssClass"
-            [onlyCountries]="onlyCountries"
-            [selectedCountryISO]="selectedCountryISO"
-            [enableAutoCountrySelect]="false"
-            [enablePlaceholder]="true"
-            [customPlaceholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
-            [searchCountryFlag]="false"
-            [selectFirstCountry]="false"
-            [separateDialCode]="true"
-            [phoneValidation]="true"
-            inputId="registerPhone"
-            formControlName="phone"
-          />
+          @if (isFieldInvalid(form, 'phone') && getPhoneError()) {
+            <small class="error-msg">{{ getPhoneError() }}</small>
+          }
         </div>
-        <small class="whatsapp-hint">
-          <i class="pi pi-whatsapp"></i>
-          {{ 'AUTH.REGISTER_PAGE.WHATSAPP_HINT' | translate }}
-        </small>
-        @if (isFieldInvalid(form, 'phone') && getPhoneError()) {
-          <small class="error-msg">{{ getPhoneError() }}</small>
-        }
-      </div>
 
-      <!-- Email -->
-      <div class="field">
-        <label for="email">{{ 'AUTH.EMAIL' | translate }} <span class="required">*</span></label>
-        <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'email')">
-          <i class="pi pi-envelope input-icon"></i>
-          <input
-            id="email"
-            pInputText
-            formControlName="email"
-            [placeholder]="'AUTH.LOGIN_PAGE.EMAIL_PLACEHOLDER' | translate"
-            type="email"
-            class="p-inputtext-custom"
-          />
+        <!-- Email -->
+        <div class="field">
+          <label for="email">{{ 'AUTH.EMAIL' | translate }} <span class="required">*</span></label>
+          <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'email')">
+            <i class="pi pi-envelope input-icon"></i>
+            <input
+              id="email"
+              pInputText
+              formControlName="email"
+              [placeholder]="'AUTH.LOGIN_PAGE.EMAIL_PLACEHOLDER' | translate"
+              type="email"
+              class="p-inputtext-custom"
+            />
+          </div>
+          @if (isFieldInvalid(form, 'email')) {
+            <small class="error-msg">
+              @if (form.get('email')?.errors?.['server']) {
+                {{ getFieldServerError(form, 'email') }}
+              } @else if (form.get('email')?.errors?.['required']) {
+                {{ 'AUTH.LOGIN_PAGE.EMAIL_REQUIRED' | translate }}
+              } @else if (form.get('email')?.errors?.['email']) {
+                {{ 'AUTH.LOGIN_PAGE.EMAIL_INVALID' | translate }}
+              }
+            </small>
+          }
         </div>
-        @if (isFieldInvalid(form, 'email')) {
-          <small class="error-msg">
-            @if (form.get('email')?.errors?.['server']) { {{ getFieldServerError(form, 'email') }} }
-            @else if (form.get('email')?.errors?.['required']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_REQUIRED' | translate }} }
-            @else if (form.get('email')?.errors?.['email']) { {{ 'AUTH.LOGIN_PAGE.EMAIL_INVALID' | translate }} }
+
+        <!-- Password -->
+        <div class="field">
+          <label for="password"
+            >{{ 'AUTH.PASSWORD' | translate }} <span class="required">*</span></label
+          >
+          <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'password')">
+            <i class="pi pi-lock input-icon"></i>
+            <input
+              id="password"
+              pInputText
+              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
+              class="p-inputtext-custom has-toggle"
+            />
+            <button type="button" class="toggle-btn" (click)="togglePassword()">
+              <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+            </button>
+          </div>
+          <small class="hint-msg">
+            <i class="pi pi-info-circle"></i>
+            {{ 'AUTH.REGISTER_PAGE.PASSWORD_HINT' | translate }}
           </small>
-        }
-      </div>
-
-      <!-- Password -->
-      <div class="field">
-        <label for="password">{{ 'AUTH.PASSWORD' | translate }} <span class="required">*</span></label>
-        <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'password')">
-          <i class="pi pi-lock input-icon"></i>
-          <input
-            id="password"
-            pInputText
-            formControlName="password"
-            [type]="showPassword() ? 'text' : 'password'"
-            [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
-            class="p-inputtext-custom has-toggle"
-          />
-          <button type="button" class="toggle-btn" (click)="togglePassword()">
-            <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
-          </button>
+          @if (isFieldInvalid(form, 'password')) {
+            <small class="error-msg">
+              @if (form.get('password')?.errors?.['required']) {
+                {{ 'AUTH.REGISTER_PAGE.PASSWORD_REQUIRED' | translate }}
+              } @else if (form.get('password')?.errors?.['minlength']) {
+                {{ 'AUTH.REGISTER_PAGE.PASSWORD_MIN' | translate }}
+              } @else if (form.get('password')?.errors?.['pattern']) {
+                {{ 'AUTH.REGISTER_PAGE.PASSWORD_PATTERN' | translate }}
+              }
+            </small>
+          }
         </div>
-        <small class="hint-msg">
-          <i class="pi pi-info-circle"></i>
-          {{ 'AUTH.REGISTER_PAGE.PASSWORD_HINT' | translate }}
-        </small>
-        @if (isFieldInvalid(form, 'password')) {
-          <small class="error-msg">
-            @if (form.get('password')?.errors?.['required']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_REQUIRED' | translate }} }
-            @else if (form.get('password')?.errors?.['minlength']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_MIN' | translate }} }
-            @else if (form.get('password')?.errors?.['pattern']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_PATTERN' | translate }} }
-          </small>
-        }
-      </div>
 
-      <!-- Confirm Password -->
-      <div class="field">
-        <label for="confirmPassword">{{ 'AUTH.REGISTER_PAGE.CONFIRM_PASSWORD' | translate }} <span class="required">*</span></label>
-        <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'confirmPassword')">
-          <i class="pi pi-lock input-icon"></i>
-          <input
-            id="confirmPassword"
-            pInputText
-            formControlName="confirmPassword"
-            [type]="showConfirm() ? 'text' : 'password'"
-            [placeholder]="'AUTH.REGISTER_PAGE.CONFIRM_PLACEHOLDER' | translate"
-            class="p-inputtext-custom has-toggle"
-          />
-          <button type="button" class="toggle-btn" (click)="toggleConfirm()">
-            <i [class]="showConfirm() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
-          </button>
+        <!-- Confirm Password -->
+        <div class="field">
+          <label for="confirmPassword"
+            >{{ 'AUTH.REGISTER_PAGE.CONFIRM_PASSWORD' | translate }}
+            <span class="required">*</span></label
+          >
+          <div class="input-wrapper" [class.error]="isFieldInvalid(form, 'confirmPassword')">
+            <i class="pi pi-lock input-icon"></i>
+            <input
+              id="confirmPassword"
+              pInputText
+              formControlName="confirmPassword"
+              [type]="showConfirm() ? 'text' : 'password'"
+              [placeholder]="'AUTH.REGISTER_PAGE.CONFIRM_PLACEHOLDER' | translate"
+              class="p-inputtext-custom has-toggle"
+            />
+            <button type="button" class="toggle-btn" (click)="toggleConfirm()">
+              <i [class]="showConfirm() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+            </button>
+          </div>
+          @if (isFieldInvalid(form, 'confirmPassword')) {
+            <small class="error-msg">
+              @if (form.get('confirmPassword')?.errors?.['required']) {
+                {{ 'AUTH.REGISTER_PAGE.CONFIRM_REQUIRED' | translate }}
+              } @else if (form.get('confirmPassword')?.errors?.['mismatch']) {
+                {{ 'AUTH.REGISTER_PAGE.PASSWORD_MISMATCH' | translate }}
+              }
+            </small>
+          }
         </div>
-        @if (isFieldInvalid(form, 'confirmPassword')) {
-          <small class="error-msg">
-            @if (form.get('confirmPassword')?.errors?.['required']) { {{ 'AUTH.REGISTER_PAGE.CONFIRM_REQUIRED' | translate }} }
-            @else if (form.get('confirmPassword')?.errors?.['mismatch']) { {{ 'AUTH.REGISTER_PAGE.PASSWORD_MISMATCH' | translate }} }
-          </small>
-        }
-      </div>
 
-      <!-- Terms -->
-      <div class="terms-row" [class.error]="isFieldInvalid(form, 'agreeToTerms')">
-        <p-checkbox
-          formControlName="agreeToTerms"
-          [binary]="true"
-          inputId="terms"
+        <!-- Terms -->
+        <div class="terms-row" [class.error]="isFieldInvalid(form, 'agreeToTerms')">
+          <p-checkbox formControlName="agreeToTerms" [binary]="true" inputId="terms" />
+          <label for="terms" class="terms-label">
+            {{ 'AUTH.REGISTER_PAGE.TERMS_PREFIX' | translate }}
+            <a href="#" class="link-inline" (click)="$event.preventDefault()">{{
+              'AUTH.REGISTER_PAGE.TERMS_LINK' | translate
+            }}</a>
+          </label>
+        </div>
+        @if (form.get('agreeToTerms')?.invalid && form.get('agreeToTerms')?.touched) {
+          <small class="error-msg">{{ 'AUTH.REGISTER_PAGE.TERMS_REQUIRED' | translate }}</small>
+        }
+
+        <!-- Submit -->
+        <p-button
+          type="submit"
+          [label]="'AUTH.REGISTER_PAGE.SUBMIT' | translate"
+          [icon]="submitIcon()"
+          iconPos="right"
+          styleClass="submit-btn"
+          [loading]="isLoading()"
+          [disabled]="isLoading()"
         />
-        <label for="terms" class="terms-label">
-          {{ 'AUTH.REGISTER_PAGE.TERMS_PREFIX' | translate }}
-          <a href="#" class="link-inline" (click)="$event.preventDefault()">{{ 'AUTH.REGISTER_PAGE.TERMS_LINK' | translate }}</a>
-        </label>
-      </div>
-      @if (form.get('agreeToTerms')?.invalid && form.get('agreeToTerms')?.touched) {
-        <small class="error-msg">{{ 'AUTH.REGISTER_PAGE.TERMS_REQUIRED' | translate }}</small>
-      }
 
-      <!-- Submit -->
-      <p-button
-        type="submit"
-        [label]="'AUTH.REGISTER_PAGE.SUBMIT' | translate"
-        [icon]="submitIcon()"
-        iconPos="right"
-        styleClass="submit-btn"
-        [loading]="isLoading()"
-        [disabled]="isLoading()"
-      />
-
-      <!-- Footer note -->
-      <p class="form-footer-note">
-        <i class="pi pi-lock"></i>
-        {{ 'AUTH.PRIVACY_NOTE' | translate }}
-      </p>
-
-    </form>
+        <!-- Footer note -->
+        <p class="form-footer-note">
+          <i class="pi pi-lock"></i>
+          {{ 'AUTH.PRIVACY_NOTE' | translate }}
+        </p>
+      </form>
     </div>
 
     @if (step() === 'otp') {

@@ -29,7 +29,8 @@
 }
 
 // ─── Hints ────────────────────────────────────────────────────────────────────
-.hint-msg, .whatsapp-hint {
+.hint-msg,
+.whatsapp-hint {
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -37,11 +38,13 @@
   color: var(--text-secondary);
   margin-top: 0.3rem;
 
-  i { font-size: 0.7rem; }
+  i {
+    font-size: 0.7rem;
+  }
 }
 
 .whatsapp-hint i {
-  color: #25D366;
+  color: #25d366;
 }
 
 // ─── Terms ────────────────────────────────────────────────────────────────────
@@ -62,7 +65,9 @@
       color: var(--color-primary);
       font-weight: 600;
       text-decoration: none;
-      &:hover { text-decoration: underline; }
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

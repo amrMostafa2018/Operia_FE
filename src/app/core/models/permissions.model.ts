@@ -10,8 +10,8 @@ export const Permissions = {
     EmployeesRead: 'Admins:Employees:read',
     EmployeesManage: 'Admins:Employees:manage',
     PackagesRead: 'Admins:Packages:read',
-    SettingsRead: 'Admins:Settings:read'
+    SettingsRead: 'Admins:Settings:read',
   },
 } as const;
 
-export type Permission = typeof Permissions.Admin[keyof typeof Permissions.Admin];
+export type Permission = (typeof Permissions.Admin)[keyof typeof Permissions.Admin];

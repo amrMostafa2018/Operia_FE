@@ -7,7 +7,11 @@
 // $p-primary-color and overrides are injected via CSS vars in _themes.scss
 
 // ─── Base Reset ───────────────────────────────────────────────────────────────
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 html {
   font-size: $font-size-base;
@@ -35,22 +39,46 @@ html[dir='ltr'] body {
 a {
   color: var(--color-primary);
   text-decoration: none;
-  &:hover { text-decoration: underline; }
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 // ─── Scrollbar ────────────────────────────────────────────────────────────────
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--surface-hover); }
-::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface-hover);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
 
 // ─── Utility Classes ──────────────────────────────────────────────────────────
-.text-primary-color  { color: var(--color-primary) !important; }
-.text-success        { color: var(--color-success) !important; }
-.text-danger         { color: var(--color-danger) !important; }
-.text-warning        { color: var(--color-warning) !important; }
-.text-muted          { color: var(--text-secondary) !important; }
-.bg-primary-light    { background: var(--color-primary-light) !important; }
+.text-primary-color {
+  color: var(--color-primary) !important;
+}
+.text-success {
+  color: var(--color-success) !important;
+}
+.text-danger {
+  color: var(--color-danger) !important;
+}
+.text-warning {
+  color: var(--color-warning) !important;
+}
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+.bg-primary-light {
+  background: var(--color-primary-light) !important;
+}
 
 .card {
   background: var(--surface-card);
@@ -66,16 +94,24 @@ a {
   justify-content: space-between;
   margin-bottom: 1.5rem;
 
-  h1, h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+  h1,
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
 }
 
 // Per-country flag images (replaces intl-tel-input sprite sheet)
-@each $iso, $asset in (
-  'eg': '/assets/flags/eg.svg',
-  'sa': '/assets/flags/sa.svg',
-  'ae': '/assets/flags/ae.svg',
-  'kw': '/assets/flags/kw.svg'
-) {
+@each $iso,
+  $asset
+    in (
+      'eg': '/assets/flags/eg.svg',
+      'sa': '/assets/flags/sa.svg',
+      'ae': '/assets/flags/ae.svg',
+      'kw': '/assets/flags/kw.svg'
+    )
+{
   .phone-row--intl .iti__flag.iti__#{$iso} {
     background-image: url(#{$asset}) !important;
     background-position: center !important;

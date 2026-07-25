@@ -1,11 +1,5 @@
 import { computed } from '@angular/core';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 
 import { User } from '@core/models/user.model';
 
@@ -26,13 +20,13 @@ const initialState: AuthState = {
 export const AuthStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed((store) => ({
+  withComputed(store => ({
     isAuthenticated: computed(() => !!store.accessToken() && !!store.user()),
     userRole: computed(() => store.user()?.role ?? null),
     currentUser: computed(() => store.user()),
     permissions: computed(() => store.user()?.permissions ?? []),
   })),
-  withMethods((store) => ({
+  withMethods(store => ({
     setAccessToken(accessToken: string): void {
       patchState(store, { accessToken });
     },

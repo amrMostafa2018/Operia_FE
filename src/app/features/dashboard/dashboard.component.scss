@@ -67,9 +67,15 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
 
-  @media (max-width: $bp-xl)  { grid-template-columns: repeat(3, 1fr); }
-  @media (max-width: $bp-md)  { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: $bp-sm)  { grid-template-columns: 1fr; }
+  @media (max-width: $bp-xl) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: $bp-md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: $bp-sm) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-card {
@@ -131,12 +137,17 @@
 
   &.up {
     color: var(--color-success);
-    i { font-size: 0.65rem; }
+    i {
+      font-size: 0.65rem;
+    }
   }
 
   &.down {
     color: var(--color-danger);
-    i { transform: rotate(180deg); font-size: 0.65rem; }
+    i {
+      transform: rotate(180deg);
+      font-size: 0.65rem;
+    }
   }
 }
 
@@ -149,7 +160,10 @@
   height: 30px;
   width: 100%;
 
-  svg { width: 100%; height: 100%; }
+  svg {
+    width: 100%;
+    height: 100%;
+  }
 }
 
 // ─── Table section ────────────────────────────────────────────────────────────
@@ -179,7 +193,9 @@
   font-weight: 600;
   color: var(--text-primary);
 
-  i { color: var(--color-primary); }
+  i {
+    color: var(--color-primary);
+  }
 }
 
 .table-date {
@@ -196,9 +212,17 @@
 }
 
 ::ng-deep {
-  .filter-drop .p-dropdown { font-size: 0.82rem; min-width: 140px; }
-  .rows-drop .p-dropdown    { font-size: 0.82rem; min-width: 80px; }
-  .search-btn .p-button     { padding: 0.45rem 0.65rem !important; }
+  .filter-drop .p-dropdown {
+    font-size: 0.82rem;
+    min-width: 140px;
+  }
+  .rows-drop .p-dropdown {
+    font-size: 0.82rem;
+    min-width: 80px;
+  }
+  .search-btn .p-button {
+    padding: 0.45rem 0.65rem !important;
+  }
 
   .bookings-table {
     .p-datatable-thead > tr > th {
@@ -257,10 +281,20 @@
   flex-shrink: 0;
 }
 
-.customer-name  { font-weight: 600; font-size: 0.85rem; }
-.customer-phone { font-size: 0.75rem; color: var(--text-secondary); }
+.customer-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.customer-phone {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
 
-.mono { font-family: monospace; font-size: 0.8rem; color: var(--text-secondary); }
+.mono {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
 
 .service-cell {
   max-width: 160px;
@@ -274,7 +308,11 @@
   color: var(--text-secondary);
   padding: 2.5rem !important;
 
-  i { display: block; font-size: 2rem; margin-bottom: 0.5rem; }
+  i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .row-action-btn {
@@ -286,7 +324,10 @@
   border-radius: $border-radius;
   font-size: 1rem;
 
-  &:hover { background: var(--surface-hover); color: var(--color-primary); }
+  &:hover {
+    background: var(--surface-hover);
+    color: var(--color-primary);
+  }
 }
 
 // ─── Table footer ─────────────────────────────────────────────────────────────
@@ -300,7 +341,11 @@
   border-top: 1px solid var(--surface-border);
 }
 
-.rows-selector { display: flex; align-items: center; gap: 0.5rem; }
+.rows-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
 .paginator {
   display: flex;
@@ -313,7 +358,9 @@
   align-items: center;
   gap: 0.35rem;
 
-  i { font-size: 0.75rem; }
+  i {
+    font-size: 0.75rem;
+  }
 }
 
 .page-btn {

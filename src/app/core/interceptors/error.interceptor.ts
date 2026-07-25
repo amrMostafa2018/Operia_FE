@@ -69,8 +69,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       const userMessage = resolveMessage(error, translate);
       const skipToast =
-        ((error.status === 400 || error.status === 422 || error.status === 401) &&
-          hasApiFieldErrors(error));
+        (error.status === 400 || error.status === 422 || error.status === 401) &&
+        hasApiFieldErrors(error);
 
       const suppressLoginRedirect =
         urlIncludesAuthEndpoint(req.url, OTP_AUTH_API_ENDPOINTS) ||

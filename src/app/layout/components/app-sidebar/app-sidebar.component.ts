@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -45,16 +54,12 @@ export class AppSidebarComponent {
     { initialValue: this.router.url }
   );
 
-  readonly isFinanceSectionActive = computed(() =>
-    this.currentUrl().startsWith('/finance')
-  );
+  readonly isFinanceSectionActive = computed(() => this.currentUrl().startsWith('/finance'));
 
   readonly isSettingsSectionActive = computed(() => {
     const url = this.currentUrl();
     return (
-      url.startsWith('/settings') ||
-      url.startsWith('/employees') ||
-      url.startsWith('/packages')
+      url.startsWith('/settings') || url.startsWith('/employees') || url.startsWith('/packages')
     );
   });
 
@@ -176,29 +181,19 @@ export class AppSidebarComponent {
     },
   ];
 
-  readonly visibleMainNavItems = computed(() =>
-    this.filterByPermission(this.mainNavItems)
+  readonly visibleMainNavItems = computed(() => this.filterByPermission(this.mainNavItems));
+
+  readonly visibleReportsNavItem = computed(
+    () => this.filterByPermission([this.reportsNavItem])[0] ?? null
   );
 
-  readonly visibleReportsNavItem = computed(() =>
-    this.filterByPermission([this.reportsNavItem])[0] ?? null
-  );
+  readonly visibleFinanceNavItems = computed(() => this.filterByPermission(this.financeNavItems));
 
-  readonly visibleFinanceNavItems = computed(() =>
-    this.filterByPermission(this.financeNavItems)
-  );
+  readonly visibleSettingsNavItems = computed(() => this.filterByPermission(this.settingsNavItems));
 
-  readonly visibleSettingsNavItems = computed(() =>
-    this.filterByPermission(this.settingsNavItems)
-  );
+  readonly showFinanceSection = computed(() => this.visibleFinanceNavItems().length > 0);
 
-  readonly showFinanceSection = computed(() =>
-    this.visibleFinanceNavItems().length > 0
-  );
-
-  readonly showSettingsSection = computed(() =>
-    this.visibleSettingsNavItems().length > 0
-  );
+  readonly showSettingsSection = computed(() => this.visibleSettingsNavItems().length > 0);
 
   toggleFinance(): void {
     this.financeOpen.update(v => !v);
@@ -217,7 +212,7 @@ export class AppSidebarComponent {
   }
 
   private filterByPermission(items: NavItem[]): NavItem[] {
-    return items.filter((item) => {
+    return items.filter(item => {
       if (!item.permissions?.length) {
         return true;
       }

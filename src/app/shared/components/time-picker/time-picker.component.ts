@@ -11,11 +11,7 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormsModule,
-  NG_VALUE_ACCESSOR,
-} from '@angular/forms';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Calendar, CalendarModule } from 'primeng/calendar';
 
 import { LanguageService } from '@core/services/language.service';
@@ -41,9 +37,7 @@ import { formatAppTime } from '@app/shared/utils/time-format.util';
     },
   ],
 })
-export class TimePickerComponent
-  implements ControlValueAccessor, AfterViewInit
-{
+export class TimePickerComponent implements ControlValueAccessor, AfterViewInit {
   private readonly languageService = inject(LanguageService);
 
   readonly inputId = input('');
@@ -163,10 +157,7 @@ export class TimePickerComponent
     this.syncPopupTimeInputs();
   }
 
-  private ensurePopupInput(
-    picker: Element,
-    kind: 'hour' | 'minute'
-  ): HTMLInputElement {
+  private ensurePopupInput(picker: Element, kind: 'hour' | 'minute'): HTMLInputElement {
     const existing = picker.querySelector(
       'input.app-time-picker-popup-input'
     ) as HTMLInputElement | null;
@@ -185,10 +176,7 @@ export class TimePickerComponent
     input.inputMode = 'numeric';
     input.maxLength = 2;
     input.className = 'app-time-picker-popup-input';
-    input.setAttribute(
-      'aria-label',
-      kind === 'hour' ? 'Hour' : 'Minute'
-    );
+    input.setAttribute('aria-label', kind === 'hour' ? 'Hour' : 'Minute');
 
     input.addEventListener('input', () => {
       input.value = input.value.replace(/\D/g, '').slice(0, 2);
@@ -196,7 +184,7 @@ export class TimePickerComponent
     input.addEventListener('blur', () => {
       this.commitPopupTimeInput(kind);
     });
-    input.addEventListener('keydown', (event) => {
+    input.addEventListener('keydown', event => {
       if (event.key === 'Enter') {
         input.blur();
         event.preventDefault();
@@ -298,13 +286,12 @@ export class TimePickerComponent
       calendar.currentMinute = parsed;
     }
 
-    [calendar.currentHour, calendar.currentMinute, calendar.currentSecond] =
-      calendar.constrainTime(
-        calendar.currentHour ?? 0,
-        calendar.currentMinute ?? 0,
-        calendar.currentSecond ?? 0,
-        !!calendar.pm
-      );
+    [calendar.currentHour, calendar.currentMinute, calendar.currentSecond] = calendar.constrainTime(
+      calendar.currentHour ?? 0,
+      calendar.currentMinute ?? 0,
+      calendar.currentSecond ?? 0,
+      !!calendar.pm
+    );
 
     const unchanged =
       calendar.currentHour === prevHour &&
@@ -368,9 +355,7 @@ export class TimePickerComponent
       return;
     }
 
-    const input = calendar.inputfieldViewChild?.nativeElement as
-      | HTMLInputElement
-      | undefined;
+    const input = calendar.inputfieldViewChild?.nativeElement as HTMLInputElement | undefined;
 
     if (this.disabled() && this.placeholder()) {
       calendar.inputFieldValue = this.placeholder();

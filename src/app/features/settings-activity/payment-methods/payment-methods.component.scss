@@ -347,7 +347,9 @@
   border: 1.5px solid var(--surface-border);
   border-radius: $border-radius;
   background: var(--surface-card);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 
   &:enabled:focus {
     border-color: var(--color-primary);

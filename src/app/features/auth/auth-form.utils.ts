@@ -6,7 +6,7 @@ export function createPasswordToggle(): {
   toggle: () => void;
 } {
   const show = signal(false);
-  return { show, toggle: () => show.update((value) => !value) };
+  return { show, toggle: () => show.update(value => !value) };
 }
 
 export function isFieldInvalid(form: AbstractControl, field: string): boolean {

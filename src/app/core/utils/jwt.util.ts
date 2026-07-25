@@ -42,8 +42,7 @@ function claimValues(payload: Record<string, unknown>, type: string): string[] {
 
 function roleFromPayload(payload: Record<string, unknown>): UserRole {
   const raw =
-    payload['role'] ??
-    payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+    payload['role'] ?? payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
   const roleName = Array.isArray(raw) ? raw[0] : raw;
   if (typeof roleName === 'string' && roleName in ROLE_MAP) {

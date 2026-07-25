@@ -3,15 +3,21 @@
 // ─── Custom Scrollbar ─────────────────────────────────────────────────────────
 .sidebar-menu {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.12) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 
-  &::-webkit-scrollbar       { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
   &::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,.12);
+    background: rgba(255, 255, 255, 0.12);
     border-radius: 4px;
 
-    &:hover { background: rgba(255,255,255,.22); }
+    &:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
   }
 }
 
@@ -22,15 +28,18 @@
   background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
-  transition: width 0.25s cubic-bezier(.4,0,.2,1);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 2px 0 24px rgba(0,0,0,.18);
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.18);
 
   &.collapsed {
     width: $sidebar-collapsed;
 
-    .nav-item { justify-content: center; padding: 0.7rem 0; }
+    .nav-item {
+      justify-content: center;
+      padding: 0.7rem 0;
+    }
 
     .sidebar-logo {
       flex-direction: column;
@@ -38,21 +47,27 @@
       padding: 0.85rem 0.5rem;
     }
 
-    .logo-brand { justify-content: center; }
+    .logo-brand {
+      justify-content: center;
+    }
 
     .nav-item.active:not(.sub-item) {
-      background: rgba(108,99,255,.5);
-      box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.28);
+      background: rgba(108, 99, 255, 0.5);
+      box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.28);
     }
 
     .sidebar-section.is-active > .section-toggle {
-      background: rgba(108,99,255,.5);
+      background: rgba(108, 99, 255, 0.5);
       color: #fff;
 
-      .nav-icon { color: #fff; }
+      .nav-icon {
+        color: #fff;
+      }
     }
 
-    .section-label { display: none; }
+    .section-label {
+      display: none;
+    }
   }
 }
 
@@ -63,12 +78,14 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding: 1.1rem 1rem;
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   min-height: $header-height;
   flex-shrink: 0;
 }
 
-:host-context([dir='ltr']) .sidebar-logo { flex-direction: row-reverse; }
+:host-context([dir='ltr']) .sidebar-logo {
+  flex-direction: row-reverse;
+}
 
 .sidebar-toggle-btn {
   display: flex;
@@ -76,19 +93,22 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: $border-radius;
   cursor: pointer;
   color: var(--sidebar-text);
   font-size: 0.8rem;
   flex-shrink: 0;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 
   &:hover {
-    background: rgba(255,255,255,.14);
+    background: rgba(255, 255, 255, 0.14);
     color: #fff;
-    border-color: rgba(255,255,255,.28);
+    border-color: rgba(255, 255, 255, 0.28);
   }
 }
 
@@ -103,12 +123,12 @@
   width: 34px;
   height: 34px;
   border-radius: 9px;
-  background: linear-gradient(135deg, rgba(108,99,255,.55), rgba(75,68,204,.7));
+  background: linear-gradient(135deg, rgba(108, 99, 255, 0.55), rgba(75, 68, 204, 0.7));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(108,99,255,.35);
+  box-shadow: 0 2px 8px rgba(108, 99, 255, 0.35);
 }
 
 .logo-name {
@@ -141,7 +161,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.3);
+  color: rgba(255, 255, 255, 0.3);
   padding: 1rem 0.5rem 0.4rem;
   margin-top: 0.25rem;
   white-space: nowrap;
@@ -160,7 +180,10 @@
   text-decoration: none;
   font-size: 0.865rem;
   font-weight: 500;
-  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
   cursor: pointer;
   border: none;
   background: transparent;
@@ -169,24 +192,28 @@
   position: relative;
 
   &:hover {
-    background: rgba(255,255,255,.07);
-    color: rgba(255,255,255,.95);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
 
-    .nav-icon { color: rgba(255,255,255,.85); }
+    .nav-icon {
+      color: rgba(255, 255, 255, 0.85);
+    }
   }
 
   &:focus-visible {
-    outline: 2px solid rgba(108,99,255,.6);
+    outline: 2px solid rgba(108, 99, 255, 0.6);
     outline-offset: 1px;
   }
 
   &.active {
-    background: rgba(108,99,255,.42);
+    background: rgba(108, 99, 255, 0.42);
     color: #fff;
     font-weight: 600;
 
-    .nav-icon { color: #fff; }
+    .nav-icon {
+      color: #fff;
+    }
   }
 
   &.sub-item {
@@ -197,10 +224,12 @@
 
   &.sub-item--text {
     gap: 0.5rem;
-    color: rgba(255,255,255,.55);
+    color: rgba(255, 255, 255, 0.55);
     padding-block: 0.5rem;
 
-    .nav-label { flex: 1; }
+    .nav-label {
+      flex: 1;
+    }
 
     .active-dot {
       display: none;
@@ -208,26 +237,28 @@
       height: 6px;
       border-radius: 50%;
       background: #c4bfff;
-      box-shadow: 0 0 0 3px rgba(108,99,255,.3);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.3);
       flex-shrink: 0;
     }
 
     &:hover {
-      color: rgba(255,255,255,.85);
-      background: rgba(255,255,255,.05);
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     &.active {
-      background: rgba(108,99,255,.22);
+      background: rgba(108, 99, 255, 0.22);
       color: #fff;
       font-weight: 600;
       box-shadow: none;
 
-      .active-dot { display: block; }
+      .active-dot {
+        display: block;
+      }
     }
 
     &.sub-item--settings.active {
-      background: rgba(108,99,255,.32);
+      background: rgba(108, 99, 255, 0.32);
       color: #fff;
     }
   }
@@ -235,11 +266,11 @@
 
 // RTL / LTR active edge indicator
 :host-context([dir='rtl']) .nav-item.active:not(.sub-item) {
-  box-shadow: inset -3px 0 0 rgba(255,255,255,.85);
+  box-shadow: inset -3px 0 0 rgba(255, 255, 255, 0.85);
 }
 
 :host-context([dir='ltr']) .nav-item.active:not(.sub-item) {
-  box-shadow: inset 3px 0 0 rgba(255,255,255,.85);
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.85);
 }
 
 .nav-icon {
@@ -251,7 +282,10 @@
   transition: color 0.16s ease;
 }
 
-.nav-label { flex: 1; white-space: nowrap; }
+.nav-label {
+  flex: 1;
+  white-space: nowrap;
+}
 
 .nav-badge {
   background: var(--color-danger);
@@ -265,7 +299,9 @@
 }
 
 // ─── Collapsible sections ─────────────────────────────────────────────────────
-.sidebar-section { padding: 0; }
+.sidebar-section {
+  padding: 0;
+}
 
 // Finance
 .sidebar-section--finance {
@@ -273,12 +309,14 @@
 
   &.is-active {
     .section-toggle--finance {
-      background: rgba(108,99,255,.55);
+      background: rgba(108, 99, 255, 0.55);
       color: #fff;
       font-weight: 600;
 
       .nav-icon,
-      .toggle-arrow { color: rgba(255,255,255,.95); }
+      .toggle-arrow {
+        color: rgba(255, 255, 255, 0.95);
+      }
     }
 
     &.is-expanded .section-toggle--finance {
@@ -290,28 +328,28 @@
     }
 
     .section-items--finance {
-      background: rgba(0,0,0,.25);
+      background: rgba(0, 0, 0, 0.25);
       border-radius: 0 0 $border-radius-lg $border-radius-lg;
       margin-top: -2px;
       padding: 0.3rem 0 0.4rem;
-      border: 1px solid rgba(108,99,255,.18);
+      border: 1px solid rgba(108, 99, 255, 0.18);
       border-top: none;
     }
   }
 
   &.is-expanded:not(.is-active) {
     .section-toggle--finance {
-      background: rgba(255,255,255,.07);
-      color: rgba(255,255,255,.9);
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.9);
       border-radius: $border-radius-lg $border-radius-lg 0 0;
     }
 
     .section-items--finance {
-      background: rgba(0,0,0,.14);
+      background: rgba(0, 0, 0, 0.14);
       border-radius: 0 0 $border-radius-lg $border-radius-lg;
       margin-top: -2px;
       padding: 0.3rem 0 0.4rem;
-      border: 1px solid rgba(255,255,255,.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-top: none;
     }
   }
@@ -319,24 +357,26 @@
 
 // Settings
 .sidebar-section--settings {
-  border-top: 1px solid rgba(255,255,255,.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding: 0.5rem 0.75rem 0.35rem;
   margin-top: 0.25rem;
 
   &.is-active .section-toggle--settings {
-    background: rgba(108,99,255,.28);
+    background: rgba(108, 99, 255, 0.28);
     color: #fff;
 
     .nav-icon,
-    .toggle-arrow { color: rgba(255,255,255,.95); }
+    .toggle-arrow {
+      color: rgba(255, 255, 255, 0.95);
+    }
   }
 
   .section-items--settings {
-    border: 1px solid rgba(255,255,255,.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: $border-radius-lg;
     margin: 0.3rem 0 0.4rem;
     padding: 0.3rem 0;
-    background: rgba(0,0,0,.1);
+    background: rgba(0, 0, 0, 0.1);
   }
 
   .sub-item--settings {
@@ -349,18 +389,26 @@
 .section-toggle {
   @extend .nav-item;
 
-  &.active { box-shadow: none; }
+  &.active {
+    box-shadow: none;
+  }
 
   .toggle-arrow {
     font-size: 0.72rem;
     margin-inline-start: auto;
-    color: rgba(255,255,255,.4);
-    transition: transform 0.2s ease, color 0.15s;
+    color: rgba(255, 255, 255, 0.4);
+    transition:
+      transform 0.2s ease,
+      color 0.15s;
   }
 
-  &:hover .toggle-arrow { color: rgba(255,255,255,.75); }
+  &:hover .toggle-arrow {
+    color: rgba(255, 255, 255, 0.75);
+  }
 
-  &.collapsed-icon { justify-content: center; }
+  &.collapsed-icon {
+    justify-content: center;
+  }
 }
 
 .section-items {
@@ -369,14 +417,20 @@
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-5px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 .sidebar-footer {
   padding: 0.5rem 0.75rem 1rem;
-  border-top: 1px solid rgba(255,255,255,.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
 
   .support-item {
@@ -384,10 +438,12 @@
     font-size: 0.85rem;
 
     &.active {
-      background: rgba(108,99,255,.42);
+      background: rgba(108, 99, 255, 0.42);
       color: #fff;
 
-      .nav-icon { color: #fff; }
+      .nav-icon {
+        color: #fff;
+      }
     }
   }
 }

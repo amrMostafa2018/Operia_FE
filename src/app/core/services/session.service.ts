@@ -37,7 +37,7 @@ export class SessionService {
     this.authStore.setUser(storedUser);
 
     return this.authHttp.refreshAccessToken(refreshToken).pipe(
-      tap((tokens) => {
+      tap(tokens => {
         this.authStore.setAccessToken(tokens.accessToken);
         this.syncUserFromAccessToken();
         this.updateStoredRefreshToken(tokens.refreshToken);
@@ -76,13 +76,13 @@ export class SessionService {
     }
 
     return this.authHttp.refreshAccessToken(refreshToken).pipe(
-      tap((tokens) => {
+      tap(tokens => {
         this.authStore.setAccessToken(tokens.accessToken);
         this.syncUserFromAccessToken();
         this.updateStoredRefreshToken(tokens.refreshToken);
       }),
       map(() => void 0),
-      catchError((err) => {
+      catchError(err => {
         this.clearSession();
         return throwError(() => err);
       })
@@ -110,16 +110,19 @@ export class SessionService {
       sessionStorage.setItem(ONBOARDING_SOURCE_KEY, entrySource);
     }
 
-    this.onboardingService.getStatus().pipe(
-      map(status => onboardingRouteForStep(status.step)),
-      catchError(() => of(ONBOARDING_SETUP_URL)),
-      take(1)
-    ).subscribe(url => {
-      if (url === DASHBOARD_URL) {
-        this.clearOnboardingEntrySource();
-      }
-      void this.router.navigateByUrl(url, { replaceUrl: true });
-    });
+    this.onboardingService
+      .getStatus()
+      .pipe(
+        map(status => onboardingRouteForStep(status.step)),
+        catchError(() => of(ONBOARDING_SETUP_URL)),
+        take(1)
+      )
+      .subscribe(url => {
+        if (url === DASHBOARD_URL) {
+          this.clearOnboardingEntrySource();
+        }
+        void this.router.navigateByUrl(url, { replaceUrl: true });
+      });
   }
 
   getOnboardingEntrySource(): OnboardingEntrySource | null {
@@ -192,11 +195,7 @@ export class SessionService {
     }
   }
 
-  private resolveDisplayName(
-    user: User,
-    storedUser: User | null,
-    displayName?: string
-  ): string {
+  private resolveDisplayName(user: User, storedUser: User | null, displayName?: string): string {
     const candidates = [displayName, storedUser?.name, user.name].filter(Boolean) as string[];
 
     for (const candidate of candidates) {

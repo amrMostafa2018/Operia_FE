@@ -16,6 +16,6 @@ export class PermissionService {
 
   hasAnyPermission(...permissions: string[]): boolean {
     const userPermissions = this.authStore.permissions();
-    return permissions.some((permission) => userPermissions.includes(permission));
+    return permissions.some(permission => userPermissions.includes(permission));
   }
 }

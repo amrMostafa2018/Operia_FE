@@ -7,18 +7,14 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { finalize } from 'rxjs';
 
 import {
   PHONE_INPUT_CSS_CLASS,
@@ -26,18 +22,19 @@ import {
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '@app/shared/constants/phone-input.config';
 import { AppConfigService } from '@core/services/app-config.service';
-import { getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
+import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
 import { MOCK_IDENTITY_PHOTOS, PhotoSlot } from '../models/settings-activity.model';
+import {
+  IdentitySettingsDto,
+  SettingsActivityService,
+} from '../services/settings-activity.service';
 
 const MAX_ABOUT_CHARS = 500;
 const PRIMARY_IMAGE_MAX = { width: 960, height: 280 };
 const SECONDARY_IMAGE_MAX = { width: 240, height: 96 };
 
-function resizeImageFile(
-  file: File,
-  maxWidth: number,
-  maxHeight: number
-): Promise<string> {
+function resizeImageFile(file: File, maxWidth: number, maxHeight: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const image = new Image();
@@ -86,10 +83,10 @@ const MOCK_EG_PHONE = {
   imports: [
     ReactiveFormsModule,
     TranslatePipe,
-    NgxIntlTelInputModule,
     ButtonModule,
     InputTextModule,
     InputTextareaModule,
+    NgxIntlTelInputModule,
   ],
   templateUrl: './identity-content.component.html',
   styleUrl: './identity-content.component.scss',
@@ -97,47 +94,117 @@ const MOCK_EG_PHONE = {
 })
 export class IdentityContentComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly appConfig = inject(AppConfigService);
+  private readonly messageService = inject(MessageService);
+  private readonly settingsService = inject(SettingsActivityService);
+  private readonly destroyRef = inject(DestroyRef);
 
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
-  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly maxAboutChars = MAX_ABOUT_CHARS;
-  readonly acceptedImageAccept = this.appConfig.allowedMimeTypesAccept;
 
   form!: FormGroup;
-  photos = signal<PhotoSlot[]>(structuredClone(MOCK_IDENTITY_PHOTOS));
-  saving = signal(false);
   aboutCharCount = signal(0);
+  saving = signal(false);
   dragOverPhotoId = signal<string | null>(null);
 
+  photos = signal<PhotoSlot[]>(structuredClone(MOCK_IDENTITY_PHOTOS));
   private initialFormValue: Record<string, unknown> = {};
   private initialPhotos: PhotoSlot[] = [];
   private initialVisibleInfo = { mainAddress: '', about: '' };
-  private readonly photoDragCounters = new Map<string, number>();
+  private photoDragCounters = new Map<string, number>();
+
+  get acceptedImageAccept(): string {
+    return this.appConfig.allowedMimeTypesAccept || 'image/jpeg,image/png,image/webp';
+  }
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      activityName: ['عيادات الليزر المتخصصة', Validators.required],
-      contactPhone: [MOCK_EG_PHONE, Validators.required],
-      whatsappPhone: [MOCK_EG_PHONE],
-      email: ['info@laserclinics.com', [Validators.required, Validators.email]],
-      mainAddress: ['123 شارع النصر، مدينة نصر، القاهرة', Validators.required],
-      about: [
-        'نقدم خدمات تجميل متقدمة باستخدام أحدث تقنيات الليزر والعناية بالبشرة، مع فريق طبي متخصص يهتم بكل تفاصيل راحتك ونتائجك.',
-        [Validators.required, Validators.maxLength(MAX_ABOUT_CHARS)],
-      ],
+      activityName: ['', [Validators.required]],
+      contactPhone: [MOCK_EG_PHONE.number, [Validators.required]],
+      whatsappPhone: [MOCK_EG_PHONE.number],
+      email: ['', [Validators.required, Validators.email]],
+      mainAddress: ['', [Validators.required]],
+      about: ['', [Validators.required, Validators.maxLength(MAX_ABOUT_CHARS)]],
     });
 
-    this.aboutCharCount.set(this.form.get('about')?.value?.length ?? 0);
     this.form
       .get('about')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((value: string) => this.aboutCharCount.set(value?.length ?? 0));
 
+    this.loadIdentity();
+  }
+
+  private loadIdentity(): void {
+    this.settingsService
+      .getIdentity()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.patchFromDto(res);
+        },
+        error: () => {
+          this.snapshotInitialState();
+        },
+      });
+  }
+
+  private patchFromDto(res: IdentitySettingsDto): void {
+    this.form.patchValue({
+      activityName: res.activityName || '',
+      contactPhone: res.contactPhone || MOCK_EG_PHONE.number,
+      whatsappPhone: res.whatsappPhone || MOCK_EG_PHONE.number,
+      email: res.email || '',
+      mainAddress: res.mainAddress || '',
+      about: res.about || '',
+    });
+
+    const primaryUrl = res.primaryPhotoUrl
+      ? resolveUploadUrl(res.primaryPhotoUrl)
+      : '/assets/images/settings-activity/photo-primary.svg';
+    const additional = res.additionalPhotoUrls || [];
+    const slots: PhotoSlot[] = [
+      { id: 'primary', isPrimary: true, previewUrl: primaryUrl, file: null },
+      {
+        id: 'photo-1',
+        isPrimary: false,
+        previewUrl: additional[0] ? resolveUploadUrl(additional[0]) : null,
+        file: null,
+        displayIndex: 2,
+      },
+      {
+        id: 'photo-2',
+        isPrimary: false,
+        previewUrl: additional[1] ? resolveUploadUrl(additional[1]) : null,
+        file: null,
+        displayIndex: 3,
+      },
+      {
+        id: 'photo-3',
+        isPrimary: false,
+        previewUrl: additional[2] ? resolveUploadUrl(additional[2]) : null,
+        file: null,
+        displayIndex: 4,
+      },
+      {
+        id: 'photo-4',
+        isPrimary: false,
+        previewUrl: additional[3] ? resolveUploadUrl(additional[3]) : null,
+        file: null,
+        displayIndex: 5,
+      },
+      {
+        id: 'photo-5',
+        isPrimary: false,
+        previewUrl: additional[4] ? resolveUploadUrl(additional[4]) : null,
+        file: null,
+        displayIndex: 6,
+      },
+    ];
+    this.photos.set(slots);
     this.snapshotInitialState();
   }
 
@@ -240,9 +307,7 @@ export class IdentityContentComponent implements OnInit {
     resizeImageFile(file, limits.width, limits.height)
       .then(previewUrl => {
         this.photos.update(slots =>
-          slots.map(item =>
-            item.id === photoId ? { ...item, previewUrl, file } : item
-          )
+          slots.map(item => (item.id === photoId ? { ...item, previewUrl, file } : item))
         );
       })
       .catch(() => {
@@ -252,11 +317,7 @@ export class IdentityContentComponent implements OnInit {
 
   removePhoto(photoId: string): void {
     this.photos.update(slots =>
-      slots.map(slot =>
-        slot.id === photoId
-          ? { ...slot, previewUrl: null, file: null }
-          : slot
-      )
+      slots.map(slot => (slot.id === photoId ? { ...slot, previewUrl: null, file: null } : slot))
     );
   }
 
@@ -266,19 +327,21 @@ export class IdentityContentComponent implements OnInit {
       return;
     }
 
-    const fallback = slot.isPrimary
-      ? '/assets/images/settings-activity/photo-primary.svg'
-      : `/assets/images/settings-activity/photo-${slot.displayIndex}.svg`;
-
-    if (slot.previewUrl === fallback) {
-      return;
+    if (slot.isPrimary) {
+      const fallback = '/assets/images/settings-activity/photo-primary.svg';
+      if (slot.previewUrl === fallback) {
+        return;
+      }
+      this.photos.update(slots =>
+        slots.map(item =>
+          item.id === photoId ? { ...item, previewUrl: fallback, file: null } : item
+        )
+      );
+    } else {
+      this.photos.update(slots =>
+        slots.map(item => (item.id === photoId ? { ...item, previewUrl: null, file: null } : item))
+      );
     }
-
-    this.photos.update(slots =>
-      slots.map(item =>
-        item.id === photoId ? { ...item, previewUrl: fallback, file: null } : item
-      )
-    );
   }
 
   onResetVisibleInfo(): void {
@@ -298,16 +361,50 @@ export class IdentityContentComponent implements OnInit {
       return;
     }
 
+    const value = this.form.getRawValue();
+    const formData = new FormData();
+    formData.append('activityName', value.activityName ?? '');
+    formData.append('contactPhone', getE164PhoneNumber(value.contactPhone) ?? '');
+    formData.append('whatsappPhone', getE164PhoneNumber(value.whatsappPhone) ?? '');
+    formData.append('email', value.email ?? '');
+    formData.append('mainAddress', value.mainAddress ?? '');
+    formData.append('about', value.about ?? '');
+
+    for (const photo of this.photos()) {
+      if (photo.file) {
+        formData.append(photo.isPrimary ? 'primaryPhoto' : 'additionalPhotos', photo.file);
+      } else if (
+        photo.previewUrl &&
+        !photo.previewUrl.startsWith('data:') &&
+        !photo.previewUrl.startsWith('/assets/')
+      ) {
+        try {
+          const urlObj = new URL(photo.previewUrl, window.location.origin);
+          formData.append('existingPhotoUrls', urlObj.pathname);
+        } catch {
+          formData.append('existingPhotoUrls', photo.previewUrl);
+        }
+      }
+    }
+
     this.saving.set(true);
-    setTimeout(() => {
-      this.snapshotInitialState();
-      this.saving.set(false);
-      this.messageService.add({
-        severity: 'success',
-        summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
-        detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
+    this.settingsService
+      .updateIdentity(formData)
+      .pipe(
+        finalize(() => this.saving.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: res => {
+          this.patchFromDto(res);
+          this.messageService.add({
+            severity: 'success',
+            summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
+            detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
+          });
+        },
+        error: () => this.showRequestError(),
       });
-    }, 400);
   }
 
   primaryPhoto(): PhotoSlot {
@@ -332,6 +429,14 @@ export class IdentityContentComponent implements OnInit {
       severity: 'warn',
       summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
       detail: this.translate.instant(key),
+    });
+  }
+
+  private showRequestError(): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Settings',
+      detail: 'Unable to save settings.',
     });
   }
 }

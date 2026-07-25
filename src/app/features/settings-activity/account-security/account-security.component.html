@@ -23,7 +23,13 @@
           >
             <defs>
               <filter id="otp-soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#6C63FF" flood-opacity="0.18" />
+                <feDropShadow
+                  dx="0"
+                  dy="2"
+                  stdDeviation="3"
+                  flood-color="#6C63FF"
+                  flood-opacity="0.18"
+                />
               </filter>
             </defs>
 
@@ -50,7 +56,7 @@
           <p class="otp-send-label">
             {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_SEND_TO' | translate }}
           </p>
-          <p class="otp-phone" dir="ltr">{{ maskedPhone }}</p>
+          <p class="otp-phone" dir="ltr">{{ maskedPhone() }}</p>
         </aside>
 
         <div class="password-body">
@@ -65,7 +71,9 @@
                 type="password"
                 class="password-input"
                 formControlName="currentPassword"
-                [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate"
+                [placeholder]="
+                  'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate
+                "
                 [class.ng-invalid]="isInvalid('currentPassword')"
               />
             </div>
@@ -80,7 +88,9 @@
                 type="password"
                 class="password-input"
                 formControlName="newPassword"
-                [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate"
+                [placeholder]="
+                  'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate
+                "
                 [class.ng-invalid]="isInvalid('newPassword')"
               />
             </div>
@@ -95,7 +105,9 @@
                 type="password"
                 class="password-input"
                 formControlName="confirmPassword"
-                [placeholder]="'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate"
+                [placeholder]="
+                  'SETTINGS_ACTIVITY.SECURITY.PASSWORD.PASSWORD_PLACEHOLDER' | translate
+                "
                 [class.ng-invalid]="isInvalid('confirmPassword') || hasPasswordMismatch()"
               />
               @if (hasPasswordMismatch()) {
@@ -178,7 +190,9 @@
       <div class="option-row">
         <p-inputSwitch [ngModel]="loginAlerts()" (ngModelChange)="loginAlerts.set($event)" />
         <div class="option-content">
-          <p class="option-title">{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS' | translate }}</p>
+          <p class="option-title">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS' | translate }}
+          </p>
           <p class="option-description">
             {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS_DESC' | translate }}
           </p>
@@ -187,12 +201,11 @@
       </div>
 
       <div class="option-row">
-        <p-inputSwitch
-          [ngModel]="logoutOthers()"
-          (ngModelChange)="onLogoutOthersChange($event)"
-        />
+        <p-inputSwitch [ngModel]="logoutOthers()" (ngModelChange)="onLogoutOthersChange($event)" />
         <div class="option-content">
-          <p class="option-title">{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS' | translate }}</p>
+          <p class="option-title">
+            {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS' | translate }}
+          </p>
           <p class="option-description">
             {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS_DESC' | translate }}
           </p>
@@ -209,10 +222,16 @@
         <span class="section-num">3.</span>
         {{ 'SETTINGS_ACTIVITY.SECURITY.USERS.TITLE' | translate }}
       </h2>
-      <aside class="users-summary" dir="ltr" [attr.aria-label]="'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate">
+      <aside
+        class="users-summary"
+        dir="ltr"
+        [attr.aria-label]="'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate"
+      >
         <i class="pi pi-users users-summary-icon" aria-hidden="true"></i>
         <div class="users-summary-content">
-          <span class="users-summary-label">{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate }}</span>
+          <span class="users-summary-label">{{
+            'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate
+          }}</span>
           <span class="users-summary-value">{{ users().length }}</span>
         </div>
       </aside>
@@ -229,36 +248,36 @@
         [showFirstLastIcon]="true"
         paginatorStyleClass="users-table-paginator"
       >
-      <ng-template pTemplate="header">
-        <tr>
-          <th class="col-index">#</th>
-          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.NAME' | translate }}</th>
-          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.EMAIL' | translate }}</th>
-          <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.LAST_LOGIN' | translate }}</th>
-          <th class="col-device">{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.DEVICE' | translate }}</th>
-          <th class="col-actions">{{ 'COMMON.ACTIONS' | translate }}</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-user let-i="rowIndex">
-        <tr>
-          <td class="col-index">{{ i + 1 }}</td>
-          <td>{{ user.name }}</td>
-          <td class="col-email" dir="ltr">{{ user.email }}</td>
-          <td class="col-last-login" dir="ltr">{{ user.lastLogin }}</td>
-          <td class="col-device">
-            <i [class]="getDeviceIcon(user.device)" aria-hidden="true"></i>
-          </td>
-          <td class="col-actions">
-            <p-button
-              [label]="'SETTINGS_ACTIVITY.SECURITY.USERS.BLOCK' | translate"
-              [outlined]="true"
-              size="small"
-              styleClass="block-user-btn"
-              (onClick)="openMenu($event, actionMenu, user.id)"
-            />
-          </td>
-        </tr>
-      </ng-template>
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="col-index">#</th>
+            <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.NAME' | translate }}</th>
+            <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.EMAIL' | translate }}</th>
+            <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.LAST_LOGIN' | translate }}</th>
+            <th class="col-device">{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.DEVICE' | translate }}</th>
+            <th class="col-actions">{{ 'COMMON.ACTIONS' | translate }}</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-user let-i="rowIndex">
+          <tr>
+            <td class="col-index">{{ i + 1 }}</td>
+            <td>{{ user.name }}</td>
+            <td class="col-email" dir="ltr">{{ user.email }}</td>
+            <td class="col-last-login" dir="ltr">{{ user.lastLogin }}</td>
+            <td class="col-device">
+              <i [class]="getDeviceIcon(user.device)" aria-hidden="true"></i>
+            </td>
+            <td class="col-actions">
+              <p-button
+                [label]="'SETTINGS_ACTIVITY.SECURITY.USERS.BLOCK' | translate"
+                [outlined]="true"
+                size="small"
+                styleClass="block-user-btn"
+                (onClick)="openMenu($event, actionMenu, user.id)"
+              />
+            </td>
+          </tr>
+        </ng-template>
       </p-table>
     </div>
   </section>
@@ -287,9 +306,5 @@
     </div>
   </section>
 
-  <app-settings-footer
-    [showReset]="false"
-    [saving]="saving()"
-    (save)="onSave()"
-  />
+  <app-settings-footer [showReset]="false" [saving]="saving()" (save)="onSave()" />
 </div>

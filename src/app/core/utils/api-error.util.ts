@@ -148,10 +148,7 @@ export function extractOtpFieldError(
   return translated['code'] ?? null;
 }
 
-export function applyServerFieldErrors(
-  form: FormGroup,
-  fieldErrors: Record<string, string>
-): void {
+export function applyServerFieldErrors(form: FormGroup, fieldErrors: Record<string, string>): void {
   for (const [field, message] of Object.entries(fieldErrors)) {
     const control = form.get(field);
     if (!control) {

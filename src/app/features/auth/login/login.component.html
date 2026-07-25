@@ -23,7 +23,11 @@
           <label for="loginPhone"
             >{{ 'AUTH.LOGIN_PAGE.PHONE' | translate }} <span class="required">*</span></label
           >
-          <div class="phone-row phone-row--intl" [class.error]="isFieldInvalid(form, 'phone')" dir="ltr">
+          <div
+            class="phone-row phone-row--intl"
+            [class.error]="isFieldInvalid(form, 'phone')"
+            dir="ltr"
+          >
             <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
             <ngx-intl-tel-input
               [cssClass]="phoneInputCssClass"

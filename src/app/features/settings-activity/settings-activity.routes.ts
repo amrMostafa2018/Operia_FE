@@ -10,14 +10,18 @@ export const settingsActivityRoutes: Routes = [
       {
         path: 'identity',
         loadComponent: () =>
-          import('./identity-content/identity-content.component').then(m => m.IdentityContentComponent),
+          import('./identity-content/identity-content.component').then(
+            m => m.IdentityContentComponent
+          ),
         title: 'Activity Identity - Operia',
         data: { featureKey: 'SETTINGS_ACTIVITY.PAGES.IDENTITY.TITLE' },
       },
       {
         path: 'payments',
         loadComponent: () =>
-          import('./payment-methods/payment-methods.component').then(m => m.PaymentMethodsComponent),
+          import('./payment-methods/payment-methods.component').then(
+            m => m.PaymentMethodsComponent
+          ),
         title: 'Payment Methods - Operia',
         data: { featureKey: 'SETTINGS_ACTIVITY.PAGES.PAYMENTS.TITLE' },
       },
@@ -31,7 +35,9 @@ export const settingsActivityRoutes: Routes = [
       {
         path: 'security',
         loadComponent: () =>
-          import('./account-security/account-security.component').then(m => m.AccountSecurityComponent),
+          import('./account-security/account-security.component').then(
+            m => m.AccountSecurityComponent
+          ),
         title: 'Account & Security - Operia',
         data: { featureKey: 'SETTINGS_ACTIVITY.PAGES.SECURITY.TITLE' },
       },
