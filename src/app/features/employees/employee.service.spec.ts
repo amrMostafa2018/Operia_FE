@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '@env/environment';
-import { EmployeePayload, EmployeeService } from './employee.service';
+import { EmployeePayload, EmployeeService, EmployeeWorkingDay } from './employee.service';
 
 describe('EmployeeService', () => {
   let service: EmployeeService;
@@ -46,5 +46,22 @@ describe('EmployeeService', () => {
     expect(body.getAll('branchIds')).toEqual(['branch-1', 'branch-2']);
     expect(body.get('temporaryPassword')).toBe('Temp@1234');
     request.flush({});
+  });
+
+  it('loads and saves an employee weekly schedule', () => {
+    const days: EmployeeWorkingDay[] = [
+      { day: 'sat', enabled: true, fromTime: '10:00:00', toTime: '16:00:00' },
+    ];
+
+    service.getSchedule('employee-1').subscribe();
+    const getRequest = http.expectOne(`${environment.apiUrl}/employees/employee-1/schedule`);
+    expect(getRequest.request.method).toBe('GET');
+    getRequest.flush({ days });
+
+    service.updateSchedule('employee-1', { days }).subscribe();
+    const putRequest = http.expectOne(`${environment.apiUrl}/employees/employee-1/schedule`);
+    expect(putRequest.request.method).toBe('PUT');
+    expect(putRequest.request.body).toEqual({ days });
+    putRequest.flush({ days });
   });
 });

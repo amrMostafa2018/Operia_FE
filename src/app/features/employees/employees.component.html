@@ -216,8 +216,22 @@
         </div>
       </header>
       <div class="tabs">
-        <b><i class="pi pi-user"></i>{{ 'EMPLOYEES.PERSONAL' | translate }}</b>
+        <button
+          type="button"
+          [class.active]="activeTab() === 'personal'"
+          (click)="selectTab('personal')"
+        >
+          <i class="pi pi-user"></i>{{ 'EMPLOYEES.PERSONAL' | translate }}
+        </button>
+        <button
+          type="button"
+          [class.active]="activeTab() === 'schedule'"
+          (click)="selectTab('schedule')"
+        >
+          <i class="pi pi-calendar"></i>{{ 'EMPLOYEES.SCHEDULE' | translate }}
+        </button>
       </div>
+      @if (activeTab() === 'personal') {
       <div class="editor-body">
         <aside>
           <h3><i class="pi pi-shield"></i>{{ 'EMPLOYEES.ROLE_SUMMARY' | translate }}</h3>
@@ -322,14 +336,75 @@
           </div>
         </div>
       </div>
+      } @else {
+        <section class="schedule-panel" [attr.aria-busy]="scheduleLoading()">
+          <div class="schedule-note">
+            <i class="pi pi-info-circle"></i>
+            <div>
+              <b>{{ 'EMPLOYEES.SCHEDULE_TITLE' | translate }}</b>
+              <p>{{ 'EMPLOYEES.SCHEDULE_HINT' | translate }}</p>
+            </div>
+          </div>
+          @if (scheduleError(); as error) {
+            <p class="schedule-error" role="alert"><i class="pi pi-exclamation-circle"></i>{{ error }}</p>
+          }
+          <div class="schedule-table-wrap">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th>{{ 'EMPLOYEES.SCHEDULE_DAY' | translate }}</th>
+                  <th>{{ 'EMPLOYEES.SCHEDULE_WORKING' | translate }}</th>
+                  <th>{{ 'EMPLOYEES.SCHEDULE_FROM' | translate }}</th>
+                  <th>{{ 'EMPLOYEES.SCHEDULE_TO' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (day of schedule(); track day.day) {
+                  <tr [class.day-off]="!day.enabled">
+                    <td><b>{{ 'EMPLOYEES.SCHEDULE_DAYS.' + day.day.toUpperCase() | translate }}</b></td>
+                    <td>
+                      <label class="schedule-toggle">
+                        <input
+                          type="checkbox"
+                          [checked]="day.enabled"
+                          (change)="setScheduleEnabled(day.day, $event)"
+                          [attr.aria-label]="'EMPLOYEES.SCHEDULE_WORKING' | translate"
+                        />
+                        <span></span>
+                        <em>{{ (day.enabled ? 'EMPLOYEES.SCHEDULE_ON' : 'EMPLOYEES.SCHEDULE_OFF') | translate }}</em>
+                      </label>
+                    </td>
+                    <td>
+                      <input
+                        type="time"
+                        [value]="timeInputValue(day.fromTime)"
+                        [disabled]="!day.enabled"
+                        (change)="setScheduleTime(day.day, 'fromTime', $event)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="time"
+                        [value]="timeInputValue(day.toTime)"
+                        [disabled]="!day.enabled"
+                        (change)="setScheduleTime(day.day, 'toTime', $event)"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
       <footer>
         <button type="button" class="cancel" (click)="close()">
           {{ 'EMPLOYEES.CANCEL' | translate }}</button
         ><p-button
           type="submit"
           [loading]="saving()"
-          [label]="'EMPLOYEES.SAVE' | translate"
-          icon="pi pi-arrow-left"
+          [label]="(activeTab() === 'schedule' ? 'EMPLOYEES.SAVE_SCHEDULE' : 'EMPLOYEES.SAVE') | translate"
+          icon="pi pi-save"
         />
       </footer>
     </form>

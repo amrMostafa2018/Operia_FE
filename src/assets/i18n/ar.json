@@ -77,6 +77,7 @@
     "OtpExpired": "انتهت صلاحية رمز التحقق",
     "IdentityError": "حدث خطأ في إنشاء الحساب. يرجى المحاولة مرة أخرى",
     "InvalidCredentials": "رقم الموبايل أو كلمة المرور غير صحيحة"
+    ,"EmployeeScheduleOutsideBusinessHours": "يجب أن تكون ساعات عمل الموظف ضمن ساعات عمل النشاط المفعلة لذلك اليوم."
   },
   "NAV": {
     "SECTION": {
@@ -840,6 +841,26 @@
     "DEACTIVATE_TITLE": "إيقاف الموظف",
     "ACTIVATE_CONFIRM": "هل تريد تفعيل {{name}}؟",
     "DEACTIVATE_CONFIRM": "هل تريد إيقاف {{name}}؟ سيتم إنهاء جلساته النشطة.",
+    "SCHEDULE": "مواعيد التواجد بالفرع",
+    "SCHEDULE_TITLE": "مواعيد تواجد الموظف بالفرع",
+    "SCHEDULE_HINT": "حدد أيام وساعات عمل الموظف ضمن ساعات عمل النشاط.",
+    "SCHEDULE_DAY": "اليوم",
+    "SCHEDULE_WORKING": "يعمل",
+    "SCHEDULE_FROM": "من",
+    "SCHEDULE_TO": "إلى",
+    "SCHEDULE_ON": "يعمل",
+    "SCHEDULE_OFF": "يوم إجازة",
+    "SAVE_SCHEDULE": "حفظ المواعيد",
+    "SCHEDULE_SAVE_FAILED": "تعذر حفظ مواعيد الموظف.",
+    "SCHEDULE_DAYS": {
+      "FRI": "الجمعة",
+      "SAT": "السبت",
+      "SUN": "الأحد",
+      "MON": "الإثنين",
+      "TUE": "الثلاثاء",
+      "WED": "الأربعاء",
+      "THU": "الخميس"
+    },
     "ROLE_DESC": {
       "SuperAdmin": "إدارة كاملة للنشاط",
       "Admin": "مسؤول معتمد لإدارة النشاط",

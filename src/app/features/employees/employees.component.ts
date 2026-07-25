@@ -10,6 +10,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -25,7 +26,9 @@ import {
   EmployeePayload,
   EmployeeRole,
   EmployeeRoleCount,
+  EmployeeSchedule,
   EmployeeService,
+  EmployeeWorkingDay,
 } from './employee.service';
 import { environment } from '@env/environment';
 
@@ -74,6 +77,10 @@ export class EmployeesComponent implements OnInit {
   readonly selectedPhoto = signal<File | undefined>(undefined);
   readonly removePhoto = signal(false);
   readonly roleValue = signal<EmployeeRole>('Staff');
+  readonly activeTab = signal<'personal' | 'schedule'>('personal');
+  readonly schedule = signal<EmployeeWorkingDay[]>(this.defaultSchedule());
+  readonly scheduleLoading = signal(false);
+  readonly scheduleError = signal<string | null>(null);
   readonly canManage = computed(() =>
     this.permissions.hasPermission(Permissions.Admin.EmployeesManage)
   );
@@ -175,6 +182,9 @@ export class EmployeesComponent implements OnInit {
     ]);
     this.form.controls.temporaryPassword.updateValueAndValidity();
     this.clearPhoto();
+    this.activeTab.set('personal');
+    this.schedule.set(this.defaultSchedule());
+    this.scheduleError.set(null);
     this.dialogOpen.set(true);
   }
   openEdit(employee: Employee): void {
@@ -196,11 +206,44 @@ export class EmployeesComponent implements OnInit {
     this.form.controls.temporaryPassword.updateValueAndValidity();
     this.clearPhoto();
     this.photoPreview.set(employee.photoUrl ?? null);
+    this.activeTab.set('personal');
+    this.scheduleError.set(null);
+    this.loadSchedule(employee.id);
     this.dialogOpen.set(true);
   }
   close(): void {
     this.dialogOpen.set(false);
     this.clearPhoto();
+    this.scheduleError.set(null);
+  }
+  selectTab(tab: 'personal' | 'schedule'): void {
+    this.activeTab.set(tab);
+  }
+  setScheduleEnabled(day: string, event: Event): void {
+    const enabled = (event.target as HTMLInputElement).checked;
+    this.schedule.update(days =>
+      days.map(item =>
+        item.day === day
+          ? {
+              ...item,
+              enabled,
+              fromTime: enabled ? item.fromTime ?? '09:00:00' : null,
+              toTime: enabled ? item.toTime ?? '17:00:00' : null,
+            }
+          : item
+      )
+    );
+    this.scheduleError.set(null);
+  }
+  setScheduleTime(day: string, field: 'fromTime' | 'toTime', event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.schedule.update(days =>
+      days.map(item => (item.day === day ? { ...item, [field]: value ? `${value}:00` : null } : item))
+    );
+    this.scheduleError.set(null);
+  }
+  timeInputValue(value: string | null): string {
+    return value?.slice(0, 5) ?? '';
   }
   choosePhoto(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -228,6 +271,7 @@ export class EmployeesComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.activeTab.set('personal');
       return;
     }
     const value = this.form.getRawValue();
@@ -241,7 +285,12 @@ export class EmployeesComponent implements OnInit {
     const request = this.editing()
       ? this.service.update(this.editing()!.id, payload)
       : this.service.create(payload);
-    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    request
+      .pipe(
+        switchMap(employee => this.service.updateSchedule(employee.id, { days: this.schedule() })),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
       next: () => {
         this.saving.set(false);
         this.close();
@@ -252,8 +301,13 @@ export class EmployeesComponent implements OnInit {
           detail: this.translate.instant('EMPLOYEES.SAVED'),
         });
       },
-      error: () => this.saving.set(false),
-    });
+        error: error => {
+          this.saving.set(false);
+          const message = this.scheduleErrorMessage(error);
+          this.scheduleError.set(message);
+          if (this.activeTab() !== 'schedule') this.activeTab.set('schedule');
+        },
+      });
   }
   requestStatus(employee: Employee): void {
     this.pendingStatus.set(employee);
@@ -285,5 +339,34 @@ export class EmployeesComponent implements OnInit {
     this.photoPreview.set(null);
     this.selectedPhoto.set(undefined);
     this.removePhoto.set(false);
+  }
+  private loadSchedule(employeeId: string): void {
+    this.scheduleLoading.set(true);
+    this.service
+      .getSchedule(employeeId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: schedule => {
+          this.schedule.set(schedule.days);
+          this.scheduleLoading.set(false);
+        },
+        error: () => this.scheduleLoading.set(false),
+      });
+  }
+  private scheduleErrorMessage(error: { error?: { errorCodes?: Record<string, string[]>; errors?: Record<string, string[]> } }): string {
+    const code = Object.values(error.error?.errorCodes ?? {}).flat()[0];
+    if (code) {
+      const translated = this.translate.instant(`ERRORS.${code}`);
+      return translated === `ERRORS.${code}` ? code : translated;
+    }
+    return Object.values(error.error?.errors ?? {}).flat()[0] ?? this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED');
+  }
+  private defaultSchedule(): EmployeeWorkingDay[] {
+    return ['fri', 'sat', 'sun', 'mon', 'tue', 'wed', 'thu'].map(day => ({
+      day,
+      enabled: false,
+      fromTime: null,
+      toTime: null,
+    }));
   }
 }

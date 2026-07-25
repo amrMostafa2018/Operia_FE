@@ -76,7 +76,8 @@
     "OtpInvalid": "Invalid OTP code.",
     "OtpExpired": "OTP has expired.",
     "IdentityError": "An error occurred while creating your account.",
-    "InvalidCredentials": "Invalid phone number or password."
+    "InvalidCredentials": "Invalid phone number or password.",
+    "EmployeeScheduleOutsideBusinessHours": "Employee working hours must be within the enabled business working hours for that day."
   },
   "NAV": {
     "SECTION": {
@@ -840,6 +841,26 @@
     "DEACTIVATE_TITLE": "Deactivate employee",
     "ACTIVATE_CONFIRM": "Activate {{name}}?",
     "DEACTIVATE_CONFIRM": "Deactivate {{name}}? Their active sessions will be revoked.",
+    "SCHEDULE": "Branch availability",
+    "SCHEDULE_TITLE": "Employee branch availability",
+    "SCHEDULE_HINT": "Set the employee's working days and hours. Hours must stay within the business working hours.",
+    "SCHEDULE_DAY": "Day",
+    "SCHEDULE_WORKING": "Working",
+    "SCHEDULE_FROM": "From",
+    "SCHEDULE_TO": "To",
+    "SCHEDULE_ON": "Working",
+    "SCHEDULE_OFF": "Day off",
+    "SAVE_SCHEDULE": "Save schedule",
+    "SCHEDULE_SAVE_FAILED": "Unable to save the employee schedule.",
+    "SCHEDULE_DAYS": {
+      "FRI": "Friday",
+      "SAT": "Saturday",
+      "SUN": "Sunday",
+      "MON": "Monday",
+      "TUE": "Tuesday",
+      "WED": "Wednesday",
+      "THU": "Thursday"
+    },
     "ROLE_DESC": {
       "SuperAdmin": "Full tenant administration",
       "Admin": "Authorized business administrator",

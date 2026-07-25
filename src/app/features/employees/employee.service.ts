@@ -61,6 +61,15 @@ export interface EmployeePayload {
   photo?: File;
   removePhoto?: boolean;
 }
+export interface EmployeeWorkingDay {
+  day: string;
+  enabled: boolean;
+  fromTime: string | null;
+  toTime: string | null;
+}
+export interface EmployeeSchedule {
+  days: EmployeeWorkingDay[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
@@ -88,6 +97,12 @@ export class EmployeeService {
   }
   changeStatus(id: string, isActive: boolean): Observable<void> {
     return this.http.patch<void>(`${this.url}/${id}/status`, { isActive });
+  }
+  getSchedule(id: string): Observable<EmployeeSchedule> {
+    return this.http.get<EmployeeSchedule>(`${this.url}/${id}/schedule`);
+  }
+  updateSchedule(id: string, schedule: EmployeeSchedule): Observable<EmployeeSchedule> {
+    return this.http.put<EmployeeSchedule>(`${this.url}/${id}/schedule`, schedule);
   }
   private toFormData(payload: EmployeePayload): FormData {
     const data = new FormData();

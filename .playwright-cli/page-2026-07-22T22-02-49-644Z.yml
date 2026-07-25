@@ -1,0 +1,87 @@
+- generic [ref=e4]:
+  - complementary [ref=e5]:
+    - generic [ref=e13]:
+      - generic [ref=e14]: OPERIA
+      - generic [ref=e15]: Smart Business Management
+    - generic [ref=e16]:
+      - heading "ابدأ إدارة عملك بسهولة واحترافية" [level=1] [ref=e17]: ابدأ إدارة عملكبسهولة واحترافية
+      - paragraph [ref=e18]:
+        - text: انضم إلى آلاف الشركات التي تدير أعمالها بذكاء مع
+        - strong [ref=e19]: Operia
+    - generic [ref=e21]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]: الحجوزات
+          - generic [ref=e30]: "125"
+          - generic [ref=e31]: +12%
+        - generic [ref=e32]:
+          - generic [ref=e33]: العملاء
+          - generic [ref=e34]: "300"
+          - generic [ref=e35]: +8%
+        - generic [ref=e36]:
+          - generic [ref=e37]: الإيرادات
+          - generic [ref=e38]: 3,448
+          - generic [ref=e39]: +21%
+      - generic [ref=e40]: 72%
+      - generic [ref=e55]: 🌿
+    - list [ref=e56]:
+      - listitem [ref=e57]:
+        - generic [ref=e58]: 
+        - text: إدارة مواعيد وحجوزات بكل سهولة
+      - listitem [ref=e60]:
+        - generic [ref=e61]: 
+        - text: تقارير دقيقة تساعدك على اتخاذ القرار
+      - listitem [ref=e63]:
+        - generic [ref=e64]: 
+        - text: نظام أمن وموثوق لحماية بياناتك
+    - paragraph [ref=e66]:
+      - generic [ref=e67]: 
+      - text: بياناتك محمية بالكامل ولن يتم مشاركتها مع أي جهة خارجية
+  - main [ref=e68]:
+    - group "اللغة" [ref=e71]:
+      - button "العربية" [ref=e72] [cursor=pointer]
+      - button "English" [ref=e73] [cursor=pointer]
+    - generic [ref=e75]:
+      - generic [ref=e76]:
+        - generic [ref=e77]: ليس لديك حساب؟
+        - link "أنشئ حساباً جديداً" [ref=e78] [cursor=pointer]:
+          - /url: /auth/register
+      - generic [ref=e79]:
+        - generic [ref=e80]:
+          - generic [ref=e81]: 
+          - heading "تسجيل الدخول" [level=2] [ref=e83]
+        - paragraph [ref=e84]: مرحباً بعودتك! أدخل رقم الموبايل وكلمة المرور للدخول إلى حسابك
+        - generic [ref=e86]:
+          - generic [ref=e87]:
+            - generic [ref=e88]: رقم الموبايل *
+            - generic [ref=e89]:
+              - generic: 
+              - generic [ref=e91]:
+                - generic [ref=e92]: "+20"
+                - textbox "رقم الموبايل *" [ref=e97]:
+                  - /placeholder: أدخل رقم الموبايل
+          - generic [ref=e98]:
+            - generic [ref=e99]:
+              - generic [ref=e100]: كلمة المرور *
+              - link "نسيت كلمة المرور؟" [ref=e101] [cursor=pointer]:
+                - /url: /auth/forgot-password
+            - generic [ref=e102]:
+              - generic: 
+              - textbox "كلمة المرور *" [ref=e103]:
+                - /placeholder: أدخل كلمة المرور
+              - button "" [ref=e104] [cursor=pointer]
+          - generic [ref=e106]:
+            - generic [ref=e109] [cursor=pointer]:
+              - checkbox "تذكرني"
+            - generic [ref=e111] [cursor=pointer]: تذكرني
+          - button " تسجيل الدخول" [ref=e113] [cursor=pointer]:
+            - generic [ref=e114]: 
+            - generic [ref=e115]: تسجيل الدخول
+          - generic [ref=e116]: أو
+          - generic [ref=e118]:
+            - generic [ref=e119]: ليس لديك حساب؟
+            - link "إنشاء حساب جديد" [ref=e120] [cursor=pointer]:
+              - /url: /auth/register
+          - paragraph [ref=e121]:
+            - generic [ref=e122]: 
+            - text: نحن نلتزم بحماية بياناتك وخصوصيتك
