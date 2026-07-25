@@ -34,7 +34,9 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 
   const base64 = segment.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-  return JSON.parse(atob(padded)) as Record<string, unknown>;
+  const bytes = Uint8Array.from(atob(padded), char => char.charCodeAt(0));
+  const json = new TextDecoder('utf-8').decode(bytes);
+  return JSON.parse(json) as Record<string, unknown>;
 }
 
 function claimValues(payload: Record<string, unknown>, type: string): string[] {

@@ -82,13 +82,13 @@ export class AppSidebarComponent {
       if (this.isFinanceSectionActive()) {
         this.financeOpen.set(true);
       }
-    });
+    }, { allowSignalWrites: true });
 
     effect(() => {
       if (this.isSettingsSectionActive()) {
         this.settingsOpen.set(true);
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   private readonly mainNavItems: NavItem[] = [

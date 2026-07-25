@@ -42,8 +42,8 @@
       <div class="filter-field">
         <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.PLAN' | translate }}</span>
         <p-dropdown
-          [options]="planOptions"
-          optionLabel="labelKey"
+          [options]="planOptions()"
+          optionLabel="label"
           optionValue="value"
           [ngModel]="selectedPlan()"
           (ngModelChange)="selectedPlan.set($event)"
@@ -52,11 +52,11 @@
         >
           <ng-template pTemplate="selectedItem" let-item>
             @if (item) {
-              {{ item.labelKey | translate }}
+              {{ item.labelKey ? (item.labelKey | translate) : item.label }}
             }
           </ng-template>
           <ng-template pTemplate="item" let-item>
-            {{ item.labelKey | translate }}
+            {{ item.labelKey ? (item.labelKey | translate) : item.label }}
           </ng-template>
         </p-dropdown>
       </div>
@@ -83,32 +83,11 @@
           </ng-template>
         </p-dropdown>
       </div>
-      <div class="filter-field">
-        <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.PAYMENT_METHOD' | translate }}</span>
-        <p-dropdown
-          [options]="paymentMethodOptions"
-          optionLabel="labelKey"
-          optionValue="value"
-          [ngModel]="selectedPaymentMethod()"
-          (ngModelChange)="selectedPaymentMethod.set($event)"
-          [placeholder]="'OPERIA_SUBSCRIPTIONS.ALL_PAYMENT_METHODS' | translate"
-          styleClass="filter-drop"
-        >
-          <ng-template pTemplate="selectedItem" let-item>
-            @if (item) {
-              {{ item.labelKey | translate }}
-            }
-          </ng-template>
-          <ng-template pTemplate="item" let-item>
-            {{ item.labelKey | translate }}
-          </ng-template>
-        </p-dropdown>
-      </div>
     </div>
     <p-button
       [label]="'COMMON.SEARCH' | translate"
       icon="pi pi-search"
-      iconPos="right"
+      [iconPos]="leadingIconPos()"
       styleClass="search-btn"
       (onClick)="onSearch()"
     />
@@ -117,53 +96,44 @@
   <!-- Table -->
   <div class="table-section">
     <p-table
-      [value]="filteredSubscriptions()"
+      [value]="subscriptions()"
       [rows]="rows()"
       [first]="first()"
-      [paginator]="false"
+      [totalRecords]="totalRecords()"
+      [paginator]="true"
+      [lazy]="true"
+      [loading]="loading()"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="subs-paginator"
       styleClass="subs-table"
-      [scrollable]="true"
+      (onLazyLoad)="onLazyLoad($event)"
     >
       <ng-template pTemplate="header">
         <tr>
           <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_NUM' | translate }}</th>
-          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_INVOICE_NUM' | translate }}</th>
           <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_PLAN' | translate }}</th>
           <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_AMOUNT' | translate }}</th>
-          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_PAYMENT' | translate }}</th>
           <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_START' | translate }}</th>
           <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_END' | translate }}</th>
           <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_STATUS' | translate }}</th>
-          <th>{{ 'OPERIA_SUBSCRIPTIONS.COL_INVOICE' | translate }}</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-row let-i="rowIndex">
         <tr>
-          <td>{{ i + 1 }}</td>
-          <td class="mono">{{ row.invoiceNumber }}</td>
+          <td>{{ rowNumber(i) }}</td>
           <td>
             <div class="plan-cell">
-              <span class="plan-name">{{ row.planNameKey | translate }}</span>
-              <span class="plan-desc">{{ row.planDescriptionKey | translate }}</span>
+              <span class="plan-name">{{ row.planName }}</span>
             </div>
           </td>
           <td>
             <div class="amount-cell">
-              <span class="amount-value"
-                >{{ row.amount | number }} {{ 'DASHBOARD.EGP' | translate }}</span
-              >
-              <span class="amount-period">{{
-                billingPeriodKey(row.billingPeriod) | translate
-              }}</span>
-            </div>
-          </td>
-          <td>
-            <div class="payment-cell">
-              @if (paymentMethodIcon(row.paymentMethod); as icon) {
-                <i [class]="icon"></i>
-              }
-              <span>{{ paymentMethodKey(row.paymentMethod) | translate }}</span>
+              <span class="amount-value">{{ row.amount | number }} {{ currencyKey(row.currency) | translate }}</span>
+              <span class="amount-period">{{ billingPeriodKey(row.billingPeriod) | translate }}</span>
             </div>
           </td>
           <td>{{ row.startDate }}</td>
@@ -175,74 +145,73 @@
               styleClass="status-tag"
             />
           </td>
-          <td>
-            <p-button
-              [label]="'OPERIA_SUBSCRIPTIONS.VIEW_INVOICE' | translate"
-              styleClass="invoice-btn"
-              [outlined]="true"
-              (onClick)="onViewInvoice(row)"
-            />
-          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="9" class="empty-msg">
+          <td colspan="6" class="empty-msg">
             <i class="pi pi-inbox"></i>
             {{ 'COMMON.NO_DATA' | translate }}
           </td>
         </tr>
       </ng-template>
-    </p-table>
 
-    <!-- Footer -->
-    <div class="table-footer">
-      <div class="rows-selector">
-        <span class="rows-label">{{ 'OPERIA_SUBSCRIPTIONS.ROWS_LABEL' | translate }}</span>
-        <p-dropdown
-          [options]="rowOptions"
-          [ngModel]="rows()"
-          (ngModelChange)="onRowsChange($event)"
-          styleClass="rows-drop"
-        />
-      </div>
-
-      <div class="footer-center">
-        <span class="records-info">
-          {{ 'OPERIA_SUBSCRIPTIONS.SHOWING' | translate }}
-          {{ totalRecords() > 0 ? 1 : 0 }}
-          {{ 'OPERIA_SUBSCRIPTIONS.TO' | translate }}
-          {{ totalRecords() }}
-          {{ 'OPERIA_SUBSCRIPTIONS.OF' | translate }}
-          {{ totalRecords() }}
-          {{ 'OPERIA_SUBSCRIPTIONS.OPERATIONS' | translate }}
-        </span>
-        <div class="paginator">
-          <button class="page-btn page-btn--nav" type="button">
-            @if (prevIconPos() === 'left') {
-              <i [class]="prevIcon()" aria-hidden="true"></i>
-            }
-            <span>{{ 'OPERIA_SUBSCRIPTIONS.PREVIOUS' | translate }}</span>
-            @if (prevIconPos() === 'right') {
-              <i [class]="prevIcon()" aria-hidden="true"></i>
-            }
-          </button>
-          <button class="page-btn active" type="button">1</button>
-          <button class="page-btn page-btn--nav" type="button">
-            <span>{{ 'OPERIA_SUBSCRIPTIONS.NEXT' | translate }}</span>
-          </button>
+      <ng-template pTemplate="paginatorleft">
+        <div class="export-action">
+          <p-button
+            #exportButton
+            [label]="'OPERIA_SUBSCRIPTIONS.EXPORT_REPORT' | translate"
+            [icon]="exportLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-download'"
+            [iconPos]="leadingIconPos()"
+            styleClass="export-btn"
+            [outlined]="true"
+            [disabled]="exportLoading()"
+            (onClick)="openExportMenu($event)"
+          />
+          <p-overlayPanel
+            #exportPanel
+            styleClass="export-menu-panel"
+            appendTo="body"
+            [dismissable]="true"
+            (onShow)="alignExportPanel()"
+          >
+            <div class="export-options" role="menu">
+              @for (option of exportMenuOptions(); track option.format) {
+                <button
+                  type="button"
+                  class="export-option"
+                  role="menuitem"
+                  (click)="selectExport(option.format)"
+                >
+                  <span
+                    class="export-option-icon"
+                    [class.export-option-icon--excel]="option.format === 'excel'"
+                    [class.export-option-icon--pdf]="option.format === 'pdf'"
+                  >
+                    @if (option.format === 'excel') {
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <rect x="2" y="2" width="16" height="16" rx="2.5" fill="currentColor" />
+                        <path d="M6 6h8M6 10h8M6 14h5M10 6v8" stroke="#fff" stroke-width="1.1" stroke-linecap="round" />
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path
+                          d="M5.5 2.5h6.8L16.5 6.2v10.3a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z"
+                          fill="currentColor"
+                        />
+                        <path d="M12.3 2.5v3.7h3.7" stroke="#fff" stroke-width="1" stroke-linejoin="round" />
+                        <path d="M6.2 11h7.6M6.2 13.4h5.4" stroke="#fff" stroke-width="1.1" stroke-linecap="round" />
+                      </svg>
+                    }
+                  </span>
+                  <span class="export-option-label">{{ option.label }}</span>
+                </button>
+              }
+            </div>
+          </p-overlayPanel>
         </div>
-      </div>
-
-      <p-button
-        [label]="'OPERIA_SUBSCRIPTIONS.EXPORT_REPORT' | translate"
-        icon="pi pi-download"
-        iconPos="right"
-        styleClass="export-btn"
-        [outlined]="true"
-        (onClick)="exportReport()"
-      />
-    </div>
+      </ng-template>
+    </p-table>
   </div>
 </div>

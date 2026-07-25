@@ -157,7 +157,7 @@ export class SessionService {
     }
 
     const storedUser = this.getStoredUser();
-    const user = userFromAccessToken(token, displayName ?? storedUser?.name);
+    const user = userFromAccessToken(token, displayName);
     const merged = {
       ...user,
       name: this.resolveDisplayName(user, storedUser, displayName),
@@ -196,7 +196,7 @@ export class SessionService {
   }
 
   private resolveDisplayName(user: User, storedUser: User | null, displayName?: string): string {
-    const candidates = [displayName, storedUser?.name, user.name].filter(Boolean) as string[];
+    const candidates = [displayName, user.name, storedUser?.name].filter(Boolean) as string[];
 
     for (const candidate of candidates) {
       if (candidate !== user.email) {

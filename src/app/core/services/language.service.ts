@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { PrimeNGConfig } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
 
+import { getPrimeNgLocale } from '@core/config/primeng-locale';
+
 export type AppLanguage = 'en' | 'ar';
 
 const STORAGE_KEY = 'operia_lang';
@@ -54,10 +56,6 @@ export class LanguageService {
   }
 
   private configurePrimeNg(lang: AppLanguage): void {
-    const isAr = lang === 'ar';
-    this.primeConfig.setTranslation({
-      am: isAr ? 'ص' : 'AM',
-      pm: isAr ? 'م' : 'PM',
-    });
+    this.primeConfig.setTranslation(getPrimeNgLocale(lang));
   }
 }

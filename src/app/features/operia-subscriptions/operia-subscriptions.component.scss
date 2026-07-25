@@ -66,6 +66,7 @@
   border-radius: $border-radius-lg;
   padding: 1rem 1.25rem;
   box-shadow: $shadow-sm;
+  overflow: visible;
 }
 
 .filter-fields {
@@ -74,6 +75,7 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   flex: 1;
+  overflow: visible;
 }
 
 .filter-field {
@@ -81,6 +83,12 @@
   flex-direction: column;
   gap: 0.25rem;
   min-width: 140px;
+  overflow: visible;
+
+  ::ng-deep .date-picker.p-calendar {
+    display: inline-flex;
+    width: 100%;
+  }
 }
 
 .filter-label {
@@ -98,13 +106,26 @@
   .date-picker .p-inputtext {
     font-size: 0.875rem;
     padding: 0.45rem 0.75rem;
+    min-width: 9.5rem;
   }
 
-  .search-btn .p-button {
+  .date-picker.p-calendar {
+    width: 100%;
+  }
+
+  .search-btn.p-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     background: var(--color-primary) !important;
     border-color: var(--color-primary) !important;
     font-size: 0.875rem !important;
     padding: 0.5rem 1.25rem !important;
+
+    .p-button-icon-left,
+    .p-button-icon-right {
+      margin: 0 !important;
+    }
   }
 }
 
@@ -154,27 +175,205 @@
     font-weight: 600;
   }
 
-  .invoice-btn .p-button {
-    font-size: 0.78rem !important;
-    padding: 0.35rem 0.75rem !important;
-    white-space: nowrap;
+  .export-action {
+    display: inline-flex;
+    flex-shrink: 0;
+    position: relative;
   }
 
-  .rows-drop .p-dropdown {
-    font-size: 0.82rem;
-    min-width: 80px;
-  }
-
-  .export-btn .p-button {
+  .export-btn.p-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.82rem !important;
-    padding: 0.4rem 0.85rem !important;
+    padding: 0.5rem 0.95rem !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    background: transparent !important;
+
+    &:enabled:hover {
+      background: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-primary) !important;
+    }
+
+    .p-button-icon-left,
+    .p-button-icon-right {
+      margin: 0 !important;
+    }
+  }
+
+  .export-menu-panel.p-overlaypanel {
+    margin-top: 0.35rem !important;
+    border: 1px solid var(--surface-border);
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow-sm;
+    background: var(--surface-card);
+    overflow: hidden;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+
+    .p-overlaypanel-content {
+      padding: 0.35rem;
+    }
+  }
+
+  .export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 9.5rem;
+  }
+
+  .export-option {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 0;
+    border-radius: $border-radius;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-family: inherit;
+    text-align: start;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: var(--surface-hover);
+
+      .export-option-icon--excel {
+        background: #d8efe2;
+      }
+
+      .export-option-icon--pdf {
+        background: #f9d9d7;
+      }
+    }
+
+    &:active {
+      background: color-mix(in srgb, var(--color-primary) 10%, var(--surface-hover));
+    }
+
+    & + .export-option {
+      border-top: 1px solid var(--surface-hover);
+    }
+  }
+
+  .export-option-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.45rem;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+
+    svg {
+      width: 1.05rem;
+      height: 1.05rem;
+    }
+
+    &--excel {
+      background: #e7f4ec;
+      color: #1d6f42;
+    }
+
+    &--pdf {
+      background: #fdecec;
+      color: #d92d20;
+    }
+  }
+
+  .export-option-label {
+    font-weight: 500;
+  }
+
+  .subs-paginator.p-paginator,
+  .subs-table .p-paginator {
+    justify-content: flex-start;
+    gap: 0.35rem 0.65rem;
+    border-top: 1px solid var(--surface-border);
+    padding: 0.85rem 1.25rem;
+    background: var(--surface-card);
+    font-size: 0.82rem;
+
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      margin: 0 !important;
+    }
+
+    .p-paginator-left-content {
+      margin-inline-end: 0.75rem !important;
+      flex-shrink: 0;
+    }
+
+    .p-paginator-current {
+      margin-inline-start: auto !important;
+      margin-inline-end: 0.75rem !important;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last,
+    .p-paginator-page {
+      min-width: 2rem;
+      height: 2rem;
+      border-radius: $border-radius;
+    }
+
+    .p-paginator-pages .p-paginator-page.p-highlight {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    .p-paginator-rpp-options {
+      margin-inline-start: 0.35rem;
+
+      .p-dropdown {
+        min-width: 5.25rem;
+        height: 2rem;
+        align-items: center;
+        border-radius: $border-radius;
+      }
+
+      .p-dropdown-label {
+        padding-inline: 0.75rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .p-dropdown-trigger {
+        width: 2rem;
+      }
+    }
   }
 }
 
-.mono {
-  font-family: monospace;
-  font-size: 0.8rem;
+.empty-msg {
+  text-align: center;
   color: var(--text-secondary);
+  padding: 2.5rem !important;
+
+  i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .plan-cell {
@@ -186,11 +385,6 @@
 .plan-name {
   font-weight: 600;
   font-size: 0.85rem;
-}
-
-.plan-desc {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
 }
 
 .amount-cell {
@@ -222,106 +416,8 @@
   }
 }
 
-.empty-msg {
-  text-align: center;
-  color: var(--text-secondary);
-  padding: 2.5rem !important;
-
-  i {
-    display: block;
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-  }
-}
-
-// ─── Table footer ─────────────────────────────────────────────────────────────
-.table-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0.75rem 1.25rem;
-  border-top: 1px solid var(--surface-border);
-}
-
-.rows-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.rows-label {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.footer-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.records-info {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-}
-
-.paginator {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.page-btn--nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-
-  i {
-    font-size: 0.75rem;
-  }
-}
-
-.page-btn {
-  min-width: 32px;
-  height: 32px;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  border-radius: $border-radius;
-  font-size: 0.82rem;
-  cursor: pointer;
-  padding: 0 0.5rem;
-  transition: all 0.15s;
-
-  &:hover {
-    background: var(--color-primary-light);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-  }
-
-  &.active {
-    background: var(--color-primary);
-    color: #fff;
-    border-color: var(--color-primary);
-    font-weight: 600;
-  }
-}
-
 @media (max-width: $bp-md) {
   .filter-field {
     min-width: 120px;
-  }
-
-  .table-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .footer-center {
-    order: -1;
   }
 }
