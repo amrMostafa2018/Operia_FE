@@ -13,24 +13,28 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { MessageService } from 'primeng/api';
 import { Branch, BranchService } from '@app/features/branches/branch.service';
 import { PermissionService } from '@core/services/permission.service';
+// TODO: wire up permission-based UI
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Permissions, Policies } from '@core/models/permissions.model';
 import {
   Employee,
   EmployeePayload,
   EmployeeRole,
   EmployeeRoleCount,
-  EmployeeSchedule,
   EmployeeService,
   EmployeeWorkingDay,
 } from './employee.service';
-import { environment } from '@env/environment';
+import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
+import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
+
+// List page shell (header + filters + table + pagination) mirrors branches.component;
+// kept separate because employee create/edit uses a full-page overlay, not a dialog.
 
 @Component({
   selector: 'app-employees',
@@ -41,10 +45,10 @@ import { environment } from '@env/environment';
     ReactiveFormsModule,
     TranslatePipe,
     ButtonModule,
-    DialogModule,
     DropdownModule,
     InputTextModule,
     MultiSelectModule,
+    ConfirmActionDialogComponent,
   ],
   templateUrl: './employees.component.html',
   styleUrl: './employees.component.scss',
@@ -328,11 +332,7 @@ export class EmployeesComponent implements OnInit {
   roleLabel(role: EmployeeRole): string {
     return role === 'SuperAdmin' ? 'Super Admin' : role;
   }
-  photoUrl(path?: string): string | null {
-    if (!path) return null;
-    if (/^https?:\/\//i.test(path)) return path;
-    return `${environment.apiUrl.replace(/\/api\/?$/, '')}${path}`;
-  }
+  readonly resolveUploadUrl = resolveUploadUrl;
   private clearPhoto(): void {
     const url = this.photoPreview();
     if (url?.startsWith('blob:')) URL.revokeObjectURL(url);

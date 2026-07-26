@@ -38,10 +38,6 @@ export class AppConfigService {
     }
   }
 
-  get fileStorage(): FileStorageConfig {
-    return this.settings.fileStorage;
-  }
-
   get allowedMimeTypesAccept(): string {
     return this.settings.fileStorage.allowedMimeTypes.join(',');
   }

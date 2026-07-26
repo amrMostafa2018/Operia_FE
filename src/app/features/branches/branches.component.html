@@ -57,35 +57,19 @@
     </footer>
   </div>
 </section>
-<p-dialog
+<app-confirm-action-dialog
   [visible]="!!branchPendingDelete()"
-  [modal]="true"
-  [closable]="false"
-  [style]="{ width: '420px' }"
+  headerKey="BRANCHES.DELETE_TITLE"
+  messageKey="BRANCHES.DELETE_CONFIRM"
+  [messageParams]="{ name: branchPendingDelete()?.name ?? '' }"
+  cancelLabelKey="BRANCHES.CANCEL"
+  confirmLabelKey="BRANCHES.DELETE"
   styleClass="delete-branch-dialog"
->
-  <ng-template pTemplate="header"
-    ><div class="delete-title">
-      <i class="pi pi-exclamation-triangle"></i>
-      <div>
-        <b>{{ 'BRANCHES.DELETE_TITLE' | translate }}</b
-        ><small>{{ 'BRANCHES.DELETE_HINT' | translate }}</small>
-      </div>
-    </div></ng-template
-  >
-  @if (branchPendingDelete(); as branch) {
-    <p class="delete-copy">{{ 'BRANCHES.DELETE_CONFIRM' | translate: { name: branch.name } }}</p>
-  }
-  <ng-template pTemplate="footer"
-    ><div class="delete-actions">
-      <button type="button" class="cancel" (click)="cancelDelete()">
-        {{ 'BRANCHES.CANCEL' | translate }}</button
-      ><button type="button" class="delete-confirm" (click)="confirmDelete()">
-        <i class="pi pi-trash"></i>{{ 'BRANCHES.DELETE' | translate }}
-      </button>
-    </div></ng-template
-  >
-</p-dialog>
+  [useNativeFooterButtons]="true"
+  confirmIcon="pi pi-trash"
+  (cancelled)="cancelDelete()"
+  (confirmed)="confirmDelete()"
+/>
 <p-dialog
   [visible]="dialogOpen()"
   [modal]="true"

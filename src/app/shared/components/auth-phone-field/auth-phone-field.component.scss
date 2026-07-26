@@ -1,0 +1,16 @@
+@use '../../styles/auth-form';
+@use '../../styles/phone-intl-input';
+
+.whatsapp-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+
+  i {
+    font-size: 0.7rem;
+    color: #25d366;
+  }
+}

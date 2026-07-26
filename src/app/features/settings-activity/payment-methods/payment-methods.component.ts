@@ -23,6 +23,7 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 
+import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
 import {
   MOCK_BANK_OPTIONS,
@@ -284,11 +285,7 @@ export class PaymentMethodsComponent implements OnInit {
             })
           );
           this.snapshotInitialState();
-          this.messageService.add({
-            severity: 'success',
-            summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
-            detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
-          });
+          showSettingsSavedToast(this.messageService, this.translate);
         },
         error: () => {
           this.saving.set(false);

@@ -14,6 +14,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputSwitchModule } from 'primeng/inputswitch';
 
 import { TimePickerComponent } from '@app/shared/components/time-picker/time-picker.component';
+import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
 import { MOCK_WORKING_DAYS, WorkingDay } from '../models/settings-activity.model';
 import { SettingsActivityService, WorkingDayDto } from '../services/settings-activity.service';
@@ -92,7 +93,6 @@ export class WorkingDaysComponent implements OnInit {
                 DAY_KEY_MAP[d.day.toLowerCase()] ||
                 `SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.${d.day.toUpperCase()}`,
               enabled: d.enabled,
-              selected: d.enabled,
               fromTime: parseTimeString(d.fromTime),
               toTime: parseTimeString(d.toTime),
             }));
@@ -149,7 +149,6 @@ export class WorkingDaysComponent implements OnInit {
                 DAY_KEY_MAP[d.day.toLowerCase()] ||
                 `SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.${d.day.toUpperCase()}`,
               enabled: d.enabled,
-              selected: d.enabled,
               fromTime: parseTimeString(d.fromTime),
               toTime: parseTimeString(d.toTime),
             }));
@@ -157,11 +156,7 @@ export class WorkingDaysComponent implements OnInit {
           }
           this.allowOutsideHours.set(res.allowBookingOutsideWorkingHours);
           this.snapshotInitialState();
-          this.messageService.add({
-            severity: 'success',
-            summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
-            detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
-          });
+          showSettingsSavedToast(this.messageService, this.translate);
         },
         error: () => {
           this.saving.set(false);

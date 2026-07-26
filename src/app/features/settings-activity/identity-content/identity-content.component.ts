@@ -23,7 +23,14 @@ import {
 } from '@app/shared/constants/phone-input.config';
 import { AppConfigService } from '@core/services/app-config.service';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
+import { MultiFileDragState } from '@app/shared/utils/file-drag.util';
+import {
+  showUploadValidationToast,
+  validateUploadFile,
+} from '@app/shared/utils/file-upload.util';
+import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { MOCK_IDENTITY_PHOTOS, PhotoSlot } from '../models/settings-activity.model';
 import {
   IdentitySettingsDto,
@@ -114,7 +121,7 @@ export class IdentityContentComponent implements OnInit {
   private initialFormValue: Record<string, unknown> = {};
   private initialPhotos: PhotoSlot[] = [];
   private initialVisibleInfo = { mainAddress: '', about: '' };
-  private photoDragCounters = new Map<string, number>();
+  private readonly photoDragState = new MultiFileDragState(this.dragOverPhotoId);
 
   get acceptedImageAccept(): string {
     return this.appConfig.allowedMimeTypesAccept || 'image/jpeg,image/png,image/webp';
@@ -220,13 +227,11 @@ export class IdentityContentComponent implements OnInit {
   }
 
   isInvalid(controlName: string): boolean {
-    const control = this.form.get(controlName);
-    return !!(control?.invalid && control.touched);
+    return isFieldInvalid(this.form, controlName);
   }
 
   isPhoneInvalid(controlName: string): boolean {
-    const control = this.form.get(controlName);
-    return !!(control?.invalid && control.touched);
+    return isFieldInvalid(this.form, controlName);
   }
 
   onPhotoSelected(event: Event, photoId: string): void {
@@ -241,63 +246,32 @@ export class IdentityContentComponent implements OnInit {
   }
 
   onPhotoDragEnter(event: DragEvent, photoId: string): void {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const count = (this.photoDragCounters.get(photoId) ?? 0) + 1;
-    this.photoDragCounters.set(photoId, count);
-    this.dragOverPhotoId.set(photoId);
+    this.photoDragState.onEnter(event, photoId);
   }
 
   onPhotoDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'copy';
-    }
+    this.photoDragState.onOver(event);
   }
 
   onPhotoDragLeave(event: DragEvent, photoId: string): void {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const count = (this.photoDragCounters.get(photoId) ?? 1) - 1;
-    if (count <= 0) {
-      this.photoDragCounters.delete(photoId);
-      if (this.dragOverPhotoId() === photoId) {
-        this.dragOverPhotoId.set(null);
-      }
-    } else {
-      this.photoDragCounters.set(photoId, count);
-    }
+    this.photoDragState.onLeave(event, photoId);
   }
 
   onPhotoDrop(event: DragEvent, photoId: string): void {
-    event.preventDefault();
-    event.stopPropagation();
-
-    this.photoDragCounters.delete(photoId);
-    this.dragOverPhotoId.set(null);
-
-    const file = event.dataTransfer?.files?.[0];
+    const file = this.photoDragState.onDrop(event, photoId);
     if (file) {
       this.processPhotoFile(file, photoId);
     }
   }
 
   isPhotoDragOver(photoId: string): boolean {
-    return this.dragOverPhotoId() === photoId;
+    return this.photoDragState.isOver(photoId);
   }
 
   private processPhotoFile(file: File, photoId: string): void {
-    if (!this.appConfig.isAllowedMimeType(file.type)) {
-      this.showToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE');
-      return;
-    }
-
-    if (!this.appConfig.isValidFileSize(file.size)) {
-      this.showToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_SIZE');
+    const validation = validateUploadFile(file, this.appConfig);
+    if (!validation.valid) {
+      showUploadValidationToast(this.messageService, this.translate, validation.errorKey!);
       return;
     }
 
@@ -311,7 +285,11 @@ export class IdentityContentComponent implements OnInit {
         );
       })
       .catch(() => {
-        this.showToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE');
+        showUploadValidationToast(
+          this.messageService,
+          this.translate,
+          'SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE'
+        );
       });
   }
 
@@ -347,12 +325,6 @@ export class IdentityContentComponent implements OnInit {
   onResetVisibleInfo(): void {
     this.form.patchValue(this.initialVisibleInfo);
     this.aboutCharCount.set(this.initialVisibleInfo.about.length);
-  }
-
-  onReset(): void {
-    this.form.reset(this.initialFormValue);
-    this.photos.set(structuredClone(this.initialPhotos));
-    this.aboutCharCount.set((this.initialFormValue['about'] as string)?.length ?? 0);
   }
 
   onSave(): void {
@@ -397,11 +369,7 @@ export class IdentityContentComponent implements OnInit {
       .subscribe({
         next: res => {
           this.patchFromDto(res);
-          this.messageService.add({
-            severity: 'success',
-            summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
-            detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
-          });
+          showSettingsSavedToast(this.messageService, this.translate);
         },
         error: () => this.showRequestError(),
       });
@@ -422,14 +390,6 @@ export class IdentityContentComponent implements OnInit {
       mainAddress: this.form.get('mainAddress')?.value ?? '',
       about: this.form.get('about')?.value ?? '',
     };
-  }
-
-  private showToast(key: string): void {
-    this.messageService.add({
-      severity: 'warn',
-      summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
-      detail: this.translate.instant(key),
-    });
   }
 
   private showRequestError(): void {

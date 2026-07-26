@@ -27,7 +27,6 @@ export const PUBLIC_AUTH_API_ENDPOINTS: readonly AuthApiEndpoint[] = [
   AuthApiEndpoint.ForgotPassword,
   AuthApiEndpoint.VerifyForgotPasswordOtp,
   AuthApiEndpoint.ResetPassword,
-  AuthApiEndpoint.CompleteFirstLogin,
   AuthApiEndpoint.ResendForgotPasswordOtp,
 ];
 

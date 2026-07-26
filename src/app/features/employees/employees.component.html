@@ -129,7 +129,7 @@
             <tr>
               <td>
                 <span class="avatar">
-                  @if (photoUrl(employee.photoUrl); as url) {
+                  @if (resolveUploadUrl(employee.photoUrl); as url) {
                     <img [src]="url" [alt]="employee.fullName" />
                   } @else {
                     <i class="pi pi-user"></i>
@@ -420,40 +420,15 @@
   </div>
 }
 
-<p-dialog
+<app-confirm-action-dialog
   [visible]="!!pendingStatus()"
-  [modal]="true"
-  [closable]="false"
-  [appendTo]="'body'"
-  [style]="{ width: '420px' }"
+  [headerKey]="pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE_TITLE' : 'EMPLOYEES.ACTIVATE_TITLE'"
+  [messageKey]="
+    pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE_CONFIRM' : 'EMPLOYEES.ACTIVATE_CONFIRM'
+  "
+  [messageParams]="{ name: pendingStatus()?.fullName ?? '' }"
+  [confirmLabelKey]="pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE'"
   styleClass="employee-status-dialog"
->
-  <ng-template pTemplate="header">
-    <b>{{
-      (pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE_TITLE' : 'EMPLOYEES.ACTIVATE_TITLE')
-        | translate
-    }}</b>
-  </ng-template>
-  <p class="status-dialog-copy">
-    {{
-      (pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE_CONFIRM' : 'EMPLOYEES.ACTIVATE_CONFIRM')
-        | translate: { name: pendingStatus()?.fullName }
-    }}
-  </p>
-  <ng-template pTemplate="footer">
-    <div class="status-dialog-actions">
-      <p-button
-        type="button"
-        (onClick)="pendingStatus.set(null)"
-        [label]="'EMPLOYEES.CANCEL' | translate"
-      />
-      <p-button
-        type="button"
-        (onClick)="confirmStatus()"
-        [label]="
-          (pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE') | translate
-        "
-      />
-    </div>
-  </ng-template>
-</p-dialog>
+  (cancelled)="pendingStatus.set(null)"
+  (confirmed)="confirmStatus()"
+/>

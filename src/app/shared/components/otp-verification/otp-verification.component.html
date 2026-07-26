@@ -33,9 +33,9 @@
         }
       </div>
       @if (serverError()) {
-        <small class="error-msg">{{ serverError() }}</small>
+        <small class="error-msg error-msg--centered">{{ serverError() }}</small>
       } @else if (isInvalid()) {
-        <small class="error-msg">{{ labels().invalid | translate }}</small>
+        <small class="error-msg error-msg--centered">{{ labels().invalid | translate }}</small>
       }
     </div>
 

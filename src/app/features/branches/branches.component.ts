@@ -19,9 +19,15 @@ import { MessageService } from 'primeng/api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
 import { PermissionService } from '@core/services/permission.service';
+// TODO: wire up permission-based UI
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Permissions, Policies } from '@core/models/permissions.model';
-import { Branch, BranchPayload, BranchService } from './branch.service';
+import { Branch, BranchService } from './branch.service';
 import { applyServerFieldErrors, extractApiFieldErrors } from '@core/utils/api-error.util';
+import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
+
+// List page shell (header + filters + table + pagination) mirrors employees.component;
+// not extracted into a shared entity-list-page to avoid heavy projection/config overhead.
 
 @Component({
   selector: 'app-branches',
@@ -34,6 +40,7 @@ import { applyServerFieldErrors, extractApiFieldErrors } from '@core/utils/api-e
     DialogModule,
     InputTextModule,
     TableModule,
+    ConfirmActionDialogComponent,
   ],
   templateUrl: './branches.component.html',
   styleUrl: './branches.component.scss',

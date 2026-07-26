@@ -29,7 +29,10 @@ import { OnboardingStateService } from '@core/services/onboarding-state.service'
 
 import { extractApiError } from '@core/utils/api-error.util';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
-
+import {
+  showUploadValidationToast,
+  validateUploadFile,
+} from '@app/shared/utils/file-upload.util';
 import { getSubmitArrowIcon, getSubmitIconPos } from '@app/shared/utils/rtl.util';
 
 import { ACTIVITY_TYPES } from '@app/features/onboarding/models/activity-type.model';
@@ -84,7 +87,6 @@ export class PlanSelectionComponent implements OnInit {
 
   readonly billingType = signal<BillingType>(BillingType.Monthly);
   readonly usableBalance = signal(0);
-  readonly totalBalance = signal(0);
   readonly tenantId = signal<string | null>(null);
   readonly subscriptionId = signal<string | null>(null);
   readonly subscriptionAmount = signal<number | null>(null);
@@ -240,13 +242,9 @@ export class PlanSelectionComponent implements OnInit {
       return;
     }
 
-    if (!this.appConfig.isAllowedMimeType(file.type)) {
-      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE');
-      return;
-    }
-
-    if (!this.appConfig.isValidFileSize(file.size)) {
-      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_SIZE');
+    const validation = validateUploadFile(file, this.appConfig);
+    if (!validation.valid) {
+      showUploadValidationToast(this.messageService, this.translate, validation.errorKey!);
       return;
     }
 
@@ -375,7 +373,6 @@ export class PlanSelectionComponent implements OnInit {
 
   private applyOnboardingStatus(status: OnboardingStatusDto): void {
     this.usableBalance.set(status.usableBalance ?? 0);
-    this.totalBalance.set(status.totalBalance ?? 0);
     this.tenantId.set(status.tenantId);
     this.subscriptionId.set(status.subscriptionId);
     this.subscriptionAmount.set(status.subscriptionAmount);
@@ -472,13 +469,5 @@ export class PlanSelectionComponent implements OnInit {
 
   private planCodeKey(code: string): string {
     return code.replace(/-/g, '_').toUpperCase();
-  }
-
-  private showUploadToast(key: string): void {
-    this.messageService.add({
-      severity: 'warn',
-      summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
-      detail: this.translate.instant(key),
-    });
   }
 }

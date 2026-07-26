@@ -1,24 +1,11 @@
+@use '../../shared/styles/page-list' as page-list;
+
 .employees-page {
   padding: 1.3rem 1.5rem;
   color: #171a43;
 }
 .page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 0 1.4rem;
-}
-.page-head h1 {
-  margin: 0;
-  font-size: 1.8rem;
-}
-.page-head h1 i {
-  color: #4f21e8;
-  margin-inline-end: 0.65rem;
-}
-.page-head p {
-  margin: 0.35rem 0;
-  color: #777a92;
+  @include page-list.page-head-base;
 }
 .summary {
   display: grid;
@@ -59,10 +46,7 @@
   font-size: 1.5rem;
 }
 .table-card {
-  background: #fff;
-  border: 1px solid #e8e7ef;
-  border-radius: 10px;
-  overflow: hidden;
+  @include page-list.table-card-base;
 }
 .filters {
   display: grid;

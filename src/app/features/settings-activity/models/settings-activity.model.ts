@@ -73,7 +73,6 @@ export interface WorkingDay {
   id: string;
   dayKey: string;
   enabled: boolean;
-  selected: boolean;
   fromTime: Date;
   toTime: Date;
 }
@@ -187,7 +186,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     id: 'fri',
     dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.FRI',
     enabled: false,
-    selected: false,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
   },
@@ -195,7 +193,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     id: 'sat',
     dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SAT',
     enabled: true,
-    selected: true,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
   },
@@ -203,7 +200,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     id: 'sun',
     dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.SUN',
     enabled: true,
-    selected: true,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
   },
@@ -211,7 +207,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     id: 'mon',
     dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.MON',
     enabled: true,
-    selected: true,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
   },
@@ -219,7 +214,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     id: 'tue',
     dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.TUE',
     enabled: true,
-    selected: true,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
   },
@@ -227,7 +221,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     id: 'wed',
     dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.WED',
     enabled: true,
-    selected: true,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
   },
@@ -235,7 +228,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     id: 'thu',
     dayKey: 'SETTINGS_ACTIVITY.WORKING_DAYS.DAYS.THU',
     enabled: true,
-    selected: true,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
   },

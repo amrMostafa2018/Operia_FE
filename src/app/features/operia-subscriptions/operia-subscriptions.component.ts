@@ -25,6 +25,11 @@ import { LanguageService } from '@core/services/language.service';
 import { OnboardingService } from '@core/services/onboarding.service';
 import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import {
+  subscriptionStatusKey,
+  subscriptionStatusSeverity,
+  TagSeverity,
+} from '@app/shared/utils/status-tag.util';
+import {
   BillingPeriod,
   SUBSCRIPTION_STATUS_OPTIONS,
   SubscriptionExportFormat,
@@ -32,8 +37,6 @@ import {
   SubscriptionRow,
   SubscriptionStatus,
 } from './models/operia-subscriptions.model';
-
-type TagSeverity = 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast';
 
 interface PlanFilterOption {
   labelKey?: string;
@@ -131,23 +134,11 @@ export class OperiaSubscriptionsComponent implements OnInit {
   }
 
   statusSeverity(status: SubscriptionStatus): TagSeverity {
-    const map: Record<SubscriptionStatus, TagSeverity> = {
-      active: 'success',
-      expired: 'secondary',
-      cancelled: 'danger',
-      pending: 'warning',
-    };
-    return map[status];
+    return subscriptionStatusSeverity(status);
   }
 
   statusKey(status: SubscriptionStatus): string {
-    const map: Record<SubscriptionStatus, string> = {
-      active: 'OPERIA_SUBSCRIPTIONS.STATUS.ACTIVE',
-      expired: 'OPERIA_SUBSCRIPTIONS.STATUS.EXPIRED',
-      cancelled: 'OPERIA_SUBSCRIPTIONS.STATUS.CANCELLED',
-      pending: 'OPERIA_SUBSCRIPTIONS.STATUS.PENDING',
-    };
-    return map[status];
+    return subscriptionStatusKey(status);
   }
 
   billingPeriodKey(period: BillingPeriod): string {

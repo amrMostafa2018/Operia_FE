@@ -24,7 +24,7 @@ import { OnboardingStateService } from '@core/services/onboarding-state.service'
 import { LanguageService } from '@core/services/language.service';
 import {
   getPrevArrowIcon,
-  getPrevIconPos,
+  getLeadingIconPos,
   getSubmitArrowIcon,
   getSubmitIconPos,
 } from '@app/shared/utils/rtl.util';
@@ -36,6 +36,12 @@ import {
 import { ACTIVITY_TO_BUSINESS_TYPE } from '@app/features/onboarding/models/onboarding.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { extractApiError } from '@core/utils/api-error.util';
+import { SingleFileDragState } from '@app/shared/utils/file-drag.util';
+import {
+  showUploadValidationToast,
+  validateUploadFile,
+} from '@app/shared/utils/file-upload.util';
+import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 
 interface SelectOption<T = string> {
   label: string;
@@ -84,7 +90,7 @@ export class BusinessSetupComponent implements OnInit {
   logoFile = signal<File | null>(null);
   isLogoDragOver = signal(false);
 
-  private logoDragCounter = 0;
+  private readonly logoDragState = new SingleFileDragState(this.isLogoDragOver);
 
   readonly activityTypes = ACTIVITY_TYPES;
   readonly acceptedImageAccept = this.appConfig.allowedMimeTypesAccept;
@@ -100,7 +106,7 @@ export class BusinessSetupComponent implements OnInit {
   readonly submitIcon = computed(() => getSubmitArrowIcon(this.languageService.currentLang()));
 
   readonly prevIconPos = computed<'left' | 'right'>(() =>
-    getPrevIconPos(this.languageService.currentLang())
+    getLeadingIconPos(this.languageService.currentLang())
   );
 
   readonly submitIconPos = computed<'left' | 'right'>(() =>
@@ -167,13 +173,8 @@ export class BusinessSetupComponent implements OnInit {
     return !!activity.comingSoon;
   }
 
-  isActivitySelected(activity: ActivityType): boolean {
-    return this.selectedActivityId() === activity.id;
-  }
-
   isInvalid(field: string): boolean {
-    const ctrl = this.form.get(field);
-    return !!(ctrl?.invalid && ctrl?.touched);
+    return isFieldInvalid(this.form, field);
   }
 
   onLogoSelected(event: Event): void {
@@ -184,37 +185,19 @@ export class BusinessSetupComponent implements OnInit {
   }
 
   onLogoDragEnter(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.logoDragCounter++;
-    this.isLogoDragOver.set(true);
+    this.logoDragState.onEnter(event);
   }
 
   onLogoDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'copy';
-    }
+    this.logoDragState.onOver(event);
   }
 
   onLogoDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.logoDragCounter--;
-    if (this.logoDragCounter <= 0) {
-      this.logoDragCounter = 0;
-      this.isLogoDragOver.set(false);
-    }
+    this.logoDragState.onLeave(event);
   }
 
   onLogoDrop(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.logoDragCounter = 0;
-    this.isLogoDragOver.set(false);
-
-    const file = event.dataTransfer?.files?.[0];
+    const file = this.logoDragState.onDrop(event);
     if (file) {
       this.setLogoFile(file);
     }
@@ -287,13 +270,9 @@ export class BusinessSetupComponent implements OnInit {
   }
 
   private setLogoFile(file: File): void {
-    if (!this.appConfig.isAllowedMimeType(file.type)) {
-      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_TYPE');
-      return;
-    }
-
-    if (!this.appConfig.isValidFileSize(file.size)) {
-      this.showUploadToast('SETTINGS_ACTIVITY.IDENTITY.PHOTOS.INVALID_SIZE');
+    const validation = validateUploadFile(file, this.appConfig);
+    if (!validation.valid) {
+      showUploadValidationToast(this.messageService, this.translate, validation.errorKey!);
       return;
     }
 
@@ -303,13 +282,5 @@ export class BusinessSetupComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => this.logoPreview.set(reader.result as string);
     reader.readAsDataURL(file);
-  }
-
-  private showUploadToast(key: string): void {
-    this.messageService.add({
-      severity: 'warn',
-      summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
-      detail: this.translate.instant(key),
-    });
   }
 }

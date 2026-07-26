@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageService } from '@core/services/language.service';
-import { getPrevArrowIcon, getPrevIconPos } from '@app/shared/utils/rtl.util';
+import { getPrevArrowIcon, getLeadingIconPos } from '@app/shared/utils/rtl.util';
+import {
+  bookingStatusKey,
+  bookingStatusSeverity,
+  TagSeverity,
+} from '@app/shared/utils/status-tag.util';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -17,8 +22,6 @@ import {
   StatCard,
   STATUS_OPTIONS,
 } from './models/dashboard.model';
-
-type TagSeverity = 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast';
 
 @Component({
   selector: 'app-dashboard',
@@ -79,7 +82,7 @@ export class DashboardComponent {
 
   readonly prevIcon = computed(() => getPrevArrowIcon(this.languageService.currentLang()));
 
-  readonly prevIconPos = computed(() => getPrevIconPos(this.languageService.currentLang()));
+  readonly prevIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
 
   readonly today = computed(() =>
     new Date().toLocaleDateString('ar-EG', {
@@ -91,25 +94,11 @@ export class DashboardComponent {
   );
 
   statusSeverity(status: BookingStatus): TagSeverity {
-    const map: Record<BookingStatus, TagSeverity> = {
-      confirmed: 'success',
-      pending: 'warning',
-      cancelled: 'danger',
-      completed: 'info',
-      no_show: 'secondary',
-    };
-    return map[status];
+    return bookingStatusSeverity(status);
   }
 
   statusKey(status: BookingStatus): string {
-    const map: Record<BookingStatus, string> = {
-      confirmed: 'BOOKING_STATUS.CONFIRMED',
-      pending: 'BOOKING_STATUS.PENDING',
-      cancelled: 'BOOKING_STATUS.CANCELLED',
-      completed: 'BOOKING_STATUS.COMPLETED',
-      no_show: 'BOOKING_STATUS.NO_SHOW',
-    };
-    return map[status];
+    return bookingStatusKey(status);
   }
 
   onRowsChange(val: number): void {

@@ -1,32 +1,22 @@
+@use '../../shared/styles/page-list' as page-list;
+
 .branches-page {
   padding: 1.5rem;
 }
 .page-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-.page-head h1 {
-  margin: 0;
-  color: #191a4d;
-  font-size: 2rem;
-}
-.page-head h1 i {
-  margin-inline-end: 0.6rem;
-  color: #3f18e8;
-}
-.page-head p,
-.page-head strong {
-  display: block;
-  margin: 0.35rem 0 0;
-  color: #73758a;
+  @include page-list.page-head-base;
+
+  h1 {
+    font-size: 2rem;
+    color: #191a4d;
+
+    i {
+      color: #3f18e8;
+    }
+  }
 }
 .table-card {
-  background: #fff;
-  border: 1px solid #ececf4;
-  border-radius: 10px;
-  overflow: hidden;
+  @include page-list.table-card-base;
 }
 .filters {
   display: flex;

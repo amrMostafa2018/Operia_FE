@@ -1,0 +1,39 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [appendTo]="'body'"
+  [style]="{ width: width() }"
+  [styleClass]="styleClass()"
+>
+  <ng-template pTemplate="header">
+    <b>{{ headerKey() | translate }}</b>
+  </ng-template>
+
+  <p class="confirm-dialog-copy">{{ messageKey() | translate: messageParams() }}</p>
+
+  <ng-template pTemplate="footer">
+    @if (useNativeFooterButtons()) {
+      <div class="confirm-dialog-actions">
+        <button type="button" class="cancel" (click)="cancelled.emit()">
+          {{ cancelLabelKey() | translate }}
+        </button>
+        <button type="button" class="delete-confirm" (click)="confirmed.emit()">
+          @if (confirmIcon()) {
+            <i [class]="confirmIcon()"></i>
+          }
+          {{ confirmLabelKey() | translate }}
+        </button>
+      </div>
+    } @else {
+      <div class="confirm-dialog-actions">
+        <p-button
+          type="button"
+          (onClick)="cancelled.emit()"
+          [label]="cancelLabelKey() | translate"
+        />
+        <p-button type="button" (onClick)="confirmed.emit()" [label]="confirmLabelKey() | translate" />
+      </div>
+    }
+  </ng-template>
+</p-dialog>

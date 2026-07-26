@@ -1,0 +1,31 @@
+<div class="field field--phone">
+  <label [for]="inputId()">
+    {{ labelKey() | translate }} <span class="required">*</span>
+  </label>
+  <div class="phone-row phone-row--intl" [class.error]="invalid()" dir="ltr">
+    <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+    <ngx-intl-tel-input
+      [cssClass]="phoneInputCssClass"
+      [onlyCountries]="onlyCountries"
+      [selectedCountryISO]="selectedCountryISO"
+      [enableAutoCountrySelect]="false"
+      [enablePlaceholder]="true"
+      [customPlaceholder]="placeholderKey() | translate"
+      [searchCountryFlag]="false"
+      [selectFirstCountry]="false"
+      [separateDialCode]="true"
+      [phoneValidation]="true"
+      [inputId]="inputId()"
+      [formControlName]="controlName()"
+    />
+  </div>
+  @if (showWhatsappHint()) {
+    <small class="whatsapp-hint">
+      <i class="pi pi-whatsapp"></i>
+      {{ 'AUTH.REGISTER_PAGE.WHATSAPP_HINT' | translate }}
+    </small>
+  }
+  @if (invalid() && errorMessage()) {
+    <small class="error-msg">{{ errorMessage() }}</small>
+  }
+</div>

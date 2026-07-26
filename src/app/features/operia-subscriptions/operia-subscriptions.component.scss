@@ -1,4 +1,5 @@
 @use '../../../styles/variables' as *;
+@use '../../shared/styles/data-table' as data-table;
 
 .subs-page {
   display: flex;
@@ -131,48 +132,17 @@
 
 // ─── Table section ────────────────────────────────────────────────────────────
 .table-section {
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-sm;
-  overflow: hidden;
+  @include data-table.data-table-shell;
   width: 100%;
 }
 
 ::ng-deep {
   .subs-table {
-    .p-datatable-thead > tr > th {
-      background: var(--surface-hover);
-      color: var(--text-secondary);
-      font-size: 0.8rem;
-      font-weight: 600;
-      padding: 0.6rem 0.75rem;
-      border-bottom: 1px solid var(--surface-border);
-      white-space: nowrap;
-    }
-
-    .p-datatable-tbody > tr > td {
-      padding: 0.65rem 0.75rem;
-      font-size: 0.85rem;
-      color: var(--text-primary);
-      vertical-align: middle;
-      border-bottom: 1px solid var(--surface-hover);
-    }
-
-    .p-datatable-tbody > tr:last-child > td {
-      border-bottom: none;
-    }
-
-    .p-datatable-tbody > tr:hover > td {
-      background: var(--surface-hover);
-    }
+    @include data-table.primeng-data-table-theme;
   }
 
   .status-tag.p-tag {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.65rem;
-    border-radius: 20px;
-    font-weight: 600;
+    @include data-table.status-tag-pill;
   }
 
   .export-action {

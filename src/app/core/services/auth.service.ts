@@ -16,7 +16,6 @@ import {
   VerifyLoginOtpResponse,
 } from '@core/models/user.model';
 import { AuthStore } from '@core/store/auth.store';
-import { extractApiError } from '@core/utils/api-error.util';
 import { AuthHttpService } from './auth-http.service';
 import { OnboardingEntrySource, SessionService } from './session.service';
 
@@ -153,10 +152,6 @@ export class AuthService {
     return this.session.getAccessToken();
   }
 
-  getRefreshToken(): string | null {
-    return this.session.getRefreshToken();
-  }
-
   hasActiveSession(): boolean {
     return this.session.hasActiveSession();
   }
@@ -171,13 +166,9 @@ export class AuthService {
 
   private withAuthState<T>(source$: Observable<T>): Observable<T> {
     this.authStore.setLoading(true);
-    this.authStore.setError(null);
     return source$.pipe(
       finalize(() => this.authStore.setLoading(false)),
-      catchError((err: HttpErrorResponse) => {
-        this.authStore.setError(extractApiError(err));
-        return throwError(() => err);
-      })
+      catchError((err: HttpErrorResponse) => throwError(() => err))
     );
   }
 }

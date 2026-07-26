@@ -15,15 +15,11 @@ import { AppHeaderComponent } from '@app/layout/components/app-header/app-header
 export class MainLayoutComponent {
   sidebarCollapsed = signal(false);
   mobileOpen = signal(false);
-  private readonly isMobileView = signal(this.getIsMobileView());
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', () => {
-        const isMobile = this.getIsMobileView();
-        this.isMobileView.set(isMobile);
-
-        if (!isMobile) {
+        if (!this.getIsMobileView()) {
           this.mobileOpen.set(false);
         }
       });

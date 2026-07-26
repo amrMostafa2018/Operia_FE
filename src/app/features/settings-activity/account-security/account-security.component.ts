@@ -8,11 +8,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  AbstractControl,
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
-  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -25,18 +23,15 @@ import { TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
+import {
+  passwordMatchValidator,
+  setupPasswordConfirmSync,
+} from '@core/utils/validators.util';
+import { isFieldInvalid } from '@app/shared/utils/form-field.util';
+import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
 import { DEVICE_ICONS, MOCK_ACCESS_USERS, AccessUser } from '../models/settings-activity.model';
 import { SettingsActivityService, AuthorizedUserDto } from '../services/settings-activity.service';
-
-function passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
-  const newPassword = group.get('newPassword')?.value;
-  const confirmPassword = group.get('confirmPassword')?.value;
-  if (newPassword && confirmPassword && newPassword !== confirmPassword) {
-    return { passwordMismatch: true };
-  }
-  return null;
-}
 
 @Component({
   selector: 'app-account-security',
@@ -78,14 +73,13 @@ export class AccountSecurityComponent implements OnInit {
   menuItems: MenuItem[] = [];
 
   ngOnInit(): void {
-    this.passwordForm = this.fb.group(
-      {
-        currentPassword: ['', Validators.required],
-        newPassword: ['', [Validators.required, Validators.minLength(8)]],
-        confirmPassword: ['', Validators.required],
-      },
-      { validators: passwordMatchValidator }
-    );
+    this.passwordForm = this.fb.group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required, passwordMatchValidator]],
+    });
+
+    setupPasswordConfirmSync(this.passwordForm, this.destroyRef, 'newPassword', 'confirmPassword');
 
     this.menuItems = [
       {
@@ -292,19 +286,14 @@ export class AccountSecurityComponent implements OnInit {
       .subscribe({
         next: () => {
           this.logoutOthers.set(false);
-          this.messageService.add({
-            severity: 'success',
-            summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_TITLE'),
-            detail: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVED_DETAIL'),
-          });
+          showSettingsSavedToast(this.messageService, this.translate);
         },
         error: () => this.showRequestError(),
       });
   }
 
   isInvalid(controlName: string): boolean {
-    const control = this.passwordForm.get(controlName);
-    return !!(control?.invalid && control.touched);
+    return isFieldInvalid(this.passwordForm, controlName);
   }
 
   getDeviceIcon(device: AccessUser['device']): string {
@@ -312,10 +301,8 @@ export class AccountSecurityComponent implements OnInit {
   }
 
   hasPasswordMismatch(): boolean {
-    return !!(
-      this.passwordForm.hasError('passwordMismatch') &&
-      this.passwordForm.get('confirmPassword')?.touched
-    );
+    const control = this.passwordForm.get('confirmPassword');
+    return !!(control?.errors?.['mismatch'] && control.touched);
   }
 
   private showRequestError(): void {

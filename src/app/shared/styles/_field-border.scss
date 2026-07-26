@@ -1,0 +1,23 @@
+@use '../../../styles/variables' as *;
+
+@mixin bordered-field-container {
+  border: 1.5px solid var(--surface-border);
+  border-radius: $border-radius;
+  background: var(--surface-card);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-focus-ring);
+  }
+
+  &.error {
+    border-color: var(--color-danger);
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px var(--color-danger-focus-ring);
+    }
+  }
+}

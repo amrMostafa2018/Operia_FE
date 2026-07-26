@@ -1,0 +1,31 @@
+@mixin page-head-base {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #171a43;
+
+    i {
+      color: #4f21e8;
+      margin-inline-end: 0.65rem;
+    }
+  }
+
+  p,
+  strong {
+    display: block;
+    margin: 0.35rem 0 0;
+    color: #777a92;
+  }
+}
+
+@mixin table-card-base {
+  background: #fff;
+  border: 1px solid #e8e7ef;
+  border-radius: 10px;
+  overflow: hidden;
+}

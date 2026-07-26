@@ -1,5 +1,6 @@
 @use '../../../../styles/variables' as *;
 @use '../../../shared/styles/phone-intl-input';
+@use '../../../shared/styles/section-card';
 
 .identity-content {
   --auth-field-padding-block: 0.65rem;
@@ -8,44 +9,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-}
-
-.section-card {
-  padding: 1.5rem;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1.25rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-
-  .section-num {
-    color: $primary;
-  }
-
-  &--with-icon {
-    gap: 0.625rem;
-  }
-}
-
-.section-title-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: $border-radius;
-  background: $primary-light;
-  color: $primary;
-  flex-shrink: 0;
-
-  .pi {
-    font-size: 1rem;
-  }
 }
 
 .basic-info-grid {

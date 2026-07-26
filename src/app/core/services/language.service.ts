@@ -29,20 +29,12 @@ export class LanguageService {
     return this.currentLang();
   }
 
-  isRtl(): boolean {
-    return this.currentLang() === 'ar';
-  }
-
   setLanguage(lang: AppLanguage): void {
     if (!this.supportedLanguages.includes(lang) || lang === this.current) {
       return;
     }
     localStorage.setItem(STORAGE_KEY, lang);
     void this.applyLanguage(lang);
-  }
-
-  toggleLanguage(): void {
-    this.setLanguage(this.current === 'ar' ? 'en' : 'ar');
   }
 
   private applyLanguage(lang: AppLanguage): Promise<void> {

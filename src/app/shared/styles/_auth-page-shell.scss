@@ -1,0 +1,16 @@
+@mixin auth-page-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  min-height: 100%;
+  position: relative;
+}
+
+@mixin auth-page-shell-mobile {
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+  }
+}

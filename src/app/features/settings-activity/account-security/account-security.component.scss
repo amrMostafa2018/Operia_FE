@@ -1,13 +1,10 @@
 @use '../../../../styles/variables' as *;
+@use '../../../shared/styles/section-card';
 
 .account-security {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-}
-
-.section-card {
-  padding: 1.5rem;
 }
 
 .section-heading,

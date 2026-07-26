@@ -118,16 +118,7 @@ export function translateApiFieldErrors(
 
 /** Resolves auth form 401/validation errors for inline display on form fields. */
 export function extractAuthFormFieldErrors(error: HttpErrorResponse): Record<string, string> {
-  const aliased: Record<string, string> = {};
-
-  for (const [field, value] of Object.entries(extractApiFieldErrors(error))) {
-    const target = AUTH_FORM_FIELD_ALIASES[field] ?? mapApiField(field);
-    if (!aliased[target]) {
-      aliased[target] = value;
-    }
-  }
-
-  return aliased;
+  return extractAliasedFieldErrors(error, AUTH_FORM_FIELD_ALIASES);
 }
 
 /** Resolves OTP verify 401 errors for inline display on the code field. */
@@ -135,17 +126,25 @@ export function extractOtpFieldError(
   error: HttpErrorResponse,
   translate: (key: string) => string
 ): string | null {
+  const aliased = extractAliasedFieldErrors(error, OTP_API_FIELD_ALIASES);
+  const translated = translateApiFieldErrors(aliased, translate);
+  return translated['code'] ?? null;
+}
+
+function extractAliasedFieldErrors(
+  error: HttpErrorResponse,
+  aliases: Record<string, string>
+): Record<string, string> {
   const aliased: Record<string, string> = {};
 
   for (const [field, value] of Object.entries(extractApiFieldErrors(error))) {
-    const target = OTP_API_FIELD_ALIASES[field] ?? field;
+    const target = aliases[field] ?? mapApiField(field);
     if (!aliased[target]) {
       aliased[target] = value;
     }
   }
 
-  const translated = translateApiFieldErrors(aliased, translate);
-  return translated['code'] ?? null;
+  return aliased;
 }
 
 export function applyServerFieldErrors(form: FormGroup, fieldErrors: Record<string, string>): void {
