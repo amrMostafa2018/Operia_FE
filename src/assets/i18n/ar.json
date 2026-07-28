@@ -77,7 +77,18 @@
     "OtpExpired": "انتهت صلاحية رمز التحقق",
     "IdentityError": "حدث خطأ في إنشاء الحساب. يرجى المحاولة مرة أخرى",
     "InvalidCredentials": "رقم الموبايل أو كلمة المرور غير صحيحة",
-    "EmployeeScheduleOutsideBusinessHours": "يجب أن تكون ساعات عمل الموظف ضمن ساعات عمل النشاط المفعلة لذلك اليوم."
+    "EmployeeScheduleOutsideBusinessHours": "يجب أن تكون ساعات عمل الموظف ضمن ساعات عمل النشاط المفعلة لذلك اليوم.",
+    "FieldRequired": "هذا الحقل مطلوب.",
+    "ActivityNameRequired": "اسم النشاط مطلوب.",
+    "AddressRequired": "العنوان مطلوب.",
+    "AboutRequired": "نبذة عن النشاط مطلوبة.",
+    "AboutMaxLength": "تم تجاوز الحد الأقصى للأحرف (500 حرف).",
+    "AccountHolderRequired": "اسم صاحب الحساب مطلوب.",
+    "AccountNumberRequired": "رقم الحساب مطلوب.",
+    "InstapayIdRequired": "معرف Instapay مطلوب.",
+    "WalletNumberRequired": "رقم المحفظة مطلوب.",
+    "ServiceCodeRequired": "كود الخدمة مطلوب.",
+    "OtpRequired": "رمز التحقق مطلوب."
   },
   "NAV": {
     "SECTION": {
@@ -691,6 +702,9 @@
       "FAWRY": {
         "CODE": "كود الخدمة / رقم الدفع",
         "NOTES": "ملاحظات (للعملاء) (اختياري)"
+      },
+      "VALIDATION": {
+        "AT_LEAST_ONE": "يجب تفعيل طريقة دفع واحدة على الأقل قبل الحفظ."
       },
       "CASH_NO_DETAILS": "لا توجد بيانات إضافية مطلوبة لطريقة الدفع كاش.",
       "REVIEW": {

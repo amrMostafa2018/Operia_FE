@@ -21,6 +21,9 @@
           class="field-input"
           [class.ng-invalid]="isInvalid('activityName')"
         />
+        @if (getFieldError('activityName'); as err) {
+          <small class="field-error">{{ err }}</small>
+        }
       </div>
 
       <div class="field field--phone">
@@ -97,6 +100,9 @@
           class="field-input"
           [class.ng-invalid]="isInvalid('email')"
         />
+        @if (getFieldError('email'); as err) {
+          <small class="field-error">{{ err }}</small>
+        }
       </div>
     </div>
   </section>
@@ -285,6 +291,9 @@
           class="field-input"
           [class.ng-invalid]="isInvalid('mainAddress')"
         />
+        @if (getFieldError('mainAddress'); as err) {
+          <small class="field-error">{{ err }}</small>
+        }
       </div>
 
       <div class="field field-about">
@@ -305,6 +314,9 @@
             {{ aboutCharCount() }}/{{ maxAboutChars }}
           </div>
         </div>
+        @if (getFieldError('about'); as err) {
+          <small class="field-error">{{ err }}</small>
+        }
       </div>
     </div>
 

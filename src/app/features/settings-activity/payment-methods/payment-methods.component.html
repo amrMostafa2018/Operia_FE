@@ -106,21 +106,41 @@
                           optionLabel="label"
                           optionValue="value"
                           styleClass="w-full"
+                          [class.ng-invalid]="isInvalid(bankForm, 'bank')"
                         />
+                        @if (getFieldError(bankForm, 'bank'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                       <div class="field">
                         <label
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.HOLDER' | translate }}
                           <span class="required">*</span></label
                         >
-                        <input pInputText formControlName="accountHolder" class="field-input" />
+                        <input
+                          pInputText
+                          formControlName="accountHolder"
+                          class="field-input"
+                          [class.ng-invalid]="isInvalid(bankForm, 'accountHolder')"
+                        />
+                        @if (getFieldError(bankForm, 'accountHolder'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                       <div class="field">
                         <label
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.ACCOUNT' | translate }}
                           <span class="required">*</span></label
                         >
-                        <input pInputText formControlName="accountNumber" class="field-input" />
+                        <input
+                          pInputText
+                          formControlName="accountNumber"
+                          class="field-input"
+                          [class.ng-invalid]="isInvalid(bankForm, 'accountNumber')"
+                        />
+                        @if (getFieldError(bankForm, 'accountNumber'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                       <div class="field">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.IBAN' | translate }}</label>
@@ -137,14 +157,30 @@
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.HOLDER' | translate }}
                           <span class="required">*</span></label
                         >
-                        <input pInputText formControlName="accountHolder" class="field-input" />
+                        <input
+                          pInputText
+                          formControlName="accountHolder"
+                          class="field-input"
+                          [class.ng-invalid]="isInvalid(instapayForm, 'accountHolder')"
+                        />
+                        @if (getFieldError(instapayForm, 'accountHolder'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                       <div class="field">
                         <label
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.ID' | translate }}
                           <span class="required">*</span></label
                         >
-                        <input pInputText formControlName="instapayId" class="field-input" />
+                        <input
+                          pInputText
+                          formControlName="instapayId"
+                          class="field-input"
+                          [class.ng-invalid]="isInvalid(instapayForm, 'instapayId')"
+                        />
+                        @if (getFieldError(instapayForm, 'instapayId'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                     </div>
                   </form>
@@ -163,21 +199,41 @@
                           optionLabel="label"
                           optionValue="value"
                           styleClass="w-full"
+                          [class.ng-invalid]="isInvalid(walletForm, 'walletType')"
                         />
+                        @if (getFieldError(walletForm, 'walletType'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                       <div class="field">
                         <label
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.NUMBER' | translate }}
                           <span class="required">*</span></label
                         >
-                        <input pInputText formControlName="walletNumber" class="field-input" />
+                        <input
+                          pInputText
+                          formControlName="walletNumber"
+                          class="field-input"
+                          [class.ng-invalid]="isInvalid(walletForm, 'walletNumber')"
+                        />
+                        @if (getFieldError(walletForm, 'walletNumber'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                       <div class="field full-width">
                         <label
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.HOLDER' | translate }}
                           <span class="required">*</span></label
                         >
-                        <input pInputText formControlName="holderName" class="field-input" />
+                        <input
+                          pInputText
+                          formControlName="holderName"
+                          class="field-input"
+                          [class.ng-invalid]="isInvalid(walletForm, 'holderName')"
+                        />
+                        @if (getFieldError(walletForm, 'holderName'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                     </div>
                   </form>
@@ -190,7 +246,15 @@
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.CODE' | translate }}
                           <span class="required">*</span></label
                         >
-                        <input pInputText formControlName="serviceCode" class="field-input" />
+                        <input
+                          pInputText
+                          formControlName="serviceCode"
+                          class="field-input"
+                          [class.ng-invalid]="isInvalid(fawryForm, 'serviceCode')"
+                        />
+                        @if (getFieldError(fawryForm, 'serviceCode'); as err) {
+                          <small class="field-error">{{ err }}</small>
+                        }
                       </div>
                       <div class="field full-width">
                         <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.NOTES' | translate }}</label>

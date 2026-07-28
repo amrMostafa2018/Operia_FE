@@ -5,6 +5,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   role: UserRole;
   permissions: string[];
   branchId?: string;

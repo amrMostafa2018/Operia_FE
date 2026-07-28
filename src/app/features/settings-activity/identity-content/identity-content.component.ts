@@ -226,6 +226,34 @@ export class IdentityContentComponent implements OnInit {
     });
   }
 
+  getFieldError(controlName: string): string | null {
+    const control = this.form.get(controlName);
+    if (!control?.touched || !control.invalid) {
+      return null;
+    }
+    if (control.errors?.['required']) {
+      switch (controlName) {
+        case 'activityName':
+          return this.translate.instant('ERRORS.ActivityNameRequired');
+        case 'email':
+          return this.translate.instant('ERRORS.EmailRequired');
+        case 'mainAddress':
+          return this.translate.instant('ERRORS.AddressRequired');
+        case 'about':
+          return this.translate.instant('ERRORS.AboutRequired');
+        default:
+          return this.translate.instant('ERRORS.FieldRequired');
+      }
+    }
+    if (control.errors?.['email']) {
+      return this.translate.instant('ERRORS.EmailInvalid');
+    }
+    if (control.errors?.['maxlength']) {
+      return this.translate.instant('ERRORS.AboutMaxLength');
+    }
+    return null;
+  }
+
   isInvalid(controlName: string): boolean {
     return isFieldInvalid(this.form, controlName);
   }

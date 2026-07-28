@@ -77,7 +77,18 @@
     "OtpExpired": "OTP has expired.",
     "IdentityError": "An error occurred while creating your account.",
     "InvalidCredentials": "Invalid phone number or password.",
-    "EmployeeScheduleOutsideBusinessHours": "Employee working hours must be within the enabled business working hours for that day."
+    "EmployeeScheduleOutsideBusinessHours": "Employee working hours must be within the enabled business working hours for that day.",
+    "FieldRequired": "This field is required.",
+    "ActivityNameRequired": "Activity name is required.",
+    "AddressRequired": "Address is required.",
+    "AboutRequired": "About section is required.",
+    "AboutMaxLength": "Maximum length exceeded (500 characters).",
+    "AccountHolderRequired": "Account holder name is required.",
+    "AccountNumberRequired": "Account number is required.",
+    "InstapayIdRequired": "Instapay ID is required.",
+    "WalletNumberRequired": "Wallet number is required.",
+    "ServiceCodeRequired": "Service code is required.",
+    "OtpRequired": "Verification code is required."
   },
   "NAV": {
     "SECTION": {
@@ -688,6 +699,9 @@
       "FAWRY": {
         "CODE": "Service Code / Payment Number",
         "NOTES": "Notes for customers (optional)"
+      },
+      "VALIDATION": {
+        "AT_LEAST_ONE": "Activate at least one payment method before saving."
       },
       "CASH_NO_DETAILS": "No additional details are required for cash payments.",
       "REVIEW": {

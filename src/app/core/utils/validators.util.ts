@@ -1,6 +1,6 @@
 import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { clearServerFieldError } from './api-error.util';
 
@@ -13,10 +13,16 @@ export const PASSWORD_VALIDATORS = [
 ];
 
 export function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const parent = control.parent;
-  if (!parent) return null;
-  const password = parent.get('password')?.value;
-  return control.value && control.value !== password ? { mismatch: true } : null;
+  return passwordMatchValidatorFor('password')(control);
+}
+
+export function passwordMatchValidatorFor(passwordField: string): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const parent = control.parent;
+    if (!parent) return null;
+    const password = parent.get(passwordField)?.value;
+    return control.value && control.value !== password ? { mismatch: true } : null;
+  };
 }
 
 export function setupPasswordConfirmSync(

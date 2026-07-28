@@ -210,6 +210,39 @@ export class PaymentMethodsComponent implements OnInit {
     }
   }
 
+  isInvalid(form: FormGroup, controlName: string): boolean {
+    const control = form.get(controlName);
+    return !!(control?.invalid && control.touched);
+  }
+
+  getFieldError(form: FormGroup, controlName: string): string | null {
+    const control = form.get(controlName);
+    if (!control?.touched || !control.invalid) {
+      return null;
+    }
+    if (control.errors?.['required']) {
+      switch (controlName) {
+        case 'bank':
+        case 'walletType':
+          return this.translate.instant('ERRORS.FieldRequired');
+        case 'accountHolder':
+        case 'holderName':
+          return this.translate.instant('ERRORS.AccountHolderRequired');
+        case 'accountNumber':
+          return this.translate.instant('ERRORS.AccountNumberRequired');
+        case 'instapayId':
+          return this.translate.instant('ERRORS.InstapayIdRequired');
+        case 'walletNumber':
+          return this.translate.instant('ERRORS.WalletNumberRequired');
+        case 'serviceCode':
+          return this.translate.instant('ERRORS.ServiceCodeRequired');
+        default:
+          return this.translate.instant('ERRORS.FieldRequired');
+      }
+    }
+    return null;
+  }
+
   detailsMethods(): PaymentMethodState[] {
     return this.detailsOrder
       .map(id => this.paymentMethods().find(method => method.id === id))
@@ -233,6 +266,15 @@ export class PaymentMethodsComponent implements OnInit {
   }
 
   onSave(): void {
+    if (!this.paymentMethods().some((method) => method.enabled)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: this.translate.instant('SETTINGS_ACTIVITY.FOOTER.SAVE'),
+        detail: this.translate.instant('SETTINGS_ACTIVITY.PAYMENTS.VALIDATION.AT_LEAST_ONE'),
+      });
+      return;
+    }
+
     const forms = [this.bankForm, this.instapayForm, this.walletForm, this.fawryForm];
     let valid = true;
 

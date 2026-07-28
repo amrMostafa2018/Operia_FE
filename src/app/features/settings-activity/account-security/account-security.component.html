@@ -56,7 +56,7 @@
           <p class="otp-send-label">
             {{ 'SETTINGS_ACTIVITY.SECURITY.PASSWORD.OTP_SEND_TO' | translate }}
           </p>
-          <p class="otp-phone" dir="ltr">{{ maskedPhone() }}</p>
+          <p class="otp-phone" dir="ltr">{{ phoneNumber() }}</p>
         </aside>
 
         <div class="password-body">
@@ -76,6 +76,9 @@
                 "
                 [class.ng-invalid]="isInvalid('currentPassword')"
               />
+              @if (getPasswordFieldError('currentPassword'); as err) {
+                <small class="field-error">{{ err }}</small>
+              }
             </div>
 
             <div class="field">
@@ -93,6 +96,9 @@
                 "
                 [class.ng-invalid]="isInvalid('newPassword')"
               />
+              @if (getPasswordFieldError('newPassword'); as err) {
+                <small class="field-error">{{ err }}</small>
+              }
             </div>
 
             <div class="field">
@@ -110,7 +116,9 @@
                 "
                 [class.ng-invalid]="isInvalid('confirmPassword') || hasPasswordMismatch()"
               />
-              @if (hasPasswordMismatch()) {
+              @if (getPasswordFieldError('confirmPassword'); as err) {
+                <small class="field-error">{{ err }}</small>
+              } @else if (hasPasswordMismatch()) {
                 <small class="field-error">{{ 'ERRORS.PasswordMismatch' | translate }}</small>
               }
             </div>
@@ -128,6 +136,7 @@
                 pInputText
                 id="otpCode"
                 class="otp-input"
+                [class.ng-invalid]="!!getOtpError()"
                 [ngModel]="otpCode()"
                 (ngModelChange)="otpCode.set($event)"
                 [ngModelOptions]="{ standalone: true }"
@@ -149,6 +158,9 @@
                 />
               </div>
             </div>
+            @if (getOtpError(); as err) {
+              <small class="field-error">{{ err }}</small>
+            }
           </div>
         </div>
       </div>

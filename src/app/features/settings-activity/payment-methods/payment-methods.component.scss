@@ -336,6 +336,11 @@
   }
 }
 
+.field-error {
+  color: $danger;
+  font-size: 0.75rem;
+}
+
 .field-input,
 .field-textarea {
   width: 100%;
@@ -351,6 +356,10 @@
   &:enabled:focus {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px var(--color-primary-focus-ring);
+  }
+
+  &.ng-invalid.ng-touched {
+    border-color: var(--color-danger);
   }
 }
 
@@ -498,6 +507,10 @@
 
   .method-form .p-dropdown {
     width: 100%;
+
+    &.ng-invalid.ng-touched {
+      border-color: var(--color-danger);
+    }
   }
 
   .method-form .p-dropdown .p-dropdown-label {

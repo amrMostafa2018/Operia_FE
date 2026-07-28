@@ -76,6 +76,12 @@ export function userFromAccessToken(token: string, name?: string): User {
     'email',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
   );
+  const phoneNumber = claim(
+    payload,
+    'phone_number',
+    'mobile_phone',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone'
+  );
   const fullName = claim(
     payload,
     'name',
@@ -92,6 +98,7 @@ export function userFromAccessToken(token: string, name?: string): User {
     id,
     name: (name ?? fullName)?.trim() || email,
     email,
+    ...(phoneNumber ? { phoneNumber } : {}),
     role: roleFromPayload(payload),
     permissions: claimValues(payload, PERMISSION_CLAIM_TYPE),
     ...(activityTypeId ? { activityTypeId } : {}),

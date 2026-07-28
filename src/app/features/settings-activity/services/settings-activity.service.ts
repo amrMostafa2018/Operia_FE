@@ -55,7 +55,8 @@ export interface AuthorizedUserDto {
 export interface SecuritySettingsDto {
   enableTwoFactorAuthentication: boolean;
   loginAlertsEnabled: boolean;
-  maskedPhone: string;
+  phoneNumber?: string;
+  maskedPhone?: string;
   users: AuthorizedUserDto[];
 }
 
