@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://operia.runasp.net/api',
+  apiUrl: 'https://operia.runasp.net/api',
 };
