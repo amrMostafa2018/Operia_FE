@@ -54,6 +54,7 @@
           >
             <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
             <ngx-intl-tel-input
+              appPhoneUsernameAutocomplete
               [cssClass]="phoneInputCssClass"
               [onlyCountries]="onlyCountries"
               [selectedCountryISO]="selectedCountryISO"
@@ -86,6 +87,8 @@
               id="email"
               pInputText
               formControlName="email"
+              name="email"
+              autocomplete="email"
               [placeholder]="'AUTH.LOGIN_PAGE.EMAIL_PLACEHOLDER' | translate"
               type="email"
               class="p-inputtext-custom"
@@ -115,6 +118,8 @@
               id="password"
               pInputText
               formControlName="password"
+              name="new-password"
+              autocomplete="new-password"
               [type]="showPassword() ? 'text' : 'password'"
               [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
               class="p-inputtext-custom has-toggle"
@@ -152,6 +157,8 @@
               id="confirmPassword"
               pInputText
               formControlName="confirmPassword"
+              name="confirm-password"
+              autocomplete="new-password"
               [type]="showConfirm() ? 'text' : 'password'"
               [placeholder]="'AUTH.REGISTER_PAGE.CONFIRM_PLACEHOLDER' | translate"
               class="p-inputtext-custom has-toggle"

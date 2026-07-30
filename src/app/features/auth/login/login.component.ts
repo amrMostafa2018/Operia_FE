@@ -34,13 +34,14 @@ import {
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '@app/shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '@app/shared/components/otp-verification/otp-verification.component';
+import { PhoneUsernameAutocompleteDirective } from '@app/shared/directives/phone-username-autocomplete.directive';
 import {
   buildOtpLabels,
   handleOtpVerifyError as resolveOtpVerifyError,
 } from '@app/shared/utils/otp.util';
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
-import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
-import { createPasswordToggle, getFieldServerError, isFieldInvalid } from '../auth-form.utils';
+import { getCredentialPhoneUsername, getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import { createPasswordToggle, getFieldServerError, isFieldInvalid, syncTelInputValueForCredentialSave } from '../auth-form.utils';
 
 type LoginStep = 'form' | 'otp' | 'password';
 
@@ -56,6 +57,7 @@ type LoginStep = 'form' | 'otp' | 'password';
     NgxIntlTelInputModule,
     TranslatePipe,
     OtpVerificationComponent,
+    PhoneUsernameAutocompleteDirective,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -135,6 +137,7 @@ export class LoginComponent implements OnInit {
 
     const { phone, password, rememberMe } = this.form.getRawValue();
     const phoneNumber = getE164PhoneNumber(phone);
+    syncTelInputValueForCredentialSave('loginPhone', getCredentialPhoneUsername(phone));
 
     this.authService
       .initiateLogin({ phoneNumber, password, rememberMe })
@@ -164,6 +167,10 @@ export class LoginComponent implements OnInit {
     }
 
     this.otpServerError.set(null);
+    syncTelInputValueForCredentialSave(
+      'loginPhone',
+      getCredentialPhoneUsername(this.form.get('phone')?.value)
+    );
 
     this.authService
       .verifyLoginOtp({ userId, code }, this.rememberMe())

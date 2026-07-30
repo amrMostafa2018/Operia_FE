@@ -39,13 +39,14 @@ import {
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '@app/shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '@app/shared/components/otp-verification/otp-verification.component';
+import { PhoneUsernameAutocompleteDirective } from '@app/shared/directives/phone-username-autocomplete.directive';
 import {
   buildOtpLabels,
   handleOtpVerifyError as resolveOtpVerifyError,
 } from '@app/shared/utils/otp.util';
 import { getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
-import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
-import { createPasswordToggle, getFieldServerError, isFieldInvalid } from '../auth-form.utils';
+import { getCredentialPhoneUsername, getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import { createPasswordToggle, getFieldServerError, isFieldInvalid, syncTelInputValueForCredentialSave } from '../auth-form.utils';
 
 type RegisterStep = 'form' | 'otp';
 
@@ -61,6 +62,7 @@ type RegisterStep = 'form' | 'otp';
     NgxIntlTelInputModule,
     TranslatePipe,
     OtpVerificationComponent,
+    PhoneUsernameAutocompleteDirective,
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
@@ -153,6 +155,7 @@ export class RegisterComponent implements OnInit {
 
     const { name, email, phone, password, confirmPassword } = this.form.value;
     const phoneNumber = getE164PhoneNumber(phone);
+    syncTelInputValueForCredentialSave('registerPhone', getCredentialPhoneUsername(phone));
 
     this.authService
       .initiateRegistration({
@@ -188,6 +191,10 @@ export class RegisterComponent implements OnInit {
     }
 
     this.otpServerError.set(null);
+    syncTelInputValueForCredentialSave(
+      'registerPhone',
+      getCredentialPhoneUsername(this.form.get('phone')?.value)
+    );
 
     this.authService
       .verifyRegisterOtp({ registrationId, code }, this.displayName())

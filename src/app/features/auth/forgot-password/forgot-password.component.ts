@@ -32,6 +32,7 @@ import {
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '@app/shared/constants/phone-input.config';
 import { OtpVerificationComponent } from '@app/shared/components/otp-verification/otp-verification.component';
+import { PhoneUsernameAutocompleteDirective } from '@app/shared/directives/phone-username-autocomplete.directive';
 import {
   buildOtpLabels,
   handleOtpVerifyError as resolveOtpVerifyError,
@@ -53,6 +54,7 @@ type ForgotPasswordStep = 'phone' | 'otp' | 'reset';
     NgxIntlTelInputModule,
     TranslatePipe,
     OtpVerificationComponent,
+    PhoneUsernameAutocompleteDirective,
   ],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',

@@ -1,10 +1,11 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable, shareReplay, tap } from 'rxjs';
+import { map, Observable, shareReplay, switchMap, tap } from 'rxjs';
 
 import { environment } from '@env/environment';
 import { AuthStore } from '@core/store/auth.store';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
+import { SessionService } from '@core/services/session.service';
 import { ActivityTypeId } from '@app/features/onboarding/models/activity-type.model';
 import {
   AddBalancePlatformRequest,
@@ -30,6 +31,7 @@ export class OnboardingService {
   private readonly http = inject(HttpClient);
   private readonly authStore = inject(AuthStore);
   private readonly onboardingState = inject(OnboardingStateService);
+  private readonly injector = inject(Injector);
   private readonly baseUrl = `${environment.apiUrl}/onboarding`;
 
   private statusCache$: Observable<OnboardingStatusDto> | null = null;
@@ -64,9 +66,12 @@ export class OnboardingService {
       form.append('logo', request.logoFile);
     }
 
-    return this.http
-      .post<SetupBusinessResultDto>(`${this.baseUrl}/setup-business`, form)
-      .pipe(tap(() => this.invalidateStatus()));
+    return this.http.post<SetupBusinessResultDto>(`${this.baseUrl}/setup-business`, form).pipe(
+      tap(() => this.invalidateStatus()),
+      switchMap(result =>
+        this.injector.get(SessionService).refreshAccessToken().pipe(map(() => result))
+      )
+    );
   }
 
   complete(request: CompleteOnboardingRequest): Observable<OnboardingResultDto> {
@@ -76,9 +81,10 @@ export class OnboardingService {
   }
 
   activateSubscription(subscriptionId: string): Observable<void> {
-    return this.http
-      .post<void>(`${this.baseUrl}/activate`, { subscriptionId })
-      .pipe(tap(() => this.invalidateStatus()));
+    return this.http.post<void>(`${this.baseUrl}/activate`, { subscriptionId }).pipe(
+      tap(() => this.invalidateStatus()),
+      switchMap(() => this.injector.get(SessionService).refreshAccessToken())
+    );
   }
 
   addBalancePlatform(request: AddBalancePlatformRequest): Observable<AddBalancePlatformResultDto> {

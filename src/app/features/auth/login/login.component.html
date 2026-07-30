@@ -30,6 +30,7 @@
           >
             <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
             <ngx-intl-tel-input
+              appPhoneUsernameAutocomplete
               [cssClass]="phoneInputCssClass"
               [onlyCountries]="onlyCountries"
               [selectedCountryISO]="selectedCountryISO"
@@ -65,6 +66,8 @@
               id="password"
               pInputText
               formControlName="password"
+              name="current-password"
+              autocomplete="current-password"
               [type]="showPassword() ? 'text' : 'password'"
               [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
               class="p-inputtext-custom has-toggle"
@@ -155,6 +158,8 @@
               id="firstLoginPassword"
               type="password"
               formControlName="newPassword"
+              name="new-password"
+              autocomplete="new-password"
               class="p-inputtext-custom"
             />
           </div>
@@ -170,6 +175,8 @@
               id="firstLoginPasswordConfirm"
               type="password"
               formControlName="confirmPassword"
+              name="confirm-password"
+              autocomplete="new-password"
               class="p-inputtext-custom"
             />
           </div>

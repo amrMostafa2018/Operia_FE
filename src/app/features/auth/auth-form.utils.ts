@@ -11,3 +11,18 @@ export function createPasswordToggle(): {
   const show = signal(false);
   return { show, toggle: () => show.update(value => !value) };
 }
+
+/** Sync national phone digits into the tel input so password managers save the login identifier. */
+export function syncTelInputValueForCredentialSave(
+  inputId: string,
+  phoneUsername: string | null | undefined
+): void {
+  if (!phoneUsername) {
+    return;
+  }
+
+  const input = document.getElementById(inputId);
+  if (input instanceof HTMLInputElement) {
+    input.value = phoneUsername;
+  }
+}
