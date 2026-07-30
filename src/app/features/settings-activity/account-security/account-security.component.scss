@@ -5,11 +5,16 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  min-width: 0;
 }
 
 .section-heading,
 .section-header-row {
   margin-bottom: 1.25rem;
+}
+
+.section-card {
+  min-width: 0;
 }
 
 .section-title {
@@ -344,7 +349,9 @@
 }
 
 .users-table-wrap {
-  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 :host ::ng-deep {
@@ -426,11 +433,26 @@
   }
 
   .users-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+
     .p-datatable-table-container,
     .p-datatable-wrapper {
+      width: 100%;
+      max-width: 100%;
       border: 1px solid var(--surface-border);
       border-radius: $border-radius;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x pan-y;
+    }
+
+    table {
+      width: 100%;
+      table-layout: auto;
     }
 
     .p-datatable-thead > tr > th {
@@ -467,7 +489,8 @@
     }
 
     .col-email,
-    .col-last-login {
+    .col-last-login,
+    .col-name {
       white-space: nowrap;
     }
 
@@ -645,10 +668,13 @@
   }
 
   .users-table-wrap {
-    overflow-x: auto;
+    margin-inline: -0.25rem;
+    padding-inline: 0.25rem;
   }
 
-  :host ::ng-deep .users-table table {
-    min-width: 42rem;
+  :host ::ng-deep .users-table {
+    table {
+      min-width: 48rem;
+    }
   }
 }
