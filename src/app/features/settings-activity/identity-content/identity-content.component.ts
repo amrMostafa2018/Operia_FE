@@ -31,7 +31,7 @@ import {
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
 import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
-import { MOCK_IDENTITY_PHOTOS, PhotoSlot } from '../models/settings-activity.model';
+import { EMPTY_IDENTITY_PHOTOS, PhotoSlot } from '../models/settings-activity.model';
 import {
   IdentitySettingsDto,
   SettingsActivityService,
@@ -75,15 +75,6 @@ function resizeImageFile(file: File, maxWidth: number, maxHeight: number): Promi
   });
 }
 
-const MOCK_EG_PHONE = {
-  number: '01012345678',
-  internationalNumber: '+20 10 1234 5678',
-  nationalNumber: '01012345678',
-  e164Number: '+201012345678',
-  countryCode: 'EG',
-  dialCode: '+20',
-};
-
 @Component({
   selector: 'app-identity-content',
   standalone: true,
@@ -117,7 +108,7 @@ export class IdentityContentComponent implements OnInit {
   saving = signal(false);
   dragOverPhotoId = signal<string | null>(null);
 
-  photos = signal<PhotoSlot[]>(structuredClone(MOCK_IDENTITY_PHOTOS));
+  photos = signal<PhotoSlot[]>(structuredClone(EMPTY_IDENTITY_PHOTOS));
   private initialFormValue: Record<string, unknown> = {};
   private initialPhotos: PhotoSlot[] = [];
   private initialVisibleInfo = { mainAddress: '', about: '' };
@@ -130,8 +121,8 @@ export class IdentityContentComponent implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       activityName: ['', [Validators.required]],
-      contactPhone: [MOCK_EG_PHONE.number, [Validators.required]],
-      whatsappPhone: [MOCK_EG_PHONE.number],
+      contactPhone: [null, [Validators.required]],
+      whatsappPhone: [null],
       email: ['', [Validators.required, Validators.email]],
       mainAddress: ['', [Validators.required]],
       about: ['', [Validators.required, Validators.maxLength(MAX_ABOUT_CHARS)]],
@@ -162,16 +153,14 @@ export class IdentityContentComponent implements OnInit {
   private patchFromDto(res: IdentitySettingsDto): void {
     this.form.patchValue({
       activityName: res.activityName || '',
-      contactPhone: res.contactPhone || MOCK_EG_PHONE.number,
-      whatsappPhone: res.whatsappPhone || MOCK_EG_PHONE.number,
+      contactPhone: res.contactPhone || null,
+      whatsappPhone: res.whatsappPhone || null,
       email: res.email || '',
       mainAddress: res.mainAddress || '',
       about: res.about || '',
     });
 
-    const primaryUrl = res.primaryPhotoUrl
-      ? resolveUploadUrl(res.primaryPhotoUrl)
-      : '/assets/images/settings-activity/photo-primary.svg';
+    const primaryUrl = res.primaryPhotoUrl ? resolveUploadUrl(res.primaryPhotoUrl) : null;
     const additional = res.additionalPhotoUrls || [];
     const slots: PhotoSlot[] = [
       { id: 'primary', isPrimary: true, previewUrl: primaryUrl, file: null },
@@ -333,21 +322,9 @@ export class IdentityContentComponent implements OnInit {
       return;
     }
 
-    if (slot.isPrimary) {
-      const fallback = '/assets/images/settings-activity/photo-primary.svg';
-      if (slot.previewUrl === fallback) {
-        return;
-      }
-      this.photos.update(slots =>
-        slots.map(item =>
-          item.id === photoId ? { ...item, previewUrl: fallback, file: null } : item
-        )
-      );
-    } else {
-      this.photos.update(slots =>
-        slots.map(item => (item.id === photoId ? { ...item, previewUrl: null, file: null } : item))
-      );
-    }
+    this.photos.update(slots =>
+      slots.map(item => (item.id === photoId ? { ...item, previewUrl: null, file: null } : item))
+    );
   }
 
   onResetVisibleInfo(): void {

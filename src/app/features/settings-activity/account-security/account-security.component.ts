@@ -31,7 +31,7 @@ import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { AuthStore } from '@core/store/auth.store';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
-import { DEVICE_ICONS, MOCK_ACCESS_USERS, AccessUser } from '../models/settings-activity.model';
+import { DEVICE_ICONS, AccessUser } from '../models/settings-activity.model';
 import { SettingsActivityService, AuthorizedUserDto } from '../services/settings-activity.service';
 
 @Component({
@@ -63,7 +63,7 @@ export class AccountSecurityComponent implements OnInit {
   passwordForm!: FormGroup;
   otpCode = signal('');
   otpTouched = signal(false);
-  users = signal<AccessUser[]>(structuredClone(MOCK_ACCESS_USERS));
+  users = signal<AccessUser[]>([]);
   enable2fa = signal(true);
   loginAlerts = signal(true);
   logoutOthers = signal(true);
@@ -113,17 +113,15 @@ export class AccountSecurityComponent implements OnInit {
           this.phoneNumber.set(
             res.phoneNumber ?? this.authStore.currentUser()?.phoneNumber ?? res.maskedPhone ?? ''
           );
-          if (res.users && res.users.length > 0) {
-            const mapped: AccessUser[] = res.users.map((u: AuthorizedUserDto) => ({
-              id: u.id,
-              name: u.name || u.email || 'User',
-              email: u.email || '',
-              lastLogin: '-',
-              device: 'windows' as const,
-              isBanned: u.isBanned,
-            }));
-            this.users.set(mapped);
-          }
+          const mapped: AccessUser[] = (res.users ?? []).map((u: AuthorizedUserDto) => ({
+            id: u.id,
+            name: u.name || u.email || 'User',
+            email: u.email || '',
+            lastLogin: '-',
+            device: 'windows' as const,
+            isBanned: u.isBanned,
+          }));
+          this.users.set(mapped);
         },
         error: () => {
           // keep defaults if fetch fails

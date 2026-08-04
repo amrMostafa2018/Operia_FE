@@ -50,27 +50,20 @@
 
   <div class="table-card">
     <div class="filters">
-      <button type="button" class="clear filter-clear" (click)="clearFilters()">
-        <i class="pi pi-replay"></i>{{ 'EMPLOYEES.CLEAR' | translate }}
-      </button>
-      <div class="date-filter filter-date">
-        <span>{{ 'EMPLOYEES.CREATED_DATE' | translate }}</span>
-        <input
+      <span class="p-input-icon-right search filter-search"
+        ><i class="pi pi-search"></i
+        ><input
           pInputText
-          type="date"
-          [(ngModel)]="createdDate"
-          (change)="applyFilters()"
-          [attr.aria-label]="'EMPLOYEES.CREATED_DATE' | translate"
-        />
-      </div>
+          [(ngModel)]="search"
+          (keyup.enter)="applyFilters()"
+          [placeholder]="'EMPLOYEES.SEARCH' | translate"
+      /></span>
       <p-dropdown
-        class="filter-control filter-branch"
-        [options]="branches()"
-        optionLabel="name"
-        optionValue="id"
-        [(ngModel)]="branchFilter"
+        class="filter-control filter-role"
+        [options]="roles"
+        [(ngModel)]="roleFilter"
         [showClear]="true"
-        [placeholder]="'EMPLOYEES.ALL_BRANCHES' | translate"
+        [placeholder]="'EMPLOYEES.ALL_ROLES' | translate"
         (onChange)="applyFilters()"
       ></p-dropdown>
       <p-dropdown
@@ -87,21 +80,28 @@
         }}</ng-template></p-dropdown
       >
       <p-dropdown
-        class="filter-control filter-role"
-        [options]="roles"
-        [(ngModel)]="roleFilter"
+        class="filter-control filter-branch"
+        [options]="branches()"
+        optionLabel="name"
+        optionValue="id"
+        [(ngModel)]="branchFilter"
         [showClear]="true"
-        [placeholder]="'EMPLOYEES.ALL_ROLES' | translate"
+        [placeholder]="'EMPLOYEES.ALL_BRANCHES' | translate"
         (onChange)="applyFilters()"
       ></p-dropdown>
-      <span class="p-input-icon-right search filter-search"
-        ><i class="pi pi-search"></i
-        ><input
+      <div class="date-filter filter-date">
+        <span>{{ 'EMPLOYEES.CREATED_DATE' | translate }}</span>
+        <input
           pInputText
-          [(ngModel)]="search"
-          (keyup.enter)="applyFilters()"
-          [placeholder]="'EMPLOYEES.SEARCH' | translate"
-      /></span>
+          type="date"
+          [(ngModel)]="createdDate"
+          (change)="applyFilters()"
+          [attr.aria-label]="'EMPLOYEES.CREATED_DATE' | translate"
+        />
+      </div>
+      <button type="button" class="clear filter-clear" (click)="clearFilters()">
+        <i class="pi pi-replay"></i>{{ 'EMPLOYEES.CLEAR' | translate }}
+      </button>
     </div>
 
     <div class="table-scroll">

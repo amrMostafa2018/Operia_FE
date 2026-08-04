@@ -1,7 +1,17 @@
+@use '../../../styles/variables' as *;
 @use '../../shared/styles/page-list' as page-list;
 
+:host {
+  display: block;
+  width: 100%;
+}
+
 .employees-page {
-  padding: 1.3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 1400px;
   color: #171a43;
 }
 .page-head {
@@ -9,10 +19,9 @@
 }
 .summary {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
-  margin-bottom: 1.4rem;
-  direction: ltr;
+  width: 100%;
 }
 .summary article {
   min-height: 85px;
@@ -47,45 +56,43 @@
 }
 .table-card {
   @include page-list.table-card-base;
+  width: 100%;
 }
 .filters {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.65fr) repeat(4, minmax(135px, 1fr)) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
   gap: 0.75rem;
   padding: 1rem;
   border-bottom: 1px solid #ededf3;
-  direction: rtl;
 }
 .filter-search {
-  grid-column: 1;
-  grid-row: 1;
-  width: 100%;
+  flex: 1 1 220px;
+  min-width: min(100%, 220px);
 }
-.filter-role {
-  grid-column: 2;
-  grid-row: 1;
-}
-.filter-status {
-  grid-column: 3;
-  grid-row: 1;
-}
+.filter-role,
+.filter-status,
 .filter-branch {
-  grid-column: 4;
-  grid-row: 1;
+  flex: 1 1 140px;
+  min-width: min(100%, 140px);
 }
 .filter-date {
-  grid-column: 5;
-  grid-row: 1;
+  flex: 1 1 180px;
+  min-width: min(100%, 180px);
 }
 .filter-clear {
-  grid-column: 6;
-  grid-row: 1;
+  flex: 0 0 auto;
+  align-self: stretch;
 }
 .filters input,
 .filter-control,
 .date-filter {
   width: 100%;
+}
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .date-filter {
   display: flex;
@@ -151,19 +158,23 @@ footer button {
 }
 table {
   width: 100%;
+  min-width: 860px;
   border-collapse: collapse;
   text-align: right;
+  table-layout: auto;
 }
 th,
 td {
   padding: 0.7rem 1rem;
   border-bottom: 1px solid #f0eff5;
   font-size: 0.88rem;
+  vertical-align: middle;
 }
 th {
   background: #fafaff;
   color: #363959;
   font-weight: 700;
+  white-space: nowrap;
 }
 .avatar {
   width: 40px;
@@ -565,23 +576,14 @@ footer button {
 .cancel {
   color: #4f5267 !important;
 }
-@media (max-width: 1100px) {
-  .filters {
+@media (max-width: $bp-xl) {
+  .summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .filter-search,
-  .filter-role,
-  .filter-status,
-  .filter-branch,
-  .filter-date,
-  .filter-clear {
-    grid-column: auto;
-    grid-row: auto;
   }
 }
 @media (max-width: 900px) {
   .summary {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .editor-body,
   .form-area {
@@ -591,21 +593,21 @@ footer button {
     order: 0;
   }
 }
-@media (max-width: 650px) {
+@media (max-width: $bp-sm) {
   .summary {
-    grid-template-columns: 1fr 1fr;
-  }
-  .filters {
     grid-template-columns: 1fr;
+  }
+  .filter-search,
+  .filter-role,
+  .filter-status,
+  .filter-branch,
+  .filter-date,
+  .filter-clear {
+    flex: 1 1 100%;
+    min-width: 100%;
   }
   .form-grid {
     grid-template-columns: 1fr;
-  }
-  .table-card {
-    overflow: auto;
-  }
-  .table-card table {
-    min-width: 720px;
   }
   .schedule-panel {
     padding: 1rem;

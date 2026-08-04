@@ -8,52 +8,13 @@ export interface PhotoSlot {
   displayIndex?: number;
 }
 
-const CLINIC_MOCK_IMAGES = [
-  '/assets/images/settings-activity/photo-primary.svg',
-  '/assets/images/settings-activity/photo-2.svg',
-  '/assets/images/settings-activity/photo-3.svg',
-  '/assets/images/settings-activity/photo-4.svg',
-  '/assets/images/settings-activity/photo-5.svg',
-  '/assets/images/settings-activity/photo-6.svg',
-];
-
-export const MOCK_IDENTITY_PHOTOS: PhotoSlot[] = [
-  { id: 'primary', isPrimary: true, previewUrl: CLINIC_MOCK_IMAGES[0], file: null },
-  {
-    id: 'photo-1',
-    isPrimary: false,
-    previewUrl: CLINIC_MOCK_IMAGES[1],
-    file: null,
-    displayIndex: 2,
-  },
-  {
-    id: 'photo-2',
-    isPrimary: false,
-    previewUrl: CLINIC_MOCK_IMAGES[2],
-    file: null,
-    displayIndex: 3,
-  },
-  {
-    id: 'photo-3',
-    isPrimary: false,
-    previewUrl: CLINIC_MOCK_IMAGES[3],
-    file: null,
-    displayIndex: 4,
-  },
-  {
-    id: 'photo-4',
-    isPrimary: false,
-    previewUrl: CLINIC_MOCK_IMAGES[4],
-    file: null,
-    displayIndex: 5,
-  },
-  {
-    id: 'photo-5',
-    isPrimary: false,
-    previewUrl: CLINIC_MOCK_IMAGES[5],
-    file: null,
-    displayIndex: 6,
-  },
+export const EMPTY_IDENTITY_PHOTOS: PhotoSlot[] = [
+  { id: 'primary', isPrimary: true, previewUrl: null, file: null },
+  { id: 'photo-1', isPrimary: false, previewUrl: null, file: null, displayIndex: 2 },
+  { id: 'photo-2', isPrimary: false, previewUrl: null, file: null, displayIndex: 3 },
+  { id: 'photo-3', isPrimary: false, previewUrl: null, file: null, displayIndex: 4 },
+  { id: 'photo-4', isPrimary: false, previewUrl: null, file: null, displayIndex: 5 },
+  { id: 'photo-5', isPrimary: false, previewUrl: null, file: null, displayIndex: 6 },
 ];
 
 export interface PaymentMethodState {
@@ -230,51 +191,6 @@ export const MOCK_WORKING_DAYS: WorkingDay[] = [
     enabled: true,
     fromTime: createTime(9, 0),
     toTime: createTime(21, 0),
-  },
-];
-
-export const MOCK_ACCESS_USERS: AccessUser[] = [
-  {
-    id: '1',
-    name: 'أحمد محمد',
-    email: 'ahmed@clinic.com',
-    lastLogin: '10:30 2026-07-14',
-    device: 'windows',
-  },
-  {
-    id: '2',
-    name: 'سارة علي',
-    email: 'sara@clinic.com',
-    lastLogin: '16:45 2026-07-13',
-    device: 'chrome',
-  },
-  {
-    id: '3',
-    name: 'محمد حسن',
-    email: 'mohamed@clinic.com',
-    lastLogin: '09:15 2026-07-12',
-    device: 'android',
-  },
-  {
-    id: '4',
-    name: 'نور إبراهيم',
-    email: 'nour@clinic.com',
-    lastLogin: '14:20 2026-07-11',
-    device: 'safari',
-  },
-  {
-    id: '5',
-    name: 'كريم يوسف',
-    email: 'karim@clinic.com',
-    lastLogin: '11:00 2026-07-10',
-    device: 'mac',
-  },
-  {
-    id: '6',
-    name: 'ليلى أحمد',
-    email: 'layla@clinic.com',
-    lastLogin: '08:30 2026-07-09',
-    device: 'chrome',
   },
 ];
 
