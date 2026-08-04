@@ -12,7 +12,7 @@ export const onboardingRouterGuard: CanActivateFn = (_route, state) => {
   const onboardingService = inject(OnboardingService);
   const router = inject(Router);
 
-  return onboardingService.getStatus().pipe(
+  return onboardingService.getFreshStatus().pipe(
     map(status => resolveOnboardingNavigation(status.step, state.url, router)),
     catchError(() => of(router.createUrlTree(['/onboarding/setup'])))
   );

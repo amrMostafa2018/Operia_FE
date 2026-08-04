@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { Permissions, Policies } from '@core/models/permissions.model';
 import { permissionGuard } from '@core/guards/permission.guard';
+import { onboardingCompleteGuard } from '@core/guards/onboarding-complete.guard';
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 
 const placeholder = () =>
@@ -13,6 +14,7 @@ export const mainRoutes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
+    canActivateChild: [onboardingCompleteGuard],
     children: [
       {
         path: 'dashboard',

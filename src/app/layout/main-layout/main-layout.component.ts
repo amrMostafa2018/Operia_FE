@@ -1,8 +1,23 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnDestroy,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterOutlet } from '@angular/router';
 
 import { AppSidebarComponent } from '@app/layout/components/app-sidebar/app-sidebar.component';
 import { AppHeaderComponent } from '@app/layout/components/app-header/app-header.component';
+import { OnboardingService } from '@core/services/onboarding.service';
+import {
+  onboardingRouteForStep,
+  OnboardingStep,
+} from '@app/features/onboarding/models/onboarding.model';
+
+const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
 @Component({
   selector: 'app-main-layout',
@@ -12,7 +27,12 @@ import { AppHeaderComponent } from '@app/layout/components/app-header/app-header
   styleUrl: './main-layout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnDestroy {
+  private readonly onboardingService = inject(OnboardingService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private pollHandle?: ReturnType<typeof setInterval>;
+
   sidebarCollapsed = signal(false);
   mobileOpen = signal(false);
 
@@ -23,6 +43,14 @@ export class MainLayoutComponent {
           this.mobileOpen.set(false);
         }
       });
+    }
+
+    this.pollHandle = setInterval(() => this.checkSubscriptionExpiry(), POLL_INTERVAL_MS);
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollHandle) {
+      clearInterval(this.pollHandle);
     }
   }
 
@@ -37,6 +65,17 @@ export class MainLayoutComponent {
 
   closeMobileSidebar(): void {
     this.mobileOpen.set(false);
+  }
+
+  private checkSubscriptionExpiry(): void {
+    this.onboardingService
+      .getFreshStatus()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(status => {
+        if (status.step !== OnboardingStep.Active) {
+          void this.router.navigateByUrl(onboardingRouteForStep(status.step));
+        }
+      });
   }
 
   private getIsMobileView(): boolean {

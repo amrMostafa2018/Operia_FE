@@ -50,6 +50,11 @@ export class OnboardingService {
     return this.statusCache$;
   }
 
+  getFreshStatus(): Observable<OnboardingStatusDto> {
+    this.invalidateStatus();
+    return this.getStatus();
+  }
+
   getPlans(): Observable<SubscriptionPlanDto[]> {
     return this.http.get<SubscriptionPlanDto[]>(`${this.baseUrl}/plans`);
   }

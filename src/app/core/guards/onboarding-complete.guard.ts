@@ -15,7 +15,7 @@ export const onboardingCompleteGuard: CanActivateFn = () => {
   const onboardingService = inject(OnboardingService);
   const router = inject(Router);
 
-  return onboardingService.getStatus().pipe(
+  return onboardingService.getFreshStatus().pipe(
     map(status => {
       if (status.step === OnboardingStep.Active) {
         return true;
