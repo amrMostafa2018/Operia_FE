@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { Permissions, Policies } from '@core/models/permissions.model';
+import { Policies } from '@core/models/permissions.model';
 import { permissionGuard } from '@core/guards/permission.guard';
 import { onboardingCompleteGuard } from '@core/guards/onboarding-complete.guard';
 import { MainLayoutComponent } from './main-layout/main-layout.component';
@@ -22,7 +22,7 @@ export const mainRoutes: Routes = [
           import('@app/features/dashboard/dashboard.component').then(m => m.DashboardComponent),
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.DashboardRead],
+          permissions: [Policies.DashboardRead],
           featureKey: 'NAV.DASHBOARD',
         },
         title: 'Dashboard - Operia',
@@ -32,7 +32,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.BookingRead],
+          permissions: [Policies.BookingsRead],
           featureKey: 'NAV.BOOKINGS',
         },
         title: 'Bookings - Operia',
@@ -42,7 +42,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.CustomersRead],
+          permissions: [Policies.CustomersRead],
           featureKey: 'NAV.CUSTOMERS',
         },
         title: 'Customers - Operia',
@@ -53,7 +53,7 @@ export const mainRoutes: Routes = [
           import('@app/features/employees/employees.component').then(m => m.EmployeesComponent),
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.EmployeesRead],
+          permissions: [Policies.EmployeesRead],
           featureKey: 'NAV.EMPLOYEES',
         },
         title: 'Employees - Operia',
@@ -63,7 +63,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.PackagesRead],
+          permissions: [Policies.PackagesRead],
           featureKey: 'NAV.PACKAGES',
         },
         title: 'Packages - Operia',
@@ -74,7 +74,7 @@ export const mainRoutes: Routes = [
           import('@app/features/branches/branches.component').then(m => m.BranchesComponent),
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.BranchesRead],
+          permissions: [Policies.BranchesRead],
           featureKey: 'NAV.BRANCHES',
         },
         title: 'Branches - Operia',
@@ -87,7 +87,7 @@ export const mainRoutes: Routes = [
           ),
         canActivate: [permissionGuard],
         data: {
-          permissions: [Policies.SubscriptionsManage],
+          permissions: [Policies.SubscriptionsRead],
           featureKey: 'NAV.SUBSCRIPTION',
         },
         title: 'Operia Subscriptions - Operia',
@@ -120,7 +120,7 @@ export const mainRoutes: Routes = [
           ),
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.SettingsRead],
+          permissions: [Policies.SettingsManage],
         },
       },
       {
@@ -128,7 +128,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.PackagesRead],
+          permissions: [Policies.PackagesRead],
           featureKey: 'NAV.OFFERS',
         },
         title: 'Offers - Operia',
@@ -138,7 +138,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.SettingsRead],
+          permissions: [Policies.SettingsManage],
           featureKey: 'NAV.SETTINGS_SECTION.NOTIFICATIONS',
         },
         title: 'Notifications - Operia',
@@ -148,7 +148,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Permissions.Admin.SettingsRead],
+          permissions: [Policies.SettingsManage],
           featureKey: 'NAV.SETTINGS_SECTION.LANGUAGE',
         },
         title: 'Language & Region - Operia',

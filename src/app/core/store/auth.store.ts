@@ -1,7 +1,7 @@
 import { computed } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 
-import { User } from '@core/models/user.model';
+import { User, UserCapabilities } from '@core/models/user.model';
 
 interface AuthState {
   user: User | null;
@@ -29,6 +29,17 @@ export const AuthStore = signalStore(
     },
     setUser(user: User): void {
       patchState(store, { user });
+    },
+    setCapabilities(capabilities: UserCapabilities): void {
+      const user = store.user();
+      if (user) {
+        patchState(store, {
+          user: {
+            ...user,
+            permissions: capabilities.permissions,
+          },
+        });
+      }
     },
     setLoading(isLoading: boolean): void {
       patchState(store, { isLoading });

@@ -17,6 +17,11 @@ export interface User {
   isActive: boolean;
 }
 
+export interface UserCapabilities {
+  roles: string[];
+  permissions: string[];
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;

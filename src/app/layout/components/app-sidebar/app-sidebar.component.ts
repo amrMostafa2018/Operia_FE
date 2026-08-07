@@ -13,7 +13,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { TranslatePipe } from '@ngx-translate/core';
 import { filter, map, startWith } from 'rxjs';
 
-import { Permissions, Policies } from '@core/models/permissions.model';
+import { Policies } from '@core/models/permissions.model';
 import { PermissionService } from '@core/services/permission.service';
 import { LanguageService } from '@core/services/language.service';
 
@@ -78,17 +78,23 @@ export class AppSidebarComponent {
   });
 
   constructor() {
-    effect(() => {
-      if (this.isFinanceSectionActive()) {
-        this.financeOpen.set(true);
-      }
-    }, { allowSignalWrites: true });
+    effect(
+      () => {
+        if (this.isFinanceSectionActive()) {
+          this.financeOpen.set(true);
+        }
+      },
+      { allowSignalWrites: true }
+    );
 
-    effect(() => {
-      if (this.isSettingsSectionActive()) {
-        this.settingsOpen.set(true);
-      }
-    }, { allowSignalWrites: true });
+    effect(
+      () => {
+        if (this.isSettingsSectionActive()) {
+          this.settingsOpen.set(true);
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   private readonly mainNavItems: NavItem[] = [
@@ -96,19 +102,19 @@ export class AppSidebarComponent {
       labelKey: 'NAV.DASHBOARD',
       icon: 'pi pi-home',
       route: '/dashboard',
-      permissions: [Permissions.Admin.DashboardRead],
+      permissions: [Policies.DashboardRead],
     },
     {
       labelKey: 'NAV.BOOKINGS',
       icon: 'pi pi-calendar',
       route: '/bookings',
-      permissions: [Permissions.Admin.BookingRead],
+      permissions: [Policies.BookingsRead],
     },
     {
       labelKey: 'NAV.CUSTOMERS',
       icon: 'pi pi-users',
       route: '/customers',
-      permissions: [Permissions.Admin.CustomersRead],
+      permissions: [Policies.CustomersRead],
     },
   ];
 
@@ -130,7 +136,7 @@ export class AppSidebarComponent {
       labelKey: 'NAV.SUBSCRIPTION',
       icon: '',
       route: '/finance/operia-subscriptions',
-      permissions: [Policies.SubscriptionsManage],
+      permissions: [Policies.SubscriptionsRead],
     },
   ];
 
@@ -139,49 +145,49 @@ export class AppSidebarComponent {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_IDENTITY',
       icon: '',
       route: '/settings/activity/identity',
-      permissions: [Permissions.Admin.SettingsRead],
+      permissions: [Policies.SettingsManage],
     },
     {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_PAYMENTS',
       icon: '',
       route: '/settings/activity/payments',
-      permissions: [Permissions.Admin.SettingsRead],
+      permissions: [Policies.SettingsManage],
     },
     {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_WORKING_DAYS',
       icon: '',
       route: '/settings/activity/working-days',
-      permissions: [Permissions.Admin.SettingsRead],
+      permissions: [Policies.SettingsManage],
     },
     {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_SECURITY',
       icon: '',
       route: '/settings/activity/security',
-      permissions: [Permissions.Admin.SettingsRead],
+      permissions: [Policies.SettingsManage],
     },
     {
       labelKey: 'NAV.EMPLOYEES',
       icon: '',
       route: '/employees',
-      permissions: [Permissions.Admin.EmployeesRead],
+      permissions: [Policies.EmployeesRead],
     },
     {
       labelKey: 'NAV.PACKAGES',
       icon: '',
       route: '/packages',
-      permissions: [Permissions.Admin.PackagesRead],
+      permissions: [Policies.PackagesRead],
     },
     {
       labelKey: 'NAV.BRANCHES',
       icon: '',
       route: '/branches',
-      permissions: [Permissions.Admin.BranchesRead],
+      permissions: [Policies.BranchesRead],
     },
     {
       labelKey: 'NAV.OFFERS',
       icon: '',
       route: '/settings/offers',
-      permissions: [Permissions.Admin.PackagesRead],
+      permissions: [Policies.PackagesRead],
     },
   ];
 

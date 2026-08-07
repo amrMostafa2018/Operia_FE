@@ -19,9 +19,7 @@ import { MessageService } from 'primeng/api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
 import { PermissionService } from '@core/services/permission.service';
-// TODO: wire up permission-based UI
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Permissions, Policies } from '@core/models/permissions.model';
+import { Policies } from '@core/models/permissions.model';
 import { Branch, BranchService } from './branch.service';
 import { applyServerFieldErrors, extractApiFieldErrors } from '@core/utils/api-error.util';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';

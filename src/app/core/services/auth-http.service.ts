@@ -15,6 +15,7 @@ import {
   VerifyLoginOtpRequest,
   VerifyRegisterOtpRequest,
   VerifyLoginOtpResponse,
+  UserCapabilities,
 } from '@core/models/user.model';
 import { AuthApiEndpoint, buildAuthApiUrl } from '@core/constants/auth-api-endpoint.enum';
 
@@ -114,6 +115,10 @@ export class AuthHttpService {
     return this.http.post<AuthTokens>(buildAuthApiUrl(this.api, AuthApiEndpoint.Refresh), {
       refreshToken,
     });
+  }
+
+  getCapabilities(): Observable<UserCapabilities> {
+    return this.http.get<UserCapabilities>(buildAuthApiUrl(this.api, AuthApiEndpoint.Capabilities));
   }
 
   logout(): Observable<unknown> {

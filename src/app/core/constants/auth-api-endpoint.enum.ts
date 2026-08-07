@@ -7,6 +7,7 @@ export enum AuthApiEndpoint {
   ResendLoginOtp = '/auth/resend-login-otp',
   ResendRegisterOtp = '/auth/resend-register-otp',
   Refresh = '/auth/refresh',
+  Capabilities = '/auth/capabilities',
   Logout = '/auth/logout',
   ForgotPassword = '/auth/forgot-password',
   VerifyForgotPasswordOtp = '/auth/verify-forgot-password-otp',

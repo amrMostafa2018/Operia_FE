@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, map, Observable, of, take, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, of, switchMap, take, tap, throwError } from 'rxjs';
 
 import { User } from '@core/models/user.model';
 import { AuthStore } from '@core/store/auth.store';
@@ -37,10 +37,11 @@ export class SessionService {
     this.authStore.setUser(storedUser);
 
     return this.authHttp.refreshAccessToken(refreshToken).pipe(
-      tap(tokens => {
+      switchMap(tokens => {
         this.authStore.setAccessToken(tokens.accessToken);
         this.syncUserFromAccessToken();
         this.updateStoredRefreshToken(tokens.refreshToken);
+        return this.loadCapabilities();
       }),
       map(() => true),
       catchError(() => {
@@ -61,12 +62,12 @@ export class SessionService {
     refreshToken: string,
     rememberMe: boolean,
     displayName?: string
-  ): User {
+  ): Observable<User> {
     const user = userFromAccessToken(accessToken, displayName);
     this.authStore.setUser(user);
     this.authStore.setAccessToken(accessToken);
     this.persistSession(user, refreshToken, rememberMe);
-    return user;
+    return this.loadCapabilities().pipe(map(() => this.authStore.currentUser() ?? user));
   }
 
   refreshAccessToken(): Observable<void> {
@@ -76,10 +77,11 @@ export class SessionService {
     }
 
     return this.authHttp.refreshAccessToken(refreshToken).pipe(
-      tap(tokens => {
+      switchMap(tokens => {
         this.authStore.setAccessToken(tokens.accessToken);
         this.syncUserFromAccessToken();
         this.updateStoredRefreshToken(tokens.refreshToken);
+        return this.loadCapabilities();
       }),
       map(() => void 0),
       catchError(err => {
@@ -174,6 +176,19 @@ export class SessionService {
     } else {
       sessionStorage.setItem(RT_KEY, refreshToken);
     }
+  }
+
+  private loadCapabilities(): Observable<void> {
+    return this.authHttp.getCapabilities().pipe(
+      tap(capabilities => {
+        this.authStore.setCapabilities(capabilities);
+        const user = this.authStore.currentUser();
+        if (user) {
+          this.updateStoredUser(user);
+        }
+      }),
+      map(() => void 0)
+    );
   }
 
   private updateStoredUser(user: User): void {

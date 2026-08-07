@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { catchError, finalize, map, Observable, of, tap, throwError } from 'rxjs';
+import { catchError, finalize, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 
 import {
   LoginInitiateResponse,
@@ -37,11 +37,16 @@ export class AuthService {
   ): Observable<VerifyLoginOtpResponse> {
     return this.withAuthState(
       this.authHttp.verifyLoginOtp(request).pipe(
-        tap(res => {
+        switchMap(res => {
           if (!res.requiresPasswordChange && res.accessToken && res.refreshToken) {
-            this.session.applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe);
-            this.session.navigateAfterAuth('login');
+            return this.session
+              .applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe)
+              .pipe(
+                tap(() => this.session.navigateAfterAuth('login')),
+                map(() => res)
+              );
           }
+          return of(res);
         })
       )
     );
@@ -55,10 +60,14 @@ export class AuthService {
   ): Observable<void> {
     return this.withAuthState(
       this.authHttp.completeFirstLogin(userId, resetToken, newPassword).pipe(
-        tap(res => {
-          this.session.applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe);
-          this.session.navigateAfterAuth('login');
-        }),
+        switchMap(res =>
+          this.session
+            .applyAuthenticatedSession(res.accessToken, res.refreshToken, rememberMe)
+            .pipe(
+              tap(() => this.session.navigateAfterAuth('login')),
+              map(() => void 0)
+            )
+        ),
         map(() => void 0)
       )
     );
@@ -71,15 +80,14 @@ export class AuthService {
   verifyRegisterOtp(request: VerifyRegisterOtpRequest, displayName?: string): Observable<void> {
     return this.withAuthState(
       this.authHttp.verifyRegisterOtp(request).pipe(
-        tap(res => {
-          this.session.applyAuthenticatedSession(
-            res.accessToken,
-            res.refreshToken,
-            false,
-            displayName
-          );
-          this.session.navigateAfterAuth('register');
-        }),
+        switchMap(res =>
+          this.session
+            .applyAuthenticatedSession(res.accessToken, res.refreshToken, false, displayName)
+            .pipe(
+              tap(() => this.session.navigateAfterAuth('register')),
+              map(() => void 0)
+            )
+        ),
         map(() => void 0)
       )
     );

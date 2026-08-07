@@ -19,9 +19,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { MessageService } from 'primeng/api';
 import { Branch, BranchService } from '@app/features/branches/branch.service';
 import { PermissionService } from '@core/services/permission.service';
-// TODO: wire up permission-based UI
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Permissions, Policies } from '@core/models/permissions.model';
+import { Policies } from '@core/models/permissions.model';
 import {
   Employee,
   EmployeePayload,

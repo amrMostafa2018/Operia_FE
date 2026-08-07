@@ -11,7 +11,7 @@ import { PermissionService } from '@core/services/permission.service';
  * {
  *   path: 'admins',
  *   canActivate: [authGuard, permissionGuard],
- *   data: { permissions: [Permissions.Admin.DashboardRead] },
+ *   data: { permissions: [Policies.DashboardRead] },
  * }
  * ```
  */

@@ -1,5 +1,4 @@
 import { User, UserRole } from '@core/models/user.model';
-import { PERMISSION_CLAIM_TYPE } from '@core/models/permissions.model';
 
 const ROLE_MAP: Record<string, UserRole> = {
   Admin: 'admin',
@@ -37,17 +36,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
   const bytes = Uint8Array.from(atob(padded), char => char.charCodeAt(0));
   const json = new TextDecoder('utf-8').decode(bytes);
   return JSON.parse(json) as Record<string, unknown>;
-}
-
-function claimValues(payload: Record<string, unknown>, type: string): string[] {
-  const raw = payload[type];
-  if (Array.isArray(raw)) {
-    return raw.filter((value): value is string => typeof value === 'string' && value.length > 0);
-  }
-  if (typeof raw === 'string' && raw) {
-    return [raw];
-  }
-  return [];
 }
 
 function roleFromPayload(payload: Record<string, unknown>): UserRole {
@@ -100,7 +88,7 @@ export function userFromAccessToken(token: string, name?: string): User {
     email,
     ...(phoneNumber ? { phoneNumber } : {}),
     role: roleFromPayload(payload),
-    permissions: claimValues(payload, PERMISSION_CLAIM_TYPE),
+    permissions: [],
     ...(activityTypeId ? { activityTypeId } : {}),
     ...(tenantId ? { tenantId } : {}),
     ...(businessId ? { businessId } : {}),
