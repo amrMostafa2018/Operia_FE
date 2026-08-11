@@ -22,6 +22,7 @@
         icon="pi pi-plus"
         iconPos="right"
         styleClass="action-btn primary-action"
+        (onClick)="openInquiry()"
       />
       <p-button
         [label]="'DASHBOARD.NEW_CUSTOMER' | translate"
@@ -82,19 +83,37 @@
       </div>
       <div class="table-filters">
         <p-dropdown
-          [options]="[{ label: 'DASHBOARD.ALL_EMPLOYEES', value: null }]"
+          [options]="employees()"
           [ngModel]="selectedEmployee()"
           (ngModelChange)="selectedEmployee.set($event)"
+          optionLabel="label"
+          optionValue="value"
           [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
           styleClass="filter-drop"
-        />
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            {{ item?.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.label | translate }}
+          </ng-template>
+        </p-dropdown>
         <p-dropdown
           [options]="statusOptions"
           [ngModel]="selectedStatus()"
           (ngModelChange)="selectedStatus.set($event)"
+          optionLabel="label"
+          optionValue="value"
           [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
           styleClass="filter-drop"
-        />
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            {{ item?.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.label | translate }}
+          </ng-template>
+        </p-dropdown>
         <p-button icon="pi pi-search" styleClass="search-btn" [outlined]="true" />
       </div>
     </div>
@@ -134,10 +153,10 @@
             </div>
           </td>
           <td class="mono">{{ row.bookingNumber }}</td>
-          <td>{{ row.employee }}</td>
+          <td>{{ row.employeeName }}</td>
           <td class="service-cell">{{ row.service }}</td>
-          <td>{{ row.fromTime }}</td>
-          <td>{{ row.toTime }}</td>
+          <td>{{ row.startTime }}</td>
+          <td>{{ row.endTime }}</td>
           <td>
             <p-tag
               [value]="statusKey(row.status) | translate"
@@ -146,7 +165,8 @@
             />
           </td>
           <td>
-            <button class="row-action-btn">
+            <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
+            <button type="button" class="row-action-btn" (click)="rowMenu.toggle($event)">
               <i class="pi pi-ellipsis-v"></i>
             </button>
           </td>
@@ -203,3 +223,54 @@
     </div>
   </div>
 </div>
+
+<app-inquiry-booking-modal
+  [visible]="inquiryOpen()"
+  (closed)="closeInquiry()"
+  (bookingCreated)="loadBookings()"
+/>
+
+<app-confirm-action-dialog
+  [visible]="!!bookingPendingCancel()"
+  headerKey="BOOKINGS.CANCEL_TITLE"
+  messageKey="BOOKINGS.CANCEL_CONFIRM"
+  [messageParams]="{ number: bookingPendingCancel()?.bookingNumber ?? '' }"
+  cancelLabelKey="BOOKINGS.CANCEL"
+  confirmLabelKey="BOOKINGS.ACTIONS.CANCEL"
+  styleClass="cancel-booking-dialog"
+  [useNativeFooterButtons]="true"
+  confirmIcon="pi pi-times"
+  (cancelled)="cancelCancelRequest()"
+  (confirmed)="confirmCancel()"
+/>
+
+<p-dialog
+  [visible]="!!detailBooking()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '480px' }"
+  styleClass="booking-detail-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="table-title">
+      <i class="pi pi-eye"></i>
+      <span>{{ 'BOOKINGS.DETAIL_TITLE' | translate }}</span>
+    </div>
+    <button type="button" class="row-action-btn" (click)="closeDetail()">
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+  @if (detailBooking(); as b) {
+    <div class="detail-grid">
+      <div><span>{{ 'BOOKINGS.COL_NUMBER' | translate }}</span><strong>{{ b.bookingNumber }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_CUSTOMER' | translate }}</span><strong>{{ b.customerName }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</span><strong>{{ b.employeeName }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_SERVICE' | translate }}</span><strong>{{ b.service }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_FROM' | translate }}</span><strong>{{ b.startTime }} – {{ b.endTime }}</strong></div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_STATUS' | translate }}</span>
+        <p-tag [value]="statusKey(b.status) | translate" [severity]="statusSeverity(b.status)" />
+      </div>
+    </div>
+  }
+</p-dialog>

@@ -1,0 +1,24 @@
+<div class="slot-picker">
+  @if (loading()) {
+    <p class="slot-picker__loading">{{ 'COMMON.LOADING' | translate }}</p>
+  } @else if (availableSlots().length === 0) {
+    <p class="slot-picker__empty">
+      <i class="pi pi-calendar-times"></i>
+      {{ 'BOOKINGS.SLOT_PICKER.NO_SLOTS' | translate }}
+    </p>
+  } @else {
+    <p class="slot-picker__hint">{{ 'BOOKINGS.SLOT_PICKER.HINT' | translate }}</p>
+    <div class="slot-picker__grid">
+      @for (slot of availableSlots(); track slot.start) {
+        <button
+          type="button"
+          class="slot-chip"
+          [class.slot-chip--selected]="isSelected(slot)"
+          (click)="selectSlot(slot)"
+        >
+          {{ slot.start }} – {{ slot.end }}
+        </button>
+      }
+    </div>
+  }
+</div>

@@ -5,6 +5,10 @@ const localeByLang: Record<AppLanguage, string> = {
   en: 'en-US',
 };
 
+export function getAppDateLocale(lang: AppLanguage): string {
+  return localeByLang[lang];
+}
+
 export function formatAppTime(date: Date | null | undefined, lang: AppLanguage): string {
   if (!date) {
     return '';

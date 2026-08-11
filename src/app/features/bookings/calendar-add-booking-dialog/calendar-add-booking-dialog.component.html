@@ -1,0 +1,82 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '480px' }"
+  styleClass="calendar-add-booking-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-title">
+      <i class="pi pi-calendar-plus"></i>
+      <div>
+        <b>{{ 'BOOKINGS.CALENDAR.ADD_DIALOG.TITLE' | translate }}</b>
+        <small>{{ 'BOOKINGS.CALENDAR.ADD_DIALOG.SUBTITLE' | translate }}</small>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="close"
+      (click)="close()"
+      [attr.aria-label]="'BOOKINGS.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  @if (slot()) {
+    <div class="slot-summary">
+      <i class="pi pi-clock"></i>
+      <span>{{ 'BOOKINGS.CALENDAR.SELECTED_SLOT' | translate }}: {{ slotSummary() }}</span>
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="continue()" novalidate>
+    <div class="field">
+      <span class="field-label">
+        {{ 'BOOKINGS.CALENDAR.ADD_DIALOG.MOBILE' | translate }}
+        <span class="required">*</span>
+      </span>
+      <input
+        pInputText
+        class="mobile-input"
+        formControlName="mobile"
+        type="tel"
+        inputmode="numeric"
+        autocomplete="tel"
+        dir="ltr"
+        [placeholder]="'BOOKINGS.CALENDAR.ADD_DIALOG.MOBILE_PLACEHOLDER' | translate"
+      />
+    </div>
+
+    <div class="field">
+      <span class="field-label">
+        {{ 'BOOKINGS.CALENDAR.ADD_DIALOG.DOCTOR' | translate }}
+        <span class="required">*</span>
+      </span>
+      <p-dropdown
+        formControlName="employeeId"
+        [options]="employees()"
+        optionLabel="fullName"
+        optionValue="id"
+        appendTo="body"
+        [placeholder]="'BOOKINGS.CALENDAR.ADD_DIALOG.SELECT_DOCTOR' | translate"
+      />
+    </div>
+
+    @if (errorMessage()) {
+      <p class="error-box">{{ errorMessage() | translate }}</p>
+    }
+
+    <div class="actions">
+      <button type="button" class="cancel" (click)="close()">
+        {{ 'BOOKINGS.CANCEL' | translate }}
+      </button>
+      <p-button
+        type="submit"
+        [label]="'BOOKINGS.CALENDAR.ADD_DIALOG.CONTINUE' | translate"
+        [icon]="continueIcon()"
+        [iconPos]="continueIconPos()"
+      />
+    </div>
+  </form>
+</p-dialog>
