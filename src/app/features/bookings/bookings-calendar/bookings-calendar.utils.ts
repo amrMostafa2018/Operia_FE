@@ -2,7 +2,8 @@ export type CalendarViewMode = 'day' | 'week';
 
 export const CALENDAR_HOUR_START = 8;
 export const CALENDAR_HOUR_END = 21;
-export const CALENDAR_SLOT_HEIGHT_PX = 48;
+/** Pixels per hour — 15 minutes ≈ 24px so short slots stay readable. */
+export const CALENDAR_SLOT_HEIGHT_PX = 96;
 
 export interface CalendarDayCell {
   date: Date;
@@ -10,6 +11,11 @@ export interface CalendarDayCell {
   inCurrentMonth: boolean;
   isToday: boolean;
   isSelected: boolean;
+}
+
+export interface CalendarHourLane {
+  hour: number;
+  label24: string;
 }
 
 export function toIsoDate(date: Date): string {
@@ -83,6 +89,10 @@ export function parseTimeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
+export function startHourFromTime(time: string): number {
+  return Math.floor(parseTimeToMinutes(time) / 60);
+}
+
 export function startOfDay(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -152,11 +162,55 @@ export function formatPeriodTitle(date: Date, mode: CalendarViewMode, locale = '
 }
 
 export function hourLabels(start = CALENDAR_HOUR_START, end = CALENDAR_HOUR_END): string[] {
-  const labels: string[] = [];
+  return buildHourLanes(start, end).map(lane => lane.label24);
+}
+
+export function buildHourLanes(start = CALENDAR_HOUR_START, end = CALENDAR_HOUR_END): CalendarHourLane[] {
+  const lanes: CalendarHourLane[] = [];
   for (let h = start; h <= end; h++) {
-    labels.push(`${String(h).padStart(2, '0')}:00`);
+    lanes.push({
+      hour: h,
+      label24: `${String(h).padStart(2, '0')}:00`,
+    });
   }
-  return labels;
+  return lanes;
+}
+
+export function hourLaneHeight(_bookingCount = 0): number {
+  return CALENDAR_SLOT_HEIGHT_PX;
+}
+
+export function bookingsInHour<T extends { startTime: string; endTime: string }>(
+  bookings: T[],
+  hour: number
+): T[] {
+  const hourStart = hour * 60;
+  const hourEnd = hourStart + 60;
+  return bookings
+    .filter(
+      b => parseTimeToMinutes(b.startTime) < hourEnd && parseTimeToMinutes(b.endTime) > hourStart
+    )
+    .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+}
+
+/** Position/size of a time range inside one hour lane (clipped to that hour). */
+export function rectInHour(
+  startTime: string,
+  endTime: string,
+  hour: number,
+  laneHeight = CALENDAR_SLOT_HEIGHT_PX
+): { top: number; height: number } | null {
+  const start = parseTimeToMinutes(startTime);
+  const end = parseTimeToMinutes(endTime);
+  const hourStart = hour * 60;
+  const hourEnd = hourStart + 60;
+  const overlapStart = Math.max(start, hourStart);
+  const overlapEnd = Math.min(end, hourEnd);
+  if (overlapStart >= overlapEnd) return null;
+
+  const top = ((overlapStart - hourStart) / 60) * laneHeight;
+  const height = ((overlapEnd - overlapStart) / 60) * laneHeight;
+  return { top, height };
 }
 
 export function bookingTopOffset(startTime: string, hourStart = CALENDAR_HOUR_START): number {
@@ -166,5 +220,5 @@ export function bookingTopOffset(startTime: string, hourStart = CALENDAR_HOUR_ST
 
 export function bookingHeight(startTime: string, endTime: string): number {
   const duration = parseTimeToMinutes(endTime) - parseTimeToMinutes(startTime);
-  return Math.max((duration / 60) * CALENDAR_SLOT_HEIGHT_PX, 22);
+  return (duration / 60) * CALENDAR_SLOT_HEIGHT_PX;
 }

@@ -18,7 +18,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { LanguageService } from '@core/services/language.service';
 import { getSubmitArrowIcon, getSubmitIconPos } from '@app/shared/utils/rtl.util';
-import { getAppDateLocale } from '@app/shared/utils/time-format.util';
+import { formatAppTimeString, getAppDateLocale } from '@app/shared/utils/time-format.util';
 import { BookingService } from '../booking.service';
 import { MockEmployee } from '../models/mock-directory.model';
 import {
@@ -121,7 +121,8 @@ export class CalendarAddBookingDialogComponent {
       day: 'numeric',
     });
     if (slot.startTime && slot.endTime) {
-      return `${dateStr} · ${slot.startTime} – ${slot.endTime}`;
+      const lang = this.languageService.currentLang();
+      return `${dateStr} · ${formatAppTimeString(slot.startTime, lang)} – ${formatAppTimeString(slot.endTime, lang)}`;
     }
     return dateStr;
   }

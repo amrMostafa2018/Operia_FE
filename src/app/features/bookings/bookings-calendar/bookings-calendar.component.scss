@@ -282,40 +282,73 @@
   border-bottom: 1px solid #fecaca;
 }
 
-.time-grid,
-.week-grid {
-  display: flex;
+.hour-lanes {
   overflow: auto;
   max-height: 620px;
 }
 
-.time-labels {
-  width: 64px;
+.hour-lane {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #ececf4;
+  box-sizing: border-box;
+  height: 96px;
   flex-shrink: 0;
-  border-inline-end: 1px solid #ececf4;
-  background: #fafafa;
+
+  &--week {
+    .time-label {
+      align-items: flex-start;
+    }
+  }
 }
 
 .time-label {
+  width: 78px;
+  flex-shrink: 0;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding: 0.25rem 0.5rem 0 0;
+  padding: 0.35rem 0.4rem 0 0;
   font-size: 0.72rem;
   color: #767b8d;
-  border-bottom: 1px solid #f0f0f5;
+  background: #fafafa;
+  border-inline-end: 1px solid #ececf4;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
-.time-body,
-.week-column {
+.hour-lane__body {
   position: relative;
   flex: 1;
   min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 
   &--selectable {
     cursor: crosshair;
   }
+
+  &--today {
+    background: #fffdf5;
+  }
+
+  &--closed {
+    background: #f9fafb;
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  &--week {
+    border-inline-end: 1px solid #ececf4;
+    min-width: 100px;
+  }
+}
+
+.hour-lane__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: 1;
+  min-width: 0;
 }
 
 .slot-selection {
@@ -323,19 +356,11 @@
   left: 4px;
   right: 4px;
   border: 2px dashed #2d9f6f;
-  background: rgba(45, 159, 111, 0.12);
+  background: rgba(45, 159, 111, 0.18);
   border-radius: 4px;
-  z-index: 2;
   pointer-events: none;
-}
-
-.time-row {
-  border-bottom: 1px solid #f0f0f5;
+  z-index: 2;
   box-sizing: border-box;
-}
-
-.day-view .time-body {
-  min-width: 100%;
 }
 
 .week-view {
@@ -344,7 +369,7 @@
 
 .week-header {
   display: grid;
-  grid-template-columns: 64px repeat(7, 1fr);
+  grid-template-columns: 78px repeat(7, 1fr);
   border-bottom: 1px solid #ececf4;
   background: #fafafa;
 
@@ -377,86 +402,49 @@
   color: #191a4d;
 }
 
-.week-columns {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  flex: 1;
-}
-
-.week-column {
-  position: relative;
-  border-inline-end: 1px solid #ececf4;
-  min-width: 100px;
-
-  &--today {
-    background: #fffdf5;
-  }
-
-  &--closed {
-    background: #f9fafb;
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
-}
-
 .event-block {
   position: absolute;
   left: 4px;
   right: 4px;
+  z-index: 1;
   border: 0;
   border-radius: 6px;
   background: #c4b5fd;
   color: #3b2e6e;
-  padding: 0.3rem 0.45rem;
+  padding: 0 0.45rem;
   font-size: 0.72rem;
   text-align: start;
   cursor: pointer;
   overflow: hidden;
-  z-index: 1;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 0.12rem;
+  align-items: center;
   line-height: 1.2;
+  box-sizing: border-box;
+  min-height: 0;
 
   &--compact {
     font-size: 0.66rem;
-    padding: 0.22rem 0.3rem;
-    gap: 0.08rem;
+    padding: 0 0.3rem;
   }
 
   &--short {
-    padding: 0.12rem 0.35rem;
-    gap: 0.05rem;
-
-    .event-block__head {
-      gap: 0.15rem;
-    }
-
-    .event-time {
-      font-size: 0.62rem;
-    }
-
-    .event-customer {
-      font-size: 0.62rem;
-    }
-
-    .event-employee {
-      display: none;
-    }
+    font-size: 0.64rem;
+    padding: 0 0.3rem;
 
     .event-status {
-      font-size: 0.52rem;
-      padding: 0.06rem 0.2rem;
+      font-size: 0.5rem;
+      padding: 0.04rem 0.18rem;
     }
   }
 
-  &__head {
+  &__line {
     display: flex;
     align-items: center;
     gap: 0.25rem;
     min-width: 0;
-    flex-wrap: wrap;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   &--pending {
@@ -497,17 +485,17 @@
 }
 
 .event-time {
+  flex-shrink: 0;
   font-weight: 700;
   white-space: nowrap;
-  min-width: 0;
 }
 
 .event-customer {
-  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
+  min-width: 0;
 
   &--cancelled {
     text-decoration: line-through;
@@ -516,17 +504,19 @@
   }
 }
 
+.event-separator {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
 .event-employee {
-  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.64rem;
-  opacity: 0.85;
-}
-
-.event-block--compact .event-employee {
-  display: none;
+  font-weight: 500;
+  opacity: 0.9;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 @media (max-width: 900px) {

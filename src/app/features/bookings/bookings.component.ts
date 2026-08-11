@@ -6,6 +6,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -70,6 +71,9 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BookingsComponent implements AfterViewInit {
+  @ViewChild(BookingsCalendarComponent)
+  private calendar?: BookingsCalendarComponent;
+
   private readonly bookingService = inject(BookingService);
   private readonly permissions = inject(PermissionService);
   private readonly toast = inject(MessageService);
@@ -190,12 +194,18 @@ export class BookingsComponent implements AfterViewInit {
   closeInquiry(): void {
     this.inquiryOpen.set(false);
     this.inquiryDraft.set(null);
+    this.clearCalendarSelection();
     this.load();
   }
 
   onBookingCreated(): void {
+    this.clearCalendarSelection();
     this.load();
     this.loadCalendar();
+  }
+
+  private clearCalendarSelection(): void {
+    this.calendar?.clearSelection();
   }
 
   viewBooking(booking: Booking): void {

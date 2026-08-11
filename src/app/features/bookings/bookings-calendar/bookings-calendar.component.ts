@@ -14,20 +14,20 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageService } from '@core/services/language.service';
 import { getNextChevronIcon, getPrevChevronIcon } from '@app/shared/utils/rtl.util';
-import { getAppDateLocale } from '@app/shared/utils/time-format.util';
+import { formatAppTimeString, getAppDateLocale } from '@app/shared/utils/time-format.util';
 import { bookingStatusKey } from '@app/shared/utils/status-tag.util';
 import { Booking, BookingStatus } from '../models/booking.model';
 import {
   buildWeekDays,
+  buildHourLanes,
+  bookingsInHour,
   CalendarSlotDuration,
   CalendarSlotSelection,
   CALENDAR_SLOT_DURATION_OPTIONS,
-  CalendarViewMode,
   CALENDAR_SLOT_HEIGHT_PX,
+  CalendarViewMode,
   formatPeriodTitle,
-  hourLabels,
-  bookingHeight,
-  bookingTopOffset,
+  rectInHour,
   addDays,
   toIsoDate,
   snapTimeFromClick,
@@ -35,7 +35,14 @@ import {
   formatTime,
   parseTimeToMinutes,
 } from './bookings-calendar.utils';
-import { DayWorkingBounds, WorkingHoursService } from '../working-hours.service';
+import { WorkingHoursService } from '../working-hours.service';
+
+export interface DisplayHourLane {
+  hour: number;
+  label: string;
+  height: number;
+  bookings: Booking[];
+}
 
 @Component({
   selector: 'app-bookings-calendar',
@@ -85,42 +92,16 @@ export class BookingsCalendarComponent {
     return this.workingHours.getDayBounds(this.currentDate());
   });
 
-  readonly hours = computed(() => {
+  readonly hourRange = computed(() => {
     const mode = this.viewMode();
     if (mode === 'day') {
       const bounds = this.dayBounds();
-      if (!bounds.enabled) return [];
-      return hourLabels(bounds.startHour, bounds.endHour);
+      if (!bounds.enabled) return { startHour: 0, endHour: -1 };
+      return { startHour: bounds.startHour, endHour: bounds.endHour };
     }
     const { startHour, endHour } = this.gridBounds();
-    return hourLabels(startHour, endHour);
+    return { startHour, endHour };
   });
-
-  readonly slotHeight = CALENDAR_SLOT_HEIGHT_PX;
-
-  readonly gridHeight = computed(() => this.hours().length * CALENDAR_SLOT_HEIGHT_PX);
-
-  readonly isClosedDay = computed(
-    () => this.viewMode() === 'day' && !this.dayBounds().enabled
-  );
-
-  readonly workingHoursLabel = computed(() => {
-    const bounds = this.dayBounds();
-    if (!bounds.enabled) return '';
-    return `${bounds.fromTime} – ${bounds.toTime}`;
-  });
-
-  readonly workingHoursFrom = computed(() => this.dayBounds().fromTime);
-
-  readonly workingHoursTo = computed(() => this.dayBounds().toTime);
-
-  readonly periodTitle = computed(() =>
-    formatPeriodTitle(
-      this.currentDate(),
-      this.viewMode(),
-      getAppDateLocale(this.languageService.currentLang())
-    )
-  );
 
   readonly filteredBookings = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
@@ -139,6 +120,55 @@ export class BookingsCalendarComponent {
 
   readonly dayBookings = computed(() =>
     this.filteredBookings().filter(b => b.date === toIsoDate(this.currentDate()))
+  );
+
+  readonly dayHourLanes = computed((): DisplayHourLane[] => {
+    const lang = this.languageService.currentLang();
+    const { startHour, endHour } = this.hourRange();
+    const bookings = this.dayBookings();
+    return buildHourLanes(startHour, endHour).map(lane => ({
+      hour: lane.hour,
+      label: formatAppTimeString(lane.label24, lang),
+      height: CALENDAR_SLOT_HEIGHT_PX,
+      bookings: bookingsInHour(bookings, lane.hour),
+    }));
+  });
+
+  readonly weekHourLanes = computed((): DisplayHourLane[] => {
+    const lang = this.languageService.currentLang();
+    const { startHour, endHour } = this.hourRange();
+    return buildHourLanes(startHour, endHour).map(lane => ({
+      hour: lane.hour,
+      label: formatAppTimeString(lane.label24, lang),
+      height: CALENDAR_SLOT_HEIGHT_PX,
+      bookings: [],
+    }));
+  });
+
+  readonly isClosedDay = computed(
+    () => this.viewMode() === 'day' && !this.dayBounds().enabled
+  );
+
+  readonly workingHoursLabel = computed(() => {
+    const bounds = this.dayBounds();
+    if (!bounds.enabled) return '';
+    return `${bounds.fromTime} – ${bounds.toTime}`;
+  });
+
+  readonly workingHoursFrom = computed(() =>
+    formatAppTimeString(this.dayBounds().fromTime, this.languageService.currentLang())
+  );
+
+  readonly workingHoursTo = computed(() =>
+    formatAppTimeString(this.dayBounds().toTime, this.languageService.currentLang())
+  );
+
+  readonly periodTitle = computed(() =>
+    formatPeriodTitle(
+      this.currentDate(),
+      this.viewMode(),
+      getAppDateLocale(this.languageService.currentLang())
+    )
   );
 
   readonly weekdayHeaders = computed(() => {
@@ -167,7 +197,7 @@ export class BookingsCalendarComponent {
     this.currentDate.set(addDays(this.currentDate(), step));
   }
 
-  onTimeGridClick(event: MouseEvent, date: Date): void {
+  onHourLaneClick(event: MouseEvent, date: Date, hour: number): void {
     if (!this.canManage()) return;
     const bounds = this.workingHours.getDayBounds(date);
     if (!bounds.enabled) {
@@ -179,9 +209,16 @@ export class BookingsCalendarComponent {
     const rect = target.getBoundingClientRect();
     const offsetY = event.clientY - rect.top;
     const duration = this.slotDuration();
+    const hourStartMinutes = hour * 60;
+    const hourEndMinutes = Math.min((hour + 1) * 60, bounds.toMinutes);
+    if (hourStartMinutes >= bounds.toMinutes || hourEndMinutes <= bounds.fromMinutes) {
+      this.slotError.set('BOOKINGS.CALENDAR.OUTSIDE_HOURS');
+      return;
+    }
+
     const { start, end } = snapTimeFromClick(
       offsetY,
-      bounds.fromMinutes,
+      Math.max(hourStartMinutes, bounds.fromMinutes),
       bounds.toMinutes,
       CALENDAR_SLOT_HEIGHT_PX,
       duration
@@ -196,41 +233,32 @@ export class BookingsCalendarComponent {
     this.currentDate.set(date);
   }
 
-  boundsForDate(date: Date): DayWorkingBounds {
-    this.workingHours.settings();
-    return this.workingHours.getDayBounds(date);
+  bookingsForHourOnDay(iso: string, hour: number): Booking[] {
+    return bookingsInHour(
+      this.filteredBookings().filter(b => b.date === iso),
+      hour
+    );
   }
 
-  hoursForDate(date: Date): string[] {
-    const bounds = this.workingHours.getDayBounds(date);
-    if (!bounds.enabled) return [];
-    return hourLabels(bounds.startHour, bounds.endHour);
-  }
-
-  gridHeightForDate(date: Date): number {
-    return this.hoursForDate(date).length * CALENDAR_SLOT_HEIGHT_PX;
-  }
-
-  hourStartForDate(date: Date): number {
-    return this.workingHours.getDayBounds(date).startHour;
-  }
-
-  isSlotSelectedForDate(date: Date): boolean {
-    const slot = this.selectedSlot();
-    if (!slot) return false;
-    return toIsoDate(slot.date) === toIsoDate(date);
-  }
-
-  selectionTop(): number | null {
-    const slot = this.selectedSlot();
-    if (!slot?.startTime) return null;
-    return bookingTopOffset(slot.startTime, this.workingHours.getDayBounds(slot.date).startHour);
-  }
-
-  selectionHeight(): number | null {
+  selectionRectForHour(
+    date: Date,
+    lane: DisplayHourLane
+  ): { top: number; height: number } | null {
     const slot = this.selectedSlot();
     if (!slot?.startTime || !slot.endTime) return null;
-    return bookingHeight(slot.startTime, slot.endTime);
+    if (toIsoDate(slot.date) !== toIsoDate(date)) return null;
+    return rectInHour(slot.startTime, slot.endTime, lane.hour, lane.height);
+  }
+
+  bookingRectInHour(
+    booking: Booking,
+    lane: DisplayHourLane
+  ): { top: number; height: number } | null {
+    return rectInHour(booking.startTime, booking.endTime, lane.hour, lane.height);
+  }
+
+  isShortBlock(height: number): boolean {
+    return height < 28;
   }
 
   selectionLabel(): string {
@@ -244,7 +272,10 @@ export class BookingsCalendarComponent {
       day: 'numeric',
     });
     if (slot.startTime && slot.endTime) {
-      return `${dateStr} · ${slot.startTime} – ${slot.endTime} (${slot.durationMinutes} ${this.durationUnitLabel()})`;
+      const lang = this.languageService.currentLang();
+      const start = formatAppTimeString(slot.startTime, lang);
+      const end = formatAppTimeString(slot.endTime, lang);
+      return `${dateStr} · ${start} – ${end} (${slot.durationMinutes} ${this.durationUnitLabel()})`;
     }
     return `${dateStr} · ${slot.durationMinutes} ${this.durationUnitLabel()}`;
   }
@@ -297,28 +328,9 @@ export class BookingsCalendarComponent {
     this.addBookingRequested.emit(slot);
   }
 
-  bookingsForWeekDay(iso: string): Booking[] {
-    return this.filteredBookings().filter(b => b.date === iso);
-  }
-
-  eventTop(startTime: string, date?: Date): number {
-    this.workingHours.settings();
-    const hourStart = date
-      ? this.workingHours.getDayBounds(date).startHour
-      : this.dayBounds().startHour;
-    return bookingTopOffset(startTime, hourStart);
-  }
-
-  eventHeight(startTime: string, endTime: string): number {
-    return bookingHeight(startTime, endTime);
-  }
-
-  isShortEvent(booking: Booking): boolean {
-    return this.eventHeight(booking.startTime, booking.endTime) < 40;
-  }
-
   eventLabel(booking: Booking): string {
-    return `${booking.startTime}-${booking.endTime}`;
+    const lang = this.languageService.currentLang();
+    return `${formatAppTimeString(booking.startTime, lang)} – ${formatAppTimeString(booking.endTime, lang)}`;
   }
 
   statusClass(status: string): string {

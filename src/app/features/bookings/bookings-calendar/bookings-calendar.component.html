@@ -113,53 +113,56 @@
         {{ 'BOOKINGS.CALENDAR.CLOSED_DAY' | translate }}
       </p>
     } @else {
-    <div class="day-view">
-      <div class="time-grid" [style.height.px]="gridHeight()">
-        <div class="time-labels">
-          @for (hour of hours(); track hour) {
-            <div class="time-label" [style.height.px]="slotHeight">{{ hour }}</div>
-          }
-        </div>
-        <div
-          class="time-body"
-          [class.time-body--selectable]="canManage()"
-          (click)="onTimeGridClick($event, currentDate())"
-        >
-          @for (hour of hours(); track hour) {
-            <div class="time-row" [style.height.px]="slotHeight"></div>
-          }
-          @if (isSlotSelectedForDate(currentDate()) && selectionTop() !== null && selectionHeight() !== null) {
-            <div
-              class="slot-selection"
-              [style.top.px]="selectionTop()!"
-              [style.height.px]="selectionHeight()!"
-            ></div>
-          }
-          @for (booking of dayBookings(); track booking.id) {
-            <button
-              type="button"
-              class="event-block"
-              [class.event-block--short]="isShortEvent(booking)"
-              [ngClass]="statusClass(booking.status)"
-              [style.top.px]="eventTop(booking.startTime, currentDate())"
-              [style.height.px]="eventHeight(booking.startTime, booking.endTime)"
-              (click)="onEventClick(booking, $event)"
-            >
-              <div class="event-block__head">
-                @if (isCancelled(booking)) {
-                  <span class="event-status">{{ statusKey(booking.status) | translate }}</span>
+      <div class="day-view">
+        <div class="hour-lanes">
+          @for (lane of dayHourLanes(); track lane.hour) {
+            <div class="hour-lane" [style.height.px]="lane.height">
+              <div class="time-label">{{ lane.label }}</div>
+              <div
+                class="hour-lane__body"
+                [class.hour-lane__body--selectable]="canManage()"
+                [style.height.px]="lane.height"
+                (click)="onHourLaneClick($event, currentDate(), lane.hour)"
+              >
+                @if (selectionRectForHour(currentDate(), lane); as selection) {
+                  <div
+                    class="slot-selection"
+                    [style.top.px]="selection.top"
+                    [style.height.px]="selection.height"
+                  ></div>
                 }
-                <span class="event-time">{{ eventLabel(booking) }}</span>
+                @for (booking of lane.bookings; track booking.id) {
+                  @if (bookingRectInHour(booking, lane); as block) {
+                    <button
+                      type="button"
+                      class="event-block"
+                      [class.event-block--short]="isShortBlock(block.height)"
+                      [ngClass]="statusClass(booking.status)"
+                      [style.top.px]="block.top"
+                      [style.height.px]="block.height"
+                      [attr.title]="booking.customerName + ' · ' + booking.employeeName"
+                      (click)="onEventClick(booking, $event)"
+                    >
+                      <div class="event-block__line">
+                        @if (isCancelled(booking)) {
+                          <span class="event-status">{{ statusKey(booking.status) | translate }}</span>
+                        }
+                        <span class="event-time">{{ eventLabel(booking) }}</span>
+                        <span class="event-separator">·</span>
+                        <span class="event-customer" [class.event-customer--cancelled]="isCancelled(booking)">
+                          {{ booking.customerName }}
+                        </span>
+                        <span class="event-separator">·</span>
+                        <span class="event-employee">{{ booking.employeeName }}</span>
+                      </div>
+                    </button>
+                  }
+                }
               </div>
-              <span class="event-customer" [class.event-customer--cancelled]="isCancelled(booking)">
-                {{ booking.customerName }}
-              </span>
-              <span class="event-employee">{{ booking.employeeName }}</span>
-            </button>
+            </div>
           }
         </div>
       </div>
-    </div>
     }
   } @else if (viewMode() === 'week') {
     <div class="week-view">
@@ -172,55 +175,59 @@
           </div>
         }
       </div>
-      <div class="week-grid" [style.height.px]="gridHeight()">
-        <div class="time-labels">
-          @for (hour of hours(); track hour) {
-            <div class="time-label" [style.height.px]="slotHeight">{{ hour }}</div>
-          }
-        </div>
-        <div class="week-columns">
-          @for (day of weekDays(); track day.iso) {
-            <div
-              class="week-column"
-              [class.week-column--today]="day.isToday"
-              [class.week-column--closed]="!isWorkingDay(day.date)"
-              [class.week-column--selectable]="canManage() && isWorkingDay(day.date)"
-              (click)="onTimeGridClick($event, day.date)"
-            >
-              @for (hour of hours(); track hour) {
-                <div class="time-row" [style.height.px]="slotHeight"></div>
-              }
-              @if (isSlotSelectedForDate(day.date) && selectionTop() !== null && selectionHeight() !== null) {
+      <div class="hour-lanes hour-lanes--week">
+        @for (lane of weekHourLanes(); track lane.hour) {
+          <div class="hour-lane hour-lane--week" [style.height.px]="lane.height">
+            <div class="time-label">{{ lane.label }}</div>
+            <div class="hour-lane__days" [style.height.px]="lane.height">
+              @for (day of weekDays(); track day.iso) {
                 <div
-                  class="slot-selection"
-                  [style.top.px]="selectionTop()!"
-                  [style.height.px]="selectionHeight()!"
-                ></div>
-              }
-              @for (booking of bookingsForWeekDay(day.iso); track booking.id) {
-                <button
-                  type="button"
-                  class="event-block event-block--compact"
-                  [class.event-block--short]="isShortEvent(booking)"
-                  [ngClass]="statusClass(booking.status)"
-                  [style.top.px]="eventTop(booking.startTime, day.date)"
-                  [style.height.px]="eventHeight(booking.startTime, booking.endTime)"
-                  (click)="onEventClick(booking, $event)"
+                  class="hour-lane__body hour-lane__body--week"
+                  [class.hour-lane__body--today]="day.isToday"
+                  [class.hour-lane__body--closed]="!isWorkingDay(day.date)"
+                  [class.hour-lane__body--selectable]="canManage() && isWorkingDay(day.date)"
+                  [style.height.px]="lane.height"
+                  (click)="onHourLaneClick($event, day.date, lane.hour)"
                 >
-                  <div class="event-block__head">
-                    @if (isCancelled(booking)) {
-                      <span class="event-status event-status--compact">{{ statusKey(booking.status) | translate }}</span>
+                  @if (selectionRectForHour(day.date, lane); as selection) {
+                    <div
+                      class="slot-selection"
+                      [style.top.px]="selection.top"
+                      [style.height.px]="selection.height"
+                    ></div>
+                  }
+                  @for (booking of bookingsForHourOnDay(day.iso, lane.hour); track booking.id) {
+                    @if (bookingRectInHour(booking, lane); as block) {
+                      <button
+                        type="button"
+                        class="event-block event-block--compact"
+                        [class.event-block--short]="isShortBlock(block.height)"
+                        [ngClass]="statusClass(booking.status)"
+                        [style.top.px]="block.top"
+                        [style.height.px]="block.height"
+                        [attr.title]="booking.customerName + ' · ' + booking.employeeName"
+                        (click)="onEventClick(booking, $event)"
+                      >
+                        <div class="event-block__line">
+                          @if (isCancelled(booking)) {
+                            <span class="event-status event-status--compact">{{ statusKey(booking.status) | translate }}</span>
+                          }
+                          <span class="event-time">{{ eventLabel(booking) }}</span>
+                          <span class="event-separator">·</span>
+                          <span class="event-customer" [class.event-customer--cancelled]="isCancelled(booking)">
+                            {{ booking.customerName }}
+                          </span>
+                          <span class="event-separator">·</span>
+                          <span class="event-employee">{{ booking.employeeName }}</span>
+                        </div>
+                      </button>
                     }
-                    <span class="event-time">{{ eventLabel(booking) }}</span>
-                  </div>
-                  <span class="event-customer" [class.event-customer--cancelled]="isCancelled(booking)">
-                    {{ booking.customerName }}
-                  </span>
-                </button>
+                  }
+                </div>
               }
             </div>
-          }
-        </div>
+          </div>
+        }
       </div>
     </div>
   }
