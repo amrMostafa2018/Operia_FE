@@ -2,8 +2,8 @@ export type CalendarViewMode = 'day' | 'week';
 
 export const CALENDAR_HOUR_START = 8;
 export const CALENDAR_HOUR_END = 21;
-/** Pixels per hour — 15 minutes ≈ 24px so short slots stay readable. */
-export const CALENDAR_SLOT_HEIGHT_PX = 96;
+/** Pixels per hour — keeps the grid compact; 15 minutes ≈ 18.75px. */
+export const CALENDAR_SLOT_HEIGHT_PX = 75;
 
 export interface CalendarDayCell {
   date: Date;

@@ -292,7 +292,7 @@
   align-items: stretch;
   border-bottom: 1px solid #ececf4;
   box-sizing: border-box;
-  height: 96px;
+  height: 75px;
   flex-shrink: 0;
 
   &--week {
@@ -425,6 +425,11 @@
   &--compact {
     font-size: 0.66rem;
     padding: 0 0.3rem;
+
+    .event-customer,
+    .event-employee {
+      font-size: 0.72rem;
+    }
   }
 
   &--short {
@@ -434,6 +439,11 @@
     .event-status {
       font-size: 0.5rem;
       padding: 0.04rem 0.18rem;
+    }
+
+    .event-customer,
+    .event-employee {
+      font-size: 0.68rem;
     }
   }
 
@@ -486,7 +496,8 @@
 
 .event-time {
   flex-shrink: 0;
-  font-weight: 700;
+  font-weight: 600;
+  opacity: 0.85;
   white-space: nowrap;
 }
 
@@ -494,7 +505,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: inherit;
   min-width: 0;
 
   &--cancelled {
@@ -506,15 +519,18 @@
 
 .event-separator {
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.55;
+  font-weight: 700;
 }
 
 .event-employee {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 500;
-  opacity: 0.9;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: inherit;
+  opacity: 1;
   min-width: 0;
   flex-shrink: 1;
 }
