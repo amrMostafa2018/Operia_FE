@@ -19,11 +19,11 @@ import {
   MockCustomer,
   MockPackage,
 } from './models/mock-directory.model';
-import { parseTimeToMinutes } from './bookings-calendar/bookings-calendar.utils';
+import { parseTimeToMinutes, toIsoDate } from './bookings-calendar/bookings-calendar.utils';
 import { WorkingHoursService } from './working-hours.service';
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toIsoDate(new Date());
 }
 
 function parseTime(time: string): number {
@@ -131,7 +131,9 @@ const INITIAL_BOOKINGS: Booking[] = [
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly workingHours = inject(WorkingHoursService);
-  private readonly bookings$ = new BehaviorSubject<Booking[]>([...INITIAL_BOOKINGS]);
+  private readonly bookings$ = new BehaviorSubject<Booking[]>(
+    INITIAL_BOOKINGS.map(booking => ({ ...booking, date: todayIso() }))
+  );
   private packages = [...MOCK_PACKAGES];
 
   get bookings(): Observable<Booking[]> {
@@ -341,11 +343,11 @@ export class BookingService {
   private applyFilters(all: Booking[], filters: BookingFilters): Booking[] {
     let result = [...all];
     if (filters.dateFrom) {
-      const from = filters.dateFrom.toISOString().slice(0, 10);
+      const from = toIsoDate(filters.dateFrom);
       result = result.filter(b => b.date >= from);
     }
     if (filters.dateTo) {
-      const to = filters.dateTo.toISOString().slice(0, 10);
+      const to = toIsoDate(filters.dateTo);
       result = result.filter(b => b.date <= to);
     }
     if (filters.search?.trim()) {

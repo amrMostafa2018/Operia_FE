@@ -1,8 +1,27 @@
+// Portal-aligned palette (matches bookings page purple baseline)
+$portal-primary: #4b28e8;
+$portal-primary-dark: #3f18e8;
+$portal-primary-text: #4521dd;
+$portal-primary-light: #f5f2ff;
+$portal-primary-tint: #eae9ff;
+$portal-heading: #191a4d;
+$portal-muted: #767b8d;
+$portal-body: #596174;
+$portal-label: #4c5567;
+$portal-border: #ececf4;
+$portal-card-border: #e8e7ef;
+$calendar-grid-bg: #fff;
+$booking-pending: #f97316;
+$booking-pending-bg: #fff7ed;
+$booking-pending-border: #fdba74;
+$booking-pending-text: #c2410c;
+
 .bookings-calendar {
   background: #fff;
-  border: 1px solid #e8e8f0;
+  border: 1px solid $portal-card-border;
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .calendar-top {
@@ -12,12 +31,12 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #ececf4;
+  border-bottom: 1px solid $portal-border;
 
   h2 {
     margin: 0;
     font-size: 1.35rem;
-    color: #191a4d;
+    color: $portal-heading;
     font-weight: 600;
   }
 }
@@ -30,20 +49,30 @@
 .action-btn {
   width: 38px;
   height: 38px;
-  border: 0;
-  border-radius: 6px;
-  color: #fff;
+  border: 1px solid $portal-border;
+  border-radius: 7px;
+  background: #fff;
+  color: $portal-body;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 
-  &--search {
-    background: #2d9f6f;
+  i {
+    color: $portal-primary;
   }
 
+  &:hover {
+    border-color: $portal-primary-tint;
+    background: $portal-primary-light;
+    color: $portal-primary;
+  }
+
+  &--search,
   &--refresh {
-    background: #e85d7a;
+    background: #fff;
+    color: $portal-body;
   }
 }
 
@@ -52,19 +81,25 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid #ececf4;
+  border-bottom: 1px solid $portal-border;
   background: #f8f9fc;
 
   i {
-    color: #767b8d;
+    color: $portal-muted;
   }
 
   input {
     flex: 1;
-    border: 1px solid #e0e0ec;
-    border-radius: 6px;
+    border: 1px solid $portal-border;
+    border-radius: 7px;
     padding: 0.5rem 0.75rem;
     font: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: $portal-primary;
+      box-shadow: 0 0 0 2px rgba(75, 40, 232, 0.1);
+    }
   }
 }
 
@@ -75,7 +110,7 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding: 0.85rem 1.25rem;
-  border-bottom: 1px solid #ececf4;
+  border-bottom: 1px solid $portal-border;
 }
 
 .nav-group {
@@ -84,36 +119,49 @@
   gap: 0.35rem;
 }
 
-.nav-btn,
-.today-btn {
-  border: 0;
-  background: #2d9f6f;
-  color: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-  font: inherit;
-}
-
 .nav-btn {
   width: 34px;
   height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid $portal-border;
+  background: #fff;
+  color: $portal-primary;
+  border-radius: 7px;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: $portal-primary-tint;
+    background: $portal-primary-light;
+  }
 }
 
 .today-btn {
+  border: 0;
+  background: $portal-primary;
+  color: #fff;
+  border-radius: 7px;
+  cursor: pointer;
+  font: inherit;
   padding: 0.45rem 0.85rem;
   margin-inline-start: 0.35rem;
   font-size: 0.82rem;
   font-weight: 600;
+  transition: background 0.15s;
+
+  &:hover {
+    background: $portal-primary-dark;
+  }
 }
 
 .period-title {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #191a4d;
+  color: $portal-heading;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -127,16 +175,16 @@
   &__label {
     font-size: 0.78rem;
     font-weight: 600;
-    color: #4c5567;
+    color: $portal-label;
     margin-inline-end: 0.25rem;
   }
 }
 
 .duration-btn {
-  border: 1px solid #d1d5db;
+  border: 1px solid $portal-border;
   background: #fff;
-  color: #4c5567;
-  border-radius: 4px;
+  color: $portal-label;
+  border-radius: 7px;
   padding: 0.35rem 0.6rem;
   font-size: 0.75rem;
   font-weight: 600;
@@ -144,46 +192,54 @@
   transition: all 0.15s;
 
   &--active {
-    background: #2d9f6f;
-    border-color: #2d9f6f;
+    background: $portal-primary;
+    border-color: $portal-primary;
     color: #fff;
   }
 
   &:hover:not(&--active) {
-    border-color: #2d9f6f;
-    color: #2d9f6f;
+    border-color: $portal-primary;
+    color: $portal-primary;
+    background: $portal-primary-light;
   }
 }
 
 .view-toggle {
   display: flex;
-  border-radius: 4px;
+  border: 1px solid $portal-border;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .view-btn {
   border: 0;
-  background: #7ec9a8;
-  color: #fff;
-  padding: 0.5rem 1rem;
-  font-size: 0.82rem;
+  background: #fff;
+  color: $portal-body;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 
   &--active {
-    background: #2d9f6f;
+    background: $portal-primary-light;
+    color: $portal-primary;
   }
 
   &:not(:last-child) {
-    border-inline-end: 1px solid rgba(255, 255, 255, 0.35);
+    border-inline-end: 1px solid $portal-border;
+  }
+
+  &:hover:not(&--active) {
+    background: #fafafa;
+    color: $portal-primary;
   }
 }
 
 .calendar-closed {
   text-align: center;
   padding: 3rem 1.5rem;
-  color: #767b8d;
+  color: $portal-muted;
   font-size: 0.9rem;
 
   i {
@@ -199,21 +255,21 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1.25rem;
-  background: #f0fdf4;
-  border-bottom: 1px solid #bbf7d0;
+  background: $portal-primary-light;
+  border-bottom: 1px solid $portal-primary-tint;
   font-size: 0.82rem;
-  color: #166534;
+  color: $portal-primary-dark;
   font-weight: 600;
 
   i {
-    color: #2d9f6f;
+    color: $portal-primary;
   }
 }
 
 .calendar-loading {
   text-align: center;
   padding: 3rem;
-  color: #767b8d;
+  color: $portal-muted;
 }
 
 .selection-bar {
@@ -223,19 +279,19 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
-  background: #f0fdf4;
-  border-bottom: 1px solid #bbf7d0;
+  background: $portal-primary-light;
+  border-bottom: 1px solid $portal-primary-tint;
 
   &__info {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    color: #166534;
+    color: $portal-primary-dark;
     font-weight: 600;
 
     i {
-      color: #2d9f6f;
+      color: $portal-primary;
     }
   }
 
@@ -247,12 +303,19 @@
 }
 
 .clear-selection {
-  border: 1px solid #d1d5db;
+  border: 1px solid $portal-border;
   background: #fff;
-  border-radius: 6px;
+  color: $portal-primary-text;
+  border-radius: 7px;
   padding: 0.45rem 0.85rem;
   font-size: 0.82rem;
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: $portal-primary-tint;
+    background: $portal-primary-light;
+  }
 }
 
 .add-booking-btn {
@@ -260,13 +323,18 @@
   align-items: center;
   gap: 0.4rem;
   border: 0;
-  background: #2d9f6f;
+  background: $portal-primary;
   color: #fff;
-  border-radius: 6px;
+  border-radius: 7px;
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: $portal-primary-dark;
+  }
 
   i {
     font-size: 0.8rem;
@@ -282,54 +350,49 @@
   border-bottom: 1px solid #fecaca;
 }
 
-.hour-lanes {
+.day-view {
+  background: $calendar-grid-bg;
+}
+
+.day-grid-scroll {
   overflow: auto;
-  max-height: 620px;
+  max-height: min(620px, calc(100dvh - 22rem));
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  background: $calendar-grid-bg;
 }
 
-.hour-lane {
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid #ececf4;
-  box-sizing: border-box;
-  height: 75px;
-  flex-shrink: 0;
-
-  &--week {
-    .time-label {
-      align-items: flex-start;
-    }
-  }
+.day-grid {
+  display: grid;
+  grid-template-columns: var(--week-time-col, 78px) 1fr;
+  background: $calendar-grid-bg;
 }
 
-.time-label {
-  width: 78px;
-  flex-shrink: 0;
+.calendar-grid__time-label {
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
   padding: 0.35rem 0.4rem 0 0;
   font-size: 0.72rem;
-  color: #767b8d;
+  color: $portal-muted;
   background: #fafafa;
-  border-inline-end: 1px solid #ececf4;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
   box-sizing: border-box;
   white-space: nowrap;
 }
 
-.hour-lane__body {
+.calendar-grid__cell {
   position: relative;
-  flex: 1;
-  min-width: 0;
   box-sizing: border-box;
   overflow: hidden;
+  min-height: 75px;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
+  background: $calendar-grid-bg;
 
   &--selectable {
     cursor: crosshair;
-  }
-
-  &--today {
-    background: #fffdf5;
   }
 
   &--closed {
@@ -337,53 +400,66 @@
     opacity: 0.65;
     cursor: not-allowed;
   }
-
-  &--week {
-    border-inline-end: 1px solid #ececf4;
-    min-width: 100px;
-  }
-}
-
-.hour-lane__days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  flex: 1;
-  min-width: 0;
 }
 
 .slot-selection {
   position: absolute;
-  left: 4px;
-  right: 4px;
-  border: 2px dashed #2d9f6f;
-  background: rgba(45, 159, 111, 0.18);
-  border-radius: 4px;
+  inset-inline-start: 4px;
+  inset-inline-end: 4px;
+  border: 2px dashed $portal-primary;
+  background: rgba(75, 40, 232, 0.12);
+  border-radius: 6px;
   pointer-events: none;
   z-index: 2;
   box-sizing: border-box;
 }
 
 .week-view {
-  overflow: auto;
+  min-width: 0;
 }
 
-.week-header {
+.week-grid-scroll {
+  overflow: auto;
+  max-height: min(620px, calc(100dvh - 22rem));
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  background: $calendar-grid-bg;
+}
+
+.week-grid {
   display: grid;
-  grid-template-columns: 78px repeat(7, 1fr);
-  border-bottom: 1px solid #ececf4;
+  grid-template-columns: var(--week-time-col, 78px) repeat(7, minmax(100px, 1fr));
+  min-width: 778px;
+  background: $calendar-grid-bg;
+}
+
+.week-grid__corner {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   background: #fafafa;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
+}
 
-  &__spacer {
-    border-inline-end: 1px solid #ececf4;
-  }
+.week-grid__day-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 0.5rem;
+  text-align: center;
+  background: #fafafa;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
 
-  &__day {
-    padding: 0.5rem;
-    text-align: center;
-    border-inline-end: 1px solid #ececf4;
+  &--today {
+    background: #fff;
+    box-shadow: inset 0 -2px 0 $portal-primary;
 
-    &--today {
-      background: #fff8e1;
+    .week-day-name,
+    .week-day-num {
+      color: $portal-primary;
+      font-weight: 700;
     }
   }
 }
@@ -391,7 +467,7 @@
 .week-day-name {
   display: block;
   font-size: 0.7rem;
-  color: #767b8d;
+  color: $portal-muted;
   font-weight: 600;
 }
 
@@ -399,7 +475,7 @@
   display: block;
   font-size: 1rem;
   font-weight: 700;
-  color: #191a4d;
+  color: $portal-heading;
 }
 
 .event-block {
@@ -409,7 +485,7 @@
   z-index: 1;
   border: 0;
   border-radius: 6px;
-  background: #c4b5fd;
+  background: transparent;
   color: #3b2e6e;
   padding: 0 0.45rem;
   font-size: 0.72rem;
@@ -421,6 +497,28 @@
   line-height: 1.2;
   box-sizing: border-box;
   min-height: 0;
+
+  &--week {
+    inset-inline-start: 4px;
+    inset-inline-end: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1.2;
+
+    .event-time {
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 1;
+    }
+  }
 
   &--compact {
     font-size: 0.66rem;
@@ -458,9 +556,9 @@
   }
 
   &--pending {
-    background: #ede9fe;
-    border: 1px solid #c4b5fd;
-    color: #3b2e6e;
+    background: $booking-pending-bg;
+    border: 1px solid $booking-pending-border;
+    color: $booking-pending-text;
   }
 
   &--completed {
@@ -491,6 +589,12 @@
   &--compact {
     font-size: 0.55rem;
     padding: 0.08rem 0.22rem;
+  }
+
+  &--week {
+    font-size: 0.58rem;
+    padding: 0.1rem 0.25rem;
+    line-height: 1.1;
   }
 }
 
@@ -544,13 +648,107 @@
   .calendar-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .nav-group {
+    justify-content: center;
   }
 
   .period-title {
     text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .duration-toggle {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.15rem;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &__label {
+      flex-shrink: 0;
+    }
+  }
+
+  .duration-btn {
+    flex-shrink: 0;
+    padding: 0.4rem 0.55rem;
   }
 
   .view-toggle {
     align-self: center;
+  }
+
+  .day-view {
+    .day-grid-scroll {
+      max-height: min(620px, calc(100dvh - 20rem));
+    }
+
+    .event-block {
+      inset-inline-start: 6px;
+      inset-inline-end: 6px;
+      font-size: 0.78rem;
+
+      &__line {
+        flex-wrap: nowrap;
+        white-space: nowrap;
+      }
+
+      .event-time {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .week-grid {
+    --week-time-col: 64px;
+    grid-template-columns: var(--week-time-col) repeat(7, minmax(88px, 1fr));
+    min-width: 700px;
+  }
+
+  .day-grid {
+    --week-time-col: 64px;
+    grid-template-columns: var(--week-time-col) 1fr;
+  }
+
+  .calendar-grid__time-label {
+    font-size: 0.68rem;
+    padding-inline-end: 0.3rem;
+  }
+
+  .event-block--week {
+    inset-inline-start: 3px;
+    inset-inline-end: 3px;
+    font-size: 0.68rem;
+
+    .event-time {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .selection-bar {
+    flex-direction: column;
+    align-items: stretch;
+
+    &__actions {
+      justify-content: stretch;
+
+      .clear-selection,
+      .add-booking-btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
   }
 }

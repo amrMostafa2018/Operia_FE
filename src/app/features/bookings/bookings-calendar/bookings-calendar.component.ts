@@ -1,12 +1,16 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
+  effect,
+  ElementRef,
   inject,
   input,
   output,
   signal,
+  viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -56,6 +60,7 @@ export class BookingsCalendarComponent {
   private readonly workingHours = inject(WorkingHoursService);
   private readonly languageService = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dayHeaders = viewChildren<ElementRef<HTMLElement>>('dayHeader');
   readonly bookings = input<Booking[]>([]);
   readonly loading = input(false);
   readonly canManage = input(false);
@@ -73,6 +78,19 @@ export class BookingsCalendarComponent {
   readonly slotDuration = signal<CalendarSlotDuration>(30);
 
   readonly durationOptions = CALENDAR_SLOT_DURATION_OPTIONS;
+
+  constructor() {
+    afterNextRender(() => this.scrollWeekToToday());
+
+    effect(() => {
+      const mode = this.viewMode();
+      const loading = this.loading();
+      this.weekDays();
+      if (mode === 'week' && !loading) {
+        queueMicrotask(() => this.scrollWeekToToday());
+      }
+    });
+  }
 
   readonly prevChevronIcon = computed(() =>
     getPrevChevronIcon(this.languageService.currentLang())
@@ -181,20 +199,26 @@ export class BookingsCalendarComponent {
 
   setView(mode: CalendarViewMode): void {
     this.viewMode.set(mode);
+    if (mode === 'week') {
+      queueMicrotask(() => this.scrollWeekToToday());
+    }
   }
 
   goToday(): void {
     this.currentDate.set(new Date());
+    queueMicrotask(() => this.scrollWeekToToday());
   }
 
   goPrev(): void {
     const step = this.viewMode() === 'day' ? 1 : 7;
     this.currentDate.set(addDays(this.currentDate(), -step));
+    queueMicrotask(() => this.scrollWeekToToday());
   }
 
   goNext(): void {
     const step = this.viewMode() === 'day' ? 1 : 7;
     this.currentDate.set(addDays(this.currentDate(), step));
+    queueMicrotask(() => this.scrollWeekToToday());
   }
 
   onHourLaneClick(event: MouseEvent, date: Date, hour: number): void {
@@ -363,5 +387,28 @@ export class BookingsCalendarComponent {
   isWorkingDay(date: Date): boolean {
     this.workingHours.settings();
     return this.workingHours.isWorkingDay(date);
+  }
+
+  isToday(date: Date): boolean {
+    return toIsoDate(date) === toIsoDate(new Date());
+  }
+
+  private scrollWeekToToday(): void {
+    if (this.viewMode() !== 'week' || !this.isMobileViewport()) return;
+
+    const todayHeader = this.dayHeaders().find(header =>
+      header.nativeElement.classList.contains('week-grid__day-header--today')
+    );
+    if (!todayHeader) return;
+
+    todayHeader.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  }
+
+  private isMobileViewport(): boolean {
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
   }
 }
