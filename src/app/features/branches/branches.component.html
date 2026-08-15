@@ -3,58 +3,102 @@
     <div>
       <h1><i class="pi pi-shop"></i>{{ 'BRANCHES.TITLE' | translate }}</h1>
       <p>{{ 'BRANCHES.SUBTITLE' | translate }}</p>
-      <strong>{{ 'BRANCHES.TOTAL' | translate: { count: total() } }}</strong>
+      <strong>{{ 'BRANCHES.TOTAL' | translate: { count: tenantTotal() } }}</strong>
     </div>
     @if (canManage()) {
       <p-button [label]="'BRANCHES.ADD' | translate" icon="pi pi-plus" (onClick)="openCreate()" />
     }
   </header>
-  <div class="table-card">
+  <div class="filter-bar">
     <div class="filters">
-      <button type="button" class="clear" (click)="clear()">
-        <i class="pi pi-replay"></i>{{ 'BRANCHES.CLEAR' | translate }}</button
-      ><span class="p-input-icon-right"
-        ><i class="pi pi-search"></i
-        ><input
-          #searchBox
+      <span class="p-input-icon-right search filter-search">
+        <button
+          type="button"
+          class="search-icon-btn"
+          (click)="applyFilters()"
+          [attr.aria-label]="'COMMON.SEARCH' | translate"
+        >
+          <i class="pi pi-search"></i>
+        </button>
+        <input
           pInputText
-          [value]="search()"
-          (keyup.enter)="applySearch(searchBox.value)"
+          [ngModel]="search"
+          (ngModelChange)="onSearchChange($event)"
+          (keyup.enter)="applyFilters()"
           [placeholder]="'BRANCHES.SEARCH' | translate"
-      /></span>
+        />
+      </span>
+      <button type="button" class="clear filter-clear" (click)="clear()">
+        <i class="pi pi-replay"></i>{{ 'BRANCHES.CLEAR' | translate }}
+      </button>
     </div>
-    <p-table [value]="branches()" [loading]="loading()"
-      ><ng-template pTemplate="header"
-        ><tr>
+  </div>
+
+  <div class="table-section">
+    <p-table
+      [value]="branches()"
+      [rows]="rows()"
+      [first]="first()"
+      [totalRecords]="total()"
+      [paginator]="true"
+      [lazy]="true"
+      [loading]="loading()"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="branches-paginator"
+      styleClass="branches-table"
+      (onLazyLoad)="onLazyLoad($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
           <th>{{ 'BRANCHES.NAME' | translate }}</th>
           <th>{{ 'BRANCHES.ADDRESS' | translate }}</th>
           <th>{{ 'BRANCHES.PHONE' | translate }}</th>
           <th>{{ 'BRANCHES.LOCATION' | translate }}</th>
           <th>{{ 'BRANCHES.ACTIONS' | translate }}</th>
-        </tr></ng-template
-      ><ng-template pTemplate="body" let-branch
-        ><tr>
-          <td><span class="dot"></span>{{ branch.name }}</td>
-          <td>{{ branch.address }}</td>
-          <td dir="ltr">{{ branch.phoneNumber }}</td>
-          <td>
-            <a [href]="branch.googleMapsUrl" target="_blank" rel="noopener"
-              ><i class="pi pi-map-marker"></i
-            ></a>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-branch>
+        <tr>
+          <td class="branch-name">
+            <span class="dot"></span>{{ branch.name }}
           </td>
+          <td>{{ branch.address }}</td>
+          <td class="phone" dir="ltr">{{ branch.phoneNumber }}</td>
           <td>
+            <a
+              class="map-link"
+              [href]="branch.googleMapsUrl"
+              target="_blank"
+              rel="noopener"
+              [attr.aria-label]="'BRANCHES.LOCATION' | translate"
+            >
+              <i class="pi pi-map-marker"></i>
+            </a>
+          </td>
+          <td class="row-actions">
             @if (canManage()) {
-              <button class="icon edit" (click)="openEdit(branch)">
-                <i class="pi pi-pencil"></i></button
-              ><button class="icon delete" (click)="requestDelete(branch)">
+              <button type="button" class="icon edit" (click)="openEdit(branch)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="icon delete" (click)="requestDelete(branch)">
                 <i class="pi pi-trash"></i>
               </button>
             }
-          </td></tr></ng-template
-    ></p-table>
-    <footer>
-      {{ 'BRANCHES.SHOWING' | translate: { count: branches().length, total: total() } }}
-    </footer>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'COMMON.NO_DATA' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   </div>
 </section>
 <app-confirm-action-dialog

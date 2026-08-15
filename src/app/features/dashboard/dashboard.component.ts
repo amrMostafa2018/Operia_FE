@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageService } from '@core/services/language.service';
-import { getPrevArrowIcon, getLeadingIconPos } from '@app/shared/utils/rtl.util';
+import { getPrevArrowIcon, getLeadingIconPos, getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 import {
   bookingStatusKey,
   bookingStatusSeverity,
@@ -21,6 +21,7 @@ import {
   MOCK_STATS,
   StatCard,
   STATUS_OPTIONS,
+  EMPLOYEE_OPTIONS,
 } from './models/dashboard.model';
 
 @Component({
@@ -51,10 +52,8 @@ export class DashboardComponent {
   rows = signal(10);
   first = signal(0);
 
-  readonly statusOptions = STATUS_OPTIONS.map(o => ({
-    ...o,
-    label: o.label,
-  }));
+  readonly statusOptions = STATUS_OPTIONS;
+  readonly employeeOptions = EMPLOYEE_OPTIONS;
 
   readonly rowOptions = [
     { label: '10', value: 10 },
@@ -81,17 +80,24 @@ export class DashboardComponent {
   });
 
   readonly prevIcon = computed(() => getPrevArrowIcon(this.languageService.currentLang()));
-
+  readonly nextIcon = computed(() => getSubmitArrowIcon(this.languageService.currentLang()));
   readonly prevIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
+  readonly nextIconPos = computed(() =>
+    this.languageService.currentLang() === 'ar' ? 'left' : 'right',
+  );
+  readonly leadingIconPos = computed(() =>
+    getLeadingIconPos(this.languageService.currentLang()),
+  );
 
-  readonly today = computed(() =>
-    new Date().toLocaleDateString('ar-EG', {
+  readonly today = computed(() => {
+    const locale = this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-GB';
+    return new Date().toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-    })
-  );
+    });
+  });
 
   statusSeverity(status: BookingStatus): TagSeverity {
     return bookingStatusSeverity(status);

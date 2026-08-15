@@ -111,6 +111,19 @@
     }
   }
 
+  // Clearable dropdowns: keep the X beside the chevron (inline-end), not over the value.
+  .p-dropdown .p-dropdown-clear-icon {
+    right: auto;
+    left: auto;
+    inset-inline-end: 3rem;
+  }
+
+  .p-dropdown.p-dropdown-clearable .p-dropdown-label {
+    padding-right: unset;
+    padding-inline-start: 0.75rem;
+    padding-inline-end: 1.75rem;
+  }
+
   // Badge / chip placement
   .p-badge {
     direction: ltr;

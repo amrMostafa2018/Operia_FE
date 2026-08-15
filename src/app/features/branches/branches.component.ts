@@ -1,22 +1,24 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService } from 'primeng/api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import * as L from 'leaflet';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
@@ -33,6 +35,7 @@ import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-act
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     TranslatePipe,
     ButtonModule,
     DialogModule,
@@ -44,23 +47,28 @@ import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-act
   styleUrl: './branches.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BranchesComponent implements AfterViewInit {
+export class BranchesComponent implements OnInit {
   private readonly service = inject(BranchService);
   private readonly permissions = inject(PermissionService);
   private readonly toast = inject(MessageService);
+  private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BranchesManage));
   readonly branches = signal<Branch[]>([]);
   readonly total = signal(0);
+  readonly tenantTotal = signal(0);
   readonly loading = signal(false);
   readonly dialogOpen = signal(false);
   readonly editing = signal<Branch | null>(null);
-  readonly search = signal('');
   readonly saveError = signal('');
   readonly branchPendingDelete = signal<Branch | null>(null);
-  page = 1;
-  pageSize = 10;
+  readonly rowsPerPageOptions = [10, 20, 50];
+  readonly rows = signal(10);
+  readonly first = signal(0);
+  readonly pageReportTemplate = signal(this.translate.instant('BRANCHES.PAGE_REPORT'));
+  search = '';
+  private readonly searchChanges = new Subject<string>();
   private map?: L.Map;
   private marker?: L.Marker;
   readonly form = this.fb.nonNullable.group({
@@ -72,16 +80,22 @@ export class BranchesComponent implements AfterViewInit {
     locationSelected: [false, Validators.requiredTrue],
   });
 
-  ngAfterViewInit(): void {
-    this.load();
+  ngOnInit(): void {
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pageReportTemplate.set(this.translate.instant('BRANCHES.PAGE_REPORT'));
+    });
+    this.searchChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyFilters());
   }
   load(): void {
+    const rows = this.rows();
     this.loading.set(true);
     this.service
       .list({
-        pageNumber: this.page,
-        pageSize: this.pageSize,
-        search: this.search(),
+        pageNumber: Math.floor(this.first() / rows) + 1,
+        pageSize: rows,
+        search: this.search.trim(),
         sortBy: 'name',
         sortDirection: 'asc',
       })
@@ -89,19 +103,31 @@ export class BranchesComponent implements AfterViewInit {
       .subscribe({
         next: r => {
           this.branches.set(r.items);
-          this.total.set(r.totalTenantCount);
+          this.total.set(r.totalCount);
+          this.tenantTotal.set(r.totalTenantCount);
           this.loading.set(false);
         },
         error: () => this.loading.set(false),
       });
   }
-  applySearch(value: string): void {
-    this.search.set(value);
-    this.page = 1;
+  onLazyLoad(event: TableLazyLoadEvent): void {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? this.rows();
+    this.first.set(first);
+    this.rows.set(rows);
     this.load();
   }
+  applyFilters(): void {
+    this.first.set(0);
+    this.load();
+  }
+  onSearchChange(value: string): void {
+    this.search = value;
+    this.searchChanges.next(value.trim());
+  }
   clear(): void {
-    this.applySearch('');
+    this.search = '';
+    this.applyFilters();
   }
   openCreate(): void {
     this.editing.set(null);

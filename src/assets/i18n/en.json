@@ -16,6 +16,7 @@
     "PHONE": "Branch Phone",
     "LOCATION": "Branch Location",
     "ACTIONS": "Actions",
+    "PAGE_REPORT": "Showing {first} to {last} of {totalRecords} branches",
     "SHOWING": "Showing {{count}} of {{total}} branches",
     "EDIT": "Edit Branch",
     "FORM_HINT": "Add branch details",
@@ -569,6 +570,8 @@
     "EXPORT_REPORT": "Export Report",
     "COMPARED_LAST_MONTH": "compared to last month",
     "COMPARED_YESTERDAY": "compared to yesterday",
+    "PREVIOUS": "Previous",
+    "NEXT": "Next",
     "EGP": "EGP"
   },
   "OPERIA_SUBSCRIPTIONS": {
@@ -822,6 +825,7 @@
     "ACTIVE": "Active",
     "INACTIVE": "Inactive",
     "EDIT": "Edit",
+    "PAGE_REPORT": "Showing {first} to {last} of {totalRecords} employees",
     "SHOWING": "Showing {{count}} of {{total}} employees",
     "PREVIOUS": "Previous",
     "NEXT": "Next",

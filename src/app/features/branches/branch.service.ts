@@ -42,7 +42,12 @@ export class BranchService {
     sortBy: string;
     sortDirection: string;
   }): Observable<BranchListResult> {
-    const params = new HttpParams({ fromObject: query });
+    let params = new HttpParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
     return this.http.get<BranchListResult>(this.url, { params });
   }
 

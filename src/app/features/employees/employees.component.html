@@ -48,7 +48,7 @@
     </article>
   </div>
 
-  <div class="table-card">
+  <div class="filter-bar">
     <div class="filters">
       <span class="p-input-icon-right search filter-search"
         ><i class="pi pi-search"></i
@@ -75,10 +75,16 @@
         [showClear]="true"
         [placeholder]="'EMPLOYEES.ALL_STATUS' | translate"
         (onChange)="applyFilters()"
-        ><ng-template pTemplate="item" let-item>{{
-          item.label | translate
-        }}</ng-template></p-dropdown
       >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
       <p-dropdown
         class="filter-control filter-branch"
         [options]="branches()"
@@ -86,6 +92,8 @@
         optionValue="id"
         [(ngModel)]="branchFilter"
         [showClear]="true"
+        [filter]="true"
+        filterBy="name"
         [placeholder]="'EMPLOYEES.ALL_BRANCHES' | translate"
         (onChange)="applyFilters()"
       ></p-dropdown>
@@ -103,104 +111,93 @@
         <i class="pi pi-replay"></i>{{ 'EMPLOYEES.CLEAR' | translate }}
       </button>
     </div>
+  </div>
 
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ 'EMPLOYEES.PHOTO' | translate }}</th>
-            <th>{{ 'EMPLOYEES.CODE' | translate }}</th>
-            <th>{{ 'EMPLOYEES.NAME' | translate }}</th>
-            <th>{{ 'EMPLOYEES.ROLE' | translate }}</th>
-            <th>{{ 'EMPLOYEES.STATUS' | translate }}</th>
-            <th>{{ 'EMPLOYEES.DATE' | translate }}</th>
-            <th>{{ 'EMPLOYEES.ACTIONS' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (loading()) {
-            <tr>
-              <td colspan="7" class="empty">
-                <i class="pi pi-spin pi-spinner"></i> {{ 'COMMON.LOADING' | translate }}
-              </td>
-            </tr>
-          }
-          @for (employee of employees(); track employee.id) {
-            <tr>
-              <td>
-                <span class="avatar">
-                  @if (resolveUploadUrl(employee.photoUrl); as url) {
-                    <img [src]="url" [alt]="employee.fullName" />
-                  } @else {
-                    <i class="pi pi-user"></i>
-                  }
-                </span>
-              </td>
-              <td class="code">{{ employee.code }}</td>
-              <td>
-                <b>{{ employee.fullName }}</b>
-                @if (employee.branches.length) {
-                  <small>-{{ employee.branches[0].name }}</small>
-                }
-              </td>
-              <td>
-                <span class="role-pill" [class]="employee.role">{{
-                  roleLabel(employee.role)
-                }}</span>
-              </td>
-              <td>
-                <span class="status-pill" [class.inactive]="!employee.isActive"
-                  ><i></i
-                  >{{
-                    (employee.isActive ? 'EMPLOYEES.ACTIVE' : 'EMPLOYEES.INACTIVE') | translate
-                  }}</span
-                >
-              </td>
-              <td>{{ employee.createdAt | date: 'dd/MM/yyyy' }}</td>
-              <td class="row-actions">
-                @if (canManage()) {
-                  <button class="edit" (click)="openEdit(employee)">
-                    <i class="pi pi-pencil"></i>{{ 'EMPLOYEES.EDIT' | translate }}</button
-                  ><button
-                    class="status-action"
-                    (click)="requestStatus(employee)"
-                    [attr.aria-label]="
-                      (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE')
-                        | translate
-                    "
-                  >
-                    <i [class]="employee.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>
-                  </button>
-                }
-              </td>
-            </tr>
-          }
-          @if (!loading() && !employees().length) {
-            <tr>
-              <td colspan="7" class="empty">{{ 'COMMON.NO_DATA' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <footer>
-      <span>{{
-        'EMPLOYEES.SHOWING' | translate: { count: employees().length, total: total() }
-      }}</span>
-      <div>
-        <button (click)="goTo(page - 1)" [disabled]="page === 1">
-          {{ 'EMPLOYEES.PREVIOUS' | translate }}
-        </button>
-        @for (item of [].constructor(totalPages()); track $index) {
-          <button (click)="goTo($index + 1)" [class.current]="page === $index + 1">
-            {{ $index + 1 }}
-          </button>
-        }
-        <button (click)="goTo(page + 1)" [disabled]="page === totalPages()">
-          {{ 'EMPLOYEES.NEXT' | translate }}
-        </button>
-      </div>
-    </footer>
+  <div class="table-section">
+    <p-table
+      [value]="employees()"
+      [rows]="rows()"
+      [first]="first()"
+      [totalRecords]="total()"
+      [paginator]="true"
+      [lazy]="true"
+      [loading]="loading()"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="employees-paginator"
+      styleClass="employees-table"
+      (onLazyLoad)="onLazyLoad($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'EMPLOYEES.PHOTO' | translate }}</th>
+          <th>{{ 'EMPLOYEES.CODE' | translate }}</th>
+          <th>{{ 'EMPLOYEES.NAME' | translate }}</th>
+          <th>{{ 'EMPLOYEES.ROLE' | translate }}</th>
+          <th>{{ 'EMPLOYEES.STATUS' | translate }}</th>
+          <th>{{ 'EMPLOYEES.DATE' | translate }}</th>
+          <th>{{ 'EMPLOYEES.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-employee>
+        <tr>
+          <td>
+            <span class="avatar">
+              @if (resolveUploadUrl(employee.photoUrl); as url) {
+                <img [src]="url" [alt]="employee.fullName" />
+              } @else {
+                <i class="pi pi-user"></i>
+              }
+            </span>
+          </td>
+          <td class="code">{{ employee.code }}</td>
+          <td>
+            <b>{{ employee.fullName }}</b>
+            @if (employee.branches.length) {
+              <small>-{{ employee.branches[0].name }}</small>
+            }
+          </td>
+          <td>
+            <span class="role-pill" [class]="employee.role">{{ roleLabel(employee.role) }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="(employee.isActive ? 'EMPLOYEES.ACTIVE' : 'EMPLOYEES.INACTIVE') | translate"
+              [severity]="employee.isActive ? 'success' : 'danger'"
+              styleClass="status-tag"
+            />
+          </td>
+          <td>{{ employee.createdAt | date: 'dd/MM/yyyy' }}</td>
+          <td class="row-actions">
+            @if (canManage()) {
+              <button type="button" class="edit" (click)="openEdit(employee)">
+                <i class="pi pi-pencil"></i>{{ 'EMPLOYEES.EDIT' | translate }}
+              </button>
+              <button
+                type="button"
+                class="status-action"
+                (click)="requestStatus(employee)"
+                [attr.aria-label]="
+                  (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE') | translate
+                "
+              >
+                <i [class]="employee.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>
+              </button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'COMMON.NO_DATA' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   </div>
 </section>
 

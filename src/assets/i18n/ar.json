@@ -16,6 +16,7 @@
     "PHONE": "تليفون الفرع",
     "LOCATION": "لوكيشن الفرع",
     "ACTIONS": "الإجراءات",
+    "PAGE_REPORT": "عرض {first} إلى {last} من {totalRecords} فرع",
     "SHOWING": "عرض {{count}} من {{total}} فروع",
     "EDIT": "تعديل فرع",
     "FORM_HINT": "أضف بيانات فرع جديد",
@@ -572,6 +573,8 @@
     "EXPORT_REPORT": "تحضير التقرير",
     "COMPARED_LAST_MONTH": "من الشهر الماضي",
     "COMPARED_YESTERDAY": "من أمس",
+    "PREVIOUS": "السابق",
+    "NEXT": "التالي",
     "EGP": "جنيه مصري"
   },
   "OPERIA_SUBSCRIPTIONS": {
@@ -825,6 +828,7 @@
     "ACTIVE": "نشط",
     "INACTIVE": "متوقف",
     "EDIT": "تعديل",
+    "PAGE_REPORT": "عرض {first} إلى {last} من {totalRecords} موظف",
     "SHOWING": "عرض {{count}} من {{total}} موظف",
     "PREVIOUS": "السابق",
     "NEXT": "التالي",

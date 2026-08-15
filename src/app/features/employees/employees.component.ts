@@ -23,6 +23,8 @@ import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { Branch, BranchService } from '@app/features/branches/branch.service';
 import { PermissionService } from '@core/services/permission.service';
@@ -72,6 +74,8 @@ interface ScheduleDayUi {
     DropdownModule,
     InputTextModule,
     MultiSelectModule,
+    TableModule,
+    TagModule,
     ConfirmActionDialogComponent,
     NgxIntlTelInputModule,
     PhoneUsernameAutocompleteDirective,
@@ -106,7 +110,6 @@ export class EmployeesComponent implements OnInit {
   readonly employees = signal<Employee[]>([]);
   readonly roleCounts = signal<EmployeeRoleCount[]>([]);
   readonly total = signal(0);
-  readonly totalPages = signal(0);
   readonly branches = signal<Branch[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -122,8 +125,10 @@ export class EmployeesComponent implements OnInit {
   readonly scheduleLoading = signal(false);
   readonly scheduleError = signal<string | null>(null);
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.EmployeesManage));
-  page = 1;
-  pageSize = 10;
+  readonly rowsPerPageOptions = [10, 20, 50];
+  readonly rows = signal(10);
+  readonly first = signal(0);
+  readonly pageReportTemplate = signal(this.translate.instant('EMPLOYEES.PAGE_REPORT'));
   search = '';
   roleFilter: EmployeeRole | null = null;
   statusFilter: boolean | null = null;
@@ -144,7 +149,9 @@ export class EmployeesComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.load();
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pageReportTemplate.set(this.translate.instant('EMPLOYEES.PAGE_REPORT'));
+    });
     this.branchesApi
       .list({ pageNumber: 1, pageSize: 50, search: '', sortBy: 'name', sortDirection: 'asc' })
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -160,11 +167,12 @@ export class EmployeesComponent implements OnInit {
     ]);
   }
   load(): void {
+    const rows = this.rows();
     this.loading.set(true);
     this.service
       .list({
-        pageNumber: this.page,
-        pageSize: this.pageSize,
+        pageNumber: Math.floor(this.first() / rows) + 1,
+        pageSize: rows,
         search: this.search,
         role: this.roleFilter ?? undefined,
         isActive: this.statusFilter ?? undefined,
@@ -178,14 +186,20 @@ export class EmployeesComponent implements OnInit {
           this.employees.set(x.items);
           this.roleCounts.set(x.roleCounts);
           this.total.set(x.totalCount);
-          this.totalPages.set(x.totalPages);
           this.loading.set(false);
         },
         error: () => this.loading.set(false),
       });
   }
+  onLazyLoad(event: TableLazyLoadEvent): void {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? this.rows();
+    this.first.set(first);
+    this.rows.set(rows);
+    this.load();
+  }
   applyFilters(): void {
-    this.page = 1;
+    this.first.set(0);
     this.load();
   }
   clearFilters(): void {
@@ -195,12 +209,6 @@ export class EmployeesComponent implements OnInit {
     this.branchFilter = null;
     this.createdDate = '';
     this.applyFilters();
-  }
-  goTo(page: number): void {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.page = page;
-      this.load();
-    }
   }
   count(role: EmployeeRole): number {
     return this.roleCounts().find(x => x.role === role)?.count ?? 0;
