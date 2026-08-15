@@ -84,6 +84,22 @@
 .filter-search {
   flex: 1 1 220px;
   min-width: min(100%, 220px);
+  position: relative;
+}
+.search-icon-btn {
+  position: absolute;
+  inset-inline-end: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  color: #6f7180;
+  padding: 0;
+  cursor: pointer;
+}
+.filter-search input {
+  padding-inline-end: 2.5rem;
 }
 .filter-role,
 .filter-status,
@@ -261,7 +277,6 @@
   gap: 0.85rem;
   align-items: flex-start;
   padding: 1.35rem 1.7rem;
-  padding-inline-start: 3rem;
   border-bottom: 1px solid #e7e7ee;
 }
 .editor-title-icon {
@@ -300,8 +315,6 @@
 .close {
   position: absolute;
   top: 1.2rem;
-  left: 1.4rem;
-  inset-inline-start: auto;
   z-index: 2;
   border: 0;
   background: transparent;
@@ -310,6 +323,26 @@
   cursor: pointer;
   line-height: 1;
   padding: 0.15rem;
+}
+:host-context([dir='ltr']) {
+  .close {
+    right: 1.4rem;
+    left: auto;
+  }
+
+  .editor > header {
+    padding-inline-end: 3rem;
+  }
+}
+:host-context([dir='rtl']) {
+  .close {
+    left: 1.4rem;
+    right: auto;
+  }
+
+  .editor > header {
+    padding-inline-start: 3rem;
+  }
 }
 .tabs {
   display: flex;
@@ -702,7 +735,7 @@
     min-height: 0;
   }
   .editor > header {
-    padding: 1rem 1rem 1rem 2.75rem;
+    padding: 1rem;
   }
   .editor > header h2 {
     font-size: 1.05rem;
@@ -710,10 +743,27 @@
   .editor header p {
     font-size: 0.78rem;
   }
-  .close {
-    top: 1rem;
-    left: 0.85rem;
-    inset-inline-start: auto;
+  :host-context([dir='ltr']) {
+    .editor > header {
+      padding-inline-end: 2.75rem;
+    }
+
+    .close {
+      top: 1rem;
+      right: 0.85rem;
+      left: auto;
+    }
+  }
+  :host-context([dir='rtl']) {
+    .editor > header {
+      padding-inline-start: 2.75rem;
+    }
+
+    .close {
+      top: 1rem;
+      left: 0.85rem;
+      right: auto;
+    }
   }
   .tabs {
     gap: 0;

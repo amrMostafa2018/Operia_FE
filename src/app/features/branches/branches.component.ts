@@ -24,7 +24,20 @@ import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { Branch, BranchService } from './branch.service';
 import { applyServerFieldErrors, extractApiFieldErrors } from '@core/utils/api-error.util';
+import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
+import {
+  PHONE_INPUT_CSS_CLASS,
+  PHONE_INPUT_DEFAULT_COUNTRY,
+  PHONE_INPUT_ONLY_COUNTRIES,
+} from '@app/shared/constants/phone-input.config';
+import {
+  getE164PhoneNumber,
+  getPhoneFieldError,
+  toNationalPhoneNumber,
+  toPhoneCountryIso,
+} from '@app/shared/utils/phone-number.util';
+import { NgxIntlTelInputModule, ChangeData, CountryISO } from 'ngx-intl-tel-input';
 
 // List page shell (header + filters + table + pagination) mirrors employees.component;
 // not extracted into a shared entity-list-page to avoid heavy projection/config overhead.
@@ -42,6 +55,7 @@ import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-act
     InputTextModule,
     TableModule,
     ConfirmActionDialogComponent,
+    NgxIntlTelInputModule,
   ],
   templateUrl: './branches.component.html',
   styleUrl: './branches.component.scss',
@@ -71,10 +85,13 @@ export class BranchesComponent implements OnInit {
   private readonly searchChanges = new Subject<string>();
   private map?: L.Map;
   private marker?: L.Marker;
+  readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
+  readonly phoneCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     address: ['', [Validators.required, Validators.maxLength(500)]],
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^(?:\+20|0)1[0125]\d{8}$/)]],
+    phoneNumber: [null as ChangeData | string | null, Validators.required],
     latitude: [0],
     longitude: [0],
     locationSelected: [false, Validators.requiredTrue],
@@ -84,6 +101,7 @@ export class BranchesComponent implements OnInit {
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('BRANCHES.PAGE_REPORT'));
     });
+    setupServerErrorClearing(this.form, this.destroyRef, ['phoneNumber']);
     this.searchChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyFilters());
@@ -132,10 +150,11 @@ export class BranchesComponent implements OnInit {
   openCreate(): void {
     this.editing.set(null);
     this.saveError.set('');
+    this.phoneCountryISO.set(PHONE_INPUT_DEFAULT_COUNTRY);
     this.form.reset({
       name: '',
       address: '',
-      phoneNumber: '',
+      phoneNumber: null,
       latitude: 30.0444,
       longitude: 31.2357,
       locationSelected: false,
@@ -146,7 +165,12 @@ export class BranchesComponent implements OnInit {
   openEdit(branch: Branch): void {
     this.editing.set(branch);
     this.saveError.set('');
-    this.form.reset({ ...branch, locationSelected: true });
+    this.phoneCountryISO.set(toPhoneCountryIso(branch.phoneNumber));
+    this.form.reset({
+      ...branch,
+      phoneNumber: toNationalPhoneNumber(branch.phoneNumber),
+      locationSelected: true,
+    });
     this.dialogOpen.set(true);
     setTimeout(() => this.initializeMap());
   }
@@ -160,12 +184,20 @@ export class BranchesComponent implements OnInit {
       return;
     }
     this.saveError.set('');
-    const { locationSelected: _, ...value } = this.form.getRawValue();
+    const { locationSelected: _, ...raw } = this.form.getRawValue();
+    const value = {
+      ...raw,
+      phoneNumber: getE164PhoneNumber(raw.phoneNumber),
+    };
     const editing = this.editing();
     const request = editing ? this.service.update(editing.id, value) : this.service.create(value);
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.toast.add({ severity: 'success', summary: 'OPERIA', detail: 'Branch saved.' });
+        this.toast.add({
+          severity: 'success',
+          summary: 'OPERIA',
+          detail: this.translate.instant('BRANCHES.SAVED'),
+        });
         this.close();
         this.load();
       },
@@ -178,6 +210,16 @@ export class BranchesComponent implements OnInit {
             'Unable to save this branch.'
         );
       },
+    });
+  }
+  isPhoneInvalid(): boolean {
+    const control = this.form.controls.phoneNumber;
+    return !!(control.invalid && control.touched);
+  }
+  getPhoneError(): string | null {
+    return getPhoneFieldError(this.form.controls.phoneNumber, {
+      required: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_REQUIRED'),
+      invalid: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_INVALID'),
     });
   }
   requestDelete(branch: Branch): void {
@@ -194,7 +236,11 @@ export class BranchesComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.toast.add({ severity: 'success', summary: 'OPERIA', detail: 'Branch deleted.' });
+          this.toast.add({
+            severity: 'success',
+            summary: 'OPERIA',
+            detail: this.translate.instant('BRANCHES.DELETED'),
+          });
           this.cancelDelete();
           this.load();
         },

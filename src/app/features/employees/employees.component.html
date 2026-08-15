@@ -21,28 +21,28 @@
     <article>
       <i class="pi pi-crown"></i>
       <div>
-        <span>Super Admin</span><strong>{{ count('SuperAdmin') }}</strong
+        <span>{{ 'EMPLOYEES.ROLES.SuperAdmin' | translate }}</span><strong>{{ count('SuperAdmin') }}</strong
         ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
       </div>
     </article>
     <article>
       <i class="pi pi-id-card"></i>
       <div>
-        <span>Admins</span><strong>{{ count('Admin') }}</strong
+        <span>{{ 'EMPLOYEES.ROLES.Admin' | translate }}</span><strong>{{ count('Admin') }}</strong
         ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
       </div>
     </article>
     <article>
       <i class="pi pi-headphones"></i>
       <div>
-        <span>Reception</span><strong>{{ count('Reception') }}</strong
+        <span>{{ 'EMPLOYEES.ROLES.Reception' | translate }}</span><strong>{{ count('Reception') }}</strong
         ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
       </div>
     </article>
     <article>
       <i class="pi pi-user"></i>
       <div>
-        <span>Staff</span><strong>{{ count('Staff') }}</strong
+        <span>{{ 'EMPLOYEES.ROLES.Staff' | translate }}</span><strong>{{ count('Staff') }}</strong
         ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
       </div>
     </article>
@@ -50,22 +50,42 @@
 
   <div class="filter-bar">
     <div class="filters">
-      <span class="p-input-icon-right search filter-search"
-        ><i class="pi pi-search"></i
-        ><input
+      <span class="p-input-icon-right search filter-search">
+        <button
+          type="button"
+          class="search-icon-btn"
+          (click)="applyFilters()"
+          [attr.aria-label]="'COMMON.SEARCH' | translate"
+        >
+          <i class="pi pi-search"></i>
+        </button>
+        <input
           pInputText
-          [(ngModel)]="search"
+          [ngModel]="search"
+          (ngModelChange)="onSearchChange($event)"
           (keyup.enter)="applyFilters()"
           [placeholder]="'EMPLOYEES.SEARCH' | translate"
-      /></span>
+        />
+      </span>
       <p-dropdown
         class="filter-control filter-role"
-        [options]="roles"
+        [options]="roleFilterOptions"
+        optionLabel="label"
+        optionValue="value"
         [(ngModel)]="roleFilter"
         [showClear]="true"
         [placeholder]="'EMPLOYEES.ALL_ROLES' | translate"
         (onChange)="applyFilters()"
-      ></p-dropdown>
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
       <p-dropdown
         class="filter-control filter-status"
         [options]="statuses"
@@ -398,11 +418,20 @@
               <div class="form-field">
                 <span class="field-label">{{ 'EMPLOYEES.ROLE' | translate }} <em>*</em></span>
                 <p-dropdown
-                  [options]="roleOptions()"
+                  [options]="roleFilterOptions"
                   optionLabel="label"
                   optionValue="value"
                   formControlName="role"
-                ></p-dropdown>
+                >
+                  <ng-template pTemplate="selectedItem" let-item>
+                    @if (item) {
+                      {{ item.label | translate }}
+                    }
+                  </ng-template>
+                  <ng-template pTemplate="item" let-item>
+                    {{ item.label | translate }}
+                  </ng-template>
+                </p-dropdown>
               </div>
               <label>
                 <span class="field-label">{{ 'EMPLOYEES.DATE' | translate }} <em>*</em></span>

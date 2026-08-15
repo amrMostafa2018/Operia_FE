@@ -53,23 +53,30 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th>{{ 'BRANCHES.NAME' | translate }}</th>
-          <th>{{ 'BRANCHES.ADDRESS' | translate }}</th>
-          <th>{{ 'BRANCHES.PHONE' | translate }}</th>
-          <th>{{ 'BRANCHES.LOCATION' | translate }}</th>
-          <th>{{ 'BRANCHES.ACTIONS' | translate }}</th>
+          <th class="col-name">{{ 'BRANCHES.NAME' | translate }}</th>
+          <th class="col-address">{{ 'BRANCHES.ADDRESS' | translate }}</th>
+          <th class="col-phone">{{ 'BRANCHES.PHONE' | translate }}</th>
+          <th class="col-location">{{ 'BRANCHES.LOCATION' | translate }}</th>
+          <th class="col-actions">{{ 'BRANCHES.ACTIONS' | translate }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-branch>
         <tr>
-          <td class="branch-name">
-            <span class="dot"></span>{{ branch.name }}
+          <td class="col-name branch-name-cell">
+            <span class="branch-name">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="branch-name-text">{{ branch.name }}</span>
+            </span>
           </td>
-          <td>{{ branch.address }}</td>
-          <td class="phone" dir="ltr">{{ branch.phoneNumber }}</td>
-          <td>
+          <td class="col-address branch-address-cell">
+            <span class="branch-address" [title]="branch.address">{{ branch.address }}</span>
+          </td>
+          <td class="col-phone branch-phone-cell">
+            <span class="branch-phone" dir="ltr">{{ branch.phoneNumber }}</span>
+          </td>
+          <td class="col-location branch-location-cell">
             <a
-              class="map-link"
+              class="table-icon-btn map-link"
               [href]="branch.googleMapsUrl"
               target="_blank"
               rel="noopener"
@@ -78,14 +85,26 @@
               <i class="pi pi-map-marker"></i>
             </a>
           </td>
-          <td class="row-actions">
+          <td class="col-actions row-actions">
             @if (canManage()) {
-              <button type="button" class="icon edit" (click)="openEdit(branch)">
-                <i class="pi pi-pencil"></i>
-              </button>
-              <button type="button" class="icon delete" (click)="requestDelete(branch)">
-                <i class="pi pi-trash"></i>
-              </button>
+              <div class="action-group">
+                <button
+                  type="button"
+                  class="table-icon-btn edit"
+                  (click)="openEdit(branch)"
+                  [attr.aria-label]="'BRANCHES.EDIT' | translate"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="table-icon-btn delete"
+                  (click)="requestDelete(branch)"
+                  [attr.aria-label]="'BRANCHES.DELETE' | translate"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
             }
           </td>
         </tr>
@@ -136,7 +155,8 @@
     >
       <i class="pi pi-times"></i></button
   ></ng-template>
-  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <form class="branch-dialog-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="branch-dialog-body">
     <label
       ><span class="field-label"
         >{{ 'BRANCHES.NAME' | translate }} <span class="required">*</span></span
@@ -170,25 +190,36 @@
       ></label
     >
     <div class="two">
-      <label
-        ><span class="field-label"
+      <div class="form-field form-field--phone">
+        <span class="field-label"
           >{{ 'BRANCHES.PHONE' | translate }} <span class="required">*</span></span
-        ><input
-          pInputText
+        >
+        <div
+          class="phone-row phone-row--intl phone-row--employee"
+          [class.error]="isPhoneInvalid()"
           dir="ltr"
-          formControlName="phoneNumber"
-          [placeholder]="'BRANCHES.PHONE_PLACEHOLDER' | translate"
-          [class.ng-invalid]="
-            form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid
-          "
-        /><small
-          class="field-error"
-          *ngIf="form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid"
-          >{{
-            form.controls.phoneNumber.errors?.['server'] || ('BRANCHES.PHONE_INVALID' | translate)
-          }}</small
-        ></label
-      ><label
+        >
+          <ngx-intl-tel-input
+            [cssClass]="phoneInputCssClass"
+            [onlyCountries]="onlyCountries"
+            [selectedCountryISO]="phoneCountryISO()"
+            [enableAutoCountrySelect]="false"
+            [enablePlaceholder]="true"
+            [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+            [searchCountryFlag]="false"
+            [selectFirstCountry]="false"
+            [separateDialCode]="true"
+            [phoneValidation]="true"
+            inputId="branchPhoneNumber"
+            formControlName="phoneNumber"
+          />
+          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+        </div>
+        @if (getPhoneError(); as phoneError) {
+          <small class="field-error">{{ phoneError }}</small>
+        }
+      </div>
+      <label
         ><span class="field-label"
           >{{ 'BRANCHES.LOCATION' | translate }} <span class="required">*</span></span
         ><button type="button" class="location-picker" (click)="locateMe()">
@@ -203,7 +234,8 @@
     <div id="branch-map"></div>
     <p class="map-note"><i class="pi pi-info-circle"></i>{{ 'BRANCHES.MAP_NOTE' | translate }}</p>
     <p class="save-error" *ngIf="saveError()">{{ saveError() }}</p>
-    <div class="actions">
+    </div>
+    <div class="branch-dialog-footer actions">
       <button type="button" class="cancel" (click)="close()">
         {{ 'BRANCHES.CANCEL' | translate }}</button
       ><p-button type="submit" [label]="'BRANCHES.SAVE' | translate" icon="pi pi-save" />

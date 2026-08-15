@@ -35,7 +35,9 @@
     "DELETE": "Delete",
     "DELETE_TITLE": "Delete branch?",
     "DELETE_HINT": "This action cannot be undone.",
-    "DELETE_CONFIRM": "Are you sure you want to delete {{name}}?"
+    "DELETE_CONFIRM": "Are you sure you want to delete {{name}}?",
+    "SAVED": "Branch saved successfully.",
+    "DELETED": "Branch deleted successfully."
   },
   "LANGUAGE": {
     "LABEL": "Language",

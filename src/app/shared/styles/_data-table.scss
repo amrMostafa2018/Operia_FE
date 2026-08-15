@@ -11,9 +11,9 @@
 @mixin primeng-data-table-theme {
   .p-datatable-thead > tr > th {
     background: var(--surface-hover);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 0.6rem 0.75rem;
     border-bottom: 1px solid var(--surface-border);
     white-space: nowrap;
@@ -27,12 +27,20 @@
     border-bottom: 1px solid var(--surface-hover);
   }
 
+  .p-datatable-tbody > tr:nth-child(odd) > td {
+    background: var(--surface-card);
+  }
+
+  .p-datatable-tbody > tr:nth-child(even) > td {
+    background: #f7f7fb;
+  }
+
   .p-datatable-tbody > tr:last-child > td {
     border-bottom: none;
   }
 
   .p-datatable-tbody > tr:hover > td {
-    background: var(--surface-hover);
+    background: #f0eff7;
   }
 }
 
