@@ -30,6 +30,25 @@ import {
 } from './employee.service';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
+import {
+  PHONE_INPUT_CSS_CLASS,
+  PHONE_INPUT_DEFAULT_COUNTRY,
+  PHONE_INPUT_ONLY_COUNTRIES,
+} from '@app/shared/constants/phone-input.config';
+import { createPasswordToggle } from '@app/features/auth/auth-form.utils';
+import { isFieldInvalid } from '@app/shared/utils/form-field.util';
+import { getE164PhoneNumber, getPhoneFieldError, toPhoneChangeData, toPhoneCountryIso } from '@app/shared/utils/phone-number.util';
+import { PhoneUsernameAutocompleteDirective } from '@app/shared/directives/phone-username-autocomplete.directive';
+import { NgxIntlTelInputModule, ChangeData, CountryISO } from 'ngx-intl-tel-input';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { TimePickerComponent } from '@app/shared/components/time-picker/time-picker.component';
+
+interface ScheduleDayUi {
+  day: string;
+  enabled: boolean;
+  fromTime: Date;
+  toTime: Date;
+}
 
 // List page shell (header + filters + table + pagination) mirrors branches.component;
 // kept separate because employee create/edit uses a full-page overlay, not a dialog.
@@ -47,6 +66,10 @@ import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-act
     InputTextModule,
     MultiSelectModule,
     ConfirmActionDialogComponent,
+    NgxIntlTelInputModule,
+    PhoneUsernameAutocompleteDirective,
+    InputSwitchModule,
+    TimePickerComponent,
   ],
   templateUrl: './employees.component.html',
   styleUrl: './employees.component.scss',
@@ -60,6 +83,14 @@ export class EmployeesComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+  readonly isFieldInvalid = isFieldInvalid;
+  readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
+  readonly mobileCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
+  readonly userNameCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
+  private readonly passwordToggle = createPasswordToggle();
+  readonly showPassword = this.passwordToggle.show;
+  readonly togglePassword = this.passwordToggle.toggle;
   readonly roles: EmployeeRole[] = ['SuperAdmin', 'Admin', 'Reception', 'Staff'];
   readonly statuses = [
     { label: 'EMPLOYEES.ACTIVE', value: true },
@@ -80,7 +111,7 @@ export class EmployeesComponent implements OnInit {
   readonly removePhoto = signal(false);
   readonly roleValue = signal<EmployeeRole>('Staff');
   readonly activeTab = signal<'personal' | 'schedule'>('personal');
-  readonly schedule = signal<EmployeeWorkingDay[]>(this.defaultSchedule());
+  readonly schedule = signal<ScheduleDayUi[]>(this.defaultSchedule());
   readonly scheduleLoading = signal(false);
   readonly scheduleError = signal<string | null>(null);
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.EmployeesManage));
@@ -94,8 +125,8 @@ export class EmployeesComponent implements OnInit {
   readonly form = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.maxLength(200)]],
     email: ['', [Validators.required, Validators.email]],
-    mobileNumber: ['', Validators.required],
-    userName: ['', Validators.required],
+    mobileNumber: [null as ChangeData | string | null, Validators.required],
+    userName: [null as ChangeData | string | null, Validators.required],
     specialty: [''],
     jobTitle: [''],
     joiningDate: ['', Validators.required],
@@ -163,11 +194,13 @@ export class EmployeesComponent implements OnInit {
   }
   openCreate(): void {
     this.editing.set(null);
+    this.mobileCountryISO.set(PHONE_INPUT_DEFAULT_COUNTRY);
+    this.userNameCountryISO.set(PHONE_INPUT_DEFAULT_COUNTRY);
     this.form.reset({
       fullName: '',
       email: '',
-      mobileNumber: '',
-      userName: '',
+      mobileNumber: null,
+      userName: null,
       specialty: '',
       jobTitle: '',
       joiningDate: new Date().toISOString().slice(0, 10),
@@ -181,6 +214,7 @@ export class EmployeesComponent implements OnInit {
       Validators.minLength(8),
     ]);
     this.form.controls.temporaryPassword.updateValueAndValidity();
+    this.passwordToggle.show.set(false);
     this.clearPhoto();
     this.activeTab.set('personal');
     this.schedule.set(this.defaultSchedule());
@@ -189,11 +223,13 @@ export class EmployeesComponent implements OnInit {
   }
   openEdit(employee: Employee): void {
     this.editing.set(employee);
+    this.mobileCountryISO.set(toPhoneCountryIso(employee.mobileNumber));
+    this.userNameCountryISO.set(toPhoneCountryIso(employee.userName));
     this.form.reset({
       fullName: employee.fullName,
       email: employee.email,
-      mobileNumber: employee.mobileNumber,
-      userName: employee.userName,
+      mobileNumber: null,
+      userName: null,
       specialty: employee.specialty ?? '',
       jobTitle: employee.jobTitle ?? '',
       joiningDate: employee.joiningDate,
@@ -204,48 +240,55 @@ export class EmployeesComponent implements OnInit {
     });
     this.form.controls.temporaryPassword.clearValidators();
     this.form.controls.temporaryPassword.updateValueAndValidity();
+    this.passwordToggle.show.set(false);
     this.clearPhoto();
-    this.photoPreview.set(employee.photoUrl ?? null);
+    this.photoPreview.set(employee.photoUrl ? resolveUploadUrl(employee.photoUrl) : null);
     this.activeTab.set('personal');
     this.scheduleError.set(null);
     this.loadSchedule(employee.id);
     this.dialogOpen.set(true);
+    queueMicrotask(() => {
+      this.form.patchValue({
+        mobileNumber: toPhoneChangeData(employee.mobileNumber),
+        userName: toPhoneChangeData(employee.userName),
+      });
+    });
   }
   close(): void {
     this.dialogOpen.set(false);
+    this.passwordToggle.show.set(false);
     this.clearPhoto();
     this.scheduleError.set(null);
   }
   selectTab(tab: 'personal' | 'schedule'): void {
     this.activeTab.set(tab);
   }
-  setScheduleEnabled(day: string, event: Event): void {
-    const enabled = (event.target as HTMLInputElement).checked;
+  setScheduleEnabled(day: string, enabled: boolean): void {
     this.schedule.update(days =>
       days.map(item =>
         item.day === day
           ? {
               ...item,
               enabled,
-              fromTime: enabled ? (item.fromTime ?? '09:00:00') : null,
-              toTime: enabled ? (item.toTime ?? '17:00:00') : null,
+              fromTime: enabled ? item.fromTime : this.parseScheduleTime(null),
+              toTime: enabled ? item.toTime : this.parseScheduleTime(null, 17, 0),
             }
           : item
       )
     );
     this.scheduleError.set(null);
   }
-  setScheduleTime(day: string, field: 'fromTime' | 'toTime', event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+  updateScheduleFromTime(day: string, time: Date): void {
     this.schedule.update(days =>
-      days.map(item =>
-        item.day === day ? { ...item, [field]: value ? `${value}:00` : null } : item
-      )
+      days.map(item => (item.day === day ? { ...item, fromTime: time } : item))
     );
     this.scheduleError.set(null);
   }
-  timeInputValue(value: string | null): string {
-    return value?.slice(0, 5) ?? '';
+  updateScheduleToTime(day: string, time: Date): void {
+    this.schedule.update(days =>
+      days.map(item => (item.day === day ? { ...item, toTime: time } : item))
+    );
+    this.scheduleError.set(null);
   }
   choosePhoto(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -279,6 +322,8 @@ export class EmployeesComponent implements OnInit {
     const value = this.form.getRawValue();
     const payload: EmployeePayload = {
       ...value,
+      mobileNumber: getE164PhoneNumber(value.mobileNumber),
+      userName: getE164PhoneNumber(value.userName),
       photo: this.selectedPhoto(),
       removePhoto: this.removePhoto(),
       temporaryPassword: this.editing() ? undefined : value.temporaryPassword,
@@ -289,7 +334,9 @@ export class EmployeesComponent implements OnInit {
       : this.service.create(payload);
     request
       .pipe(
-        switchMap(employee => this.service.updateSchedule(employee.id, { days: this.schedule() })),
+        switchMap(employee =>
+          this.service.updateSchedule(employee.id, { days: this.toSchedulePayload(this.schedule()) })
+        ),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
@@ -328,7 +375,65 @@ export class EmployeesComponent implements OnInit {
       });
   }
   roleLabel(role: EmployeeRole): string {
-    return role === 'SuperAdmin' ? 'Super Admin' : role;
+    return this.translate.instant(`EMPLOYEES.ROLES.${role}`);
+  }
+  roleOptions(): { label: string; value: EmployeeRole }[] {
+    return this.roles.map(role => ({
+      label: this.translate.instant(`EMPLOYEES.ROLES.${role}`),
+      value: role,
+    }));
+  }
+  isPhoneInvalid(): boolean {
+    const control = this.form.controls.mobileNumber;
+    return !!(control.invalid && control.touched);
+  }
+  getMobileError(): string | null {
+    return getPhoneFieldError(this.form.controls.mobileNumber, {
+      required: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_REQUIRED'),
+      invalid: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_INVALID'),
+    });
+  }
+  isUserNameInvalid(): boolean {
+    const control = this.form.controls.userName;
+    return !!(control.invalid && control.touched);
+  }
+  getUserNameError(): string | null {
+    return getPhoneFieldError(this.form.controls.userName, {
+      required: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_REQUIRED'),
+      invalid: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_INVALID'),
+    });
+  }
+  getEmailError(): string | null {
+    const control = this.form.controls.email;
+    if (!control.touched || !control.errors) {
+      return null;
+    }
+    if (control.errors['server']) {
+      return control.errors['server'];
+    }
+    if (control.errors['required']) {
+      return this.translate.instant('AUTH.LOGIN_PAGE.EMAIL_REQUIRED');
+    }
+    if (control.errors['email']) {
+      return this.translate.instant('AUTH.LOGIN_PAGE.EMAIL_INVALID');
+    }
+    return null;
+  }
+  getPasswordError(): string | null {
+    const control = this.form.controls.temporaryPassword;
+    if (!control.touched || !control.errors) {
+      return null;
+    }
+    if (control.errors['server']) {
+      return control.errors['server'];
+    }
+    if (control.errors['required']) {
+      return this.translate.instant('AUTH.REGISTER_PAGE.PASSWORD_REQUIRED');
+    }
+    if (control.errors['minlength']) {
+      return this.translate.instant('AUTH.REGISTER_PAGE.PASSWORD_MIN');
+    }
+    return null;
   }
   readonly resolveUploadUrl = resolveUploadUrl;
   private clearPhoto(): void {
@@ -345,7 +450,14 @@ export class EmployeesComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: schedule => {
-          this.schedule.set(schedule.days);
+          this.schedule.set(
+            schedule.days.map(day => ({
+              day: day.day,
+              enabled: day.enabled,
+              fromTime: this.parseScheduleTime(day.fromTime),
+              toTime: this.parseScheduleTime(day.toTime, 17, 0),
+            }))
+          );
           this.scheduleLoading.set(false);
         },
         error: () => this.scheduleLoading.set(false),
@@ -364,12 +476,33 @@ export class EmployeesComponent implements OnInit {
       this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED')
     );
   }
-  private defaultSchedule(): EmployeeWorkingDay[] {
+  private defaultSchedule(): ScheduleDayUi[] {
     return ['fri', 'sat', 'sun', 'mon', 'tue', 'wed', 'thu'].map(day => ({
       day,
       enabled: false,
-      fromTime: null,
-      toTime: null,
+      fromTime: this.parseScheduleTime(null),
+      toTime: this.parseScheduleTime(null, 17, 0),
+    }));
+  }
+  private parseScheduleTime(time: string | null, defaultHour = 9, defaultMinute = 0): Date {
+    const value = new Date();
+    if (!time) {
+      value.setHours(defaultHour, defaultMinute, 0, 0);
+      return value;
+    }
+    const [hours, minutes] = time.split(':');
+    value.setHours(parseInt(hours, 10) || defaultHour, parseInt(minutes, 10) || defaultMinute, 0, 0);
+    return value;
+  }
+  private formatScheduleTime(time: Date): string {
+    return `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}:00`;
+  }
+  private toSchedulePayload(days: ScheduleDayUi[]): EmployeeWorkingDay[] {
+    return days.map(day => ({
+      day: day.day,
+      enabled: day.enabled,
+      fromTime: day.enabled ? this.formatScheduleTime(day.fromTime) : null,
+      toTime: day.enabled ? this.formatScheduleTime(day.toTime) : null,
     }));
   }
 }

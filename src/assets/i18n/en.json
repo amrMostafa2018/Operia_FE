@@ -809,6 +809,12 @@
     "CODE": "Employee code",
     "NAME": "Employee name",
     "ROLE": "Role",
+    "ROLES": {
+      "SuperAdmin": "Super Admin",
+      "Admin": "Admin",
+      "Reception": "Reception",
+      "Staff": "Staff"
+    },
     "STATUS": "Status",
     "DATE": "Joining date",
     "ACTIONS": "Actions",

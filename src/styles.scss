@@ -1,6 +1,7 @@
 @use 'styles/variables' as *;
 @use 'styles/themes';
 @use 'styles/rtl';
+@use 'app/shared/styles/schedule-days-list';
 
 // ─── PrimeNG Theme ────────────────────────────────────────────────────────────
 // Using lara-light theme for good RTL support

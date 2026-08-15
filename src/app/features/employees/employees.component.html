@@ -209,7 +209,7 @@
     <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
       <button type="button" class="close" (click)="close()"><i class="pi pi-times"></i></button>
       <header>
-        <i class="pi pi-user-plus"></i>
+        <span class="editor-title-icon" aria-hidden="true"><i class="pi pi-user-plus"></i></span>
         <div>
           <h2>{{ (editing() ? 'EMPLOYEES.EDIT_TITLE' : 'EMPLOYEES.ADD') | translate }}</h2>
           <p>{{ 'EMPLOYEES.MODAL_HINT' | translate }}</p>
@@ -250,40 +250,69 @@
           </aside>
           <div class="form-area">
             <div class="photo">
-              <b>{{ 'EMPLOYEES.PERSONAL_PHOTO' | translate }}</b
-              ><span>
+              <span class="field-label">{{ 'EMPLOYEES.PERSONAL_PHOTO' | translate }}</span>
+              <span class="photo-preview">
                 @if (photoPreview()) {
                   <img [src]="photoPreview()!" alt="" />
                 } @else {
                   <i class="pi pi-user"></i>
-                }</span
-              ><label class="upload"
-                ><i class="pi pi-upload"></i>{{ 'EMPLOYEES.UPLOAD' | translate
-                }}<input
+                }
+              </span>
+              <label class="upload">
+                <i class="pi pi-upload"></i>
+                {{ 'EMPLOYEES.UPLOAD' | translate }}
+                <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   (change)="choosePhoto($event)"
-              /></label>
+                />
+              </label>
               @if (photoPreview()) {
                 <button type="button" class="remove-photo" (click)="removeSelectedPhoto()">
                   {{ 'EMPLOYEES.REMOVE_PHOTO' | translate }}
                 </button>
               }
-              <small>JPG / PNG / WEBP · 2MB</small>
+              <small class="photo-hint">JPG / PNG / WEBP · 2MB</small>
             </div>
             <div class="form-grid">
               <label>
                 <span class="field-label">{{ 'EMPLOYEES.FULL_NAME' | translate }} <em>*</em></span>
                 <input pInputText formControlName="fullName" />
               </label>
-              <label>
+              <div class="form-field">
                 <span class="field-label">{{ 'EMPLOYEES.EMAIL' | translate }} <em>*</em></span>
                 <input pInputText type="email" formControlName="email" dir="ltr" />
-              </label>
-              <label>
+                @if (getEmailError(); as emailError) {
+                  <small class="field-error">{{ emailError }}</small>
+                }
+              </div>
+              <div class="form-field form-field--phone">
                 <span class="field-label">{{ 'EMPLOYEES.MOBILE' | translate }} <em>*</em></span>
-                <input pInputText formControlName="mobileNumber" dir="ltr" />
-              </label>
+                <div
+                  class="phone-row phone-row--intl phone-row--employee"
+                  [class.error]="isPhoneInvalid()"
+                  dir="ltr"
+                >
+                  <ngx-intl-tel-input
+                    [cssClass]="phoneInputCssClass"
+                    [onlyCountries]="onlyCountries"
+                    [selectedCountryISO]="mobileCountryISO()"
+                    [enableAutoCountrySelect]="false"
+                    [enablePlaceholder]="true"
+                    [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+                    [searchCountryFlag]="false"
+                    [selectFirstCountry]="false"
+                    [separateDialCode]="true"
+                    [phoneValidation]="true"
+                    inputId="employeeMobileNumber"
+                    formControlName="mobileNumber"
+                  />
+                  <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+                </div>
+                @if (getMobileError(); as mobileError) {
+                  <small class="field-error">{{ mobileError }}</small>
+                }
+              </div>
               <div class="form-field">
                 <span class="field-label">{{ 'EMPLOYEES.BRANCH' | translate }} <em>*</em></span>
                 <p-multiSelect
@@ -302,47 +331,107 @@
                 <span class="field-label">{{ 'EMPLOYEES.SPECIALTY' | translate }}</span>
                 <input pInputText formControlName="specialty" />
               </label>
-              <label>
+              <div class="form-field form-field--phone">
                 <span class="field-label">{{ 'EMPLOYEES.USERNAME' | translate }} <em>*</em></span>
-                <input pInputText formControlName="userName" dir="ltr" />
-              </label>
+                <div
+                  class="phone-row phone-row--intl phone-row--employee"
+                  [class.error]="isUserNameInvalid()"
+                  dir="ltr"
+                >
+                  <ngx-intl-tel-input
+                    appPhoneUsernameAutocomplete
+                    [cssClass]="phoneInputCssClass"
+                    [onlyCountries]="onlyCountries"
+                    [selectedCountryISO]="userNameCountryISO()"
+                    [enableAutoCountrySelect]="false"
+                    [enablePlaceholder]="true"
+                    [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+                    [searchCountryFlag]="false"
+                    [selectFirstCountry]="false"
+                    [separateDialCode]="true"
+                    [phoneValidation]="true"
+                    inputId="employeeUserName"
+                    formControlName="userName"
+                  />
+                  <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+                </div>
+                @if (getUserNameError(); as userNameError) {
+                  <small class="field-error">{{ userNameError }}</small>
+                }
+              </div>
               @if (!editing()) {
-                <label>
-                  <span class="field-label">{{ 'EMPLOYEES.PASSWORD' | translate }} <em>*</em></span>
-                  <input pInputText type="password" formControlName="temporaryPassword" dir="ltr" />
-                  <small>{{ 'EMPLOYEES.PASSWORD_HINT' | translate }}</small>
-                </label>
+                <div class="form-field form-field--icon-input">
+                  <span class="field-label"
+                    >{{ 'EMPLOYEES.PASSWORD' | translate }} <em>*</em></span
+                  >
+                  <div
+                    class="input-wrapper"
+                    [class.error]="isFieldInvalid(form, 'temporaryPassword')"
+                    dir="ltr"
+                  >
+                    <button type="button" class="toggle-btn" (click)="togglePassword()">
+                      <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+                    </button>
+                    <input
+                      id="employeeTemporaryPassword"
+                      pInputText
+                      formControlName="temporaryPassword"
+                      name="new-password"
+                      autocomplete="new-password"
+                      [type]="showPassword() ? 'text' : 'password'"
+                      [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
+                      class="p-inputtext-custom has-toggle"
+                      dir="rtl"
+                    />
+                    <i class="pi pi-lock input-icon input-icon--end" aria-hidden="true"></i>
+                  </div>
+                  @if (getPasswordError(); as passwordError) {
+                    <small class="field-error">{{ passwordError }}</small>
+                  } @else {
+                    <small class="field-hint">{{ 'EMPLOYEES.PASSWORD_HINT' | translate }}</small>
+                  }
+                </div>
               }
               <div class="form-field">
                 <span class="field-label">{{ 'EMPLOYEES.ROLE' | translate }} <em>*</em></span>
-                <p-dropdown [options]="roles" formControlName="role"></p-dropdown>
+                <p-dropdown
+                  [options]="roleOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  formControlName="role"
+                ></p-dropdown>
               </div>
               <label>
                 <span class="field-label">{{ 'EMPLOYEES.DATE' | translate }} <em>*</em></span>
                 <input pInputText type="date" formControlName="joiningDate" />
               </label>
-              <fieldset>
+              <fieldset class="status-field">
                 <legend>{{ 'EMPLOYEES.STATUS' | translate }}</legend>
-                <label class="radio"
-                  ><input type="radio" [value]="true" formControlName="isActive" />{{
-                    'EMPLOYEES.ACTIVE' | translate
-                  }}</label
-                ><label class="radio"
-                  ><input type="radio" [value]="false" formControlName="isActive" />{{
-                    'EMPLOYEES.INACTIVE' | translate
-                  }}</label
-                >
+                <div class="status-options">
+                  <label class="radio">
+                    <input type="radio" [value]="true" formControlName="isActive" />
+                    <span>{{ 'EMPLOYEES.ACTIVE' | translate }}</span>
+                  </label>
+                  <label class="radio">
+                    <input type="radio" [value]="false" formControlName="isActive" />
+                    <span>{{ 'EMPLOYEES.INACTIVE' | translate }}</span>
+                  </label>
+                </div>
               </fieldset>
             </div>
           </div>
         </div>
       } @else {
         <section class="schedule-panel" [attr.aria-busy]="scheduleLoading()">
-          <div class="schedule-note">
-            <i class="pi pi-info-circle"></i>
-            <div>
-              <b>{{ 'EMPLOYEES.SCHEDULE_TITLE' | translate }}</b>
-              <p>{{ 'EMPLOYEES.SCHEDULE_HINT' | translate }}</p>
+          <div class="schedule-info-banner">
+            <div class="schedule-info-banner-content">
+              <div class="schedule-info-banner-first-line">
+                <i class="pi pi-info-circle" aria-hidden="true"></i>
+                <p>{{ 'EMPLOYEES.SCHEDULE_TITLE' | translate }}</p>
+              </div>
+              <p class="schedule-info-banner-second-line">
+                {{ 'EMPLOYEES.SCHEDULE_HINT' | translate }}
+              </p>
             </div>
           </div>
           @if (scheduleError(); as error) {
@@ -350,70 +439,63 @@
               <i class="pi pi-exclamation-circle"></i>{{ error }}
             </p>
           }
-          <div class="schedule-table-wrap">
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th>{{ 'EMPLOYEES.SCHEDULE_DAY' | translate }}</th>
-                  <th>{{ 'EMPLOYEES.SCHEDULE_WORKING' | translate }}</th>
-                  <th>{{ 'EMPLOYEES.SCHEDULE_FROM' | translate }}</th>
-                  <th>{{ 'EMPLOYEES.SCHEDULE_TO' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (day of schedule(); track day.day) {
-                  <tr [class.day-off]="!day.enabled">
-                    <td>
-                      <b>{{ 'EMPLOYEES.SCHEDULE_DAYS.' + day.day.toUpperCase() | translate }}</b>
-                    </td>
-                    <td>
-                      <label class="schedule-toggle">
-                        <input
-                          type="checkbox"
-                          [checked]="day.enabled"
-                          (change)="setScheduleEnabled(day.day, $event)"
-                          [attr.aria-label]="'EMPLOYEES.SCHEDULE_WORKING' | translate"
-                        />
-                        <span></span>
-                        <em>{{
-                          (day.enabled ? 'EMPLOYEES.SCHEDULE_ON' : 'EMPLOYEES.SCHEDULE_OFF')
-                            | translate
-                        }}</em>
-                      </label>
-                    </td>
-                    <td>
-                      <input
-                        type="time"
-                        [value]="timeInputValue(day.fromTime)"
-                        [disabled]="!day.enabled"
-                        (change)="setScheduleTime(day.day, 'fromTime', $event)"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="time"
-                        [value]="timeInputValue(day.toTime)"
-                        [disabled]="!day.enabled"
-                        (change)="setScheduleTime(day.day, 'toTime', $event)"
-                      />
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+          <div class="days-list">
+            @for (day of schedule(); track day.day) {
+              <div class="day-row" [class.disabled]="!day.enabled">
+                <p-inputSwitch
+                  [ngModel]="day.enabled"
+                  (ngModelChange)="setScheduleEnabled(day.day, $event)"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <span class="day-name">{{
+                  'EMPLOYEES.SCHEDULE_DAYS.' + day.day.toUpperCase() | translate
+                }}</span>
+                <div class="time-fields">
+                  <app-time-picker
+                    [inputId]="'employee-from-' + day.day"
+                    [ngModel]="day.fromTime"
+                    (ngModelChange)="updateScheduleFromTime(day.day, $event)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="!day.enabled"
+                    [placeholder]="!day.enabled ? '--:--' : ''"
+                    styleClass="time-picker time-picker--inline"
+                  />
+                  <span class="time-separator" aria-hidden="true">-</span>
+                  <app-time-picker
+                    [inputId]="'employee-to-' + day.day"
+                    [ngModel]="day.toTime"
+                    (ngModelChange)="updateScheduleToTime(day.day, $event)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="!day.enabled"
+                    [placeholder]="!day.enabled ? '--:--' : ''"
+                    styleClass="time-picker time-picker--inline"
+                  />
+                </div>
+                <span class="day-status" [class.working]="day.enabled" [class.off]="!day.enabled">
+                  {{
+                    (day.enabled
+                      ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY'
+                      : 'SETTINGS_ACTIVITY.WORKING_DAYS.DAY_OFF'
+                    ) | translate
+                  }}
+                </span>
+              </div>
+            }
           </div>
         </section>
       }
       <footer>
         <button type="button" class="cancel" (click)="close()">
-          {{ 'EMPLOYEES.CANCEL' | translate }}</button
-        ><p-button
+          {{ 'EMPLOYEES.CANCEL' | translate }}
+        </button>
+        <p-button
           type="submit"
           [loading]="saving()"
           [label]="
             (activeTab() === 'schedule' ? 'EMPLOYEES.SAVE_SCHEDULE' : 'EMPLOYEES.SAVE') | translate
           "
           icon="pi pi-save"
+          styleClass="editor-save-btn"
         />
       </footer>
     </form>
