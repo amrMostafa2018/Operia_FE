@@ -314,7 +314,8 @@ footer button {
 .close {
   position: absolute;
   top: 1.2rem;
-  inset-inline-start: 1.4rem;
+  left: 1.4rem;
+  inset-inline-start: auto;
   z-index: 2;
   border: 0;
   background: transparent;
@@ -364,6 +365,9 @@ footer button {
   gap: 1.25rem;
   padding: 1.35rem 1.7rem;
   align-items: start;
+}
+.editor-tab-panel.is-hidden {
+  display: none;
 }
 .editor aside {
   order: -1;
@@ -763,21 +767,22 @@ footer button {
 @media (max-width: $bp-md) {
   .editor-backdrop {
     display: flex;
-    flex-direction: column;
-    padding: 0;
+    align-items: center;
+    justify-content: center;
+    padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem max(0.75rem, env(safe-area-inset-bottom));
     overflow: hidden;
     overscroll-behavior: contain;
   }
   .editor {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
-    width: 100%;
+    flex: 0 1 auto;
+    width: min(420px, 100%);
+    max-height: min(88dvh, calc(100dvh - 1.5rem));
+    height: auto;
     margin: 0;
     min-height: 0;
-    height: 100dvh;
-    max-height: 100dvh;
-    border-radius: 0;
+    border-radius: 12px;
     overflow: hidden;
   }
   .editor > header,
@@ -795,7 +800,6 @@ footer button {
     overscroll-behavior: contain;
     touch-action: pan-y;
     padding: 1rem;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
   .schedule-panel {
     min-height: 0;
@@ -811,11 +815,12 @@ footer button {
   }
   .close {
     top: 1rem;
-    inset-inline-start: 0.85rem;
+    left: 0.85rem;
+    inset-inline-start: auto;
   }
   .tabs {
     gap: 0;
-    padding: 0;
+    padding: 0 0.75rem;
     justify-content: stretch;
     flex-shrink: 0;
   }
@@ -828,8 +833,7 @@ footer button {
   .editor > footer {
     flex-direction: column-reverse;
     align-items: stretch;
-    padding: 1rem;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.85rem 1rem 1rem;
   }
   .editor > footer .cancel {
     width: 100%;

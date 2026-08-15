@@ -68,6 +68,38 @@
     text-align: right;
   }
 
+  // Icon + label spacing: PrimeNG uses physical margin-right/left, which collapses in RTL.
+  .p-button:not(.p-button-icon-only) {
+    gap: 0.5rem;
+
+    .p-button-icon-left,
+    .p-button-icon-right {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
+  .p-button .p-badge {
+    margin-left: 0;
+    margin-inline-start: 0.5rem;
+  }
+
+  .p-menuitem-link .p-menuitem-icon,
+  .p-tabmenuitem .p-menuitem-icon {
+    margin-right: 0;
+    margin-inline-end: 0.5rem;
+  }
+
+  button:not(.p-button) > .pi:first-child:not(:only-child):not(.nav-icon):not(.input-icon):not(.phone-row-icon),
+  a:not(.nav-item) > .pi:first-child:not(:only-child):not(.nav-icon),
+  p > .pi:first-child:not(:only-child),
+  h1 > .pi:first-child,
+  h2 > .pi:first-child,
+  h3 > .pi:first-child,
+  h4 > .pi:first-child {
+    margin-inline-end: 0.5rem;
+  }
+
   .p-paginator-rpp-options .p-dropdown {
     .p-dropdown-label {
       padding-inline: 0.75rem 2rem;

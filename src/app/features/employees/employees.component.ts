@@ -10,8 +10,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { switchMap } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import {
+  applyServerFieldErrors,
+  extractApiFieldErrors,
+  translateApiFieldErrors,
+} from '@core/utils/api-error.util';
+import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -37,7 +44,7 @@ import {
 } from '@app/shared/constants/phone-input.config';
 import { createPasswordToggle } from '@app/features/auth/auth-form.utils';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
-import { getE164PhoneNumber, getPhoneFieldError, toPhoneChangeData, toPhoneCountryIso } from '@app/shared/utils/phone-number.util';
+import { getE164PhoneNumber, getPhoneFieldError, toNationalPhoneNumber, toPhoneCountryIso } from '@app/shared/utils/phone-number.util';
 import { PhoneUsernameAutocompleteDirective } from '@app/shared/directives/phone-username-autocomplete.directive';
 import { NgxIntlTelInputModule, ChangeData, CountryISO } from 'ngx-intl-tel-input';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -145,6 +152,12 @@ export class EmployeesComponent implements OnInit {
     this.form.controls.role.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(x => this.roleValue.set(x));
+    setupServerErrorClearing(this.form, this.destroyRef, [
+      'email',
+      'mobileNumber',
+      'userName',
+      'temporaryPassword',
+    ]);
   }
   load(): void {
     this.loading.set(true);
@@ -228,8 +241,8 @@ export class EmployeesComponent implements OnInit {
     this.form.reset({
       fullName: employee.fullName,
       email: employee.email,
-      mobileNumber: null,
-      userName: null,
+      mobileNumber: toNationalPhoneNumber(employee.mobileNumber),
+      userName: toNationalPhoneNumber(employee.userName),
       specialty: employee.specialty ?? '',
       jobTitle: employee.jobTitle ?? '',
       joiningDate: employee.joiningDate,
@@ -247,12 +260,6 @@ export class EmployeesComponent implements OnInit {
     this.scheduleError.set(null);
     this.loadSchedule(employee.id);
     this.dialogOpen.set(true);
-    queueMicrotask(() => {
-      this.form.patchValue({
-        mobileNumber: toPhoneChangeData(employee.mobileNumber),
-        userName: toPhoneChangeData(employee.userName),
-      });
-    });
   }
   close(): void {
     this.dialogOpen.set(false);
@@ -350,12 +357,7 @@ export class EmployeesComponent implements OnInit {
             detail: this.translate.instant('EMPLOYEES.SAVED'),
           });
         },
-        error: error => {
-          this.saving.set(false);
-          const message = this.scheduleErrorMessage(error);
-          this.scheduleError.set(message);
-          if (this.activeTab() !== 'schedule') this.activeTab.set('schedule');
-        },
+        error: (error: HttpErrorResponse) => this.handleSaveError(error),
       });
   }
   requestStatus(employee: Employee): void {
@@ -402,6 +404,19 @@ export class EmployeesComponent implements OnInit {
       required: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_REQUIRED'),
       invalid: this.translate.instant('AUTH.LOGIN_PAGE.PHONE_INVALID'),
     });
+  }
+  getFullNameError(): string | null {
+    const control = this.form.controls.fullName;
+    if (!control.touched || !control.errors) {
+      return null;
+    }
+    if (control.errors['server']) {
+      return control.errors['server'];
+    }
+    if (control.errors['required']) {
+      return this.translate.instant('ERRORS.FullNameRequired');
+    }
+    return null;
   }
   getEmailError(): string | null {
     const control = this.form.controls.email;
@@ -463,17 +478,40 @@ export class EmployeesComponent implements OnInit {
         error: () => this.scheduleLoading.set(false),
       });
   }
-  private scheduleErrorMessage(error: {
-    error?: { errorCodes?: Record<string, string[]>; errors?: Record<string, string[]> };
-  }): string {
-    const code = Object.values(error.error?.errorCodes ?? {}).flat()[0];
+  private handleSaveError(error: HttpErrorResponse): void {
+    this.saving.set(false);
+    this.scheduleError.set(null);
+
+    const fieldErrors = translateApiFieldErrors(
+      extractApiFieldErrors(error),
+      key => this.translate.instant(key)
+    );
+    const personalErrors = Object.fromEntries(
+      Object.entries(fieldErrors).filter(([field]) => !!this.form.get(field))
+    );
+
+    if (Object.keys(personalErrors).length > 0) {
+      applyServerFieldErrors(this.form, personalErrors);
+      this.activeTab.set('personal');
+      return;
+    }
+
+    const scheduleMessage = this.scheduleErrorMessage(error);
+    this.scheduleError.set(scheduleMessage);
+    this.activeTab.set('schedule');
+  }
+  private scheduleErrorMessage(error: HttpErrorResponse): string {
+    const code = Object.values(
+      (error.error as { errorCodes?: Record<string, string[]> })?.errorCodes ?? {}
+    ).flat()[0];
     if (code) {
       const translated = this.translate.instant(`ERRORS.${code}`);
       return translated === `ERRORS.${code}` ? code : translated;
     }
     return (
-      Object.values(error.error?.errors ?? {}).flat()[0] ??
-      this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED')
+      Object.values(
+        (error.error as { errors?: Record<string, string[]> })?.errors ?? {}
+      ).flat()[0] ?? this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED')
     );
   }
   private defaultSchedule(): ScheduleDayUi[] {

@@ -52,6 +52,11 @@ export function toPhoneCountryIso(value: string | null | undefined): CountryISO 
   return PHONE_INPUT_DEFAULT_COUNTRY;
 }
 
+/** National digits for ngx-intl-tel-input when separateDialCode is enabled (e.g. 1148958461). */
+export function toNationalPhoneNumber(value: string | null | undefined): string | null {
+  return toPhoneChangeData(value)?.number ?? null;
+}
+
 function buildPhoneChangeData(
   national: string,
   e164Number: string,
@@ -74,7 +79,12 @@ export function getE164PhoneNumber(value: ChangeData | string | null | undefined
   }
 
   if (typeof value === 'string') {
-    return value.replace(/\s/g, '');
+    const trimmed = value.replace(/\s/g, '');
+    if (!trimmed || trimmed.includes('[object')) {
+      return '';
+    }
+
+    return toPhoneChangeData(trimmed)?.e164Number ?? trimmed;
   }
 
   return (value.e164Number ?? value.internationalNumber ?? value.number ?? '').replace(/\s/g, '');

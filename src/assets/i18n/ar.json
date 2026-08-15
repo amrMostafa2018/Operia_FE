@@ -61,6 +61,7 @@
   },
   "ERRORS": {
     "EmailAlreadyRegistered": "هذا البريد الإلكتروني مسجل بالفعل",
+    "UserNameAlreadyRegistered": "اسم المستخدم مسجل بالفعل",
     "EmailRequired": "البريد الإلكتروني مطلوب",
     "EmailInvalid": "البريد الإلكتروني غير صحيح",
     "PasswordRequired": "كلمة المرور مطلوبة",

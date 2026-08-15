@@ -61,6 +61,7 @@
   },
   "ERRORS": {
     "EmailAlreadyRegistered": "Email is already registered.",
+    "UserNameAlreadyRegistered": "Username is already registered.",
     "EmailRequired": "Email is required.",
     "EmailInvalid": "Email is not valid.",
     "PasswordRequired": "Password is required.",

@@ -231,8 +231,11 @@
           <i class="pi pi-calendar"></i>{{ 'EMPLOYEES.SCHEDULE' | translate }}
         </button>
       </div>
-      @if (activeTab() === 'personal') {
-        <div class="editor-body">
+      <div
+        class="editor-body editor-tab-panel"
+        [class.is-hidden]="activeTab() !== 'personal'"
+        [attr.aria-hidden]="activeTab() !== 'personal'"
+      >
           <aside>
             <h3><i class="pi pi-shield"></i>{{ 'EMPLOYEES.ROLE_SUMMARY' | translate }}</h3>
             <div class="selected-role">{{ roleLabel(roleValue()) }}</div>
@@ -275,11 +278,14 @@
               <small class="photo-hint">JPG / PNG / WEBP · 2MB</small>
             </div>
             <div class="form-grid">
-              <label>
+              <div class="form-field" [class.error]="isFieldInvalid(form, 'fullName')">
                 <span class="field-label">{{ 'EMPLOYEES.FULL_NAME' | translate }} <em>*</em></span>
                 <input pInputText formControlName="fullName" />
-              </label>
-              <div class="form-field">
+                @if (getFullNameError(); as fullNameError) {
+                  <small class="field-error">{{ fullNameError }}</small>
+                }
+              </div>
+              <div class="form-field" [class.error]="isFieldInvalid(form, 'email')">
                 <span class="field-label">{{ 'EMPLOYEES.EMAIL' | translate }} <em>*</em></span>
                 <input pInputText type="email" formControlName="email" dir="ltr" />
                 @if (getEmailError(); as emailError) {
@@ -420,9 +426,13 @@
               </fieldset>
             </div>
           </div>
-        </div>
-      } @else {
-        <section class="schedule-panel" [attr.aria-busy]="scheduleLoading()">
+      </div>
+      <section
+        class="schedule-panel editor-tab-panel"
+        [class.is-hidden]="activeTab() !== 'schedule'"
+        [attr.aria-busy]="scheduleLoading()"
+        [attr.aria-hidden]="activeTab() !== 'schedule'"
+      >
           <div class="schedule-info-banner">
             <div class="schedule-info-banner-content">
               <div class="schedule-info-banner-first-line">
@@ -483,7 +493,6 @@
             }
           </div>
         </section>
-      }
       <footer>
         <button type="button" class="cancel" (click)="close()">
           {{ 'EMPLOYEES.CANCEL' | translate }}
