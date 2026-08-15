@@ -11,7 +11,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { switchMap } from 'rxjs';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   applyServerFieldErrors,
@@ -102,7 +103,12 @@ export class EmployeesComponent implements OnInit {
   private readonly passwordToggle = createPasswordToggle();
   readonly showPassword = this.passwordToggle.show;
   readonly togglePassword = this.passwordToggle.toggle;
-  readonly roles: EmployeeRole[] = ['SuperAdmin', 'Admin', 'Reception', 'Staff'];
+  readonly roleFilterOptions: { label: string; value: EmployeeRole }[] = [
+    { label: 'EMPLOYEES.ROLES.SuperAdmin', value: 'SuperAdmin' },
+    { label: 'EMPLOYEES.ROLES.Admin', value: 'Admin' },
+    { label: 'EMPLOYEES.ROLES.Reception', value: 'Reception' },
+    { label: 'EMPLOYEES.ROLES.Staff', value: 'Staff' },
+  ];
   readonly statuses = [
     { label: 'EMPLOYEES.ACTIVE', value: true },
     { label: 'EMPLOYEES.INACTIVE', value: false },
@@ -130,6 +136,7 @@ export class EmployeesComponent implements OnInit {
   readonly first = signal(0);
   readonly pageReportTemplate = signal(this.translate.instant('EMPLOYEES.PAGE_REPORT'));
   search = '';
+  private readonly searchChanges = new Subject<string>();
   roleFilter: EmployeeRole | null = null;
   statusFilter: boolean | null = null;
   branchFilter: string | null = null;
@@ -165,6 +172,9 @@ export class EmployeesComponent implements OnInit {
       'userName',
       'temporaryPassword',
     ]);
+    this.searchChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyFilters());
   }
   load(): void {
     const rows = this.rows();
@@ -173,7 +183,7 @@ export class EmployeesComponent implements OnInit {
       .list({
         pageNumber: Math.floor(this.first() / rows) + 1,
         pageSize: rows,
-        search: this.search,
+        search: this.search.trim(),
         role: this.roleFilter ?? undefined,
         isActive: this.statusFilter ?? undefined,
         branchId: this.branchFilter ?? undefined,
@@ -201,6 +211,10 @@ export class EmployeesComponent implements OnInit {
   applyFilters(): void {
     this.first.set(0);
     this.load();
+  }
+  onSearchChange(value: string): void {
+    this.search = value;
+    this.searchChanges.next(value.trim());
   }
   clearFilters(): void {
     this.search = '';
@@ -386,12 +400,6 @@ export class EmployeesComponent implements OnInit {
   }
   roleLabel(role: EmployeeRole): string {
     return this.translate.instant(`EMPLOYEES.ROLES.${role}`);
-  }
-  roleOptions(): { label: string; value: EmployeeRole }[] {
-    return this.roles.map(role => ({
-      label: this.translate.instant(`EMPLOYEES.ROLES.${role}`),
-      value: role,
-    }));
   }
   isPhoneInvalid(): boolean {
     const control = this.form.controls.mobileNumber;

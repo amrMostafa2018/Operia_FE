@@ -35,7 +35,9 @@
     "DELETE": "حذف",
     "DELETE_TITLE": "حذف الفرع؟",
     "DELETE_HINT": "لا يمكن التراجع عن هذا الإجراء.",
-    "DELETE_CONFIRM": "هل أنت متأكد من حذف {{name}}؟"
+    "DELETE_CONFIRM": "هل أنت متأكد من حذف {{name}}؟",
+    "SAVED": "تم حفظ الفرع بنجاح.",
+    "DELETED": "تم حذف الفرع بنجاح."
   },
   "LANGUAGE": {
     "LABEL": "اللغة",
