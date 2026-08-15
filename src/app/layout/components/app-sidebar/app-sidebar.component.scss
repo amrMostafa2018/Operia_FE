@@ -1,5 +1,12 @@
 @use '../../../../styles/variables' as *;
 
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 // ─── Custom Scrollbar ─────────────────────────────────────────────────────────
 .sidebar-menu {
   scrollbar-width: thin;
@@ -24,13 +31,15 @@
 // ─── Root ─────────────────────────────────────────────────────────────────────
 .sidebar {
   width: $sidebar-width;
-  min-height: 100vh;
+  height: 100%;
+  max-height: 100dvh;
+  min-height: 0;
   background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  flex-shrink: 0;
+  flex: 1 1 auto;
   box-shadow: 2px 0 24px rgba(0, 0, 0, 0.18);
 
   &.collapsed {
@@ -140,12 +149,14 @@
 
 // ─── Scrollable menu ──────────────────────────────────────────────────────────
 .sidebar-menu {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding-bottom: 0.5rem;
+  padding-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidebar-nav {

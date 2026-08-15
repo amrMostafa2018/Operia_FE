@@ -8,3 +8,28 @@
   unicode-bidi: plaintext;
   cursor: pointer;
 }
+
+:host ::ng-deep .p-calendar.p-input-icon-right {
+  .p-datepicker-icon {
+    top: 50%;
+    inset-inline-start: 0.65rem;
+    inset-inline-end: auto;
+    right: auto;
+    left: auto;
+    margin: 0;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    pointer-events: none;
+  }
+
+  .p-inputtext {
+    padding-inline-start: 1.85rem;
+    padding-inline-end: 0.6rem;
+  }
+}
+
+:host ::ng-deep .p-calendar.p-calendar-disabled .p-datepicker-icon {
+  opacity: 0.45;
+}

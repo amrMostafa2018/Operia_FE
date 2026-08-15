@@ -120,6 +120,21 @@
           }
         </a>
       }
+
+      @for (item of visibleAfterReportsNavItems(); track item.route) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route !== '/settings/offers' }"
+          (click)="onLinkClick()"
+        >
+          <i [class]="item.icon" class="nav-icon"></i>
+          @if (!collapsed()) {
+            <span class="nav-label">{{ item.labelKey | translate }}</span>
+          }
+        </a>
+      }
     </nav>
 
     <!-- Settings section -->

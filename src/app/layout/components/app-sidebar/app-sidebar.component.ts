@@ -57,12 +57,7 @@ export class AppSidebarComponent {
 
   readonly isFinanceSectionActive = computed(() => this.currentUrl().startsWith('/finance'));
 
-  readonly isSettingsSectionActive = computed(() => {
-    const url = this.currentUrl();
-    return (
-      url.startsWith('/settings') || url.startsWith('/employees') || url.startsWith('/packages')
-    );
-  });
+  readonly isSettingsSectionActive = computed(() => this.currentUrl().startsWith('/settings/activity'));
 
   readonly toggleIcon = computed(() => {
     this.languageService.currentLang();
@@ -125,6 +120,33 @@ export class AppSidebarComponent {
     permissions: [Policies.ReportsRead],
   };
 
+  private readonly afterReportsNavItems: NavItem[] = [
+    {
+      labelKey: 'NAV.EMPLOYEES',
+      icon: 'pi pi-id-card',
+      route: '/employees',
+      permissions: [Policies.EmployeesRead],
+    },
+    {
+      labelKey: 'NAV.PACKAGES',
+      icon: 'pi pi-box',
+      route: '/packages',
+      permissions: [Policies.PackagesRead],
+    },
+    {
+      labelKey: 'NAV.BRANCHES',
+      icon: 'pi pi-shop',
+      route: '/branches',
+      permissions: [Policies.BranchesRead],
+    },
+    {
+      labelKey: 'NAV.OFFERS',
+      icon: 'pi pi-tag',
+      route: '/settings/offers',
+      permissions: [Policies.PackagesRead],
+    },
+  ];
+
   private readonly financeNavItems: NavItem[] = [
     {
       labelKey: 'NAV.ACTIVITY_REVENUE',
@@ -165,36 +187,16 @@ export class AppSidebarComponent {
       route: '/settings/activity/security',
       permissions: [Policies.SettingsManage],
     },
-    {
-      labelKey: 'NAV.EMPLOYEES',
-      icon: '',
-      route: '/employees',
-      permissions: [Policies.EmployeesRead],
-    },
-    {
-      labelKey: 'NAV.PACKAGES',
-      icon: '',
-      route: '/packages',
-      permissions: [Policies.PackagesRead],
-    },
-    {
-      labelKey: 'NAV.BRANCHES',
-      icon: '',
-      route: '/branches',
-      permissions: [Policies.BranchesRead],
-    },
-    {
-      labelKey: 'NAV.OFFERS',
-      icon: '',
-      route: '/settings/offers',
-      permissions: [Policies.PackagesRead],
-    },
   ];
 
   readonly visibleMainNavItems = computed(() => this.filterByPermission(this.mainNavItems));
 
   readonly visibleReportsNavItem = computed(
     () => this.filterByPermission([this.reportsNavItem])[0] ?? null
+  );
+
+  readonly visibleAfterReportsNavItems = computed(() =>
+    this.filterByPermission(this.afterReportsNavItems)
   );
 
   readonly visibleFinanceNavItems = computed(() => this.filterByPermission(this.financeNavItems));
