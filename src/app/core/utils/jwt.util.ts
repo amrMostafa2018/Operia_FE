@@ -3,9 +3,9 @@ import { User, UserRole } from '@core/models/user.model';
 const ROLE_MAP: Record<string, UserRole> = {
   Admin: 'admin',
   admin: 'admin',
-  SuperAdmin: 'super_admin',
-  super_admin: 'super_admin',
-  superadmin: 'super_admin',
+  SuperAdmin: 'admin',
+  super_admin: 'admin',
+  superadmin: 'admin',
   Reception: 'reception',
   reception: 'reception',
   Staff: 'staff',

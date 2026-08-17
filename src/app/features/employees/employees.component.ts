@@ -104,7 +104,6 @@ export class EmployeesComponent implements OnInit {
   readonly showPassword = this.passwordToggle.show;
   readonly togglePassword = this.passwordToggle.toggle;
   readonly roleFilterOptions: { label: string; value: EmployeeRole }[] = [
-    { label: 'EMPLOYEES.ROLES.SuperAdmin', value: 'SuperAdmin' },
     { label: 'EMPLOYEES.ROLES.Admin', value: 'Admin' },
     { label: 'EMPLOYEES.ROLES.Reception', value: 'Reception' },
     { label: 'EMPLOYEES.ROLES.Staff', value: 'Staff' },
@@ -269,7 +268,7 @@ export class EmployeesComponent implements OnInit {
       jobTitle: employee.jobTitle ?? '',
       joiningDate: employee.joiningDate,
       isActive: employee.isActive,
-      role: employee.role,
+      role: this.normalizeRole(employee.role),
       branchIds: employee.branches.map(x => x.id),
       temporaryPassword: '',
     });
@@ -398,8 +397,11 @@ export class EmployeesComponent implements OnInit {
         },
       });
   }
-  roleLabel(role: EmployeeRole): string {
-    return this.translate.instant(`EMPLOYEES.ROLES.${role}`);
+  roleLabel(role: EmployeeRole | 'SuperAdmin'): string {
+    return this.translate.instant(`EMPLOYEES.ROLES.${this.normalizeRole(role)}`);
+  }
+  private normalizeRole(role: EmployeeRole | 'SuperAdmin'): EmployeeRole {
+    return role === 'SuperAdmin' ? 'Admin' : role;
   }
   isPhoneInvalid(): boolean {
     const control = this.form.controls.mobileNumber;

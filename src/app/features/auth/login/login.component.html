@@ -150,38 +150,76 @@
       <p class="form-subtitle">{{ 'AUTH.LOGIN_PAGE.FIRST_PASSWORD_SUBTITLE' | translate }}</p>
       <form [formGroup]="passwordForm" (ngSubmit)="completeFirstLogin()" novalidate>
         <div class="field">
-          <label for="firstLoginPassword">{{ 'AUTH.LOGIN_PAGE.NEW_PASSWORD' | translate }}</label>
-          <div class="input-wrapper">
-            <i class="pi pi-lock input-icon"></i
-            ><input
+          <label for="firstLoginPassword"
+            >{{ 'AUTH.LOGIN_PAGE.NEW_PASSWORD' | translate }} <span class="required">*</span></label
+          >
+          <div
+            class="input-wrapper"
+            [class.error]="isFieldInvalid(passwordForm, 'newPassword')"
+          >
+            <i class="pi pi-lock input-icon"></i>
+            <input
               pInputText
               id="firstLoginPassword"
-              type="password"
               formControlName="newPassword"
               name="new-password"
               autocomplete="new-password"
-              class="p-inputtext-custom"
+              [type]="showNewPassword() ? 'text' : 'password'"
+              [placeholder]="'AUTH.LOGIN_PAGE.PASSWORD_PLACEHOLDER' | translate"
+              class="p-inputtext-custom has-toggle"
             />
+            <button type="button" class="toggle-btn" (click)="toggleNewPassword()">
+              <i [class]="showNewPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+            </button>
           </div>
+          <small class="hint-msg">
+            <i class="pi pi-info-circle"></i>
+            {{ 'AUTH.REGISTER_PAGE.PASSWORD_HINT' | translate }}
+          </small>
+          @if (isFieldInvalid(passwordForm, 'newPassword')) {
+            <small class="error-msg">
+              @if (passwordForm.get('newPassword')?.errors?.['required']) {
+                {{ 'AUTH.REGISTER_PAGE.PASSWORD_REQUIRED' | translate }}
+              } @else if (passwordForm.get('newPassword')?.errors?.['minlength']) {
+                {{ 'AUTH.REGISTER_PAGE.PASSWORD_MIN' | translate }}
+              } @else if (passwordForm.get('newPassword')?.errors?.['pattern']) {
+                {{ 'AUTH.REGISTER_PAGE.PASSWORD_PATTERN' | translate }}
+              }
+            </small>
+          }
         </div>
         <div class="field">
-          <label for="firstLoginPasswordConfirm">{{
-            'AUTH.LOGIN_PAGE.CONFIRM_PASSWORD' | translate
-          }}</label>
-          <div class="input-wrapper">
-            <i class="pi pi-lock input-icon"></i
-            ><input
+          <label for="firstLoginPasswordConfirm"
+            >{{ 'AUTH.LOGIN_PAGE.CONFIRM_PASSWORD' | translate }}
+            <span class="required">*</span></label
+          >
+          <div
+            class="input-wrapper"
+            [class.error]="isFieldInvalid(passwordForm, 'confirmPassword')"
+          >
+            <i class="pi pi-lock input-icon"></i>
+            <input
               pInputText
               id="firstLoginPasswordConfirm"
-              type="password"
               formControlName="confirmPassword"
               name="confirm-password"
               autocomplete="new-password"
-              class="p-inputtext-custom"
+              [type]="showConfirm() ? 'text' : 'password'"
+              [placeholder]="'AUTH.REGISTER_PAGE.CONFIRM_PLACEHOLDER' | translate"
+              class="p-inputtext-custom has-toggle"
             />
+            <button type="button" class="toggle-btn" (click)="toggleConfirm()">
+              <i [class]="showConfirm() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+            </button>
           </div>
-          @if (passwordForm.controls.confirmPassword.errors?.['mismatch']) {
-            <small class="error-msg">{{ 'AUTH.LOGIN_PAGE.PASSWORDS_MISMATCH' | translate }}</small>
+          @if (isFieldInvalid(passwordForm, 'confirmPassword')) {
+            <small class="error-msg">
+              @if (passwordForm.get('confirmPassword')?.errors?.['required']) {
+                {{ 'AUTH.REGISTER_PAGE.CONFIRM_REQUIRED' | translate }}
+              } @else if (passwordForm.get('confirmPassword')?.errors?.['mismatch']) {
+                {{ 'AUTH.LOGIN_PAGE.PASSWORDS_MISMATCH' | translate }}
+              }
+            </small>
           }
         </div>
         <p-button

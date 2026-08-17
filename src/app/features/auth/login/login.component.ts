@@ -27,7 +27,12 @@ import {
   extractAuthFormFieldErrors,
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
-import { setupServerErrorClearing } from '@core/utils/validators.util';
+import {
+  PASSWORD_VALIDATORS,
+  passwordMatchValidatorFor,
+  setupPasswordConfirmSync,
+  setupServerErrorClearing,
+} from '@core/utils/validators.util';
 import {
   PHONE_INPUT_CSS_CLASS,
   PHONE_INPUT_DEFAULT_COUNTRY,
@@ -88,13 +93,21 @@ export class LoginComponent implements OnInit {
   otpServerError = signal<string | null>(null);
   resetToken = signal<string | null>(null);
   passwordForm = this.fb.nonNullable.group({
-    newPassword: ['', [Validators.required, Validators.minLength(8)]],
-    confirmPassword: ['', Validators.required],
+    newPassword: ['', PASSWORD_VALIDATORS],
+    confirmPassword: ['', [Validators.required, passwordMatchValidatorFor('newPassword')]],
   });
 
   private readonly passwordToggle = createPasswordToggle();
   readonly showPassword = this.passwordToggle.show;
   readonly togglePassword = this.passwordToggle.toggle;
+
+  private readonly newPasswordToggle = createPasswordToggle();
+  readonly showNewPassword = this.newPasswordToggle.show;
+  readonly toggleNewPassword = this.newPasswordToggle.toggle;
+
+  private readonly confirmToggle = createPasswordToggle();
+  readonly showConfirm = this.confirmToggle.show;
+  readonly toggleConfirm = this.confirmToggle.toggle;
 
   readonly otpLabels = buildOtpLabels('AUTH.LOGIN_PAGE');
 
@@ -108,6 +121,7 @@ export class LoginComponent implements OnInit {
     });
 
     setupServerErrorClearing(this.form, this.destroyRef, ['phone', 'password']);
+    setupPasswordConfirmSync(this.passwordForm, this.destroyRef, 'newPassword', 'confirmPassword');
   }
 
   private handleLoginError(err: HttpErrorResponse): void {
@@ -191,11 +205,7 @@ export class LoginComponent implements OnInit {
       this.passwordForm.markAllAsTouched();
       return;
     }
-    const { newPassword, confirmPassword } = this.passwordForm.getRawValue();
-    if (newPassword !== confirmPassword) {
-      this.passwordForm.controls.confirmPassword.setErrors({ mismatch: true });
-      return;
-    }
+    const { newPassword } = this.passwordForm.getRawValue();
     const userId = this.userId();
     const resetToken = this.resetToken();
     if (!userId || !resetToken) {

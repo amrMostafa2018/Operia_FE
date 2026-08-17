@@ -13,37 +13,41 @@
     <article class="total">
       <i class="pi pi-users"></i>
       <div>
-        <span>{{ 'EMPLOYEES.TOTAL' | translate }}</span
-        ><strong>{{ total() }}</strong
-        ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
-      </div>
-    </article>
-    <article>
-      <i class="pi pi-crown"></i>
-      <div>
-        <span>{{ 'EMPLOYEES.ROLES.SuperAdmin' | translate }}</span><strong>{{ count('SuperAdmin') }}</strong
-        ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        <span>{{ 'EMPLOYEES.TOTAL' | translate }}</span>
+        <div class="summary-stat">
+          <strong>{{ total() }}</strong>
+          <small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        </div>
       </div>
     </article>
     <article>
       <i class="pi pi-id-card"></i>
       <div>
-        <span>{{ 'EMPLOYEES.ROLES.Admin' | translate }}</span><strong>{{ count('Admin') }}</strong
-        ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        <span>{{ 'EMPLOYEES.ROLES.Admin' | translate }}</span>
+        <div class="summary-stat">
+          <strong>{{ count('Admin') }}</strong>
+          <small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        </div>
       </div>
     </article>
     <article>
       <i class="pi pi-headphones"></i>
       <div>
-        <span>{{ 'EMPLOYEES.ROLES.Reception' | translate }}</span><strong>{{ count('Reception') }}</strong
-        ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        <span>{{ 'EMPLOYEES.ROLES.Reception' | translate }}</span>
+        <div class="summary-stat">
+          <strong>{{ count('Reception') }}</strong>
+          <small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        </div>
       </div>
     </article>
     <article>
       <i class="pi pi-user"></i>
       <div>
-        <span>{{ 'EMPLOYEES.ROLES.Staff' | translate }}</span><strong>{{ count('Staff') }}</strong
-        ><small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        <span>{{ 'EMPLOYEES.ROLES.Staff' | translate }}</span>
+        <div class="summary-stat">
+          <strong>{{ count('Staff') }}</strong>
+          <small>{{ 'EMPLOYEES.EMPLOYEE' | translate }}</small>
+        </div>
       </div>
     </article>
   </div>
@@ -192,19 +196,26 @@
           <td>{{ employee.createdAt | date: 'dd/MM/yyyy' }}</td>
           <td class="row-actions">
             @if (canManage()) {
-              <button type="button" class="edit" (click)="openEdit(employee)">
-                <i class="pi pi-pencil"></i>{{ 'EMPLOYEES.EDIT' | translate }}
-              </button>
-              <button
-                type="button"
-                class="status-action"
-                (click)="requestStatus(employee)"
-                [attr.aria-label]="
-                  (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE') | translate
-                "
-              >
-                <i [class]="employee.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>
-              </button>
+              <div class="action-group">
+                <button
+                  type="button"
+                  class="table-icon-btn edit"
+                  (click)="openEdit(employee)"
+                  [attr.aria-label]="'EMPLOYEES.EDIT' | translate"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="table-icon-btn status-action"
+                  (click)="requestStatus(employee)"
+                  [attr.aria-label]="
+                    (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE') | translate
+                  "
+                >
+                  <i [class]="employee.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>
+                </button>
+              </div>
             }
           </td>
         </tr>
