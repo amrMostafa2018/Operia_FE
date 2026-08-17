@@ -22,6 +22,7 @@
     "FORM_HINT": "Add branch details",
     "PICK_LOCATION": "Use my current location",
     "LOCATING": "Getting your location...",
+    "MOBILE_LOCATION_HINT": "Please enable location services on your device to set the branch location accurately.",
     "LOCATION_DENIED": "Location access was denied. Allow location access in your browser settings or select the branch on the map.",
     "LOCATION_TIMEOUT": "We could not get your location in time. Try again or select the branch on the map.",
     "LOCATION_UNAVAILABLE": "Location services are not available on this device. Select the branch on the map.",
