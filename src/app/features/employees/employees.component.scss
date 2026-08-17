@@ -950,8 +950,23 @@
     grid-template-columns: 1fr;
   }
   .schedule-panel {
-    padding: 1rem;
+    padding: 0.75rem;
     min-height: auto;
+  }
+
+  .schedule-info-banner {
+    margin-bottom: 0.65rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .schedule-info-banner-first-line .pi {
+    font-size: 0.95rem;
+  }
+
+  .schedule-info-banner-first-line p,
+  .schedule-info-banner-second-line {
+    font-size: 0.72rem;
+    line-height: 1.45;
   }
   .form-field--phone {
     position: relative;
