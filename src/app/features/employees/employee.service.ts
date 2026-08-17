@@ -3,7 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 
-export type EmployeeRole = 'SuperAdmin' | 'Admin' | 'Reception' | 'Staff';
+export type EmployeeRole = 'Admin' | 'Reception' | 'Staff';
+export type EmployeeRoleResponse = EmployeeRole | 'SuperAdmin';
 export interface EmployeeBranch {
   id: string;
   name: string;
@@ -20,12 +21,12 @@ export interface Employee {
   joiningDate: string;
   photoUrl?: string;
   isActive: boolean;
-  role: EmployeeRole;
+  role: EmployeeRoleResponse;
   branches: EmployeeBranch[];
   createdAt: string;
 }
 export interface EmployeeRoleCount {
-  role: EmployeeRole;
+  role: EmployeeRoleResponse;
   count: number;
 }
 export interface EmployeeListResult {

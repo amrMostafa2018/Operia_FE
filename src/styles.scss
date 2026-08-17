@@ -287,6 +287,103 @@ a {
   border-color: #4a1fd0;
 }
 
+// PrimeNG dropdown overlays — white panel, neutral filter, no gray/purple item states.
+.p-dropdown-panel,
+.p-multiselect-panel {
+  background: #fff;
+  border: 1px solid #dfe0e9;
+  border-radius: 7px;
+  box-shadow: $shadow-md;
+  overflow: hidden;
+
+  .p-dropdown-header,
+  .p-multiselect-header {
+    background: #fff;
+    border-bottom: 1px solid #dfe0e9;
+    padding: 0.5rem 0.65rem;
+    margin: 0;
+  }
+
+  .p-dropdown-header .p-dropdown-filter-container,
+  .p-multiselect-header .p-multiselect-filter-container {
+    position: relative;
+    width: 100%;
+  }
+
+  .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter,
+  .p-multiselect-header .p-multiselect-filter-container .p-inputtext {
+    width: 100%;
+    margin: 0;
+    padding: 0.45rem 0.55rem;
+    padding-inline-end: 2rem;
+    border: 1px solid #dfe0e9;
+    border-radius: 7px;
+    background: #fff;
+    color: var(--text-primary);
+    box-shadow: none;
+
+    &:enabled:hover {
+      border-color: #a7a3bd;
+    }
+
+    &:enabled:focus {
+      outline: none;
+      border-color: #5525e8;
+      box-shadow: 0 0 0 3px rgba(85, 37, 232, 0.12);
+    }
+  }
+
+  .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter-icon,
+  .p-multiselect-header .p-multiselect-filter-container .p-multiselect-filter-icon {
+    position: absolute;
+    top: 50%;
+    inset-inline-end: 0.65rem;
+    right: auto;
+    left: auto;
+    margin: 0;
+    transform: translateY(-50%);
+    color: #6f7180;
+    pointer-events: none;
+  }
+
+  .p-dropdown-items,
+  .p-multiselect-items,
+  .p-dropdown-items-wrapper,
+  .p-multiselect-items-wrapper {
+    background: #fff;
+    padding: 0.25rem 0;
+  }
+
+  .p-dropdown-items .p-dropdown-item,
+  .p-multiselect-items .p-multiselect-item {
+    margin: 0;
+    padding: 0.55rem 0.75rem;
+    background: #fff;
+    color: var(--text-primary);
+    border-radius: 0;
+
+    &:not(.p-highlight):not(.p-disabled):hover,
+    &:not(.p-highlight):not(.p-disabled).p-focus {
+      background: #fff;
+      color: var(--text-primary);
+    }
+
+    &.p-highlight,
+    &.p-highlight.p-focus {
+      background: #fff;
+      color: #4e2be2;
+      font-weight: 600;
+    }
+  }
+
+  .p-dropdown-items .p-dropdown-empty-message,
+  .p-multiselect-items .p-multiselect-empty-message {
+    background: #fff;
+    color: var(--text-secondary);
+    padding: 0.55rem 0.75rem;
+  }
+}
+
 // ─── Arabic placeholder alignment for intl-tel-input ─────────────────────────
 html[dir='rtl'] .phone-row--intl {
   input.operia-tel-input.iti__tel-input,

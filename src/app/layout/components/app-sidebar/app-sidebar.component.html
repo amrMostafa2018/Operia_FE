@@ -126,7 +126,7 @@
           class="nav-item"
           [routerLink]="item.route"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.route !== '/settings/offers' }"
+          [routerLinkActiveOptions]="{ exact: true }"
           (click)="onLinkClick()"
         >
           <i [class]="item.icon" class="nav-icon"></i>

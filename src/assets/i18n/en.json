@@ -535,7 +535,12 @@
     "LOADING": "Loading...",
     "NO_DATA": "No data found",
     "ROWS_PER_PAGE": "Rows per page",
-    "OF": "of"
+    "OF": "of",
+    "ROLES": {
+      "Admin": "Admin",
+      "Reception": "Reception",
+      "Staff": "Staff"
+    }
   },
   "BOOKING_STATUS": {
     "PENDING": "Pending",
@@ -799,7 +804,7 @@
   "EMPLOYEES": {
     "TITLE": "Employee management",
     "SUBTITLE": "View and manage all employees in the system",
-    "ADD": "Add new employee",
+    "ADD": "Add employee",
     "EDIT_TITLE": "Edit employee",
     "TOTAL": "Total employees",
     "EMPLOYEE": "employees",
@@ -816,7 +821,6 @@
     "NAME": "Employee name",
     "ROLE": "Role",
     "ROLES": {
-      "SuperAdmin": "Super Admin",
       "Admin": "Admin",
       "Reception": "Reception",
       "Staff": "Staff"
@@ -879,13 +883,11 @@
       "THU": "Thursday"
     },
     "ROLE_DESC": {
-      "SuperAdmin": "Full tenant administration",
       "Admin": "Authorized business administrator",
       "Reception": "Reception employee",
       "Staff": "Service delivery employee"
     },
     "ACCESS": {
-      "SuperAdmin": ["All administration", "Employees and branches", "Settings and reports"],
       "Admin": ["Daily operations", "Employees", "Bookings and customers"],
       "Reception": ["Manage bookings", "Manage customers", "View appointments"],
       "Staff": ["Assigned bookings", "Related customers", "Own work information"]
