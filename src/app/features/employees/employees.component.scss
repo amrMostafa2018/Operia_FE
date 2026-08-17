@@ -53,7 +53,8 @@
   align-items: center;
   gap: 0.8rem;
 }
-.total > i {
+.total > i,
+.summary article > i {
   padding: 0.7rem;
   border-radius: 12px;
   color: #5726e9;
@@ -977,13 +978,6 @@
   }
 }
 
-.summary article > i {
-  padding: 0.7rem;
-  border-radius: 12px;
-  color: #5726e9;
-  background: #eee8ff;
-  font-size: 1.5rem;
-}
 .avatar,
 .photo-preview {
   overflow: hidden;
