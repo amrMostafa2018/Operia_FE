@@ -239,6 +239,12 @@
             (locating() ? 'BRANCHES.LOCATING' : 'BRANCHES.PICK_LOCATION') | translate
           }}</button
         >
+        @if (isMobileLayout()) {
+          <p class="location-mobile-hint">
+            <i class="pi pi-mobile" aria-hidden="true"></i
+            >{{ 'BRANCHES.MOBILE_LOCATION_HINT' | translate }}
+          </p>
+        }
         <small
           class="field-error"
           *ngIf="form.controls.locationSelected.touched && form.controls.locationSelected.invalid"
