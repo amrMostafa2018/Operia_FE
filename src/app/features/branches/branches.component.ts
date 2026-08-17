@@ -17,7 +17,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService } from 'primeng/api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject } from 'rxjs';
+import { fromEvent, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import * as L from 'leaflet';
 import { PermissionService } from '@core/services/permission.service';
@@ -88,6 +88,8 @@ export class BranchesComponent implements OnInit {
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
   readonly phoneCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
+  readonly isMobileLayout = signal(false);
+  readonly locating = signal(false);
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     address: ['', [Validators.required, Validators.maxLength(500)]],
@@ -98,6 +100,12 @@ export class BranchesComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.updateMobileLayout();
+    if (typeof window !== 'undefined') {
+      fromEvent(window, 'resize')
+        .pipe(debounceTime(100), takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.updateMobileLayout());
+    }
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('BRANCHES.PAGE_REPORT'));
     });
@@ -175,6 +183,7 @@ export class BranchesComponent implements OnInit {
     setTimeout(() => this.initializeMap());
   }
   close(): void {
+    this.locating.set(false);
     this.destroyMap();
     this.dialogOpen.set(false);
   }
@@ -271,21 +280,41 @@ export class BranchesComponent implements OnInit {
   }
   locateMe(): void {
     if (!navigator.geolocation) {
-      this.saveError.set('Location services are not available in this browser.');
+      this.saveError.set(this.translate.instant('BRANCHES.LOCATION_UNAVAILABLE'));
       return;
     }
+    this.saveError.set('');
+    this.locating.set(true);
+    const options: PositionOptions = this.isMobileLayout()
+      ? { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      : { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 };
     navigator.geolocation.getCurrentPosition(
-      position => {
-        const location = L.latLng(position.coords.latitude, position.coords.longitude);
-        this.map?.setView(location, 16);
-        this.marker?.setLatLng(location);
-        this.setLocation(location);
-      },
-      () =>
-        this.saveError.set(
-          'We could not read your location. Allow location access or select it on the map.'
-        )
+      position => this.applyLocatedPosition(position),
+      error => this.handleLocationError(error),
+      options
     );
+  }
+  private applyLocatedPosition(position: GeolocationPosition): void {
+    this.locating.set(false);
+    const location = L.latLng(position.coords.latitude, position.coords.longitude);
+    this.map?.setView(location, 16);
+    this.marker?.setLatLng(location);
+    this.setLocation(location);
+    this.form.controls.locationSelected.markAsTouched();
+    setTimeout(() => this.map?.invalidateSize(), 0);
+  }
+  private handleLocationError(error: GeolocationPositionError): void {
+    this.locating.set(false);
+    const key =
+      error.code === error.PERMISSION_DENIED
+        ? 'BRANCHES.LOCATION_DENIED'
+        : error.code === error.TIMEOUT
+          ? 'BRANCHES.LOCATION_TIMEOUT'
+          : 'BRANCHES.LOCATION_UNAVAILABLE';
+    this.saveError.set(this.translate.instant(key));
+  }
+  private updateMobileLayout(): void {
+    this.isMobileLayout.set(typeof window !== 'undefined' && window.innerWidth <= 992);
   }
   private setLocation(location: L.LatLng): void {
     this.form.patchValue({
