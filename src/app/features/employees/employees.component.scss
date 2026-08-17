@@ -680,12 +680,14 @@
   .summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .editor-body,
-  .form-area {
+  .editor-body {
     grid-template-columns: 1fr;
   }
   .editor aside {
     order: 0;
+  }
+  .form-area {
+    grid-template-columns: 1fr;
   }
   .photo {
     max-width: 220px;

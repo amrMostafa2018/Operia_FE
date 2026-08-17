@@ -139,12 +139,6 @@ export class AppSidebarComponent {
       route: '/branches',
       permissions: [Policies.BranchesRead],
     },
-    {
-      labelKey: 'NAV.OFFERS',
-      icon: 'pi pi-tag',
-      route: '/settings/offers',
-      permissions: [Policies.PackagesRead],
-    },
   ];
 
   private readonly financeNavItems: NavItem[] = [
