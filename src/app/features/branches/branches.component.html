@@ -222,9 +222,24 @@
       <label
         ><span class="field-label"
           >{{ 'BRANCHES.LOCATION' | translate }} <span class="required">*</span></span
-        ><button type="button" class="location-picker" (click)="locateMe()">
-          <i class="pi pi-map-marker"></i>{{ 'BRANCHES.PICK_LOCATION' | translate }}</button
-        ><small
+        >
+        <button
+          type="button"
+          class="location-picker"
+          [disabled]="locating()"
+          (click)="locateMe()"
+        >
+          <i
+            class="pi"
+            [class.pi-map-marker]="!locating()"
+            [class.pi-spin]="locating()"
+            [class.pi-spinner]="locating()"
+          ></i
+          >{{
+            (locating() ? 'BRANCHES.LOCATING' : 'BRANCHES.PICK_LOCATION') | translate
+          }}</button
+        >
+        <small
           class="field-error"
           *ngIf="form.controls.locationSelected.touched && form.controls.locationSelected.invalid"
           >{{ 'BRANCHES.LOCATION_REQUIRED' | translate }}</small
