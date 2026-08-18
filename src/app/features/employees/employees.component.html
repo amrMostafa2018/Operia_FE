@@ -259,11 +259,9 @@
           <i class="pi pi-calendar"></i>{{ 'EMPLOYEES.SCHEDULE' | translate }}
         </button>
       </div>
-      <div
-        class="editor-body editor-tab-panel"
-        [class.is-hidden]="activeTab() !== 'personal'"
-        [attr.aria-hidden]="activeTab() !== 'personal'"
-      >
+      <div class="editor-tab-content">
+        @if (activeTab() === 'personal') {
+          <div class="editor-body editor-tab-panel">
           <div class="form-area">
             <div class="photo">
               <span class="field-label">{{ 'EMPLOYEES.PERSONAL_PHOTO' | translate }}</span>
@@ -335,6 +333,7 @@
               <div class="form-field form-field--branches">
                 <span class="field-label">{{ 'EMPLOYEES.BRANCH' | translate }} <em>*</em></span>
                 <p-multiSelect
+                  #branchMultiselect
                   [options]="branches()"
                   optionLabel="name"
                   optionValue="id"
@@ -347,6 +346,7 @@
                   styleClass="employee-branch-multiselect"
                   panelStyleClass="employee-branch-multiselect-panel"
                   (onPanelShow)="syncBranchMultiselectPanelWidth()"
+                  (onChange)="onBranchSelectionChange()"
                 ></p-multiSelect>
               </div>
               <label>
@@ -470,13 +470,13 @@
               <i class="pi pi-info-circle"></i>{{ 'EMPLOYEES.PERMISSION_NOTE' | translate }}
             </div>
           </aside>
-      </div>
-      <section
-        class="schedule-panel editor-tab-panel"
-        [class.is-hidden]="activeTab() !== 'schedule'"
-        [attr.aria-busy]="scheduleLoading()"
-        [attr.aria-hidden]="activeTab() !== 'schedule'"
-      >
+          </div>
+        }
+        @if (activeTab() === 'schedule') {
+          <section
+            class="schedule-panel editor-tab-panel"
+            [attr.aria-busy]="scheduleLoading()"
+          >
           <div class="schedule-info-banner">
             <div class="schedule-info-banner-content">
               <div class="schedule-info-banner-first-line">
@@ -554,6 +554,8 @@
             }
           }
         </section>
+        }
+      </div>
       <footer>
         <button type="button" class="cancel" (click)="close()">
           {{ 'EMPLOYEES.CANCEL' | translate }}
