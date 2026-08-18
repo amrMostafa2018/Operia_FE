@@ -129,6 +129,47 @@
     direction: ltr;
   }
 
+  // MultiSelect: PrimeNG theme margins use physical left/right and collapse in RTL.
+  .p-multiselect.p-multiselect-chip .p-multiselect-token {
+    margin-right: 0;
+    margin-inline-end: 0;
+  }
+
+  .p-multiselect.p-multiselect-chip .p-multiselect-token .p-multiselect-token-icon {
+    margin-left: 0;
+    margin-inline-start: 0.35rem;
+  }
+
+  .p-multiselect-panel {
+    direction: rtl;
+
+    .p-multiselect-header .p-checkbox {
+      margin-right: 0;
+      margin-inline-end: 0.5rem;
+    }
+
+    .p-multiselect-header .p-multiselect-close {
+      margin-left: 0;
+      margin-inline-start: 0.5rem;
+    }
+
+    .p-multiselect-items .p-multiselect-item {
+      gap: 0.5rem;
+      text-align: right;
+
+      .p-checkbox {
+        margin-right: 0;
+        flex-shrink: 0;
+      }
+
+      > span {
+        flex: 1;
+        min-width: 0;
+        text-align: right;
+      }
+    }
+  }
+
   // Input group
   .p-inputgroup-addon:first-child {
     border-radius: 0 $border-radius $border-radius 0;
