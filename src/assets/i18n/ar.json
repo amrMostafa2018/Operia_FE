@@ -592,38 +592,38 @@
     "EGP": "جنيه مصري"
   },
   "OPERIA_SUBSCRIPTIONS": {
-    "TITLE":                    "اشتراكاتك في OPERIA",
-    "FROM_DATE":                "من تاريخ",
-    "TO_DATE":                  "إلى تاريخ",
-    "PLAN":                     "الباقة",
-    "ALL_PLANS":                "كل الباقات",
-    "SUBSCRIPTION_STATUS":      "حالة الاشتراك",
-    "ALL_STATUSES":             "كل الحالات",
-    "COL_NUM":                  "#",
-    "COL_PLAN":                 "الباقة",
-    "COL_AMOUNT":               "قيمة الاشتراك",
-    "COL_START":                "بداية الاشتراك",
-    "COL_END":                  "نهاية الاشتراك",
-    "COL_STATUS":               "حالة الاشتراك",
-    "EXPORT_REPORT":            "تصدير التقرير",
-    "EXPORT_EXCEL":             "تصدير Excel",
-    "EXPORT_PDF":               "تصدير PDF",
-    "PAGE_REPORT":              "عرض {first} إلى {last} من {totalRecords} عمليات",
+    "TITLE": "اشتراكاتك في OPERIA",
+    "FROM_DATE": "من تاريخ",
+    "TO_DATE": "إلى تاريخ",
+    "PLAN": "الباقة",
+    "ALL_PLANS": "كل الباقات",
+    "SUBSCRIPTION_STATUS": "حالة الاشتراك",
+    "ALL_STATUSES": "كل الحالات",
+    "COL_NUM": "#",
+    "COL_PLAN": "الباقة",
+    "COL_AMOUNT": "قيمة الاشتراك",
+    "COL_START": "بداية الاشتراك",
+    "COL_END": "نهاية الاشتراك",
+    "COL_STATUS": "حالة الاشتراك",
+    "EXPORT_REPORT": "تصدير التقرير",
+    "EXPORT_EXCEL": "تصدير Excel",
+    "EXPORT_PDF": "تصدير PDF",
+    "PAGE_REPORT": "عرض {first} إلى {last} من {totalRecords} عمليات",
     "BILLING": {
       "YEARLY": "سنوياً",
       "MONTHLY": "شهرياً"
     },
     "STATUS": {
-      "ACTIVE":                 "مفعل",
-      "EXPIRED":                "منتهي",
-      "CANCELLED":              "ملغى",
-      "PENDING":                "قيد الانتظار"
+      "ACTIVE": "مفعل",
+      "EXPIRED": "منتهي",
+      "CANCELLED": "ملغى",
+      "PENDING": "قيد الانتظار"
     },
     "CURRENCIES": {
-      "EGP":                    "جنيه مصري",
-      "SAR":                    "ريال سعودي",
-      "AED":                    "درهم إماراتي",
-      "USD":                    "دولار أمريكي"
+      "EGP": "جنيه مصري",
+      "SAR": "ريال سعودي",
+      "AED": "درهم إماراتي",
+      "USD": "دولار أمريكي"
     }
   },
   "SETTINGS_ACTIVITY": {
@@ -859,6 +859,7 @@
     "MOBILE": "رقم الموبايل",
     "BRANCH": "الفروع",
     "BRANCH_PLACEHOLDER": "اختر الفروع",
+    "BRANCH_SEARCH": "ابحث عن فرع...",
     "BRANCHES_SELECTED": "تم اختيار {0} فروع",
     "JOB_TITLE": "المسمى الوظيفي",
     "SPECIALTY": "التخصص",
@@ -885,6 +886,8 @@
     "SCHEDULE_ON": "يعمل",
     "SCHEDULE_OFF": "يوم إجازة",
     "SAVE_SCHEDULE": "حفظ المواعيد",
+    "COMPLETE_PERSONAL_FIRST": "أكمل البيانات الشخصية قبل الحفظ.",
+    "SCHEDULE_SAVED": "تم حفظ المواعيد.",
     "SCHEDULE_SAVE_FAILED": "تعذر حفظ مواعيد الموظف.",
     "SCHEDULE_DAYS": {
       "FRI": "الجمعة",

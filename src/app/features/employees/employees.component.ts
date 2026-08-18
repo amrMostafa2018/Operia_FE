@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -23,7 +24,7 @@ import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
-import { MultiSelectModule } from 'primeng/multiselect';
+import { MultiSelect, MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
@@ -94,6 +95,8 @@ interface BranchScheduleUi {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmployeesComponent implements OnInit {
+  @ViewChild('branchMultiselect') private branchMultiselect?: MultiSelect;
+
   private readonly service = inject(EmployeeService);
   private readonly branchesApi = inject(BranchService);
   private readonly permissions = inject(PermissionService);
@@ -322,7 +325,11 @@ export class EmployeesComponent implements OnInit {
     this.scheduleErrors.set({});
   }
   selectTab(tab: 'personal' | 'schedule'): void {
+    this.closeBranchMultiselect();
     this.activeTab.set(tab);
+  }
+  onBranchSelectionChange(): void {
+    queueMicrotask(() => this.closeBranchMultiselect());
   }
   selectBranchTab(branchId: string): void {
     this.activeBranchId.set(branchId);
@@ -401,6 +408,14 @@ export class EmployeesComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      if (this.activeTab() === 'schedule') {
+        this.toast.add({
+          severity: 'warn',
+          summary: 'OPERIA',
+          detail: this.translate.instant('EMPLOYEES.COMPLETE_PERSONAL_FIRST'),
+        });
+      }
+      this.closeBranchMultiselect();
       this.activeTab.set('personal');
       return;
     }
@@ -597,7 +612,11 @@ export class EmployeesComponent implements OnInit {
     if (!active || !branchIds.includes(active)) {
       this.activeBranchId.set(branchIds[0] ?? null);
     }
+    this.closeBranchMultiselect();
     this.scheduleErrors.set({});
+  }
+  private closeBranchMultiselect(): void {
+    this.branchMultiselect?.hide();
   }
   private clearScheduleError(branchId: string): void {
     this.scheduleErrors.update(errors => {
