@@ -60,6 +60,12 @@ interface ScheduleDayUi {
   toTime: Date;
 }
 
+interface BranchScheduleUi {
+  branchId: string;
+  branchName: string;
+  days: ScheduleDayUi[];
+}
+
 // List page shell (header + filters + table + pagination) mirrors branches.component;
 // kept separate because employee create/edit uses a full-page overlay, not a dialog.
 
@@ -126,9 +132,17 @@ export class EmployeesComponent implements OnInit {
   readonly removePhoto = signal(false);
   readonly roleValue = signal<EmployeeRole>('Staff');
   readonly activeTab = signal<'personal' | 'schedule'>('personal');
-  readonly schedule = signal<ScheduleDayUi[]>(this.defaultSchedule());
+  readonly branchSchedules = signal<BranchScheduleUi[]>([]);
+  readonly activeBranchId = signal<string | null>(null);
   readonly scheduleLoading = signal(false);
-  readonly scheduleError = signal<string | null>(null);
+  readonly scheduleErrors = signal<Record<string, string>>({});
+  readonly activeBranchSchedule = computed(
+    () => this.branchSchedules().find(x => x.branchId === this.activeBranchId()) ?? null
+  );
+  readonly activeScheduleError = computed(() => {
+    const branchId = this.activeBranchId();
+    return branchId ? (this.scheduleErrors()[branchId] ?? null) : null;
+  });
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.EmployeesManage));
   readonly rowsPerPageOptions = [10, 20, 50];
   readonly rows = signal(10);
@@ -171,6 +185,9 @@ export class EmployeesComponent implements OnInit {
       'userName',
       'temporaryPassword',
     ]);
+    this.form.controls.branchIds.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(branchIds => this.syncBranchSchedules(branchIds));
     this.searchChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyFilters());
@@ -223,6 +240,19 @@ export class EmployeesComponent implements OnInit {
     this.createdDate = '';
     this.applyFilters();
   }
+  syncBranchMultiselectPanelWidth(): void {
+    requestAnimationFrame(() => {
+      const trigger = document.querySelector(
+        '.employee-branch-multiselect.p-multiselect'
+      ) as HTMLElement | null;
+      const panel = document.querySelector(
+        '.employee-branch-multiselect-panel'
+      ) as HTMLElement | null;
+      if (trigger && panel) {
+        panel.style.minWidth = `${trigger.offsetWidth}px`;
+      }
+    });
+  }
   count(role: EmployeeRole): number {
     return this.roleCounts().find(x => x.role === role)?.count ?? 0;
   }
@@ -251,8 +281,9 @@ export class EmployeesComponent implements OnInit {
     this.passwordToggle.show.set(false);
     this.clearPhoto();
     this.activeTab.set('personal');
-    this.schedule.set(this.defaultSchedule());
-    this.scheduleError.set(null);
+    this.branchSchedules.set([]);
+    this.activeBranchId.set(null);
+    this.scheduleErrors.set({});
     this.dialogOpen.set(true);
   }
   openEdit(employee: Employee): void {
@@ -278,7 +309,8 @@ export class EmployeesComponent implements OnInit {
     this.clearPhoto();
     this.photoPreview.set(employee.photoUrl ? resolveUploadUrl(employee.photoUrl) : null);
     this.activeTab.set('personal');
-    this.scheduleError.set(null);
+    this.scheduleErrors.set({});
+    this.syncBranchSchedules(employee.branches.map(x => x.id));
     this.loadSchedule(employee.id);
     this.dialogOpen.set(true);
   }
@@ -286,37 +318,62 @@ export class EmployeesComponent implements OnInit {
     this.dialogOpen.set(false);
     this.passwordToggle.show.set(false);
     this.clearPhoto();
-    this.scheduleError.set(null);
+    this.clearPhoto();
+    this.scheduleErrors.set({});
   }
   selectTab(tab: 'personal' | 'schedule'): void {
     this.activeTab.set(tab);
   }
-  setScheduleEnabled(day: string, enabled: boolean): void {
-    this.schedule.update(days =>
-      days.map(item =>
-        item.day === day
+  selectBranchTab(branchId: string): void {
+    this.activeBranchId.set(branchId);
+  }
+  setScheduleEnabled(branchId: string, day: string, enabled: boolean): void {
+    this.branchSchedules.update(branches =>
+      branches.map(branch =>
+        branch.branchId === branchId
           ? {
-              ...item,
-              enabled,
-              fromTime: enabled ? item.fromTime : this.parseScheduleTime(null),
-              toTime: enabled ? item.toTime : this.parseScheduleTime(null, 17, 0),
+              ...branch,
+              days: branch.days.map(item =>
+                item.day === day
+                  ? {
+                      ...item,
+                      enabled,
+                      fromTime: enabled ? item.fromTime : this.parseScheduleTime(null),
+                      toTime: enabled ? item.toTime : this.parseScheduleTime(null, 17, 0),
+                    }
+                  : item
+              ),
             }
-          : item
+          : branch
       )
     );
-    this.scheduleError.set(null);
+    this.clearScheduleError(branchId);
   }
-  updateScheduleFromTime(day: string, time: Date): void {
-    this.schedule.update(days =>
-      days.map(item => (item.day === day ? { ...item, fromTime: time } : item))
+  updateScheduleFromTime(branchId: string, day: string, time: Date): void {
+    this.branchSchedules.update(branches =>
+      branches.map(branch =>
+        branch.branchId === branchId
+          ? {
+              ...branch,
+              days: branch.days.map(item => (item.day === day ? { ...item, fromTime: time } : item)),
+            }
+          : branch
+      )
     );
-    this.scheduleError.set(null);
+    this.clearScheduleError(branchId);
   }
-  updateScheduleToTime(day: string, time: Date): void {
-    this.schedule.update(days =>
-      days.map(item => (item.day === day ? { ...item, toTime: time } : item))
+  updateScheduleToTime(branchId: string, day: string, time: Date): void {
+    this.branchSchedules.update(branches =>
+      branches.map(branch =>
+        branch.branchId === branchId
+          ? {
+              ...branch,
+              days: branch.days.map(item => (item.day === day ? { ...item, toTime: time } : item)),
+            }
+          : branch
+      )
     );
-    this.scheduleError.set(null);
+    this.clearScheduleError(branchId);
   }
   choosePhoto(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -356,30 +413,48 @@ export class EmployeesComponent implements OnInit {
       removePhoto: this.removePhoto(),
       temporaryPassword: this.editing() ? undefined : value.temporaryPassword,
     };
+    const schedulePayload = this.toSchedulePayload();
     this.saving.set(true);
-    const request = this.editing()
-      ? this.service.update(this.editing()!.id, payload)
-      : this.service.create(payload);
-    request
-      .pipe(
-        switchMap(employee =>
-          this.service.updateSchedule(employee.id, { days: this.toSchedulePayload(this.schedule()) })
-        ),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.close();
-          this.load();
-          this.toast.add({
-            severity: 'success',
-            summary: 'OPERIA',
-            detail: this.translate.instant('EMPLOYEES.SAVED'),
-          });
-        },
-        error: (error: HttpErrorResponse) => this.handleSaveError(error),
-      });
+
+    const editing = this.editing();
+    if (editing) {
+      // Edit mode: update employee info then update schedule in sequence.
+      // editing() is already set so retries always use update, not create.
+      this.service
+        .update(editing.id, payload)
+        .pipe(
+          switchMap(employee =>
+            this.service.updateSchedule(employee.id, { branches: schedulePayload })
+          ),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: () => this.onSaveSuccess(),
+          error: (error: HttpErrorResponse) => this.handleSaveError(error),
+        });
+    } else {
+      // Create mode: send employee + schedule in one atomic request.
+      // If schedule validation fails the employee is never persisted, so
+      // retrying never triggers a "username already exists" error.
+      this.service
+        .create(payload, schedulePayload)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => this.onSaveSuccess(),
+          error: (error: HttpErrorResponse) => this.handleSaveError(error),
+        });
+    }
+  }
+
+  private onSaveSuccess(): void {
+    this.saving.set(false);
+    this.close();
+    this.load();
+    this.toast.add({
+      severity: 'success',
+      summary: 'OPERIA',
+      detail: this.translate.instant('EMPLOYEES.SAVED'),
+    });
   }
   requestStatus(employee: Employee): void {
     this.pendingStatus.set(employee);
@@ -483,22 +558,58 @@ export class EmployeesComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: schedule => {
-          this.schedule.set(
-            schedule.days.map(day => ({
-              day: day.day,
-              enabled: day.enabled,
-              fromTime: this.parseScheduleTime(day.fromTime),
-              toTime: this.parseScheduleTime(day.toTime, 17, 0),
+          this.branchSchedules.set(
+            schedule.branches.map(branch => ({
+              branchId: branch.branchId,
+              branchName: branch.branchName,
+              days: branch.days.map(day => ({
+                day: day.day,
+                enabled: day.enabled,
+                fromTime: this.parseScheduleTime(day.fromTime),
+                toTime: this.parseScheduleTime(day.toTime, 17, 0),
+              })),
             }))
           );
+          this.activeBranchId.set(schedule.branches[0]?.branchId ?? null);
           this.scheduleLoading.set(false);
         },
         error: () => this.scheduleLoading.set(false),
       });
   }
+  private syncBranchSchedules(branchIds: string[]): void {
+    const available = this.branches();
+    const current = this.branchSchedules();
+    const next = branchIds.map(branchId => {
+      const existing = current.find(x => x.branchId === branchId);
+      if (existing) {
+        const branch = available.find(x => x.id === branchId);
+        return branch ? { ...existing, branchName: branch.name } : existing;
+      }
+      const branch = available.find(x => x.id === branchId);
+      return {
+        branchId,
+        branchName: branch?.name ?? branchId,
+        days: this.defaultSchedule(),
+      };
+    });
+    this.branchSchedules.set(next);
+    const active = this.activeBranchId();
+    if (!active || !branchIds.includes(active)) {
+      this.activeBranchId.set(branchIds[0] ?? null);
+    }
+    this.scheduleErrors.set({});
+  }
+  private clearScheduleError(branchId: string): void {
+    this.scheduleErrors.update(errors => {
+      if (!errors[branchId]) return errors;
+      const next = { ...errors };
+      delete next[branchId];
+      return next;
+    });
+  }
   private handleSaveError(error: HttpErrorResponse): void {
     this.saving.set(false);
-    this.scheduleError.set(null);
+    this.scheduleErrors.set({});
 
     const fieldErrors = translateApiFieldErrors(
       extractApiFieldErrors(error),
@@ -514,23 +625,61 @@ export class EmployeesComponent implements OnInit {
       return;
     }
 
-    const scheduleMessage = this.scheduleErrorMessage(error);
-    this.scheduleError.set(scheduleMessage);
+    const scheduleMessage = this.scheduleErrorMessage(error, fieldErrors);
+    const branchId = this.resolveScheduleErrorBranchId(fieldErrors);
+    if (branchId) {
+      this.scheduleErrors.set({ [branchId]: scheduleMessage });
+      this.activeBranchId.set(branchId);
+    }
     this.activeTab.set('schedule');
   }
-  private scheduleErrorMessage(error: HttpErrorResponse): string {
-    const code = Object.values(
-      (error.error as { errorCodes?: Record<string, string[]> })?.errorCodes ?? {}
-    ).flat()[0];
+  private resolveScheduleErrorBranchId(fieldErrors: Record<string, string>): string | null {
+    const branchField = Object.keys(fieldErrors).find(key => key.startsWith('branches['));
+    if (!branchField) {
+      return this.activeBranchId();
+    }
+    const match = branchField.match(/branches\[(\d+)\]/);
+    if (!match) {
+      return this.activeBranchId();
+    }
+    const index = Number.parseInt(match[1], 10);
+    return this.branchSchedules()[index]?.branchId ?? this.activeBranchId();
+  }
+  private scheduleErrorMessage(
+    error: HttpErrorResponse,
+    fieldErrors: Record<string, string>
+  ): string {
+    const scheduleField = Object.keys(fieldErrors).find(key => key.startsWith('branches['));
+    if (scheduleField) {
+      const translated = fieldErrors[scheduleField];
+      if (translated && !this.isRawErrorCode(translated)) {
+        return translated;
+      }
+    }
+
+    const body = error.error as {
+      errors?: Record<string, string[]>;
+      errorCodes?: Record<string, string[]>;
+    };
+    const apiScheduleField = Object.keys(body?.errors ?? {}).find(key => key.startsWith('branches['));
+    const apiMessage = apiScheduleField ? body?.errors?.[apiScheduleField]?.[0] : null;
+    if (apiMessage) {
+      return apiMessage;
+    }
+
+    const code =
+      (scheduleField ? fieldErrors[scheduleField] : null) ??
+      Object.values(body?.errorCodes ?? {}).flat()[0];
     if (code) {
       const translated = this.translate.instant(`ERRORS.${code}`);
       return translated === `ERRORS.${code}` ? code : translated;
     }
-    return (
-      Object.values(
-        (error.error as { errors?: Record<string, string[]> })?.errors ?? {}
-      ).flat()[0] ?? this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED')
-    );
+
+    return this.translate.instant('EMPLOYEES.SCHEDULE_SAVE_FAILED');
+  }
+
+  private isRawErrorCode(value: string): boolean {
+    return /^[A-Z][A-Za-z0-9]*$/.test(value);
   }
   private defaultSchedule(): ScheduleDayUi[] {
     return ['fri', 'sat', 'sun', 'mon', 'tue', 'wed', 'thu'].map(day => ({
@@ -553,12 +702,16 @@ export class EmployeesComponent implements OnInit {
   private formatScheduleTime(time: Date): string {
     return `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}:00`;
   }
-  private toSchedulePayload(days: ScheduleDayUi[]): EmployeeWorkingDay[] {
-    return days.map(day => ({
-      day: day.day,
-      enabled: day.enabled,
-      fromTime: day.enabled ? this.formatScheduleTime(day.fromTime) : null,
-      toTime: day.enabled ? this.formatScheduleTime(day.toTime) : null,
+  private toSchedulePayload(): { branchId: string; branchName: string; days: EmployeeWorkingDay[] }[] {
+    return this.branchSchedules().map(branch => ({
+      branchId: branch.branchId,
+      branchName: branch.branchName,
+      days: branch.days.map(day => ({
+        day: day.day,
+        enabled: day.enabled,
+        fromTime: day.enabled ? this.formatScheduleTime(day.fromTime) : null,
+        toTime: day.enabled ? this.formatScheduleTime(day.toTime) : null,
+      })),
     }));
   }
 }

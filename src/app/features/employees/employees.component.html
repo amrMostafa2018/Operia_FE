@@ -332,7 +332,7 @@
                   <small class="field-error">{{ mobileError }}</small>
                 }
               </div>
-              <div class="form-field">
+              <div class="form-field form-field--branches">
                 <span class="field-label">{{ 'EMPLOYEES.BRANCH' | translate }} <em>*</em></span>
                 <p-multiSelect
                   [options]="branches()"
@@ -340,6 +340,13 @@
                   optionValue="id"
                   formControlName="branchIds"
                   display="chip"
+                  appendTo="body"
+                  [filter]="true"
+                  [maxSelectedLabels]="null"
+                  [placeholder]="'EMPLOYEES.BRANCH_PLACEHOLDER' | translate"
+                  styleClass="employee-branch-multiselect"
+                  panelStyleClass="employee-branch-multiselect-panel"
+                  (onPanelShow)="syncBranchMultiselectPanelWidth()"
                 ></p-multiSelect>
               </div>
               <label>
@@ -481,54 +488,71 @@
               </p>
             </div>
           </div>
-          @if (scheduleError(); as error) {
-            <p class="schedule-error" role="alert">
-              <i class="pi pi-exclamation-circle"></i>{{ error }}
-            </p>
-          }
-          <div class="days-list">
-            @for (day of schedule(); track day.day) {
-              <div class="day-row" [class.disabled]="!day.enabled">
-                <p-inputSwitch
-                  [ngModel]="day.enabled"
-                  (ngModelChange)="setScheduleEnabled(day.day, $event)"
-                  [ngModelOptions]="{ standalone: true }"
-                />
-                <span class="day-name">{{
-                  'EMPLOYEES.SCHEDULE_DAYS.' + day.day.toUpperCase() | translate
-                }}</span>
-                <div class="time-fields">
-                  <app-time-picker
-                    [inputId]="'employee-from-' + day.day"
-                    [ngModel]="day.fromTime"
-                    (ngModelChange)="updateScheduleFromTime(day.day, $event)"
-                    [ngModelOptions]="{ standalone: true }"
-                    [disabled]="!day.enabled"
-                    [placeholder]="!day.enabled ? '--:--' : ''"
-                    styleClass="time-picker time-picker--inline"
-                  />
-                  <span class="time-separator" aria-hidden="true">-</span>
-                  <app-time-picker
-                    [inputId]="'employee-to-' + day.day"
-                    [ngModel]="day.toTime"
-                    (ngModelChange)="updateScheduleToTime(day.day, $event)"
-                    [ngModelOptions]="{ standalone: true }"
-                    [disabled]="!day.enabled"
-                    [placeholder]="!day.enabled ? '--:--' : ''"
-                    styleClass="time-picker time-picker--inline"
-                  />
-                </div>
-                <span class="day-status" [class.working]="day.enabled" [class.off]="!day.enabled">
-                  {{
-                    (day.enabled
-                      ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY'
-                      : 'SETTINGS_ACTIVITY.WORKING_DAYS.DAY_OFF'
-                    ) | translate
-                  }}
-                </span>
+          @if (branchSchedules().length === 0) {
+            <p class="schedule-empty">{{ 'EMPLOYEES.SCHEDULE_SELECT_BRANCH' | translate }}</p>
+          } @else {
+            <div class="tabs schedule-branch-tabs">
+              @for (branchSchedule of branchSchedules(); track branchSchedule.branchId) {
+                <button
+                  type="button"
+                  [class.active]="activeBranchId() === branchSchedule.branchId"
+                  (click)="selectBranchTab(branchSchedule.branchId)"
+                >
+                  {{ branchSchedule.branchName }}
+                </button>
+              }
+            </div>
+            @if (activeScheduleError(); as error) {
+              <p class="schedule-error" role="alert">
+                <i class="pi pi-exclamation-circle"></i>{{ error }}
+              </p>
+            }
+            @if (activeBranchSchedule(); as activeBranch) {
+              <div class="days-list">
+                @for (day of activeBranch.days; track day.day) {
+                  <div class="day-row" [class.disabled]="!day.enabled">
+                    <p-inputSwitch
+                      [ngModel]="day.enabled"
+                      (ngModelChange)="setScheduleEnabled(activeBranch.branchId, day.day, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                    <span class="day-name">{{
+                      'EMPLOYEES.SCHEDULE_DAYS.' + day.day.toUpperCase() | translate
+                    }}</span>
+                    <div class="time-fields">
+                      <app-time-picker
+                        [inputId]="'employee-from-' + activeBranch.branchId + '-' + day.day"
+                        [ngModel]="day.fromTime"
+                        (ngModelChange)="updateScheduleFromTime(activeBranch.branchId, day.day, $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="!day.enabled"
+                        [placeholder]="!day.enabled ? '--:--' : ''"
+                        styleClass="time-picker time-picker--inline"
+                      />
+                      <span class="time-separator" aria-hidden="true">-</span>
+                      <app-time-picker
+                        [inputId]="'employee-to-' + activeBranch.branchId + '-' + day.day"
+                        [ngModel]="day.toTime"
+                        (ngModelChange)="updateScheduleToTime(activeBranch.branchId, day.day, $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="!day.enabled"
+                        [placeholder]="!day.enabled ? '--:--' : ''"
+                        styleClass="time-picker time-picker--inline"
+                      />
+                    </div>
+                    <span class="day-status" [class.working]="day.enabled" [class.off]="!day.enabled">
+                      {{
+                        (day.enabled
+                          ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY'
+                          : 'SETTINGS_ACTIVITY.WORKING_DAYS.DAY_OFF'
+                        ) | translate
+                      }}
+                    </span>
+                  </div>
+                }
               </div>
             }
-          </div>
+          }
         </section>
       <footer>
         <button type="button" class="cancel" (click)="close()">
