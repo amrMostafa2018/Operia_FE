@@ -370,6 +370,9 @@
 .editor-tab-panel.is-hidden {
   display: none;
 }
+.editor-tab-content {
+  display: contents;
+}
 .editor aside {
   order: -1;
   background: #fbfaff;
@@ -830,6 +833,13 @@
   .editor > footer {
     flex-shrink: 0;
   }
+  .editor-tab-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
   .editor-body,
   .schedule-panel {
     flex: 1 1 auto;
@@ -864,6 +874,9 @@
     padding: 0 0.75rem;
     justify-content: stretch;
     flex-shrink: 0;
+    position: relative;
+    z-index: 5;
+    background: #fff;
   }
   .tabs button {
     flex: 1 1 0;

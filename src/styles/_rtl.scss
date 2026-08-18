@@ -143,14 +143,28 @@
   .p-multiselect-panel {
     direction: rtl;
 
+    .p-multiselect-header {
+      flex-direction: row;
+    }
+
     .p-multiselect-header .p-checkbox {
       margin-right: 0;
-      margin-inline-end: 0.5rem;
+      margin-inline-end: 0;
     }
 
     .p-multiselect-header .p-multiselect-close {
       margin-left: 0;
-      margin-inline-start: 0.5rem;
+      margin-inline-start: 0;
+    }
+
+    .p-multiselect-header .p-multiselect-filter-container .p-inputtext {
+      padding-inline-end: 0.55rem;
+      padding-inline-start: 2rem;
+    }
+
+    .p-multiselect-header .p-multiselect-filter-container .p-multiselect-filter-icon {
+      inset-inline-end: auto;
+      inset-inline-start: 0.65rem;
     }
 
     .p-multiselect-items .p-multiselect-item {
