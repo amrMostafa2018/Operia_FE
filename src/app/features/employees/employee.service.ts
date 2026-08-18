@@ -68,8 +68,13 @@ export interface EmployeeWorkingDay {
   fromTime: string | null;
   toTime: string | null;
 }
-export interface EmployeeSchedule {
+export interface EmployeeBranchSchedule {
+  branchId: string;
+  branchName: string;
   days: EmployeeWorkingDay[];
+}
+export interface EmployeeSchedule {
+  branches: EmployeeBranchSchedule[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -87,8 +92,8 @@ export class EmployeeService {
   get(id: string): Observable<Employee> {
     return this.http.get<Employee>(`${this.url}/${id}`);
   }
-  create(payload: EmployeePayload): Observable<Employee> {
-    return this.http.post<Employee>(this.url, this.toFormData(payload));
+  create(payload: EmployeePayload, schedule?: EmployeeBranchSchedule[]): Observable<Employee> {
+    return this.http.post<Employee>(this.url, this.toFormData(payload, schedule));
   }
   update(id: string, payload: EmployeePayload): Observable<Employee> {
     return this.http.put<Employee>(`${this.url}/${id}`, this.toFormData(payload));
@@ -105,13 +110,16 @@ export class EmployeeService {
   updateSchedule(id: string, schedule: EmployeeSchedule): Observable<EmployeeSchedule> {
     return this.http.put<EmployeeSchedule>(`${this.url}/${id}/schedule`, schedule);
   }
-  private toFormData(payload: EmployeePayload): FormData {
+  private toFormData(payload: EmployeePayload, schedule?: EmployeeBranchSchedule[]): FormData {
     const data = new FormData();
     Object.entries(payload).forEach(([key, value]) => {
       if (key === 'branchIds') (value as string[]).forEach(id => data.append('branchIds', id));
       else if (value instanceof File) data.append('photo', value, value.name);
       else if (value !== undefined && value !== null) data.append(key, String(value));
     });
+    if (schedule) {
+      data.append('scheduleJson', JSON.stringify(schedule));
+    }
     return data;
   }
 }
