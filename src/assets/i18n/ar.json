@@ -859,6 +859,7 @@
     "MOBILE": "رقم الموبايل",
     "BRANCH": "الفروع",
     "BRANCH_PLACEHOLDER": "اختر الفروع",
+    "BRANCH_SEARCH": "ابحث عن فرع...",
     "BRANCHES_SELECTED": "تم اختيار {0} فروع",
     "JOB_TITLE": "المسمى الوظيفي",
     "SPECIALTY": "التخصص",

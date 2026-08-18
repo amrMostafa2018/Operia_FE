@@ -856,6 +856,7 @@
     "MOBILE": "Mobile number",
     "BRANCH": "Branches",
     "BRANCH_PLACEHOLDER": "Select branches",
+    "BRANCH_SEARCH": "Search branches...",
     "BRANCHES_SELECTED": "{0} branches selected",
     "JOB_TITLE": "Job title",
     "SPECIALTY": "Specialty",
