@@ -2,7 +2,7 @@
 @use '../../shared/styles/page-list' as page-list;
 @use '../../shared/styles/data-table' as data-table;
 @use '../../shared/styles/phone-intl-input';
-@use '../../shared/styles/auth-form';
+@use '../../shared/styles/field-border' as field-border;
 
 :host {
   display: block;
@@ -224,6 +224,7 @@
   color: #6f7180;
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 .code {
   color: #4b24da;
@@ -276,6 +277,7 @@
   gap: 0.85rem;
   align-items: flex-start;
   padding: 1.35rem 1.7rem;
+  padding-inline-end: 3rem;
   border-bottom: 1px solid #e7e7ee;
 }
 .editor-title-icon {
@@ -314,6 +316,7 @@
 .close {
   position: absolute;
   top: 1.2rem;
+  inset-inline-end: 1.4rem;
   z-index: 2;
   border: 0;
   background: transparent;
@@ -322,26 +325,6 @@
   cursor: pointer;
   line-height: 1;
   padding: 0.15rem;
-}
-:host-context([dir='ltr']) {
-  .close {
-    right: 1.4rem;
-    left: auto;
-  }
-
-  .editor > header {
-    padding-inline-end: 3rem;
-  }
-}
-:host-context([dir='rtl']) {
-  .close {
-    left: 1.4rem;
-    right: auto;
-  }
-
-  .editor > header {
-    padding-inline-start: 3rem;
-  }
 }
 .tabs {
   display: flex;
@@ -480,7 +463,9 @@
   border-radius: 7px;
   box-shadow: none;
   background: #fff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
     border-color: #a7a3bd;
@@ -500,28 +485,66 @@
   --auth-field-padding-block: 0.7rem;
 
   .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
     min-height: 42px;
+    @include field-border.bordered-field-container;
   }
 
-  .toggle-btn {
-    left: 0.75rem;
-    right: auto;
+  .input-icon {
+    position: absolute;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1;
   }
 
   .input-icon--end {
-    left: auto;
-    right: 0.85rem;
     inset-inline-start: auto;
     inset-inline-end: 0.85rem;
   }
 
+  .toggle-btn {
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    inset-inline-end: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+
+    &:hover {
+      color: var(--color-primary);
+    }
+
+    i {
+      font-size: 0.85rem;
+    }
+  }
+
   .p-inputtext-custom {
+    flex: 1;
+    width: 100%;
     height: auto;
     border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     background: transparent !important;
     padding: var(--auth-field-padding-block) 2.5rem var(--auth-field-padding-block) 2.75rem !important;
+    font-size: var(--auth-field-font-size, 0.85rem);
+    line-height: var(--auth-field-line-height, 1.5);
+    color: var(--text-primary);
     text-align: right;
     direction: rtl;
+
+    &::placeholder {
+      color: var(--text-disabled);
+    }
   }
 }
 .form-field--phone .phone-row--employee {
@@ -557,20 +580,13 @@
   font-weight: 400;
   line-height: 1.4;
 }
-.field-hint,
-.form-field--icon-input .field-hint {
+.field-hint {
   color: #7a7d90;
   font-size: 0.72rem;
   font-weight: 400;
   line-height: 1.45;
 }
-.form-grid label {
-  display: grid;
-  gap: 0.35rem;
-  color: #363952;
-  font-weight: 600;
-  font-size: 0.8rem;
-}
+.form-grid label,
 .form-field {
   display: grid;
   gap: 0.35rem;
@@ -744,6 +760,25 @@
   padding: 0;
   margin-bottom: 1rem;
   min-height: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
 }
 @media (max-width: $bp-xl) {
   .summary {
@@ -773,7 +808,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem max(0.75rem, env(safe-area-inset-bottom));
+    padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem
+      max(0.75rem, env(safe-area-inset-bottom));
     overflow: hidden;
     overscroll-behavior: contain;
   }
@@ -807,9 +843,11 @@
   }
   .schedule-panel {
     min-height: 0;
+    touch-action: pan-x pan-y;
   }
   .editor > header {
     padding: 1rem;
+    padding-inline-end: 2.75rem;
   }
   .editor > header h2 {
     font-size: 1.05rem;
@@ -817,27 +855,9 @@
   .editor header p {
     font-size: 0.78rem;
   }
-  :host-context([dir='ltr']) {
-    .editor > header {
-      padding-inline-end: 2.75rem;
-    }
-
-    .close {
-      top: 1rem;
-      right: 0.85rem;
-      left: auto;
-    }
-  }
-  :host-context([dir='rtl']) {
-    .editor > header {
-      padding-inline-start: 2.75rem;
-    }
-
-    .close {
-      top: 1rem;
-      left: 0.85rem;
-      right: auto;
-    }
+  .close {
+    top: 1rem;
+    inset-inline-end: 0.85rem;
   }
   .tabs {
     gap: 0;
@@ -851,6 +871,18 @@
     font-size: 0.76rem;
     white-space: normal;
   }
+  .schedule-branch-tabs {
+    justify-content: flex-start;
+    gap: 1rem;
+    padding: 0;
+
+    button {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      padding: 0.65rem 0.15rem;
+      font-size: 0.82rem;
+    }
+  }
   .editor > footer {
     flex-direction: column-reverse;
     align-items: stretch;
@@ -862,6 +894,16 @@
   }
   :host ::ng-deep .editor > footer .p-button {
     width: 100%;
+    justify-content: center;
+    gap: 0.5rem;
+
+    .p-button-icon {
+      margin: 0;
+    }
+
+    .p-button-label {
+      flex: 0 1 auto;
+    }
   }
 }
 @media (max-width: $bp-sm) {
@@ -1051,10 +1093,6 @@
   }
 }
 
-.avatar,
-.photo-preview {
-  overflow: hidden;
-}
 .avatar img,
 .photo-preview img {
   width: 100%;
@@ -1166,7 +1204,6 @@
   display: none;
 }
 .remove-photo {
-  width: 100%;
   margin-top: 0.35rem;
   color: #c33;
 }
