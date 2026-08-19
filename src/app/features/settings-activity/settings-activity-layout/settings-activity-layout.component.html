@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <nav class="breadcrumb" aria-label="Breadcrumb">
+    <nav class="breadcrumb" [attr.aria-label]="'COMMON.ARIA.BREADCRUMB' | translate">
       <span>{{ 'NAV.SETTINGS' | translate }}</span>
       <i class="pi pi-angle-left" aria-hidden="true"></i>
       <span>{{ 'SETTINGS_ACTIVITY.BREADCRUMB_TITLE' | translate }}</span>
@@ -19,7 +19,7 @@
     </nav>
   </header>
 
-  <nav class="tab-bar" aria-label="Activity settings tabs">
+  <nav class="tab-bar" [attr.aria-label]="'SETTINGS_ACTIVITY.ARIA.TABS' | translate">
     @for (tab of tabs; track tab.route) {
       <a
         class="tab-item"
