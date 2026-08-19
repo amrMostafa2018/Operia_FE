@@ -286,6 +286,9 @@
     }
   },
   "ONBOARDING": {
+    "ARIA": {
+      "STEPS": "Onboarding steps"
+    },
     "STEPS": {
       "CREATE_ACCOUNT": "Create Account",
       "SETUP_BUSINESS": "Choose Activity Type",
@@ -547,6 +550,9 @@
       "Admin": "Admin",
       "Reception": "Reception",
       "Staff": "Staff"
+    },
+    "ARIA": {
+      "BREADCRUMB": "Breadcrumb"
     }
   },
   "BOOKING_STATUS": {
@@ -625,6 +631,9 @@
   },
   "SETTINGS_ACTIVITY": {
     "BREADCRUMB_TITLE": "Activity Settings",
+    "ARIA": {
+      "TABS": "Activity settings tabs"
+    },
     "TABS": {
       "IDENTITY": "Activity Identity & Customer Content",
       "PAYMENTS": "Payment Methods",
@@ -850,6 +859,7 @@
     "PERSONAL_PHOTO": "Profile photo",
     "UPLOAD": "Upload photo",
     "REMOVE_PHOTO": "Remove photo",
+    "PHOTO_HINT": "JPG / PNG / WEBP · 2MB",
     "PHOTO_INVALID": "Use a JPG, PNG, or WEBP image no larger than 2 MB.",
     "FULL_NAME": "Full name",
     "EMAIL": "Email address",

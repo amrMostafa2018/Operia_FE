@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <nav class="stepper" aria-label="Onboarding steps">
+    <nav class="stepper" [attr.aria-label]="'ONBOARDING.ARIA.STEPS' | translate">
       <div class="step" [class.completed]="currentStep() > 1" [class.active]="currentStep() === 1">
         <span class="step-indicator">
           @if (currentStep() > 1) {
