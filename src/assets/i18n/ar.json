@@ -288,6 +288,9 @@
     }
   },
   "ONBOARDING": {
+    "ARIA": {
+      "STEPS": "خطوات الإعداد"
+    },
     "STEPS": {
       "CREATE_ACCOUNT": "إنشاء الحساب",
       "SETUP_BUSINESS": "اختيار نوع النشاط",
@@ -550,6 +553,9 @@
       "Admin": "أدمن",
       "Reception": "استقبال",
       "Staff": "موظف"
+    },
+    "ARIA": {
+      "BREADCRUMB": "مسار التنقل"
     }
   },
   "BOOKING_STATUS": {
@@ -628,6 +634,9 @@
   },
   "SETTINGS_ACTIVITY": {
     "BREADCRUMB_TITLE": "إعدادات النشاط",
+    "ARIA": {
+      "TABS": "علامات تبويب إعدادات النشاط"
+    },
     "TABS": {
       "IDENTITY": "هوية النشاط والمحتوى الظاهر للعميل",
       "PAYMENTS": "طرق الدفع",
@@ -853,6 +862,7 @@
     "PERSONAL_PHOTO": "الصورة الشخصية",
     "UPLOAD": "رفع صورة",
     "REMOVE_PHOTO": "إزالة الصورة",
+    "PHOTO_HINT": "JPG / PNG / WEBP · 2 ميجابايت",
     "PHOTO_INVALID": "استخدم صورة JPG أو PNG أو WEBP بحد أقصى 2 ميجابايت.",
     "FULL_NAME": "الاسم الكامل",
     "EMAIL": "البريد الإلكتروني",
