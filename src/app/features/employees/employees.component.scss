@@ -851,6 +851,10 @@
     touch-action: pan-y;
     padding: 1rem;
   }
+  .editor-tab-panel.is-hidden {
+    display: none !important;
+    pointer-events: none;
+  }
   .schedule-panel {
     min-height: 0;
     touch-action: pan-x pan-y;
