@@ -39,9 +39,8 @@ import {
 } from './models/operia-subscriptions.model';
 
 interface PlanFilterOption {
-  labelKey?: string;
-  label?: string;
-  value: string | null;
+  label: string;
+  value: string;
 }
 
 interface ExportMenuOption {
@@ -90,19 +89,18 @@ export class OperiaSubscriptionsComponent implements OnInit {
   dateTo = signal<Date | null>(null);
   selectedPlan = signal<string | null>(null);
   selectedStatus = signal<SubscriptionStatus | null>(null);
-  rows = signal(10);
+  rows = signal(5);
   first = signal(0);
 
   readonly statusOptions = SUBSCRIPTION_STATUS_OPTIONS;
   private readonly availablePlans = signal<{ name: string; code: string }[]>([]);
-  readonly planOptions = computed<PlanFilterOption[]>(() => [
-    { labelKey: 'OPERIA_SUBSCRIPTIONS.ALL_PLANS', value: null },
-    ...this.availablePlans().map(plan => ({
+  readonly planOptions = computed<PlanFilterOption[]>(() =>
+    this.availablePlans().map(plan => ({
       label: plan.name,
       value: plan.code,
     })),
-  ]);
-  readonly rowsPerPageOptions = [10, 20, 50];
+  );
+  readonly rowsPerPageOptions = [5, 10, 20, 50];
   readonly pageReportTemplate = signal(
     this.translate.instant('OPERIA_SUBSCRIPTIONS.PAGE_REPORT'),
   );
@@ -164,9 +162,37 @@ export class OperiaSubscriptionsComponent implements OnInit {
     this.loadSubscriptions();
   }
 
-  onSearch(): void {
+  applyFilters(): void {
     this.first.set(0);
     this.loadSubscriptions();
+  }
+
+  onDateFromChange(date: Date | null): void {
+    this.dateFrom.set(date);
+    this.applyFilters();
+  }
+
+  onDateToChange(date: Date | null): void {
+    this.dateTo.set(date);
+    this.applyFilters();
+  }
+
+  onPlanChange(planCode: string | null): void {
+    this.selectedPlan.set(planCode);
+    this.applyFilters();
+  }
+
+  onStatusChange(status: SubscriptionStatus | null): void {
+    this.selectedStatus.set(status);
+    this.applyFilters();
+  }
+
+  clearFilters(): void {
+    this.dateFrom.set(null);
+    this.dateTo.set(null);
+    this.selectedPlan.set(null);
+    this.selectedStatus.set(null);
+    this.applyFilters();
   }
 
   openExportMenu(event: Event): void {

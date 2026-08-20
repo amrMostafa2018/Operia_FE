@@ -678,6 +678,12 @@ input {
 
   :host ::ng-deep .branch-dialog-footer .p-button {
     width: 100%;
+    justify-content: center;
+  }
+
+  :host ::ng-deep .branch-dialog-footer .p-button .p-button-label,
+  :host ::ng-deep .branch-dialog-footer .p-button .p-button-icon {
+    flex: 0 0 auto;
   }
 
   .form-field--phone {

@@ -57,9 +57,8 @@ export interface PagedResultApiDto<T> {
 
 export const SUBSCRIPTION_STATUS_OPTIONS: {
   labelKey: string;
-  value: SubscriptionStatus | null;
+  value: SubscriptionStatus;
 }[] = [
-  { labelKey: 'OPERIA_SUBSCRIPTIONS.ALL_STATUSES', value: null },
   { labelKey: 'OPERIA_SUBSCRIPTIONS.STATUS.ACTIVE', value: 'active' },
   { labelKey: 'OPERIA_SUBSCRIPTIONS.STATUS.EXPIRED', value: 'expired' },
   { labelKey: 'OPERIA_SUBSCRIPTIONS.STATUS.CANCELLED', value: 'cancelled' },

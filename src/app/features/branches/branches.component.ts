@@ -77,8 +77,8 @@ export class BranchesComponent implements OnInit {
   readonly editing = signal<Branch | null>(null);
   readonly saveError = signal('');
   readonly branchPendingDelete = signal<Branch | null>(null);
-  readonly rowsPerPageOptions = [10, 20, 50];
-  readonly rows = signal(10);
+  readonly rowsPerPageOptions = [5, 10, 20, 50];
+  readonly rows = signal(5);
   readonly first = signal(0);
   readonly pageReportTemplate = signal(this.translate.instant('BRANCHES.PAGE_REPORT'));
   search = '';
@@ -204,7 +204,7 @@ export class BranchesComponent implements OnInit {
       next: () => {
         this.toast.add({
           severity: 'success',
-          summary: 'OPERIA',
+          summary: this.translate.instant('BRANCHES.TITLE'),
           detail: this.translate.instant('BRANCHES.SAVED'),
         });
         this.close();
@@ -247,7 +247,7 @@ export class BranchesComponent implements OnInit {
         next: () => {
           this.toast.add({
             severity: 'success',
-            summary: 'OPERIA',
+            summary: this.translate.instant('BRANCHES.TITLE'),
             detail: this.translate.instant('BRANCHES.DELETED'),
           });
           this.cancelDelete();
