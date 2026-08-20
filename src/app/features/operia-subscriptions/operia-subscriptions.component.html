@@ -19,9 +19,10 @@
         <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.FROM_DATE' | translate }}</span>
         <p-calendar
           [ngModel]="dateFrom()"
-          (ngModelChange)="dateFrom.set($event)"
+          (ngModelChange)="onDateFromChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
+          [showClear]="true"
           dateFormat="dd/mm/yy"
           [placeholder]="'OPERIA_SUBSCRIPTIONS.FROM_DATE' | translate"
           styleClass="date-picker"
@@ -31,36 +32,29 @@
         <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.TO_DATE' | translate }}</span>
         <p-calendar
           [ngModel]="dateTo()"
-          (ngModelChange)="dateTo.set($event)"
+          (ngModelChange)="onDateToChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
+          [showClear]="true"
           dateFormat="dd/mm/yy"
           [placeholder]="'OPERIA_SUBSCRIPTIONS.TO_DATE' | translate"
           styleClass="date-picker"
         />
       </div>
-      <div class="filter-field">
+      <div class="filter-field filter-field--plan">
         <span class="filter-label">{{ 'OPERIA_SUBSCRIPTIONS.PLAN' | translate }}</span>
         <p-dropdown
           [options]="planOptions()"
           optionLabel="label"
           optionValue="value"
           [ngModel]="selectedPlan()"
-          (ngModelChange)="selectedPlan.set($event)"
+          (ngModelChange)="onPlanChange($event)"
+          [showClear]="true"
           [placeholder]="'OPERIA_SUBSCRIPTIONS.ALL_PLANS' | translate"
           styleClass="filter-drop"
-        >
-          <ng-template pTemplate="selectedItem" let-item>
-            @if (item) {
-              {{ item.labelKey ? (item.labelKey | translate) : item.label }}
-            }
-          </ng-template>
-          <ng-template pTemplate="item" let-item>
-            {{ item.labelKey ? (item.labelKey | translate) : item.label }}
-          </ng-template>
-        </p-dropdown>
+        />
       </div>
-      <div class="filter-field">
+      <div class="filter-field filter-field--status">
         <span class="filter-label">{{
           'OPERIA_SUBSCRIPTIONS.SUBSCRIPTION_STATUS' | translate
         }}</span>
@@ -69,7 +63,8 @@
           optionLabel="labelKey"
           optionValue="value"
           [ngModel]="selectedStatus()"
-          (ngModelChange)="selectedStatus.set($event)"
+          (ngModelChange)="onStatusChange($event)"
+          [showClear]="true"
           [placeholder]="'OPERIA_SUBSCRIPTIONS.ALL_STATUSES' | translate"
           styleClass="filter-drop"
         >
@@ -84,13 +79,9 @@
         </p-dropdown>
       </div>
     </div>
-    <p-button
-      [label]="'COMMON.SEARCH' | translate"
-      icon="pi pi-search"
-      [iconPos]="leadingIconPos()"
-      styleClass="search-btn"
-      (onClick)="onSearch()"
-    />
+    <button type="button" class="clear filter-clear" (click)="clearFilters()">
+      <i class="pi pi-replay"></i>{{ 'OPERIA_SUBSCRIPTIONS.CLEAR' | translate }}
+    </button>
   </div>
 
   <!-- Table -->

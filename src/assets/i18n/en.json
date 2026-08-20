@@ -602,6 +602,7 @@
     "ALL_PLANS": "All plans",
     "SUBSCRIPTION_STATUS": "Subscription status",
     "ALL_STATUSES": "All statuses",
+    "CLEAR": "Clear filters",
     "COL_NUM": "#",
     "COL_PLAN": "Plan",
     "COL_AMOUNT": "Subscription value",
