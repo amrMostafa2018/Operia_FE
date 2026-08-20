@@ -447,11 +447,11 @@
               <fieldset class="status-field">
                 <legend>{{ 'EMPLOYEES.STATUS' | translate }}</legend>
                 <div class="status-options">
-                  <label class="radio">
+                  <label class="radio radio--active">
                     <input type="radio" [value]="true" formControlName="isActive" />
                     <span>{{ 'EMPLOYEES.ACTIVE' | translate }}</span>
                   </label>
-                  <label class="radio">
+                  <label class="radio radio--inactive">
                     <input type="radio" [value]="false" formControlName="isActive" />
                     <span>{{ 'EMPLOYEES.INACTIVE' | translate }}</span>
                   </label>

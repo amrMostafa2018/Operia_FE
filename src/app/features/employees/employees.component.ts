@@ -147,8 +147,8 @@ export class EmployeesComponent implements OnInit {
     return branchId ? (this.scheduleErrors()[branchId] ?? null) : null;
   });
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.EmployeesManage));
-  readonly rowsPerPageOptions = [10, 20, 50];
-  readonly rows = signal(10);
+  readonly rowsPerPageOptions = [5, 10, 20, 50];
+  readonly rows = signal(5);
   readonly first = signal(0);
   readonly pageReportTemplate = signal(this.translate.instant('EMPLOYEES.PAGE_REPORT'));
   search = '';
@@ -391,7 +391,7 @@ export class EmployeesComponent implements OnInit {
     ) {
       this.toast.add({
         severity: 'error',
-        summary: 'OPERIA',
+        summary: this.translate.instant('EMPLOYEES.TITLE'),
         detail: this.translate.instant('EMPLOYEES.PHOTO_INVALID'),
       });
       return;
@@ -411,7 +411,7 @@ export class EmployeesComponent implements OnInit {
       if (this.activeTab() === 'schedule') {
         this.toast.add({
           severity: 'warn',
-          summary: 'OPERIA',
+          summary: this.translate.instant('EMPLOYEES.TITLE'),
           detail: this.translate.instant('EMPLOYEES.COMPLETE_PERSONAL_FIRST'),
         });
       }
@@ -467,7 +467,7 @@ export class EmployeesComponent implements OnInit {
     this.load();
     this.toast.add({
       severity: 'success',
-      summary: 'OPERIA',
+      summary: this.translate.instant('EMPLOYEES.TITLE'),
       detail: this.translate.instant('EMPLOYEES.SAVED'),
     });
   }
@@ -651,7 +651,43 @@ export class EmployeesComponent implements OnInit {
       this.activeBranchId.set(branchId);
     }
     this.activeTab.set('schedule');
+    this.showScheduleWarnToast(error, scheduleMessage);
   }
+
+  private static readonly scheduleWarnCodes = new Set([
+    'EmployeeScheduleOutsideBusinessHours',
+    'EmployeeScheduleBranchNotAssigned',
+    'EmployeeScheduleOverlappingBranchHours',
+  ]);
+
+  private showScheduleWarnToast(error: HttpErrorResponse, fallbackMessage: string): void {
+    const body = error.error as { errorCodes?: Record<string, string[]> } | null;
+    const codes = Object.values(body?.errorCodes ?? {})
+      .flat()
+      .filter(code => EmployeesComponent.scheduleWarnCodes.has(code));
+
+    if (codes.length === 0) {
+      return;
+    }
+
+    const detail = [
+      ...new Set(
+        codes.map(code => {
+          const key = `ERRORS.${code}`;
+          const translated = this.translate.instant(key);
+          return translated === key ? fallbackMessage : translated;
+        })
+      ),
+    ].join(' ');
+
+    this.toast.add({
+      severity: 'warn',
+      summary: this.translate.instant('EMPLOYEES.TITLE'),
+      detail,
+      life: 6000,
+    });
+  }
+
   private resolveScheduleErrorBranchId(fieldErrors: Record<string, string>): string | null {
     const branchField = Object.keys(fieldErrors).find(key => key.startsWith('branches['));
     if (!branchField) {
