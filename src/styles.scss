@@ -126,7 +126,9 @@ a {
 // to live here rather than in the component SCSS.
 
 .employees-paginator.p-paginator,
-.employees-table .p-paginator {
+.employees-table .p-paginator,
+.users-table-paginator.p-paginator,
+.users-table .p-paginator {
   justify-content: flex-start;
   gap: 0.35rem 0.65rem;
   border-top: 1px solid var(--surface-border);

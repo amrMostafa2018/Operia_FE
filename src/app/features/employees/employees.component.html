@@ -122,13 +122,13 @@
         (onChange)="applyFilters()"
       ></p-dropdown>
       <div class="date-filter filter-date">
-        <span>{{ 'EMPLOYEES.CREATED_DATE' | translate }}</span>
+        <span>{{ 'EMPLOYEES.JOINING_DATE' | translate }}</span>
         <input
           pInputText
           type="date"
-          [(ngModel)]="createdDate"
+          [(ngModel)]="joiningDateFilter"
           (change)="applyFilters()"
-          [attr.aria-label]="'EMPLOYEES.CREATED_DATE' | translate"
+          [attr.aria-label]="'EMPLOYEES.JOINING_DATE' | translate"
         />
       </div>
       <button type="button" class="clear filter-clear" (click)="clearFilters()">
@@ -159,9 +159,10 @@
           <th>{{ 'EMPLOYEES.PHOTO' | translate }}</th>
           <th>{{ 'EMPLOYEES.CODE' | translate }}</th>
           <th>{{ 'EMPLOYEES.NAME' | translate }}</th>
+          <th>{{ 'EMPLOYEES.BRANCH' | translate }}</th>
           <th>{{ 'EMPLOYEES.ROLE' | translate }}</th>
           <th>{{ 'EMPLOYEES.STATUS' | translate }}</th>
-          <th>{{ 'EMPLOYEES.DATE' | translate }}</th>
+          <th>{{ 'EMPLOYEES.JOINING_DATE' | translate }}</th>
           <th>{{ 'EMPLOYEES.ACTIONS' | translate }}</th>
         </tr>
       </ng-template>
@@ -179,8 +180,14 @@
           <td class="code">{{ employee.code }}</td>
           <td>
             <b>{{ employee.fullName }}</b>
+          </td>
+          <td>
             @if (employee.branches.length) {
-              <small>-{{ employee.branches[0].name }}</small>
+              <div class="branch-list">
+                @for (branch of employee.branches; track branch.id) {
+                  <span class="branch-pill">{{ branch.name }}</span>
+                }
+              </div>
             }
           </td>
           <td>
@@ -193,7 +200,7 @@
               styleClass="status-tag"
             />
           </td>
-          <td>{{ employee.createdAt | date: 'dd/MM/yyyy' }}</td>
+          <td>{{ formatJoiningDate(employee.joiningDate) }}</td>
           <td class="row-actions">
             @if (canManage()) {
               <div class="action-group">
@@ -222,7 +229,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" class="empty-msg">
+          <td colspan="8" class="empty-msg">
             <i class="pi pi-inbox"></i>
             {{ 'COMMON.NO_DATA' | translate }}
           </td>
@@ -391,9 +398,7 @@
               </div>
               @if (!editing()) {
                 <div class="form-field form-field--icon-input">
-                  <span class="field-label"
-                    >{{ 'EMPLOYEES.PASSWORD' | translate }} <em>*</em></span
-                  >
+                  <span class="field-label">{{ 'EMPLOYEES.PASSWORD' | translate }} <em>*</em></span>
                   <div
                     class="input-wrapper"
                     [class.error]="isFieldInvalid(form, 'temporaryPassword')"
@@ -441,7 +446,9 @@
                 </p-dropdown>
               </div>
               <label>
-                <span class="field-label">{{ 'EMPLOYEES.DATE' | translate }} <em>*</em></span>
+                <span class="field-label"
+                  >{{ 'EMPLOYEES.JOINING_DATE' | translate }} <em>*</em></span
+                >
                 <input pInputText type="date" formControlName="joiningDate" />
               </label>
               <fieldset class="status-field">
@@ -527,7 +534,9 @@
                       <app-time-picker
                         [inputId]="'employee-from-' + activeBranch.branchId + '-' + day.day"
                         [ngModel]="day.fromTime"
-                        (ngModelChange)="updateScheduleFromTime(activeBranch.branchId, day.day, $event)"
+                        (ngModelChange)="
+                          updateScheduleFromTime(activeBranch.branchId, day.day, $event)
+                        "
                         [ngModelOptions]="{ standalone: true }"
                         [disabled]="!day.enabled"
                         [placeholder]="!day.enabled ? '--:--' : ''"
@@ -537,14 +546,20 @@
                       <app-time-picker
                         [inputId]="'employee-to-' + activeBranch.branchId + '-' + day.day"
                         [ngModel]="day.toTime"
-                        (ngModelChange)="updateScheduleToTime(activeBranch.branchId, day.day, $event)"
+                        (ngModelChange)="
+                          updateScheduleToTime(activeBranch.branchId, day.day, $event)
+                        "
                         [ngModelOptions]="{ standalone: true }"
                         [disabled]="!day.enabled"
                         [placeholder]="!day.enabled ? '--:--' : ''"
                         styleClass="time-picker time-picker--inline"
                       />
                     </div>
-                    <span class="day-status" [class.working]="day.enabled" [class.off]="!day.enabled">
+                    <span
+                      class="day-status"
+                      [class.working]="day.enabled"
+                      [class.off]="!day.enabled"
+                    >
                       {{
                         (day.enabled
                           ? 'SETTINGS_ACTIVITY.WORKING_DAYS.WORKING_DAY'
@@ -579,7 +594,9 @@
 
 <app-confirm-action-dialog
   [visible]="!!pendingStatus()"
-  [headerKey]="pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE_TITLE' : 'EMPLOYEES.ACTIVATE_TITLE'"
+  [headerKey]="
+    pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE_TITLE' : 'EMPLOYEES.ACTIVATE_TITLE'
+  "
   [messageKey]="
     pendingStatus()?.isActive ? 'EMPLOYEES.DEACTIVATE_CONFIRM' : 'EMPLOYEES.ACTIVATE_CONFIRM'
   "

@@ -9,7 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
+import { NgxIntlTelInputModule, CountryISO } from 'ngx-intl-tel-input';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -24,12 +24,14 @@ import {
 import { AppConfigService } from '@core/services/app-config.service';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
 import { MultiFileDragState } from '@app/shared/utils/file-drag.util';
-import {
-  showUploadValidationToast,
-  validateUploadFile,
-} from '@app/shared/utils/file-upload.util';
+import { showUploadValidationToast, validateUploadFile } from '@app/shared/utils/file-upload.util';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
-import { getE164PhoneNumber, getPhoneFieldError } from '@app/shared/utils/phone-number.util';
+import {
+  getE164PhoneNumber,
+  getPhoneFieldError,
+  toNationalPhoneNumber,
+  toPhoneCountryIso,
+} from '@app/shared/utils/phone-number.util';
 import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { EMPTY_IDENTITY_PHOTOS, PhotoSlot } from '../models/settings-activity.model';
 import {
@@ -100,7 +102,8 @@ export class IdentityContentComponent implements OnInit {
 
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
-  readonly selectedCountryISO = PHONE_INPUT_DEFAULT_COUNTRY;
+  readonly contactPhoneCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
+  readonly whatsappPhoneCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
   readonly maxAboutChars = MAX_ABOUT_CHARS;
 
   form!: FormGroup;
@@ -151,10 +154,12 @@ export class IdentityContentComponent implements OnInit {
   }
 
   private patchFromDto(res: IdentitySettingsDto): void {
+    this.contactPhoneCountryISO.set(toPhoneCountryIso(res.contactPhone));
+    this.whatsappPhoneCountryISO.set(toPhoneCountryIso(res.whatsappPhone));
     this.form.patchValue({
       activityName: res.activityName || '',
-      contactPhone: res.contactPhone || null,
-      whatsappPhone: res.whatsappPhone || null,
+      contactPhone: toNationalPhoneNumber(res.contactPhone),
+      whatsappPhone: toNationalPhoneNumber(res.whatsappPhone),
       email: res.email || '',
       mainAddress: res.mainAddress || '',
       about: res.about || '',

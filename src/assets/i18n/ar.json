@@ -811,7 +811,8 @@
         "BLOCK": "حظر",
         "BAN": "حظر المستخدم",
         "DELETE": "حذف المستخدم",
-        "DELETED": "تم حذف المستخدم"
+        "DELETED": "تم حذف المستخدم",
+        "PAGE_REPORT": "عرض {first} إلى {last} من {totalRecords} مستخدم"
       },
       "DEACTIVATE": {
         "TITLE": "تعطيل الحساب مؤقتاً",
@@ -833,7 +834,8 @@
     "ALL_ROLES": "كل الصلاحيات",
     "ALL_STATUS": "كل الحالات",
     "ALL_BRANCHES": "كل الفروع",
-    "CREATED_DATE": "تاريخ الإضافة",
+    "CREATED_DATE": "تاريخ الانضمام",
+    "JOINING_DATE": "تاريخ الانضمام",
     "FROM_DATE": "من تاريخ",
     "TO_DATE": "إلى تاريخ",
     "PHOTO": "الصورة",

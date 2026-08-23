@@ -1,0 +1,8 @@
+@if (routeLoading.navigating()) {
+  <div class="route-loading" role="status" [attr.aria-label]="'APP.LOADING' | translate">
+    <div class="route-loading__panel">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      <span>{{ 'APP.LOADING' | translate }}</span>
+    </div>
+  </div>
+}

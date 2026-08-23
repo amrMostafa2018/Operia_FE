@@ -7,12 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -23,10 +18,7 @@ import { TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
-import {
-  passwordMatchValidatorFor,
-  setupPasswordConfirmSync,
-} from '@core/utils/validators.util';
+import { passwordMatchValidatorFor, setupPasswordConfirmSync } from '@core/utils/validators.util';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { AuthStore } from '@core/store/auth.store';
@@ -71,6 +63,11 @@ export class AccountSecurityComponent implements OnInit {
   sendingOtp = signal(false);
 
   readonly deviceIcons = DEVICE_ICONS;
+  readonly rowsPerPageOptions = [5, 10, 20, 50];
+  readonly rows = signal(5);
+  readonly pageReportTemplate = signal(
+    this.translate.instant('SETTINGS_ACTIVITY.SECURITY.USERS.PAGE_REPORT')
+  );
   phoneNumber = signal(this.authStore.currentUser()?.phoneNumber ?? '');
 
   menuItems: MenuItem[] = [];
@@ -83,6 +80,12 @@ export class AccountSecurityComponent implements OnInit {
     });
 
     setupPasswordConfirmSync(this.passwordForm, this.destroyRef, 'newPassword', 'confirmPassword');
+
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pageReportTemplate.set(
+        this.translate.instant('SETTINGS_ACTIVITY.SECURITY.USERS.PAGE_REPORT')
+      );
+    });
 
     this.menuItems = [
       {
@@ -113,14 +116,21 @@ export class AccountSecurityComponent implements OnInit {
           this.phoneNumber.set(
             res.phoneNumber ?? this.authStore.currentUser()?.phoneNumber ?? res.maskedPhone ?? ''
           );
-          const mapped: AccessUser[] = (res.users ?? []).map((u: AuthorizedUserDto) => ({
-            id: u.id,
-            name: u.name || u.email || 'User',
-            email: u.email || '',
-            lastLogin: '-',
-            device: 'windows' as const,
-            isBanned: u.isBanned,
-          }));
+          const currentUserId = this.authStore.currentUser()?.id;
+          const sessionPhone = this.phoneNumber();
+          const mapped: AccessUser[] = (res.users ?? [])
+            .filter(
+              (u: AuthorizedUserDto) =>
+                u.id !== currentUserId && !this.isSameLogin(u.name, sessionPhone)
+            )
+            .map((u: AuthorizedUserDto) => ({
+              id: u.id,
+              name: u.name || '',
+              email: u.email || '',
+              lastLogin: '-',
+              device: 'windows' as const,
+              isBanned: u.isBanned,
+            }));
           this.users.set(mapped);
         },
         error: () => {
@@ -334,6 +344,20 @@ export class AccountSecurityComponent implements OnInit {
 
   getDeviceIcon(device: AccessUser['device']): string {
     return this.deviceIcons[device];
+  }
+
+  private isSameLogin(left: string | null | undefined, right: string | null | undefined): boolean {
+    const a = left?.trim() ?? '';
+    const b = right?.trim() ?? '';
+    if (!a || !b) {
+      return false;
+    }
+    if (a.localeCompare(b, undefined, { sensitivity: 'accent' }) === 0) {
+      return true;
+    }
+    const leftDigits = a.replace(/\D/g, '');
+    const rightDigits = b.replace(/\D/g, '');
+    return leftDigits.length >= 8 && leftDigits === rightDigits;
   }
 
   hasPasswordMismatch(): boolean {
