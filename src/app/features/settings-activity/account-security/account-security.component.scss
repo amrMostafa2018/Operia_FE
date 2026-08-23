@@ -1,5 +1,6 @@
 @use '../../../../styles/variables' as *;
 @use '../../../shared/styles/section-card';
+@use '../../../shared/styles/data-table' as data-table;
 
 .account-security {
   display: flex;
@@ -62,17 +63,21 @@
 .users-summary {
   display: inline-flex;
   align-items: center;
-  gap: 0.875rem;
-  padding: 0.75rem 1.125rem;
-  min-width: 9rem;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius;
+  gap: 0.8rem;
+  min-height: 85px;
+  min-width: 11rem;
+  padding: 1rem;
+  border: 1px solid #e8e7ef;
+  border-radius: 10px;
   background: #fff;
 }
 
 .users-summary-icon {
   flex-shrink: 0;
-  color: $primary;
+  padding: 0.7rem;
+  border-radius: 12px;
+  color: #5726e9;
+  background: #eee8ff;
   font-size: 1.5rem;
   line-height: 1;
 }
@@ -80,21 +85,21 @@
 .users-summary-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.125rem;
+  align-items: flex-start;
+  gap: 0.15rem;
   min-width: 0;
 }
 
 .users-summary-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: $primary;
+  color: #171a43;
   line-height: 1.3;
-  text-align: center;
 }
 
 .users-summary-value {
-  font-size: 1.125rem;
+  display: block;
+  font-size: 1.55rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
@@ -348,10 +353,23 @@
   font-size: 0.875rem;
 }
 
-.users-table-wrap {
+.table-section {
+  @include data-table.data-table-shell;
   width: 100%;
   min-width: 0;
   max-width: 100%;
+}
+
+.empty-msg {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2.5rem !important;
+
+  i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 :host ::ng-deep {
@@ -433,6 +451,7 @@
   }
 
   .users-table {
+    @include data-table.primeng-data-table-theme;
     display: block;
     width: 100%;
     min-width: 0;
@@ -441,8 +460,6 @@
     .p-datatable-wrapper {
       width: 100%;
       max-width: 100%;
-      border: 1px solid var(--surface-border);
-      border-radius: $border-radius;
       overflow-x: auto;
       overflow-y: visible;
       -webkit-overflow-scrolling: touch;
@@ -453,28 +470,6 @@
     table {
       width: 100%;
       table-layout: auto;
-    }
-
-    .p-datatable-thead > tr > th {
-      padding: 0.75rem 1rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      background: $gray-50;
-      border-bottom: 1px solid var(--surface-border);
-      white-space: nowrap;
-    }
-
-    .p-datatable-tbody > tr > td {
-      padding: 0.875rem 1rem;
-      font-size: 0.8125rem;
-      color: var(--text-primary);
-      border-bottom: 1px solid var(--surface-border);
-      vertical-align: middle;
-    }
-
-    .p-datatable-tbody > tr:last-child > td {
-      border-bottom: none;
     }
 
     .col-index,
@@ -494,38 +489,26 @@
       white-space: nowrap;
     }
 
+    .col-name,
+    .col-name b {
+      color: #4b24da;
+      font-weight: 700;
+    }
+
     .col-actions {
       width: 6.5rem;
       text-align: center;
     }
   }
 
-  .users-table-paginator.p-paginator {
-    justify-content: center;
-    margin-top: 1rem;
-    padding: 0;
-    border: none;
-    background: transparent;
-    gap: 0.25rem;
+  .p-datatable.users-table .p-datatable-thead > tr > th {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
 
-    .p-paginator-first,
-    .p-paginator-prev,
-    .p-paginator-next,
-    .p-paginator-last,
-    .p-paginator-page {
-      min-width: 2rem;
-      height: 2rem;
-      border-radius: 999px;
-      color: var(--text-secondary);
-    }
-
-    .p-paginator-page.p-paginator-page-selected,
-    .p-paginator-page.p-highlight {
-      background: $primary-light;
-      border-color: transparent;
-      color: $primary;
-      font-weight: 600;
-    }
+  .p-datatable.users-table .p-datatable-tbody > tr > td.col-name {
+    color: #4b24da;
+    font-weight: 700;
   }
 
   .block-user-btn.p-button {
@@ -667,7 +650,7 @@
     justify-content: center;
   }
 
-  .users-table-wrap {
+  .table-section {
     margin-inline: -0.25rem;
     padding-inline: 0.25rem;
   }

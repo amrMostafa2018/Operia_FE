@@ -236,7 +236,6 @@
       </h2>
       <aside
         class="users-summary"
-        dir="ltr"
         [attr.aria-label]="'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate"
       >
         <i class="pi pi-users users-summary-icon" aria-hidden="true"></i>
@@ -244,21 +243,25 @@
           <span class="users-summary-label">{{
             'SETTINGS_ACTIVITY.SECURITY.USERS.TOTAL' | translate
           }}</span>
-          <span class="users-summary-value">{{ users().length }}</span>
+          <strong class="users-summary-value">{{ users().length }}</strong>
         </div>
       </aside>
     </div>
 
-    <div class="users-table-wrap">
+    <div class="table-section">
       <p-menu #actionMenu [model]="menuItems" [popup]="true" />
 
       <p-table
         [value]="users()"
         styleClass="users-table"
         [paginator]="true"
-        [rows]="5"
-        [showFirstLastIcon]="true"
+        [rows]="rows()"
+        [rowsPerPageOptions]="rowsPerPageOptions"
+        [showCurrentPageReport]="true"
+        [currentPageReportTemplate]="pageReportTemplate()"
+        paginatorDropdownAppendTo="body"
         paginatorStyleClass="users-table-paginator"
+        [showFirstLastIcon]="true"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -273,7 +276,9 @@
         <ng-template pTemplate="body" let-user let-i="rowIndex">
           <tr>
             <td class="col-index">{{ i + 1 }}</td>
-            <td class="col-name" dir="ltr">{{ user.name }}</td>
+            <td class="col-name" dir="ltr">
+              <b>{{ user.name }}</b>
+            </td>
             <td class="col-email" dir="ltr">{{ user.email }}</td>
             <td class="col-last-login" dir="ltr">{{ user.lastLogin }}</td>
             <td class="col-device">
@@ -287,6 +292,14 @@
                 styleClass="block-user-btn"
                 (onClick)="openMenu($event, actionMenu, user.id)"
               />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="empty-msg">
+              <i class="pi pi-inbox"></i>
+              {{ 'COMMON.NO_DATA' | translate }}
             </td>
           </tr>
         </ng-template>

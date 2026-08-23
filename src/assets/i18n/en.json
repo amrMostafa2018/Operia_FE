@@ -808,7 +808,8 @@
         "BLOCK": "Block",
         "BAN": "Ban User",
         "DELETE": "Delete User",
-        "DELETED": "User deleted"
+        "DELETED": "User deleted",
+        "PAGE_REPORT": "Showing {first} to {last} of {totalRecords} users"
       },
       "DEACTIVATE": {
         "TITLE": "Temporarily Deactivate Account",
@@ -830,7 +831,8 @@
     "ALL_ROLES": "All roles",
     "ALL_STATUS": "All statuses",
     "ALL_BRANCHES": "All branches",
-    "CREATED_DATE": "Created date",
+    "CREATED_DATE": "Joining date",
+    "JOINING_DATE": "Joining date",
     "FROM_DATE": "From date",
     "TO_DATE": "To date",
     "PHOTO": "Photo",

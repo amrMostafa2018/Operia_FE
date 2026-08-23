@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '@env/environment';
 
 export type EmployeeRole = 'Admin' | 'Reception' | 'Staff';
@@ -44,8 +44,7 @@ export interface EmployeeQuery {
   role?: string;
   isActive?: boolean;
   branchId?: string;
-  createdFrom?: string;
-  createdTo?: string;
+  joiningDate?: string;
 }
 export interface EmployeePayload {
   fullName: string;
@@ -77,6 +76,26 @@ export interface EmployeeSchedule {
   branches: EmployeeBranchSchedule[];
 }
 
+function toJoiningDateValue(value: unknown): string {
+  if (value && typeof value === 'object' && 'year' in value && 'month' in value && 'day' in value) {
+    const date = value as { year: number; month: number; day: number };
+    return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+  }
+
+  if (typeof value === 'string' && value.length >= 10) {
+    return value.slice(0, 10);
+  }
+
+  return '';
+}
+
+function mapEmployee(employee: Employee): Employee {
+  return {
+    ...employee,
+    joiningDate: toJoiningDateValue(employee.joiningDate),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
   private readonly http = inject(HttpClient);
@@ -87,16 +106,25 @@ export class EmployeeService {
       if (value !== undefined && value !== '' && value !== null)
         params = params.set(key, String(value));
     });
-    return this.http.get<EmployeeListResult>(this.url, { params });
+    return this.http.get<EmployeeListResult>(this.url, { params }).pipe(
+      map(result => ({
+        ...result,
+        items: result.items.map(mapEmployee),
+      }))
+    );
   }
   get(id: string): Observable<Employee> {
-    return this.http.get<Employee>(`${this.url}/${id}`);
+    return this.http.get<Employee>(`${this.url}/${id}`).pipe(map(mapEmployee));
   }
   create(payload: EmployeePayload, schedule?: EmployeeBranchSchedule[]): Observable<Employee> {
-    return this.http.post<Employee>(this.url, this.toFormData(payload, schedule));
+    return this.http
+      .post<Employee>(this.url, this.toFormData(payload, schedule))
+      .pipe(map(mapEmployee));
   }
   update(id: string, payload: EmployeePayload): Observable<Employee> {
-    return this.http.put<Employee>(`${this.url}/${id}`, this.toFormData(payload));
+    return this.http
+      .put<Employee>(`${this.url}/${id}`, this.toFormData(payload))
+      .pipe(map(mapEmployee));
   }
   changeRole(id: string, role: EmployeeRole): Observable<void> {
     return this.http.patch<void>(`${this.url}/${id}/role`, { role });

@@ -48,7 +48,12 @@ import {
 } from '@app/shared/constants/phone-input.config';
 import { createPasswordToggle } from '@app/features/auth/auth-form.utils';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
-import { getE164PhoneNumber, getPhoneFieldError, toNationalPhoneNumber, toPhoneCountryIso } from '@app/shared/utils/phone-number.util';
+import {
+  getE164PhoneNumber,
+  getPhoneFieldError,
+  toNationalPhoneNumber,
+  toPhoneCountryIso,
+} from '@app/shared/utils/phone-number.util';
 import { PhoneUsernameAutocompleteDirective } from '@app/shared/directives/phone-username-autocomplete.directive';
 import { NgxIntlTelInputModule, ChangeData, CountryISO } from 'ngx-intl-tel-input';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -156,7 +161,7 @@ export class EmployeesComponent implements OnInit {
   roleFilter: EmployeeRole | null = null;
   statusFilter: boolean | null = null;
   branchFilter: string | null = null;
-  createdDate = '';
+  joiningDateFilter = '';
   readonly form = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.maxLength(200)]],
     email: ['', [Validators.required, Validators.email]],
@@ -206,8 +211,7 @@ export class EmployeesComponent implements OnInit {
         role: this.roleFilter ?? undefined,
         isActive: this.statusFilter ?? undefined,
         branchId: this.branchFilter ?? undefined,
-        createdFrom: this.createdDate || undefined,
-        createdTo: this.createdDate || undefined,
+        joiningDate: this.joiningDateFilter || undefined,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -240,7 +244,7 @@ export class EmployeesComponent implements OnInit {
     this.roleFilter = null;
     this.statusFilter = null;
     this.branchFilter = null;
-    this.createdDate = '';
+    this.joiningDateFilter = '';
     this.applyFilters();
   }
   syncBranchMultiselectPanelWidth(): void {
@@ -258,6 +262,14 @@ export class EmployeesComponent implements OnInit {
   }
   count(role: EmployeeRole): number {
     return this.roleCounts().find(x => x.role === role)?.count ?? 0;
+  }
+  formatJoiningDate(value: string | null | undefined): string {
+    const iso = (value ?? '').slice(0, 10);
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!match) {
+      return '';
+    }
+    return `${match[3]}/${match[2]}/${match[1]}`;
   }
   openCreate(): void {
     this.editing.set(null);
@@ -300,7 +312,7 @@ export class EmployeesComponent implements OnInit {
       userName: toNationalPhoneNumber(employee.userName),
       specialty: employee.specialty ?? '',
       jobTitle: employee.jobTitle ?? '',
-      joiningDate: employee.joiningDate,
+      joiningDate: employee.joiningDate.slice(0, 10),
       isActive: employee.isActive,
       role: this.normalizeRole(employee.role),
       branchIds: employee.branches.map(x => x.id),
@@ -362,7 +374,9 @@ export class EmployeesComponent implements OnInit {
         branch.branchId === branchId
           ? {
               ...branch,
-              days: branch.days.map(item => (item.day === day ? { ...item, fromTime: time } : item)),
+              days: branch.days.map(item =>
+                item.day === day ? { ...item, fromTime: time } : item
+              ),
             }
           : branch
       )
@@ -630,9 +644,8 @@ export class EmployeesComponent implements OnInit {
     this.saving.set(false);
     this.scheduleErrors.set({});
 
-    const fieldErrors = translateApiFieldErrors(
-      extractApiFieldErrors(error),
-      key => this.translate.instant(key)
+    const fieldErrors = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+      this.translate.instant(key)
     );
     const personalErrors = Object.fromEntries(
       Object.entries(fieldErrors).filter(([field]) => !!this.form.get(field))
@@ -716,7 +729,9 @@ export class EmployeesComponent implements OnInit {
       errors?: Record<string, string[]>;
       errorCodes?: Record<string, string[]>;
     };
-    const apiScheduleField = Object.keys(body?.errors ?? {}).find(key => key.startsWith('branches['));
+    const apiScheduleField = Object.keys(body?.errors ?? {}).find(key =>
+      key.startsWith('branches[')
+    );
     const apiMessage = apiScheduleField ? body?.errors?.[apiScheduleField]?.[0] : null;
     if (apiMessage) {
       return apiMessage;
@@ -751,13 +766,22 @@ export class EmployeesComponent implements OnInit {
       return value;
     }
     const [hours, minutes] = time.split(':');
-    value.setHours(parseInt(hours, 10) || defaultHour, parseInt(minutes, 10) || defaultMinute, 0, 0);
+    value.setHours(
+      parseInt(hours, 10) || defaultHour,
+      parseInt(minutes, 10) || defaultMinute,
+      0,
+      0
+    );
     return value;
   }
   private formatScheduleTime(time: Date): string {
     return `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}:00`;
   }
-  private toSchedulePayload(): { branchId: string; branchName: string; days: EmployeeWorkingDay[] }[] {
+  private toSchedulePayload(): {
+    branchId: string;
+    branchName: string;
+    days: EmployeeWorkingDay[];
+  }[] {
     return this.branchSchedules().map(branch => ({
       branchId: branch.branchId,
       branchName: branch.branchName,

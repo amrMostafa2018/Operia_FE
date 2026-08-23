@@ -40,7 +40,7 @@
           <ngx-intl-tel-input
             [cssClass]="phoneInputCssClass"
             [onlyCountries]="onlyCountries"
-            [selectedCountryISO]="selectedCountryISO"
+            [selectedCountryISO]="contactPhoneCountryISO()"
             [enableAutoCountrySelect]="false"
             [enablePlaceholder]="true"
             [customPlaceholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
@@ -70,7 +70,7 @@
           <ngx-intl-tel-input
             [cssClass]="phoneInputCssClass"
             [onlyCountries]="onlyCountries"
-            [selectedCountryISO]="selectedCountryISO"
+            [selectedCountryISO]="whatsappPhoneCountryISO()"
             [enableAutoCountrySelect]="false"
             [enablePlaceholder]="true"
             [customPlaceholder]="'AUTH.REGISTER_PAGE.PHONE_PLACEHOLDER' | translate"
