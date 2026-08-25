@@ -7,6 +7,7 @@ import {
   inject,
   OnInit,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,7 +16,7 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
-import { MenuModule } from 'primeng/menu';
+import { Menu, MenuModule } from 'primeng/menu';
 import { TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -95,6 +96,8 @@ export class AccountSecurityComponent implements OnInit {
     this.translate.instant('SETTINGS_ACTIVITY.SECURITY.USERS.PAGE_REPORT')
   );
   phoneNumber = signal(this.authStore.currentUser()?.phoneNumber ?? '');
+
+  private readonly actionMenu = viewChild<Menu>('actionMenu');
 
   menuItems: MenuItem[] = [];
 
@@ -189,9 +192,9 @@ export class AccountSecurityComponent implements OnInit {
 
   selectedUserId = signal<string | null>(null);
 
-  openMenu(event: Event, menu: { toggle: (e: Event) => void }, userId: string): void {
+  openMenu(event: Event, userId: string): void {
     this.selectedUserId.set(userId);
-    menu.toggle(event);
+    this.actionMenu()?.toggle(event);
   }
 
   onSendOtp(): void {
