@@ -212,16 +212,18 @@
                 >
                   <i class="pi pi-pencil"></i>
                 </button>
-                <button
-                  type="button"
-                  class="table-icon-btn status-action"
-                  (click)="requestStatus(employee)"
-                  [attr.aria-label]="
-                    (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE') | translate
-                  "
-                >
-                  <i [class]="employee.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>
-                </button>
+                @if (canChangeStatus()) {
+                  <button
+                    type="button"
+                    class="table-icon-btn status-action"
+                    (click)="requestStatus(employee)"
+                    [attr.aria-label]="
+                      (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE') | translate
+                    "
+                  >
+                    <i [class]="employee.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>
+                  </button>
+                }
               </div>
             }
           </td>
@@ -434,6 +436,7 @@
                   optionLabel="label"
                   optionValue="value"
                   formControlName="role"
+                  [disabled]="!canChangeRole()"
                 >
                   <ng-template pTemplate="selectedItem" let-item>
                     @if (item) {
@@ -455,11 +458,21 @@
                 <legend>{{ 'EMPLOYEES.STATUS' | translate }}</legend>
                 <div class="status-options">
                   <label class="radio radio--active">
-                    <input type="radio" [value]="true" formControlName="isActive" />
+                    <input
+                      type="radio"
+                      [value]="true"
+                      formControlName="isActive"
+                      [disabled]="!canChangeStatus()"
+                    />
                     <span>{{ 'EMPLOYEES.ACTIVE' | translate }}</span>
                   </label>
                   <label class="radio radio--inactive">
-                    <input type="radio" [value]="false" formControlName="isActive" />
+                    <input
+                      type="radio"
+                      [value]="false"
+                      formControlName="isActive"
+                      [disabled]="!canChangeStatus()"
+                    />
                     <span>{{ 'EMPLOYEES.INACTIVE' | translate }}</span>
                   </label>
                 </div>

@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageService } from '@core/services/language.service';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 import { getPrevArrowIcon, getLeadingIconPos, getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
 import {
   bookingStatusKey,
@@ -42,6 +44,15 @@ import {
 })
 export class DashboardComponent {
   private readonly languageService = inject(LanguageService);
+  private readonly permissionService = inject(PermissionService);
+
+  readonly canNewBooking = computed(() =>
+    this.permissionService.hasPermission(Policies.BookingsManage)
+  );
+  readonly canNewCustomer = computed(() =>
+    this.permissionService.hasPermission(Policies.CustomersManage)
+  );
+  readonly canExport = computed(() => this.permissionService.hasPermission(Policies.DashboardExport));
 
   readonly stats: StatCard[] = MOCK_STATS;
   readonly allBookings: BookingRow[] = MOCK_BOOKINGS;

@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
+  effect,
   inject,
   OnInit,
   signal,
@@ -22,6 +24,8 @@ import { passwordMatchValidatorFor, setupPasswordConfirmSync } from '@core/utils
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
 import { AuthStore } from '@core/store/auth.store';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
 import { DEVICE_ICONS, AccessUser } from '../models/settings-activity.model';
 import { SettingsActivityService, AuthorizedUserDto } from '../services/settings-activity.service';
@@ -51,6 +55,28 @@ export class AccountSecurityComponent implements OnInit {
   private readonly settingsService = inject(SettingsActivityService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly authStore = inject(AuthStore);
+  private readonly permissionService = inject(PermissionService);
+
+  readonly canReadSecurity = computed(() =>
+    this.permissionService.hasAnyPermission(
+      Policies.SettingsSecurityRead,
+      Policies.SettingsSecurityManage
+    )
+  );
+  readonly canChangePassword = computed(() =>
+    this.permissionService.hasPermission(Policies.SettingsPasswordChange)
+  );
+  readonly canManageSecurity = computed(() =>
+    this.permissionService.hasPermission(Policies.SettingsSecurityManage)
+  );
+  readonly canBan = computed(() => this.permissionService.hasPermission(Policies.SettingsUsersBan));
+  readonly canDelete = computed(() =>
+    this.permissionService.hasPermission(Policies.SettingsUsersDelete)
+  );
+  readonly canDeactivate = computed(() =>
+    this.permissionService.hasPermission(Policies.SettingsAccountDeactivate)
+  );
+  readonly canManageUsers = computed(() => this.canBan() || this.canDelete());
 
   passwordForm!: FormGroup;
   otpCode = signal('');
@@ -72,6 +98,20 @@ export class AccountSecurityComponent implements OnInit {
 
   menuItems: MenuItem[] = [];
 
+  constructor() {
+    effect(() => {
+      if (!this.passwordForm) {
+        return;
+      }
+
+      if (this.canChangePassword()) {
+        this.passwordForm.enable({ emitEvent: false });
+      } else {
+        this.passwordForm.disable({ emitEvent: false });
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
@@ -88,18 +128,26 @@ export class AccountSecurityComponent implements OnInit {
     });
 
     this.menuItems = [
-      {
-        label: this.translate.instant('SETTINGS_ACTIVITY.SECURITY.USERS.BAN'),
-        icon: 'pi pi-ban',
-        styleClass: 'danger-item',
-        command: () => this.onBanUser(),
-      },
-      {
-        label: this.translate.instant('SETTINGS_ACTIVITY.SECURITY.USERS.DELETE'),
-        icon: 'pi pi-trash',
-        styleClass: 'danger-item',
-        command: () => this.onDeleteUser(),
-      },
+      ...(this.canBan()
+        ? [
+            {
+              label: this.translate.instant('SETTINGS_ACTIVITY.SECURITY.USERS.BAN'),
+              icon: 'pi pi-ban',
+              styleClass: 'danger-item',
+              command: () => this.onBanUser(),
+            },
+          ]
+        : []),
+      ...(this.canDelete()
+        ? [
+            {
+              label: this.translate.instant('SETTINGS_ACTIVITY.SECURITY.USERS.DELETE'),
+              icon: 'pi pi-trash',
+              styleClass: 'danger-item',
+              command: () => this.onDeleteUser(),
+            },
+          ]
+        : []),
     ];
 
     this.loadSecurity();

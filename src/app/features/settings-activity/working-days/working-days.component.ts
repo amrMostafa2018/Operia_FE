@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   OnInit,
@@ -15,6 +16,8 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 
 import { TimePickerComponent } from '@app/shared/components/time-picker/time-picker.component';
 import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
 import { MOCK_WORKING_DAYS, WorkingDay } from '../models/settings-activity.model';
 import { SettingsActivityService, WorkingDayDto } from '../services/settings-activity.service';
@@ -67,7 +70,12 @@ export class WorkingDaysComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly settingsService = inject(SettingsActivityService);
+  private readonly permissionService = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly canManage = computed(() =>
+    this.permissionService.hasPermission(Policies.SettingsWorkingDaysManage)
+  );
 
   workingDays = signal<WorkingDay[]>(structuredClone(MOCK_WORKING_DAYS));
   allowOutsideHours = signal(false);

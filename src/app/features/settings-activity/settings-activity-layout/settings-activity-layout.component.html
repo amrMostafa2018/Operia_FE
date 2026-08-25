@@ -1,13 +1,15 @@
 <div class="settings-activity-page">
   <header class="page-header-block">
     <div class="title-row">
-      <div class="title-icon" aria-hidden="true">
-        <i [class]="activeTab().icon"></i>
-      </div>
-      <div class="title-text">
-        <h1>{{ activeTab().titleKey | translate }}</h1>
-        <p>{{ activeTab().subtitleKey | translate }}</p>
-      </div>
+      @if (activeTab(); as tab) {
+        <div class="title-icon" aria-hidden="true">
+          <i [class]="tab.icon"></i>
+        </div>
+        <div class="title-text">
+          <h1>{{ tab.titleKey | translate }}</h1>
+          <p>{{ tab.subtitleKey | translate }}</p>
+        </div>
+      }
     </div>
 
     <nav class="breadcrumb" [attr.aria-label]="'COMMON.ARIA.BREADCRUMB' | translate">
@@ -15,12 +17,14 @@
       <i class="pi pi-angle-left" aria-hidden="true"></i>
       <span>{{ 'SETTINGS_ACTIVITY.BREADCRUMB_TITLE' | translate }}</span>
       <i class="pi pi-angle-left" aria-hidden="true"></i>
-      <span class="breadcrumb-current">{{ activeTab().breadcrumbKey | translate }}</span>
+      @if (activeTab(); as tab) {
+        <span class="breadcrumb-current">{{ tab.breadcrumbKey | translate }}</span>
+      }
     </nav>
   </header>
 
   <nav class="tab-bar" [attr.aria-label]="'SETTINGS_ACTIVITY.ARIA.TABS' | translate">
-    @for (tab of tabs; track tab.route) {
+    @for (tab of visibleTabs(); track tab.route) {
       <a
         class="tab-item"
         [routerLink]="['/settings/activity', tab.route]"

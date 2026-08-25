@@ -1,6 +1,7 @@
 <div class="account-security">
   <!-- Section 1: Change Password -->
-  <section class="card section-card">
+  @if (canChangePassword()) {
+    <section class="card section-card">
     <div class="section-heading">
       <h2 class="section-title">
         <span class="section-num">1.</span>
@@ -174,9 +175,11 @@
       </div>
     </form>
   </section>
+  }
 
   <!-- Section 2: Security Options -->
-  <section class="card section-card">
+  @if (canManageSecurity() || canReadSecurity()) {
+    <section class="card section-card">
     <div class="section-heading">
       <h2 class="section-title">
         <span class="section-num">2.</span>
@@ -189,7 +192,11 @@
 
     <div class="options-list">
       <div class="option-row">
-        <p-inputSwitch [ngModel]="enable2fa()" (ngModelChange)="enable2fa.set($event)" />
+        <p-inputSwitch
+          [ngModel]="enable2fa()"
+          [disabled]="!canManageSecurity()"
+          (ngModelChange)="enable2fa.set($event)"
+        />
         <div class="option-content">
           <p class="option-title">{{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.TWO_FA' | translate }}</p>
           <p class="option-description">
@@ -200,7 +207,11 @@
       </div>
 
       <div class="option-row">
-        <p-inputSwitch [ngModel]="loginAlerts()" (ngModelChange)="loginAlerts.set($event)" />
+        <p-inputSwitch
+          [ngModel]="loginAlerts()"
+          [disabled]="!canManageSecurity()"
+          (ngModelChange)="loginAlerts.set($event)"
+        />
         <div class="option-content">
           <p class="option-title">
             {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGIN_ALERTS' | translate }}
@@ -213,7 +224,11 @@
       </div>
 
       <div class="option-row">
-        <p-inputSwitch [ngModel]="logoutOthers()" (ngModelChange)="onLogoutOthersChange($event)" />
+        <p-inputSwitch
+          [ngModel]="logoutOthers()"
+          [disabled]="!canManageSecurity()"
+          (ngModelChange)="onLogoutOthersChange($event)"
+        />
         <div class="option-content">
           <p class="option-title">
             {{ 'SETTINGS_ACTIVITY.SECURITY.OPTIONS.LOGOUT_OTHERS' | translate }}
@@ -226,9 +241,11 @@
       </div>
     </div>
   </section>
+  }
 
   <!-- Section 3: Access Users -->
-  <section class="card section-card">
+  @if (canReadSecurity()) {
+    <section class="card section-card">
     <div class="section-header-row">
       <h2 class="section-title">
         <span class="section-num">3.</span>
@@ -249,7 +266,9 @@
     </div>
 
     <div class="table-section">
-      <p-menu #actionMenu [model]="menuItems" [popup]="true" />
+      @if (canManageUsers()) {
+        <p-menu #actionMenu [model]="menuItems" [popup]="true" />
+      }
 
       <p-table
         [value]="users()"
@@ -270,7 +289,9 @@
             <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.EMAIL' | translate }}</th>
             <th>{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.LAST_LOGIN' | translate }}</th>
             <th class="col-device">{{ 'SETTINGS_ACTIVITY.SECURITY.USERS.DEVICE' | translate }}</th>
-            <th class="col-actions">{{ 'COMMON.ACTIONS' | translate }}</th>
+            @if (canManageUsers()) {
+              <th class="col-actions">{{ 'COMMON.ACTIONS' | translate }}</th>
+            }
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-user let-i="rowIndex">
@@ -284,20 +305,22 @@
             <td class="col-device">
               <i [class]="getDeviceIcon(user.device)" aria-hidden="true"></i>
             </td>
-            <td class="col-actions">
-              <p-button
-                [label]="'SETTINGS_ACTIVITY.SECURITY.USERS.BLOCK' | translate"
-                [outlined]="true"
-                size="small"
-                styleClass="block-user-btn"
-                (onClick)="openMenu($event, actionMenu, user.id)"
-              />
-            </td>
+            @if (canManageUsers()) {
+              <td class="col-actions">
+                <p-button
+                  [label]="'SETTINGS_ACTIVITY.SECURITY.USERS.BLOCK' | translate"
+                  [outlined]="true"
+                  size="small"
+                  styleClass="block-user-btn"
+                  (onClick)="openMenu($event, actionMenu, user.id)"
+                />
+              </td>
+            }
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="6" class="empty-msg">
+            <td [attr.colspan]="canManageUsers() ? 6 : 5" class="empty-msg">
               <i class="pi pi-inbox"></i>
               {{ 'COMMON.NO_DATA' | translate }}
             </td>
@@ -306,9 +329,11 @@
       </p-table>
     </div>
   </section>
+  }
 
   <!-- Section 4: Deactivate Account -->
-  <section class="card section-card">
+  @if (canDeactivate()) {
+    <section class="card section-card">
     <div class="deactivate-row">
       <div class="deactivate-content">
         <h2 class="section-title">
@@ -330,6 +355,9 @@
       />
     </div>
   </section>
+  }
 
-  <app-settings-footer [showReset]="false" [saving]="saving()" (save)="onSave()" />
+  @if (canManageSecurity()) {
+    <app-settings-footer [showReset]="false" [saving]="saving()" (save)="onSave()" />
+  }
 </div>

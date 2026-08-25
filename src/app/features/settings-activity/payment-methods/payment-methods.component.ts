@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
+  effect,
   inject,
   OnInit,
   signal,
@@ -24,6 +26,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 
 import { showSettingsSavedToast } from '@app/shared/utils/settings-toast.util';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 import { SettingsFooterComponent } from '../components/settings-footer/settings-footer.component';
 import {
   MOCK_BANK_OPTIONS,
@@ -58,7 +62,12 @@ export class PaymentMethodsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly settingsService = inject(SettingsActivityService);
+  private readonly permissionService = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly canManage = computed(() =>
+    this.permissionService.hasPermission(Policies.SettingsPaymentsManage)
+  );
 
   paymentMethods = signal<PaymentMethodState[]>(structuredClone(MOCK_PAYMENT_METHODS));
   expandedIds = signal<Set<PaymentMethodId>>(
@@ -83,6 +92,26 @@ export class PaymentMethodsComponent implements OnInit {
   fawryForm!: FormGroup;
 
   private initialState: Record<string, unknown> = {};
+
+  constructor() {
+    effect(() => {
+      if (!this.bankForm) {
+        return;
+      }
+
+      if (this.canManage()) {
+        this.bankForm.enable({ emitEvent: false });
+        this.instapayForm.enable({ emitEvent: false });
+        this.walletForm.enable({ emitEvent: false });
+        this.fawryForm.enable({ emitEvent: false });
+      } else {
+        this.bankForm.disable({ emitEvent: false });
+        this.instapayForm.disable({ emitEvent: false });
+        this.walletForm.disable({ emitEvent: false });
+        this.fawryForm.disable({ emitEvent: false });
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.bankForm = this.fb.group({
@@ -161,6 +190,9 @@ export class PaymentMethodsComponent implements OnInit {
   }
 
   toggleMethod(id: PaymentMethodId, enabled: boolean): void {
+    if (!this.canManage()) {
+      return;
+    }
     this.paymentMethods.update(methods => methods.map(m => (m.id === id ? { ...m, enabled } : m)));
 
     if (!enabled) {

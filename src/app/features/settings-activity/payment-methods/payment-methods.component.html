@@ -30,6 +30,7 @@
           }
           <p-inputSwitch
             [ngModel]="method.enabled"
+            [disabled]="!canManage()"
             (ngModelChange)="toggleMethod(method.id, $event)"
           />
           <span class="method-status" [class.is-active]="method.enabled">
@@ -84,6 +85,7 @@
             <div class="accordion-header-end" (click)="onHeaderSwitchClick($event)">
               <p-inputSwitch
                 [ngModel]="method.enabled"
+                [disabled]="!canManage()"
                 (ngModelChange)="toggleMethod(method.id, $event)"
               />
             </div>
@@ -342,7 +344,9 @@
     </div>
   </section>
 
-  <app-settings-footer [saving]="saving()" (reset)="onReset()" (save)="onSave()" />
+  @if (canManage()) {
+    <app-settings-footer [saving]="saving()" (reset)="onReset()" (save)="onSave()" />
+  }
 </div>
 
 <ng-template #methodBrand let-method>

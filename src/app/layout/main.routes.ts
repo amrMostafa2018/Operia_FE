@@ -4,6 +4,7 @@ import { Policies } from '@core/models/permissions.model';
 import { permissionGuard } from '@core/guards/permission.guard';
 import { onboardingCompleteGuard } from '@core/guards/onboarding-complete.guard';
 import { MainLayoutComponent } from './main-layout/main-layout.component';
+import { ACTIVITY_SETTINGS_PARENT_PERMISSIONS } from '@app/features/settings-activity/models/settings-activity.model';
 
 const placeholder = () =>
   import('@app/shared/components/feature-placeholder/feature-placeholder.component').then(
@@ -120,7 +121,7 @@ export const mainRoutes: Routes = [
           ),
         canActivate: [permissionGuard],
         data: {
-          permissions: [Policies.SettingsManage],
+          permissions: ACTIVITY_SETTINGS_PARENT_PERMISSIONS,
         },
       },
       {
@@ -128,7 +129,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Policies.PackagesRead],
+          permissions: [Policies.OffersRead],
           featureKey: 'NAV.OFFERS',
         },
         title: 'Offers - Operia',
@@ -138,7 +139,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Policies.SettingsManage],
+          permissions: [Policies.SettingsNotificationsManage],
           featureKey: 'NAV.SETTINGS_SECTION.NOTIFICATIONS',
         },
         title: 'Notifications - Operia',
@@ -148,7 +149,7 @@ export const mainRoutes: Routes = [
         loadComponent: placeholder,
         canActivate: [permissionGuard],
         data: {
-          permissions: [Policies.SettingsManage],
+          permissions: [Policies.SettingsLanguageManage],
           featureKey: 'NAV.SETTINGS_SECTION.LANGUAGE',
         },
         title: 'Language & Region - Operia',
@@ -156,7 +157,9 @@ export const mainRoutes: Routes = [
       {
         path: 'support',
         loadComponent: placeholder,
+        canActivate: [permissionGuard],
         data: {
+          permissions: [Policies.SupportRead],
           featureKey: 'NAV.SUPPORT',
         },
         title: 'Support - Operia',

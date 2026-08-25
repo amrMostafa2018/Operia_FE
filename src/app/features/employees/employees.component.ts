@@ -152,6 +152,12 @@ export class EmployeesComponent implements OnInit {
     return branchId ? (this.scheduleErrors()[branchId] ?? null) : null;
   });
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.EmployeesManage));
+  readonly canChangeStatus = computed(() =>
+    this.permissions.hasPermission(Policies.EmployeesChangeStatus)
+  );
+  readonly canChangeRole = computed(() =>
+    this.permissions.hasPermission(Policies.EmployeesChangeRole)
+  );
   readonly rowsPerPageOptions = [5, 10, 20, 50];
   readonly rows = signal(5);
   readonly first = signal(0);

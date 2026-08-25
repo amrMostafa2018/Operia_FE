@@ -1,3 +1,5 @@
+import { Policies } from '@core/models/permissions.model';
+
 export type PaymentMethodId = 'cash' | 'bank_transfer' | 'instapay' | 'e_wallet' | 'fawry';
 
 export interface PhotoSlot {
@@ -55,6 +57,7 @@ export const ACTIVITY_SETTINGS_TABS = [
     icon: 'pi pi-desktop',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.IDENTITY.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.IDENTITY.SUBTITLE',
+    permissions: [Policies.SettingsIdentityRead, Policies.SettingsIdentityManage],
   },
   {
     route: 'payments',
@@ -63,6 +66,7 @@ export const ACTIVITY_SETTINGS_TABS = [
     icon: 'pi pi-credit-card',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.PAYMENTS.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.PAYMENTS.SUBTITLE',
+    permissions: [Policies.SettingsPaymentsRead, Policies.SettingsPaymentsManage],
   },
   {
     route: 'working-days',
@@ -71,6 +75,7 @@ export const ACTIVITY_SETTINGS_TABS = [
     icon: 'pi pi-calendar',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.WORKING_DAYS.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.WORKING_DAYS.SUBTITLE',
+    permissions: [Policies.SettingsWorkingDaysRead, Policies.SettingsWorkingDaysManage],
   },
   {
     route: 'security',
@@ -79,8 +84,20 @@ export const ACTIVITY_SETTINGS_TABS = [
     icon: 'pi pi-shield',
     titleKey: 'SETTINGS_ACTIVITY.PAGES.SECURITY.TITLE',
     subtitleKey: 'SETTINGS_ACTIVITY.PAGES.SECURITY.SUBTITLE',
+    permissions: [
+      Policies.SettingsSecurityRead,
+      Policies.SettingsSecurityManage,
+      Policies.SettingsPasswordChange,
+      Policies.SettingsUsersBan,
+      Policies.SettingsUsersDelete,
+      Policies.SettingsAccountDeactivate,
+    ],
   },
 ] as const;
+
+export const ACTIVITY_SETTINGS_PARENT_PERMISSIONS = ACTIVITY_SETTINGS_TABS.flatMap(
+  tab => tab.permissions
+);
 
 export const MOCK_PAYMENT_METHODS: PaymentMethodState[] = [
   {

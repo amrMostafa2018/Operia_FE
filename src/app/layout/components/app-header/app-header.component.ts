@@ -8,6 +8,8 @@ import { AuthService } from '@core/services/auth.service';
 import { LanguageService } from '@core/services/language.service';
 import { OnboardingService } from '@core/services/onboarding.service';
 import { OnboardingStateService } from '@core/services/onboarding-state.service';
+import { Policies } from '@core/models/permissions.model';
+import { PermissionService } from '@core/services/permission.service';
 import { LanguageSwitcherComponent } from '@app/shared/components/language-switcher/language-switcher.component';
 
 @Component({
@@ -21,6 +23,7 @@ import { LanguageSwitcherComponent } from '@app/shared/components/language-switc
 export class AppHeaderComponent {
   private readonly authService = inject(AuthService);
   private readonly languageService = inject(LanguageService);
+  private readonly permissionService = inject(PermissionService);
   private readonly onboardingService = inject(OnboardingService);
   private readonly onboardingState = inject(OnboardingStateService);
   readonly authStore = inject(AuthStore);
@@ -49,6 +52,10 @@ export class AppHeaderComponent {
       .map(n => n[0])
       .join('')
       .toUpperCase()
+  );
+
+  readonly canNotifications = computed(() =>
+    this.permissionService.hasPermission(Policies.NotificationsRead)
   );
 
   readonly currentDate = computed(() => {

@@ -17,19 +17,23 @@
       </div>
     </div>
     <div class="quick-actions">
-      <p-button
-        [label]="'DASHBOARD.NEW_BOOKING' | translate"
-        icon="pi pi-plus"
-        [iconPos]="leadingIconPos()"
-        styleClass="action-btn primary-action"
-      />
-      <p-button
-        [label]="'DASHBOARD.NEW_CUSTOMER' | translate"
-        icon="pi pi-user-plus"
-        [iconPos]="leadingIconPos()"
-        styleClass="action-btn secondary-action"
-        [outlined]="true"
-      />
+      @if (canNewBooking()) {
+        <p-button
+          [label]="'DASHBOARD.NEW_BOOKING' | translate"
+          icon="pi pi-plus"
+          [iconPos]="leadingIconPos()"
+          styleClass="action-btn primary-action"
+        />
+      }
+      @if (canNewCustomer()) {
+        <p-button
+          [label]="'DASHBOARD.NEW_CUSTOMER' | translate"
+          icon="pi pi-user-plus"
+          [iconPos]="leadingIconPos()"
+          styleClass="action-btn secondary-action"
+          [outlined]="true"
+        />
+      }
     </div>
   </div>
 
@@ -226,14 +230,16 @@
         </button>
       </div>
 
-      <p-button
-        [label]="'DASHBOARD.EXPORT_REPORT' | translate"
-        icon="pi pi-download"
-        [iconPos]="leadingIconPos()"
-        styleClass="export-btn"
-        [outlined]="true"
-        (onClick)="exportReport()"
-      />
+      @if (canExport()) {
+        <p-button
+          [label]="'DASHBOARD.EXPORT_REPORT' | translate"
+          icon="pi pi-download"
+          [iconPos]="leadingIconPos()"
+          styleClass="export-btn"
+          [outlined]="true"
+          (onClick)="exportReport()"
+        />
+      }
     </div>
   </div>
 </div>

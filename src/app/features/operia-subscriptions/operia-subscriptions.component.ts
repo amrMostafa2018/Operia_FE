@@ -22,6 +22,8 @@ import { finalize } from 'rxjs';
 
 import { FinanceService } from '@core/services/finance.service';
 import { LanguageService } from '@core/services/language.service';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 import { OnboardingService } from '@core/services/onboarding.service';
 import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import {
@@ -70,6 +72,7 @@ export class OperiaSubscriptionsComponent implements OnInit {
   private readonly financeService = inject(FinanceService);
   private readonly onboardingService = inject(OnboardingService);
   private readonly languageService = inject(LanguageService);
+  private readonly permissionService = inject(PermissionService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -78,6 +81,9 @@ export class OperiaSubscriptionsComponent implements OnInit {
 
   readonly leadingIconPos = computed(() =>
     getLeadingIconPos(this.languageService.currentLang()),
+  );
+  readonly canExport = computed(() =>
+    this.permissionService.hasPermission(Policies.SubscriptionsExport)
   );
 
   readonly subscriptions = signal<SubscriptionRow[]>([]);
