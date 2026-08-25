@@ -550,6 +550,7 @@
     "ROWS_PER_PAGE": "صفوف في الصفحة",
     "OF": "من",
     "ROLES": {
+      "SuperAdmin": "مشرف أعلى",
       "Admin": "أدمن",
       "Reception": "استقبال",
       "Staff": "موظف"
@@ -843,6 +844,7 @@
     "NAME": "اسم الموظف",
     "ROLE": "الصلاحية",
     "ROLES": {
+      "SuperAdmin": "مشرف أعلى",
       "Admin": "أدمن",
       "Reception": "استقبال",
       "Staff": "موظف"

@@ -547,6 +547,7 @@
     "ROWS_PER_PAGE": "Rows per page",
     "OF": "of",
     "ROLES": {
+      "SuperAdmin": "Super Admin",
       "Admin": "Admin",
       "Reception": "Reception",
       "Staff": "Staff"
@@ -840,6 +841,7 @@
     "NAME": "Employee name",
     "ROLE": "Role",
     "ROLES": {
+      "SuperAdmin": "Super Admin",
       "Admin": "Admin",
       "Reception": "Reception",
       "Staff": "Staff"
