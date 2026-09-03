@@ -68,6 +68,16 @@
     text-align: right;
   }
 
+  .p-dropdown-panel .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter-icon {
+    inset-inline-end: auto;
+    inset-inline-start: 0.65rem;
+  }
+
+  .p-dropdown-panel .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter {
+    padding-inline-start: 2rem !important;
+    padding-inline-end: 0.55rem !important;
+  }
+
   // Icon + label spacing: PrimeNG uses physical margin-right/left, which collapses in RTL.
   .p-button:not(.p-button-icon-only) {
     gap: 0.5rem;

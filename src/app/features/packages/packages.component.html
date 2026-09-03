@@ -1,0 +1,590 @@
+<section class="packages-page">
+  <header class="page-head">
+    <div>
+      <h1><i class="pi pi-box"></i>{{ 'PACKAGES.TITLE' | translate }}</h1>
+      <p>{{ 'PACKAGES.SUBTITLE' | translate }}</p>
+    </div>
+    @if (canManage()) {
+      <p-button [label]="'PACKAGES.ADD' | translate" icon="pi pi-plus" (onClick)="openCreate()" />
+    }
+  </header>
+
+  <div class="summary">
+    <article class="total">
+      <i class="pi pi-database"></i>
+      <div>
+        <span>{{ 'PACKAGES.TOTAL' | translate }}</span>
+        <div class="summary-stat">
+          <strong>{{ totalCount() }}</strong>
+          <small>{{ 'PACKAGES.OFFER_UNIT' | translate }}</small>
+        </div>
+      </div>
+    </article>
+    <article class="active">
+      <i class="pi pi-check-circle"></i>
+      <div>
+        <span>{{ 'PACKAGES.ACTIVE_COUNT' | translate }}</span>
+        <div class="summary-stat">
+          <strong>{{ activeCount() }}</strong>
+          <small>{{ 'PACKAGES.OFFER_UNIT' | translate }}</small>
+        </div>
+      </div>
+    </article>
+    <article class="closed">
+      <i class="pi pi-stop"></i>
+      <div>
+        <span>{{ 'PACKAGES.CLOSED_COUNT' | translate }}</span>
+        <div class="summary-stat">
+          <strong>{{ closedCount() }}</strong>
+          <small>{{ 'PACKAGES.OFFER_UNIT' | translate }}</small>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filters">
+      <span class="p-input-icon-right search filter-search">
+        <button
+          type="button"
+          class="search-icon-btn"
+          (click)="applyFilters()"
+          [attr.aria-label]="'COMMON.SEARCH' | translate"
+        >
+          <i class="pi pi-search"></i>
+        </button>
+        <input
+          pInputText
+          [ngModel]="search"
+          (ngModelChange)="onSearchChange($event)"
+          (keyup.enter)="applyFilters()"
+          [placeholder]="'PACKAGES.SEARCH' | translate"
+        />
+      </span>
+      <p-dropdown
+        class="filter-control filter-offer-type"
+        [options]="offerTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="offerTypeFilter"
+        [showClear]="true"
+        [placeholder]="'PACKAGES.FILTER_OFFER_TYPE' | translate"
+        (onChange)="applyFilters()"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+      <p-dropdown
+        class="filter-control filter-service-type"
+        [options]="serviceCategories()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="serviceCategoryFilter"
+        [showClear]="true"
+        [placeholder]="'PACKAGES.FILTER_SERVICE_TYPE' | translate"
+        (onChange)="applyFilters()"
+      />
+      <p-dropdown
+        class="filter-control filter-status"
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="statusFilter"
+        [showClear]="true"
+        [placeholder]="'PACKAGES.FILTER_STATUS' | translate"
+        (onChange)="applyFilters()"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+      <button type="button" class="clear filter-clear" (click)="clearFilters()">
+        <i class="pi pi-replay"></i>{{ 'PACKAGES.CLEAR' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <p-table
+      [value]="packages()"
+      [rows]="rows()"
+      [first]="first()"
+      [totalRecords]="total()"
+      [paginator]="true"
+      [lazy]="true"
+      [loading]="loading()"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="packages-paginator"
+      styleClass="packages-table"
+      (onLazyLoad)="onLazyLoad($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="col-status">{{ 'PACKAGES.COL_STATUS' | translate }}</th>
+          <th class="col-name">{{ 'PACKAGES.COL_NAME' | translate }}</th>
+          <th class="col-offer-type">{{ 'PACKAGES.COL_OFFER_TYPE' | translate }}</th>
+          <th class="col-duration">{{ 'PACKAGES.COL_SESSION_DURATION' | translate }}</th>
+          <th class="col-classification">{{ 'PACKAGES.COL_CLASSIFICATION' | translate }}</th>
+          <th class="col-price">{{ 'PACKAGES.COL_PRICE' | translate }}</th>
+          <th class="col-created">{{ 'PACKAGES.COL_CREATED' | translate }}</th>
+          <th class="col-ends">{{ 'PACKAGES.COL_ENDS' | translate }}</th>
+          <th class="col-actions">{{ 'PACKAGES.COL_ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td class="col-status">
+            <p-tag
+              [value]="
+                (item.status === 'active' ? 'PACKAGES.STATUS_ACTIVE' : 'PACKAGES.STATUS_CANCELLED')
+                  | translate
+              "
+              [severity]="item.status === 'active' ? 'success' : 'danger'"
+              styleClass="status-tag"
+            />
+          </td>
+          <td class="col-name">
+            <span class="package-name">{{ item.name }}</span>
+          </td>
+          <td class="col-offer-type">{{ offerTypeLabel(item.offerType) }}</td>
+          <td class="col-duration">
+            {{ 'PACKAGES.DURATION_MINUTES' | translate: { count: item.sessionDurationMinutes } }}
+          </td>
+          <td class="col-classification">{{ categoryLabel(item) }}</td>
+          <td class="col-price">
+            {{ 'PACKAGES.PRICE_VALUE' | translate: { amount: formatPriceAmount(item.price) } }}
+          </td>
+          <td class="col-created" dir="ltr">{{ formatDate(item.createdAt) }}</td>
+          <td class="col-ends" dir="ltr">{{ formatDate(item.endsAt) }}</td>
+          <td class="col-actions row-actions">
+            <div class="action-group">
+              @if (canManage()) {
+                <button
+                  type="button"
+                  class="table-icon-btn edit"
+                  (click)="openEdit(item)"
+                  [attr.aria-label]="'PACKAGES.EDIT' | translate"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+              }
+              @if (canManage()) {
+                <button
+                  type="button"
+                  class="table-icon-btn delete"
+                  (click)="requestDelete(item)"
+                  [attr.aria-label]="'PACKAGES.DELETE' | translate"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'COMMON.NO_DATA' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</section>
+
+@if (dialogOpen()) {
+  <div class="editor-backdrop">
+    <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <button type="button" class="close" (click)="close()">
+        <i class="pi pi-times"></i>
+      </button>
+      <header>
+        <span class="editor-title-icon" aria-hidden="true">
+          <i class="pi pi-ticket"></i>
+        </span>
+        <div>
+          <h2>
+            {{ (editing() ? 'PACKAGES.CREATE.EDIT_TITLE' : 'PACKAGES.CREATE.TITLE') | translate }}
+          </h2>
+          <p>
+            {{
+              (editing() ? 'PACKAGES.CREATE.EDIT_BREADCRUMB' : 'PACKAGES.CREATE.BREADCRUMB')
+                | translate
+            }}
+          </p>
+        </div>
+      </header>
+
+      <div class="editor-body">
+        <div class="name-status-row">
+          <div class="form-field" [class.error]="isFieldInvalid(form, 'name')">
+            <span class="field-label">
+              {{ 'PACKAGES.CREATE.NAME_LABEL' | translate }} <em>*</em>
+            </span>
+            <input
+              pInputText
+              formControlName="name"
+              [placeholder]="'PACKAGES.CREATE.NAME_PLACEHOLDER' | translate"
+            />
+            @if (getFieldError('name'); as nameError) {
+              <small class="field-error">{{ nameError }}</small>
+            }
+          </div>
+          <div class="status-field">
+            <span class="field-label">{{ 'PACKAGES.CREATE.STATUS_LABEL' | translate }}</span>
+            <div class="status-toggle">
+              <p-inputSwitch formControlName="status" />
+              <span [class.active]="statusValue()" [class.inactive]="!statusValue()">
+                {{
+                  (statusValue()
+                    ? 'PACKAGES.CREATE.STATUS_ACTIVE'
+                    : 'PACKAGES.CREATE.STATUS_INACTIVE'
+                  ) | translate
+                }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field offer-type-field">
+          <span class="field-label">
+            {{ 'PACKAGES.CREATE.OFFER_TYPE_LABEL' | translate }} <em>*</em>
+          </span>
+          <div class="offer-type-cards" role="radiogroup">
+            <button
+              type="button"
+              class="offer-type-card"
+              [class.selected]="offerTypeValue() === 'singleSession'"
+              (click)="selectOfferType('singleSession')"
+              role="radio"
+              [attr.aria-checked]="offerTypeValue() === 'singleSession'"
+            >
+              <span class="offer-type-radio" aria-hidden="true"></span>
+              <i class="pi pi-user" aria-hidden="true"></i>
+              <span>{{ 'PACKAGES.CREATE.OFFER_TYPE_SINGLE' | translate }}</span>
+            </button>
+            <button
+              type="button"
+              class="offer-type-card"
+              [class.selected]="offerTypeValue() === 'package'"
+              (click)="selectOfferType('package')"
+              role="radio"
+              [attr.aria-checked]="offerTypeValue() === 'package'"
+            >
+              <span class="offer-type-radio" aria-hidden="true"></span>
+              <i class="pi pi-box" aria-hidden="true"></i>
+              <span>{{ 'PACKAGES.CREATE.OFFER_TYPE_PACKAGE' | translate }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="description-expiry-row" [class.has-expiry]="isPackageOffer()">
+          <div class="form-field" [class.error]="isFieldInvalid(form, 'description')">
+            <span class="field-label">{{ 'PACKAGES.CREATE.DESCRIPTION_LABEL' | translate }}</span>
+            <div class="textarea-wrap">
+              <textarea
+                pInputTextarea
+                formControlName="description"
+                rows="4"
+                [maxlength]="descriptionMaxLength"
+                [placeholder]="'PACKAGES.CREATE.DESCRIPTION_PLACEHOLDER' | translate"
+              ></textarea>
+              <div class="char-counter">{{ descriptionLength() }}/{{ descriptionMaxLength }}</div>
+            </div>
+            @if (getFieldError('description'); as descriptionError) {
+              <small class="field-error">{{ descriptionError }}</small>
+            }
+          </div>
+          @if (isPackageOffer()) {
+            <div class="form-field expiry-field">
+              <span class="field-label">{{ 'PACKAGES.CREATE.EXPIRY_LABEL' | translate }}</span>
+              <div class="input-with-addon expiry-select">
+                <p-dropdown
+                  formControlName="packageExpiryMonths"
+                  [options]="expiryMonthOptions"
+                  optionLabel="value"
+                  optionValue="value"
+                  appendTo="body"
+                  [showClear]="true"
+                  styleClass="expiry-dropdown"
+                  panelStyleClass="expiry-dropdown-panel"
+                >
+                  <ng-template pTemplate="selectedItem" let-item>
+                    @if (item) {
+                      {{
+                        'PACKAGES.CREATE.EXPIRY_MONTHS'
+                          | translate: { count: item.value ?? item }
+                      }}
+                    }
+                  </ng-template>
+                  <ng-template pTemplate="item" let-item>
+                    {{
+                      'PACKAGES.CREATE.EXPIRY_MONTHS' | translate: { count: item.value ?? item }
+                    }}
+                  </ng-template>
+                </p-dropdown>
+                <i class="pi pi-calendar" aria-hidden="true"></i>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="form-field" [class.error]="isFieldInvalid(form, 'serviceCategoryId')">
+          <span class="field-label">
+            {{ 'PACKAGES.CREATE.SERVICE_CATEGORY_LABEL' | translate }} <em>*</em>
+          </span>
+          <div class="dropdown-with-add">
+            <p-dropdown
+              formControlName="serviceCategoryId"
+              [options]="serviceCategories()"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [filter]="true"
+              (onFilter)="onServiceCategoryFilter($event)"
+              [placeholder]="'PACKAGES.CREATE.SERVICE_CATEGORY_PLACEHOLDER' | translate"
+              styleClass="package-category-dropdown"
+              panelStyleClass="package-category-dropdown-panel"
+            />
+            @if (canManage()) {
+              <button
+                type="button"
+                class="add-category"
+                (click)="addServiceCategory()"
+                [disabled]="!serviceCategorySearchText().trim() || categorySaving() === 'service'"
+              >
+                <span>{{ 'PACKAGES.CREATE.ADD_CATEGORY' | translate }}</span>
+                <i class="pi pi-plus" aria-hidden="true"></i>
+              </button>
+            }
+          </div>
+          @if (getFieldError('serviceCategoryId'); as categoryError) {
+            <small class="field-error">{{ categoryError }}</small>
+          }
+        </div>
+
+        <div class="form-field" [class.error]="isFieldInvalid(form, 'subServiceCategoryId')">
+          <span class="field-label">
+            {{ 'PACKAGES.CREATE.SUB_CATEGORY_LABEL' | translate }}
+          </span>
+          <div class="dropdown-with-add">
+            <p-dropdown
+              formControlName="subServiceCategoryId"
+              [options]="subServiceCategories()"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [filter]="true"
+              (onFilter)="onSubServiceCategoryFilter($event)"
+              [placeholder]="'PACKAGES.CREATE.SUB_CATEGORY_PLACEHOLDER' | translate"
+              styleClass="package-category-dropdown"
+              panelStyleClass="package-category-dropdown-panel"
+            />
+            @if (canManage()) {
+              <button
+                type="button"
+                class="add-category"
+                (click)="addSubServiceCategory()"
+                [disabled]="!serviceCategoryIdValue() || !subServiceCategorySearchText().trim() || categorySaving() === 'sub'"
+              >
+                <span>{{ 'PACKAGES.CREATE.ADD_CATEGORY' | translate }}</span>
+                <i class="pi pi-plus" aria-hidden="true"></i>
+              </button>
+            }
+          </div>
+          @if (getFieldError('subServiceCategoryId'); as subCategoryError) {
+            <small class="field-error">{{ subCategoryError }}</small>
+          }
+        </div>
+
+        <div class="duration-price-row" [class.is-package]="isPackageOffer()">
+          <div class="form-field" [class.error]="isFieldInvalid(form, 'sessionDurationValue')">
+            <span class="field-label">
+              {{ 'PACKAGES.CREATE.DURATION_LABEL' | translate }} <em>*</em>
+            </span>
+            <div class="input-with-addon duration-input">
+              <i class="pi pi-clock" aria-hidden="true"></i>
+              <input pInputText type="number" min="1" formControlName="sessionDurationValue" />
+              <p-dropdown
+                formControlName="sessionDurationUnit"
+                [options]="durationUnitOptions"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="duration-unit-dropdown"
+              >
+                <ng-template pTemplate="selectedItem" let-item>
+                  @if (item) {
+                    {{ item.label | translate }}
+                  }
+                </ng-template>
+                <ng-template pTemplate="item" let-item>
+                  {{ item.label | translate }}
+                </ng-template>
+              </p-dropdown>
+            </div>
+            @if (getFieldError('sessionDurationValue'); as durationError) {
+              <small class="field-error">{{ durationError }}</small>
+            }
+          </div>
+          @if (isPackageOffer()) {
+            <div class="form-field" [class.error]="isFieldInvalid(form, 'pulseCount')">
+              <span class="field-label">{{ 'PACKAGES.CREATE.PULSE_COUNT_LABEL' | translate }}</span>
+              <div class="input-with-addon">
+                <input pInputText type="number" min="0" formControlName="pulseCount" />
+                <i class="pi pi-heart" aria-hidden="true"></i>
+              </div>
+              @if (getFieldError('pulseCount'); as pulseCountError) {
+                <small class="field-error">{{ pulseCountError }}</small>
+              }
+            </div>
+            <div class="form-field" [class.error]="isFieldInvalid(form, 'sessionCount')">
+              <span class="field-label">
+                {{ 'PACKAGES.CREATE.SESSION_COUNT_LABEL' | translate }} <em>*</em>
+              </span>
+              <div class="input-with-addon">
+                <input pInputText type="number" min="1" formControlName="sessionCount" />
+                <i class="pi pi-calendar" aria-hidden="true"></i>
+              </div>
+              @if (getFieldError('sessionCount'); as sessionCountError) {
+                <small class="field-error">{{ sessionCountError }}</small>
+              }
+            </div>
+          }
+          <div class="form-field" [class.error]="isFieldInvalid(form, 'price')">
+            <span class="field-label">
+              {{ 'PACKAGES.CREATE.PRICE_LABEL' | translate }} <em>*</em>
+            </span>
+            <div class="input-with-addon price-input">
+              <p-inputNumber
+                formControlName="price"
+                [min]="0"
+                [useGrouping]="true"
+                locale="en-US"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                styleClass="price-input-number"
+                inputStyleClass="price-input-field"
+              />
+              <span class="addon">{{ 'PACKAGES.CURRENCY' | translate }}</span>
+            </div>
+            @if (getFieldError('price'); as priceError) {
+              <small class="field-error">{{ priceError }}</small>
+            }
+          </div>
+        </div>
+
+        <section class="discount-accordion" [class.open]="discountOpen()">
+          <button type="button" class="discount-toggle" (click)="toggleDiscount()">
+            <span>{{ 'PACKAGES.CREATE.DISCOUNT_SECTION' | translate }}</span>
+            <i
+              class="pi"
+              [class.pi-chevron-up]="discountOpen()"
+              [class.pi-chevron-down]="!discountOpen()"
+            ></i>
+          </button>
+          @if (discountOpen()) {
+            <div class="discount-body">
+              <div class="form-field" [class.error]="isFieldInvalid(form, 'discountCode')">
+                <span class="field-label">{{
+                  'PACKAGES.CREATE.DISCOUNT_CODE_LABEL' | translate
+                }}</span>
+                <div class="input-with-addon">
+                  <i class="pi pi-ticket" aria-hidden="true"></i>
+                  <input
+                    pInputText
+                    formControlName="discountCode"
+                    [placeholder]="'PACKAGES.CREATE.DISCOUNT_CODE_PLACEHOLDER' | translate"
+                  />
+                </div>
+                @if (getFieldError('discountCode'); as discountCodeError) {
+                  <small class="field-error">{{ discountCodeError }}</small>
+                }
+              </div>
+              <div class="discount-metrics">
+                <div class="form-field" [class.error]="isFieldInvalid(form, 'discountPercent')">
+                  <span class="field-label">
+                    {{ 'PACKAGES.CREATE.DISCOUNT_PERCENT_LABEL' | translate }}
+                  </span>
+                  <div class="input-with-addon">
+                    <input
+                      pInputText
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      formControlName="discountPercent"
+                    />
+                    <span class="addon">%</span>
+                  </div>
+                  @if (getFieldError('discountPercent'); as percentError) {
+                    <small class="field-error">{{ percentError }}</small>
+                  }
+                </div>
+                <div class="form-field">
+                  <span class="field-label">
+                    {{ 'PACKAGES.CREATE.PRICE_AFTER_DISCOUNT' | translate }}
+                  </span>
+                  <div class="input-with-addon readonly">
+                    <input
+                      pInputText
+                      [value]="priceAfterDiscount() | number: '1.2-2'"
+                      readonly
+                      tabindex="-1"
+                    />
+                    <span class="addon">{{ 'PACKAGES.CURRENCY' | translate }}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="discount-note">
+                <i class="pi pi-info-circle" aria-hidden="true"></i>
+                {{ 'PACKAGES.CREATE.DISCOUNT_NOTE' | translate }}
+              </p>
+            </div>
+          }
+        </section>
+      </div>
+
+      <footer>
+        <p-button
+          type="submit"
+          icon="pi pi-save"
+          [loading]="saving()"
+          [disabled]="!canManage() || saving()"
+          [label]="'PACKAGES.CREATE.SAVE' | translate"
+          styleClass="editor-save-btn"
+        />
+      </footer>
+    </form>
+  </div>
+}
+
+<app-confirm-action-dialog
+  [visible]="!!pendingDelete()"
+  headerKey="PACKAGES.DELETE_TITLE"
+  messageKey="PACKAGES.DELETE_CONFIRM"
+  [messageParams]="{ name: pendingDelete()?.name ?? '' }"
+  cancelLabelKey="PACKAGES.CANCEL"
+  confirmLabelKey="PACKAGES.DELETE"
+  styleClass="delete-package-dialog"
+  [useNativeFooterButtons]="true"
+  confirmIcon="pi pi-trash"
+  (cancelled)="cancelDelete()"
+  (confirmed)="confirmDelete()"
+/>

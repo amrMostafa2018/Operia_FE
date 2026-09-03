@@ -49,6 +49,17 @@ export const mainRoutes: Routes = [
         title: 'Customers - Operia',
       },
       {
+        path: 'packages',
+        loadComponent: () =>
+          import('@app/features/packages/packages.component').then(m => m.PackagesComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permissions: [Policies.PackagesRead],
+          featureKey: 'NAV.PACKAGES',
+        },
+        title: 'Packages - Operia',
+      },
+      {
         path: 'employees',
         loadComponent: () =>
           import('@app/features/employees/employees.component').then(m => m.EmployeesComponent),
@@ -58,16 +69,6 @@ export const mainRoutes: Routes = [
           featureKey: 'NAV.EMPLOYEES',
         },
         title: 'Employees - Operia',
-      },
-      {
-        path: 'packages',
-        loadComponent: placeholder,
-        canActivate: [permissionGuard],
-        data: {
-          permissions: [Policies.PackagesRead],
-          featureKey: 'NAV.PACKAGES',
-        },
-        title: 'Packages - Operia',
       },
       {
         path: 'branches',

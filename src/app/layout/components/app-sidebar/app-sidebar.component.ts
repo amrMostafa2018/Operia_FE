@@ -122,16 +122,16 @@ export class AppSidebarComponent {
 
   private readonly afterReportsNavItems: NavItem[] = [
     {
-      labelKey: 'NAV.EMPLOYEES',
-      icon: 'pi pi-id-card',
-      route: '/employees',
-      permissions: [Policies.EmployeesRead],
-    },
-    {
       labelKey: 'NAV.PACKAGES',
       icon: 'pi pi-box',
       route: '/packages',
       permissions: [Policies.PackagesRead],
+    },
+    {
+      labelKey: 'NAV.EMPLOYEES',
+      icon: 'pi pi-id-card',
+      route: '/employees',
+      permissions: [Policies.EmployeesRead],
     },
     {
       labelKey: 'NAV.BRANCHES',

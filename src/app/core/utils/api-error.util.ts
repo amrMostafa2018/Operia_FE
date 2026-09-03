@@ -95,8 +95,32 @@ export function hasApiFieldErrors(error: HttpErrorResponse): boolean {
   return hasCodes || hasErrors;
 }
 
+export const PACKAGE_CATEGORY_DUPLICATE_CODES = new Set([
+  'CATEGORY_NAME_TAKEN',
+  'SUB_CATEGORY_NAME_TAKEN',
+]);
+
+export function extractApiErrorCodes(error: HttpErrorResponse): string[] {
+  const body = error.error as ApiErrorBody | null;
+  if (!body?.errorCodes) {
+    return [];
+  }
+
+  return Object.values(body.errorCodes).flat().filter(Boolean);
+}
+
+export function hasPackageCategoryDuplicateError(error: HttpErrorResponse): boolean {
+  if (extractApiErrorCodes(error).some(code => PACKAGE_CATEGORY_DUPLICATE_CODES.has(code))) {
+    return true;
+  }
+
+  return Object.values(extractApiFieldErrors(error)).some(value =>
+    PACKAGE_CATEGORY_DUPLICATE_CODES.has(value)
+  );
+}
+
 function resolveErrorCode(codeOrMessage: string): string {
-  if (/^[A-Z][A-Za-z0-9]*$/.test(codeOrMessage)) {
+  if (/^[A-Z][A-Z0-9_]*$/.test(codeOrMessage) || /^[A-Z][A-Za-z0-9]*$/.test(codeOrMessage)) {
     return codeOrMessage;
   }
   return API_MESSAGE_TO_CODE[codeOrMessage] ?? codeOrMessage;
