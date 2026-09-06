@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
@@ -31,6 +32,7 @@ import {
   standalone: true,
   imports: [
     TranslatePipe,
+    RouterLink,
     TableModule,
     ButtonModule,
     TagModule,

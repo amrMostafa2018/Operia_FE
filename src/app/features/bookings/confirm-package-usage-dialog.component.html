@@ -1,0 +1,82 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="bookings-package-usage-dialog"
+  [style]="{ width: '520px' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-header">
+      <span class="header-icon"><i class="pi pi-shield"></i></span>
+      <div>
+        <h3>{{ 'BOOKINGS.PACKAGE_USAGE.TITLE' | translate }}</h3>
+        <p>{{ 'BOOKINGS.PACKAGE_USAGE.SUBTITLE' | translate }}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <form class="usage-form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="field-row">
+      <span class="step">1</span>
+      <div class="field-body">
+        <label>{{ 'BOOKINGS.PACKAGE_USAGE.USAGE_COUNT' | translate }}</label>
+        <small>{{ 'BOOKINGS.PACKAGE_USAGE.USAGE_HINT' | translate }}</small>
+        @if (isInvalid('usageCount')) {
+          <small class="field-error">
+            @if (form.controls.usageCount.errors?.['required']) {
+              {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.USAGE_REQUIRED' | translate }}
+            } @else if (form.controls.usageCount.errors?.['min']) {
+              {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.USAGE_MIN' | translate }}
+            }
+          </small>
+        }
+      </div>
+      <p-inputNumber formControlName="usageCount" [min]="0" [useGrouping]="false" />
+    </div>
+
+    <div class="field-row">
+      <span class="step">2</span>
+      <div class="field-body">
+        <label>{{ 'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE' | translate }}</label>
+        <small>{{ 'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_HINT' | translate }}</small>
+        @if (isInvalid('serviceType')) {
+          <small class="field-error">
+            {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.SERVICE_TYPE_REQUIRED' | translate }}
+          </small>
+        }
+      </div>
+      <input
+        pInputText
+        formControlName="serviceType"
+        [placeholder]="'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_PLACEHOLDER' | translate"
+      />
+    </div>
+
+    <div class="field-row textarea-row">
+      <span class="step">3</span>
+      <div class="field-body">
+        <label>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES' | translate }}</label>
+        <small>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES_HINT' | translate }}</small>
+        @if (isInvalid('notes')) {
+          <small class="field-error">
+            {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.NOTES_MAX' | translate }}
+          </small>
+        }
+      </div>
+      <div class="textarea-wrap">
+        <textarea pInputTextarea formControlName="notes" rows="4"></textarea>
+        <span class="counter">{{ notesLength() }} / 200</span>
+      </div>
+    </div>
+
+    <p-button
+      type="submit"
+      [label]="'BOOKINGS.PACKAGE_USAGE.SUBMIT' | translate"
+      styleClass="submit-btn"
+    />
+  </form>
+</p-dialog>

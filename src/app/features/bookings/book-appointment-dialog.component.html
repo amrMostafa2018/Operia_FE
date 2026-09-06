@@ -1,0 +1,175 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="bookings-book-dialog"
+  [style]="{ width: 'min(960px, 96vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-header">
+      <h3>{{ 'BOOKINGS.BOOK.TITLE' | translate }}</h3>
+      @if (selection(); as slot) {
+        <div class="slot-summary">
+          <span><i class="pi pi-map-marker"></i>{{ slot.branchName }}</span>
+          <span><i class="pi pi-user"></i>{{ slot.employeeName }}</span>
+          <span><i class="pi pi-clock"></i>{{ slot.slotDurationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</span>
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  <div class="book-layout">
+    <section class="left-panel">
+      <form class="client-form" [formGroup]="clientForm">
+        <div class="field">
+          <label>{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
+          <input pInputText formControlName="mobile" />
+        </div>
+        <div class="field">
+          <label>{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
+          <input pInputText formControlName="name" />
+        </div>
+        @if (matchedClient(); as client) {
+          <span class="client-badge registered">
+            {{ 'BOOKINGS.BOOK.REGISTERED' | translate }}
+          </span>
+          @for (pkg of client.packages; track pkg.packageId) {
+            <div class="package-card">
+              <strong>{{ pkg.packageName }}</strong>
+              <span>
+                {{
+                  'BOOKINGS.BOOK.PACKAGE_PROGRESS'
+                    | translate: { used: pkg.usedSessions, total: pkg.totalSessions }
+                }}
+              </span>
+              <small>{{ 'BOOKINGS.BOOK.PACKAGE_EXPIRY' | translate: { date: pkg.expiryDate } }}</small>
+            </div>
+          }
+        } @else if (clientForm.controls.mobile.value) {
+          <span class="client-badge unregistered">
+            {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
+          </span>
+        }
+      </form>
+
+      <div class="service-tabs">
+        @for (tab of categoryTabs; track tab.key) {
+          <button
+            type="button"
+            class="tab"
+            [class.active]="activeCategory() === tab.key"
+            (click)="setCategory(tab.key)"
+          >
+            {{ tab.labelKey | translate }}
+          </button>
+        }
+      </div>
+
+      <div class="service-grid">
+        @for (service of filteredServices(); track service.id) {
+          <article class="service-card">
+            <i [class]="service.icon"></i>
+            <strong>{{ service.name }}</strong>
+            <span>{{ service.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</span>
+            <span class="price">{{ service.price }} {{ currencyService.currencyLabel() }}</span>
+            <div class="qty">
+              <button type="button" (click)="changeQuantity(service, -1)">-</button>
+              <span>{{ quantityFor(service.id) }}</span>
+              <button type="button" (click)="changeQuantity(service, 1)">+</button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <button type="button" class="unlisted-toggle" (click)="showUnlisted.set(!showUnlisted())">
+        {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
+      </button>
+      @if (showUnlisted()) {
+        <form class="unlisted-form" [formGroup]="unlistedForm">
+          <input
+            pInputText
+            formControlName="name"
+            [placeholder]="'BOOKINGS.DETAILS.UNLISTED_NAME' | translate"
+          />
+          <p-inputNumber formControlName="price" [min]="0" />
+        </form>
+      }
+    </section>
+
+    <section class="right-panel">
+      <h4>{{ 'BOOKINGS.BOOK.SELECTED_SERVICES' | translate }}</h4>
+      <ul class="selected-list">
+        @for (item of lineItems(); track item.id) {
+          <li>
+            <span>{{ item.name }} ({{ item.quantity }})</span>
+            <strong>{{ item.price * item.quantity }} {{ currencyService.currencyLabel() }}</strong>
+          </li>
+        }
+      </ul>
+
+      <h4>{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h4>
+      <div class="payment-grid">
+        @for (method of paymentMethods; track method.id) {
+          <button
+            type="button"
+            class="payment-btn"
+            [class.active]="paymentMethod() === method.id"
+            (click)="selectPayment(method.id)"
+          >
+            <i [class]="method.icon"></i>
+            {{ method.labelKey | translate }}
+          </button>
+        }
+      </div>
+
+      <div class="summary-box">
+        <h4>{{ 'BOOKINGS.BOOK.SUMMARY' | translate }}</h4>
+        <div class="summary-row">
+          <span>{{ 'BOOKINGS.BOOK.SERVICE_COUNT' | translate }}</span>
+          <strong>{{ lineItems().length }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>{{ 'BOOKINGS.BOOK.SESSION_COUNT' | translate }}</span>
+          <strong>{{ sessionCount() }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>{{ 'BOOKINGS.BOOK.TOTAL_DURATION' | translate }}</span>
+          <strong>{{ serviceDuration() }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>{{ 'BOOKINGS.BOOK.SUBTOTAL' | translate }}</span>
+          <strong>{{ subtotal() }} {{ currencyService.currencyLabel() }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>{{ 'BOOKINGS.BOOK.DISCOUNT' | translate }}</span>
+          <p-inputNumber [ngModel]="discount()" (ngModelChange)="discount.set($event ?? 0)" [min]="0" />
+        </div>
+        <div class="summary-row net">
+          <span>{{ 'BOOKINGS.BOOK.NET_TOTAL' | translate }}</span>
+          <strong>{{ netTotal() }} {{ currencyService.currencyLabel() }}</strong>
+        </div>
+      </div>
+
+      <div class="send-message">
+        <p-checkbox
+          [binary]="true"
+          [ngModel]="sendMessage()"
+          (ngModelChange)="sendMessage.set($event)"
+          inputId="sendMessage"
+        />
+        <label for="sendMessage">{{ 'BOOKINGS.BOOK.SEND_MESSAGE' | translate }}</label>
+      </div>
+
+      <p-button
+        [label]="'BOOKINGS.BOOK.CONFIRM' | translate"
+        icon="pi pi-check"
+        styleClass="confirm-btn"
+        (onClick)="submit()"
+      />
+    </section>
+  </div>
+</p-dialog>

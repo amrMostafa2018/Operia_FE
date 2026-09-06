@@ -1,0 +1,183 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="bookings-details-dialog"
+  [style]="{ width: 'min(760px, 96vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-header">
+      <h3>{{ 'BOOKINGS.DETAILS.TITLE' | translate }}</h3>
+      @if (booking(); as current) {
+        <div class="meta-row">
+          <span>{{ current.bookingNumber }}</span>
+          <p-tag
+            [value]="statusKey(current.status) | translate"
+            [severity]="statusSeverity(current.status)"
+          />
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  @if (booking(); as current) {
+    <div class="details-body">
+      <div class="info-grid">
+        <div>
+          <label>{{ 'BOOKINGS.DETAILS.CUSTOMER' | translate }}</label>
+          <strong>{{ current.clientName }}</strong>
+          <small>{{ current.clientMobile }}</small>
+        </div>
+        <div>
+          <label>{{ 'BOOKINGS.DETAILS.EMPLOYEE' | translate }}</label>
+          <strong>{{ current.employeeName }}</strong>
+        </div>
+        <div>
+          <label>{{ 'BOOKINGS.DETAILS.BRANCH' | translate }}</label>
+          <strong>{{ current.branchName }}</strong>
+        </div>
+        <div>
+          <label>{{ 'BOOKINGS.DETAILS.SOURCE' | translate }}</label>
+          <strong>{{ current.sourceKey | translate }}</strong>
+        </div>
+        <div>
+          <label>{{ 'BOOKINGS.DETAILS.SCHEDULED' | translate }}</label>
+          <strong>{{ current.scheduledDate | date: 'mediumDate' }}</strong>
+        </div>
+        <div>
+          <label>{{ 'BOOKINGS.DETAILS.DURATION' | translate }}</label>
+          <strong>{{ current.slotDurationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+        </div>
+      </div>
+
+      <section class="services-section">
+        <div class="section-head">
+          <h4>{{ 'BOOKINGS.DETAILS.SERVICES' | translate }}</h4>
+          @if (isEditable()) {
+            <button type="button" class="link-btn" (click)="showServicePicker.set(!showServicePicker())">
+              {{ 'BOOKINGS.DETAILS.ADD_FROM_LIST' | translate }}
+            </button>
+          }
+        </div>
+
+        @if (showServicePicker() && isEditable()) {
+          <div class="service-picker">
+            @for (service of catalogServices; track service.id) {
+              <button type="button" (click)="addService(service.id)">{{ service.name }}</button>
+            }
+          </div>
+        }
+
+        <ul class="line-items">
+          @for (item of draftLineItems(); track item.id) {
+            <li>
+              <div>
+                <strong>{{ item.name }}</strong>
+                <span class="type-badge">{{ item.type }}</span>
+              </div>
+              <div class="line-actions">
+                <strong>{{ item.price * item.quantity }} {{ currencyService.currencyLabel() }}</strong>
+                @if (isEditable()) {
+                  <button type="button" class="icon-btn" (click)="removeLineItem(item.id)">
+                    <i class="pi pi-trash"></i>
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+
+        @if (isEditable()) {
+          <button type="button" class="link-btn" (click)="showUnlisted.set(!showUnlisted())">
+            {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
+          </button>
+          @if (showUnlisted()) {
+            <form class="unlisted-form" [formGroup]="unlistedForm" (ngSubmit)="addUnlisted()">
+              <input
+                pInputText
+                formControlName="name"
+                [placeholder]="'BOOKINGS.DETAILS.UNLISTED_NAME' | translate"
+              />
+              <p-inputNumber formControlName="price" [min]="0" />
+              <p-button type="submit" icon="pi pi-plus" [label]="'COMMON.ADD' | translate" />
+            </form>
+          }
+        }
+      </section>
+
+      <div class="totals">
+        <article>
+          <span>{{ 'BOOKINGS.DETAILS.TOTAL_SERVICES' | translate }}</span>
+          <strong>{{ totalAmount() }} {{ currencyService.currencyLabel() }}</strong>
+        </article>
+        <article>
+          <span>{{ 'BOOKINGS.DETAILS.PAID' | translate }}</span>
+          @if (isEditable()) {
+            <p-inputNumber
+              [ngModel]="draftPaidAmount()"
+              (ngModelChange)="draftPaidAmount.set($event ?? 0)"
+              [min]="0"
+            />
+          } @else {
+            <strong>{{ draftPaidAmount() }} {{ currencyService.currencyLabel() }}</strong>
+          }
+        </article>
+        <article class="remaining">
+          <span>{{ 'BOOKINGS.DETAILS.REMAINING' | translate }}</span>
+          <strong>{{ remainingAmount() }} {{ currencyService.currencyLabel() }}</strong>
+        </article>
+      </div>
+
+      <section class="payment-section">
+        <h4>{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h4>
+        <div class="payment-grid">
+          @for (method of paymentMethods; track method.id) {
+            <button
+              type="button"
+              class="payment-btn"
+              [class.active]="draftPaymentMethod() === method.id"
+              [disabled]="!isEditable()"
+              (click)="selectPayment(method.id)"
+            >
+              <i [class]="method.icon"></i>
+              {{ method.labelKey | translate }}
+            </button>
+          }
+        </div>
+      </section>
+
+      @if (showActions()) {
+        <div class="footer-actions">
+          @if (canCancel()) {
+            <p-button
+              [label]="'BOOKINGS.DETAILS.CANCEL' | translate"
+              icon="pi pi-trash"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="requestCancel()"
+            />
+          }
+          @if (canManage()) {
+            <p-button
+              [label]="'BOOKINGS.DETAILS.SAVE' | translate"
+              icon="pi pi-save"
+              [outlined]="true"
+              (onClick)="save()"
+            />
+          }
+          @if (canChangeStatus()) {
+            <p-button
+              [label]="'BOOKINGS.DETAILS.CLOSE' | translate"
+              icon="pi pi-lock"
+              (onClick)="requestClose()"
+            />
+          }
+        </div>
+      }
+    </div>
+  }
+</p-dialog>
