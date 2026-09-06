@@ -77,10 +77,9 @@
       "SKIN_CARE": "العناية بالبشرة",
       "FACE_LASER": "ليزر الوجه"
     },
-    "CURRENCY": "ج.م",
     "MINUTES": "دقيقة",
     "DURATION_MINUTES": "{{count}} دقيقة",
-    "PRICE_VALUE": "{{amount}} ج.م",
+    "PRICE_VALUE": "{{amount}} {{currency}}",
     "EDIT": "تعديل",
     "DELETE": "حذف",
     "CANCEL": "إلغاء",
@@ -674,6 +673,12 @@
     "NO_DATA": "لا توجد بيانات",
     "ROWS_PER_PAGE": "صفوف في الصفحة",
     "OF": "من",
+    "CURRENCY_SYMBOLS": {
+      "EGP": "ج.م",
+      "SAR": "ر.س",
+      "AED": "د.إ",
+      "USD": "$"
+    },
     "ROLES": {
       "SuperAdmin": "مشرف أعلى",
       "Admin": "أدمن",

@@ -77,10 +77,9 @@
       "SKIN_CARE": "Skin Care",
       "FACE_LASER": "Face Laser"
     },
-    "CURRENCY": "EGP",
     "MINUTES": "min",
     "DURATION_MINUTES": "{{count}} min",
-    "PRICE_VALUE": "{{amount}} EGP",
+    "PRICE_VALUE": "{{amount}} {{currency}}",
     "EDIT": "Edit",
     "DELETE": "Delete",
     "CANCEL": "Cancel",
@@ -671,6 +670,12 @@
     "NO_DATA": "No data found",
     "ROWS_PER_PAGE": "Rows per page",
     "OF": "of",
+    "CURRENCY_SYMBOLS": {
+      "EGP": "EGP",
+      "SAR": "SAR",
+      "AED": "AED",
+      "USD": "USD"
+    },
     "ROLES": {
       "SuperAdmin": "Super Admin",
       "Admin": "Admin",

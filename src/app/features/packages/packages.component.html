@@ -166,7 +166,18 @@
           </td>
           <td class="col-classification">{{ categoryLabel(item) }}</td>
           <td class="col-price">
-            {{ 'PACKAGES.PRICE_VALUE' | translate: { amount: formatPriceAmount(item.price) } }}
+            @if (currencyService.hasCurrency()) {
+              {{
+                'PACKAGES.PRICE_VALUE'
+                  | translate
+                    : {
+                        amount: formatPriceAmount(item.price),
+                        currency: currencyService.currencyLabel(),
+                      }
+              }}
+            } @else {
+              {{ formatPriceAmount(item.price) }}
+            }
           </td>
           <td class="col-created" dir="ltr">{{ formatDate(item.createdAt) }}</td>
           <td class="col-ends" dir="ltr">{{ formatDate(item.endsAt) }}</td>
@@ -482,7 +493,9 @@
                 styleClass="price-input-number"
                 inputStyleClass="price-input-field"
               />
-              <span class="addon">{{ 'PACKAGES.CURRENCY' | translate }}</span>
+              @if (currencyService.hasCurrency()) {
+                <span class="addon">{{ currencyService.currencyLabel() }}</span>
+              }
             </div>
             @if (getFieldError('price'); as priceError) {
               <small class="field-error">{{ priceError }}</small>
@@ -548,7 +561,9 @@
                       readonly
                       tabindex="-1"
                     />
-                    <span class="addon">{{ 'PACKAGES.CURRENCY' | translate }}</span>
+                    @if (currencyService.hasCurrency()) {
+                      <span class="addon">{{ currencyService.currencyLabel() }}</span>
+                    }
                   </div>
                 </div>
               </div>

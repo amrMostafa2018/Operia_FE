@@ -24,6 +24,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { PermissionService } from '@core/services/permission.service';
+import { CurrencyService } from '@core/services/currency.service';
 import { Policies } from '@core/models/permissions.model';
 import {
   applyServerFieldErrors,
@@ -125,6 +126,7 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
 export class PackagesComponent implements OnInit {
   private readonly service = inject(PackageService);
   private readonly permissions = inject(PermissionService);
+  readonly currencyService = inject(CurrencyService);
   private readonly toast = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);

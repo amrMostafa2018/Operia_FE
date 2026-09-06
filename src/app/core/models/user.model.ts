@@ -25,6 +25,7 @@ export interface User {
 export interface UserCapabilities {
   roles: string[];
   permissions: string[];
+  currencyCode?: string | null;
 }
 
 export interface AuthTokens {
