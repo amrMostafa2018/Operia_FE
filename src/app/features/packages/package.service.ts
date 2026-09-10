@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { environment } from '@env/environment';
 import {
   PackageCategoryOption,
@@ -34,7 +34,7 @@ export interface PackagePayload {
   isActive: boolean;
   offerType: PackageOfferType;
   description: string;
-  serviceCategoryId: string;
+  serviceCategoryId: string | null;
   subServiceCategoryId: string | null;
   sessionDurationMinutes: number;
   sessionCount: number;
@@ -58,6 +58,25 @@ export class PackageService {
       }
     });
     return this.http.get<PackageListResult>(this.url, { params });
+  }
+
+  listAllActive(): Observable<PackageListItem[]> {
+    const pageSize = 50;
+    return this.list({ pageNumber: 1, pageSize, status: 'active' }).pipe(
+      switchMap(firstPage => {
+        if (firstPage.totalPages <= 1) {
+          return of(firstPage.items);
+        }
+
+        const remainingPages = Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+          this.list({ pageNumber: index + 2, pageSize, status: 'active' })
+        );
+
+        return forkJoin(remainingPages).pipe(
+          map(pages => [firstPage.items, ...pages.map(page => page.items)].flat())
+        );
+      })
+    );
   }
 
   get(id: string): Observable<PackageDetail> {
@@ -88,7 +107,10 @@ export class PackageService {
     return this.http.get<PackageCategoryOption[]>(`${this.url}/sub-service-categories`, { params });
   }
 
-  createServiceCategory(payload: { name: string; icon: string }): Observable<PackageCategoryOption> {
+  createServiceCategory(payload: {
+    name: string;
+    icon: string;
+  }): Observable<PackageCategoryOption> {
     return this.http.post<PackageCategoryOption>(`${this.url}/service-categories`, payload);
   }
 

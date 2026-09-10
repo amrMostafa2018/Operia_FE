@@ -4,6 +4,33 @@
   line-height: 1.7;
 }
 
+:host ::ng-deep .p-dialog-header {
+  position: relative;
+  padding-inline-end: 3rem;
+}
+
+:host-context([dir='rtl']) ::ng-deep .p-dialog-header {
+  padding-inline-start: 3rem;
+  padding-inline-end: 1.25rem;
+}
+
+.dialog-close {
+  position: absolute;
+  top: 1.2rem;
+  inset-inline-end: 1.4rem;
+  z-index: 2;
+  border: 0;
+  background: transparent;
+  font-size: 1.2rem;
+  color: #4f5267;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .confirm-dialog-actions {
   display: flex;
   align-items: center;

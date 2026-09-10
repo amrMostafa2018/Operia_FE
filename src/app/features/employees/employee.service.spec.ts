@@ -108,6 +108,14 @@ describe('EmployeeService', () => {
     request.flush({});
   });
 
+  it('loads bookable staff for a branch', () => {
+    service.listBookable('branch-1').subscribe();
+
+    const request = http.expectOne(`${environment.apiUrl}/employees/bookable?branchId=branch-1`);
+    expect(request.request.method).toBe('GET');
+    request.flush([]);
+  });
+
   it('loads and saves an employee weekly schedule', () => {
     const days: EmployeeWorkingDay[] = [
       { day: 'sat', enabled: true, fromTime: '10:00:00', toTime: '16:00:00' },

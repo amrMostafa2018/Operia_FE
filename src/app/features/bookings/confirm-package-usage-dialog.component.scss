@@ -1,0 +1,253 @@
+@use './bookings-dialog' as dialog;
+
+@include dialog.bookings-dialog-header;
+@include dialog.bookings-dialog-close-button;
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #171a43;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+}
+
+.header-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #eae9ff;
+  color: #4b24da;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.usage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 6.5rem;
+  gap: 0.75rem 0.85rem;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.service-row {
+  grid-template-columns: 2rem minmax(0, 1.1fr) minmax(11rem, 1fr);
+}
+
+.notes-row {
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: start;
+  border-bottom: 0;
+  padding-bottom: 1rem;
+}
+
+.step {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #4b24da;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.field-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+
+  label {
+    font-weight: 700;
+    color: #171a43;
+    font-size: 0.92rem;
+  }
+
+  small {
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+}
+
+.field-control {
+  min-width: 0;
+  width: 100%;
+}
+
+.notes-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.textarea-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.field-error {
+  color: var(--color-danger);
+}
+
+.counter {
+  position: absolute;
+  inset-inline-start: 0.75rem;
+  bottom: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.control-input,
+.notes-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d7d9e5;
+  border-radius: 10px;
+  background: #fff;
+  color: #363952;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.control-input {
+  height: 44px;
+  padding: 0 0.85rem;
+}
+
+.notes-input {
+  min-height: 112px;
+  height: auto;
+  resize: vertical;
+  line-height: 1.5;
+  padding: 0.75rem 0.85rem 1.7rem;
+}
+
+.control-input:hover,
+.notes-input:hover {
+  border-color: #a7a3bd;
+}
+
+.control-input:focus,
+.notes-input:focus {
+  outline: none;
+  border-color: #5525e8;
+  box-shadow: 0 0 0 3px rgba(85, 37, 232, 0.12);
+}
+
+.invalid .control-input,
+.invalid .notes-input {
+  border-color: #ef4444;
+}
+
+.package-usage-submit {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 0.25rem;
+  border: 0;
+  border-radius: 12px;
+  background: #4b24da;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.4;
+  padding: 0.75rem 1rem;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.package-usage-submit:hover {
+  background: #3f1fc4;
+}
+
+:host ::ng-deep {
+  .count-control .p-inputnumber {
+    width: 100%;
+    display: block;
+  }
+
+  .count-control .p-inputnumber-input,
+  .usage-count-input {
+    width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+    border: 1px solid #d7d9e5;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .invalid .count-control .p-inputnumber-input,
+  .invalid .usage-count-input {
+    border-color: #ef4444;
+  }
+
+  .service-type-dropdown.p-dropdown {
+    width: 100%;
+    height: 44px;
+    min-height: 44px;
+    box-sizing: border-box;
+    border: 1px solid #d7d9e5;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .service-type-dropdown .p-dropdown-label {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 0.85rem;
+    color: #363952;
+    font-size: 0.9rem;
+  }
+
+  .service-type-dropdown .p-dropdown-label.p-placeholder {
+    color: #8b8fa3;
+  }
+
+  .service-type-dropdown .p-dropdown-trigger {
+    width: 2.25rem;
+    color: #8b8fa3;
+  }
+
+  .service-type-dropdown.p-dropdown:not(.p-disabled):hover {
+    border-color: #a7a3bd;
+  }
+
+  .service-type-dropdown.p-dropdown.p-focus {
+    border-color: #5525e8;
+    box-shadow: 0 0 0 3px rgba(85, 37, 232, 0.12);
+  }
+
+  .invalid .service-type-dropdown.p-dropdown {
+    border-color: #ef4444;
+  }
+}

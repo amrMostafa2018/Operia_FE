@@ -76,6 +76,16 @@ export interface EmployeeSchedule {
   branches: EmployeeBranchSchedule[];
 }
 
+export interface BookableEmployee {
+  id: string;
+  code: string;
+  fullName: string;
+  photoUrl?: string | null;
+  specialty?: string | null;
+  jobTitle?: string | null;
+  workingDays: EmployeeWorkingDay[];
+}
+
 function toJoiningDateValue(value: unknown): string {
   if (value && typeof value === 'object' && 'year' in value && 'month' in value && 'day' in value) {
     const date = value as { year: number; month: number; day: number };
@@ -132,6 +142,11 @@ export class EmployeeService {
   changeStatus(id: string, isActive: boolean): Observable<void> {
     return this.http.patch<void>(`${this.url}/${id}/status`, { isActive });
   }
+  listBookable(branchId: string): Observable<BookableEmployee[]> {
+    const params = new HttpParams().set('branchId', branchId);
+    return this.http.get<BookableEmployee[]>(`${this.url}/bookable`, { params });
+  }
+
   getSchedule(id: string): Observable<EmployeeSchedule> {
     return this.http.get<EmployeeSchedule>(`${this.url}/${id}/schedule`);
   }

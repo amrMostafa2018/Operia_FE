@@ -1,0 +1,533 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="bookings-book-dialog"
+  [style]="{ width: 'min(1180px, 98vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-header">
+      <i class="pi pi-calendar"></i>
+      <h3>{{ 'BOOKINGS.BOOK.TITLE' | translate }}</h3>
+    </div>
+    <button
+      type="button"
+      class="dialog-close"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  @if (selection(); as slot) {
+    <div class="slot-meta">
+      <article>
+        <i class="pi pi-calendar"></i>
+        <div>
+          <small>{{ 'BOOKINGS.BOOK.DATE' | translate }}</small>
+          <strong>{{ slotDateLabel(slot) }}</strong>
+        </div>
+      </article>
+      <article>
+        <i class="pi pi-clock"></i>
+        <div>
+          <small>{{ 'BOOKINGS.BOOK.TIME' | translate }}</small>
+          <strong dir="ltr">{{ slotTimeLabel(slot) }}</strong>
+        </div>
+      </article>
+      <article>
+        <i class="pi pi-stopwatch"></i>
+        <div>
+          <small>{{ 'BOOKINGS.BOOK.DURATION' | translate }}</small>
+          <strong>{{ slot.slotDurationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+        </div>
+      </article>
+      <article>
+        <i class="pi pi-user"></i>
+        <div>
+          <small>{{ 'BOOKINGS.BOOK.STAFF' | translate }}</small>
+          <strong>{{ slot.employeeName }}</strong>
+        </div>
+      </article>
+      <article>
+        <i class="pi pi-map-marker"></i>
+        <div>
+          <small>{{ 'BOOKINGS.BOOK.BRANCH' | translate }}</small>
+          <strong>{{ slot.branchName }}</strong>
+        </div>
+      </article>
+    </div>
+  }
+
+  <section class="panel-card client-section">
+    <h4>
+      <i class="pi pi-user"></i>
+      {{ 'BOOKINGS.BOOK.CLIENT_SECTION' | translate }}
+    </h4>
+
+    <form class="client-form" [formGroup]="clientForm">
+      <div class="field">
+        <label>{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
+        <span class="input-icon-wrap">
+          <i class="pi pi-phone"></i>
+          <input pInputText formControlName="mobile" dir="ltr" />
+        </span>
+        @if (mobileError(); as errorKey) {
+          <small class="field-error">{{ errorKey | translate }}</small>
+        }
+      </div>
+      <div class="field">
+        <label>{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
+        <span class="input-icon-wrap">
+          <i class="pi pi-user"></i>
+          <input pInputText formControlName="name" />
+        </span>
+        @if (nameError(); as errorKey) {
+          <small class="field-error">{{ errorKey | translate }}</small>
+        }
+      </div>
+      <div class="field">
+        <label>{{ 'BOOKINGS.BOOK.PACKAGE_SELECT' | translate }}</label>
+        <p-dropdown
+          [options]="packageOptions()"
+          [ngModel]="selectedPackageId()"
+          (ngModelChange)="selectedPackageId.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'BOOKINGS.BOOK.PACKAGE_SELECT' | translate"
+          [showClear]="true"
+        />
+      </div>
+    </form>
+
+    @if (matchedClient(); as client) {
+      <span class="client-badge registered">
+        <i class="pi pi-check-circle"></i>
+        {{ 'BOOKINGS.BOOK.REGISTERED' | translate }}
+      </span>
+    } @else if (clientForm.controls.mobile.value) {
+      <span class="client-badge unregistered">
+        {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
+      </span>
+    }
+
+    @if (selectedClientPackage(); as pkg) {
+      <div class="package-stats">
+        <article>
+          <small>{{ 'BOOKINGS.BOOK.PACKAGE_TOTAL_SESSIONS' | translate }}</small>
+          <strong>{{ pkg.totalSessions }}</strong>
+        </article>
+        <article>
+          <small>{{ 'BOOKINGS.BOOK.PACKAGE_USED' | translate }}</small>
+          <strong>{{ pkg.usedSessions }}</strong>
+        </article>
+        <article>
+          <small>{{ 'BOOKINGS.BOOK.PACKAGE_REMAINING' | translate }}</small>
+          <strong>{{ pkg.totalSessions - pkg.usedSessions }}</strong>
+        </article>
+        <article>
+          <small>{{ 'BOOKINGS.BOOK.PACKAGE_EXPIRY_DATE' | translate }}</small>
+          <strong>{{ pkg.expiryDate }}</strong>
+        </article>
+      </div>
+    }
+  </section>
+
+  <section class="panel-card services-section">
+    <h4>
+      <i class="pi pi-th-large"></i>
+      {{ 'BOOKINGS.BOOK.SERVICES_SECTION' | translate }}
+    </h4>
+
+    <div class="search-wrap">
+      <i class="pi pi-search"></i>
+      <input
+        pInputText
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        [placeholder]="'BOOKINGS.BOOK.SEARCH_SERVICES' | translate"
+      />
+    </div>
+
+    <div class="service-tabs">
+      @for (tab of categoryTabs(); track tab.id) {
+        <button
+          type="button"
+          class="tab"
+          [class.active]="activeCategory() === tab.id"
+          (click)="setCategory(tab.id)"
+        >
+          @if (tab.labelKey) {
+            {{ tab.labelKey | translate }}
+          } @else {
+            {{ tab.label }}
+          }
+        </button>
+      }
+    </div>
+
+    <div class="service-carousel">
+      <div class="service-carousel-viewport">
+        <button
+          type="button"
+          class="carousel-arrow carousel-arrow-prev"
+          [class.is-disabled]="!canScrollLeft()"
+          [attr.aria-disabled]="!canScrollLeft()"
+          (click)="$event.preventDefault(); $event.stopPropagation(); scrollServices(-1)"
+          [attr.aria-label]="
+            (isRtl() ? 'BOOKINGS.BOOK.SCROLL_NEXT' : 'BOOKINGS.BOOK.SCROLL_PREV') | translate
+          "
+        >
+          <i class="pi pi-chevron-left"></i>
+        </button>
+
+        <div
+          class="service-carousel-track"
+          [class.is-rtl]="isRtl()"
+          #serviceTrack
+          (scroll)="onServiceTrackScroll()"
+        >
+          @if (catalogLoading()) {
+            <p class="catalog-empty">{{ 'BOOKINGS.BOOK.CATALOG_LOADING' | translate }}</p>
+          } @else if (filteredServices().length === 0) {
+            <p class="catalog-empty">{{ 'BOOKINGS.BOOK.CATALOG_EMPTY' | translate }}</p>
+          } @else {
+            @for (service of filteredServices(); track service.id) {
+              <article class="service-card">
+                <span class="service-icon"><i [class]="service.icon"></i></span>
+                <strong class="service-name">{{ service.name }}</strong>
+                <span class="type-badge" [class]="lineTypeClass(service.type)">
+                  {{ lineTypeKey(service.type) | translate }}
+                </span>
+                <span class="duration"
+                  >{{ service.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</span
+                >
+                <span class="price">
+                  {{ service.price }}
+                  @if (currencyService.hasCurrency()) {
+                    {{ currencyService.currencyLabel() }}
+                  }
+                </span>
+                <div class="qty" [class.is-rtl]="isRtl()">
+                  <button type="button" (click)="changeQuantity(service, -1)">-</button>
+                  <span>{{ quantityFor(service.id) }}</span>
+                  <button type="button" (click)="changeQuantity(service, 1)">+</button>
+                </div>
+              </article>
+            }
+          }
+        </div>
+
+        <button
+          type="button"
+          class="carousel-arrow carousel-arrow-next"
+          [class.is-disabled]="!canScrollRight()"
+          [attr.aria-disabled]="!canScrollRight()"
+          (click)="$event.preventDefault(); $event.stopPropagation(); scrollServices(1)"
+          [attr.aria-label]="
+            (isRtl() ? 'BOOKINGS.BOOK.SCROLL_PREV' : 'BOOKINGS.BOOK.SCROLL_NEXT') | translate
+          "
+        >
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="unlisted-panel">
+      <button type="button" class="unlisted-toggle" (click)="showUnlisted.set(!showUnlisted())">
+        <span>
+          <i class="pi pi-plus-circle"></i>
+          {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
+        </span>
+        <i
+          class="pi"
+          [class.pi-chevron-up]="showUnlisted()"
+          [class.pi-chevron-down]="!showUnlisted()"
+        ></i>
+      </button>
+      @if (showUnlisted()) {
+        <form class="unlisted-form" [formGroup]="unlistedForm" (ngSubmit)="addUnlisted()">
+          <div class="field field-name" [class.error]="!!unlistedNameError()">
+            <label for="book-unlisted-name">
+              {{ 'BOOKINGS.DETAILS.UNLISTED_NAME' | translate }} <em>*</em>
+            </label>
+            <input pInputText id="book-unlisted-name" formControlName="name" />
+            @if (unlistedNameError(); as errorKey) {
+              <small class="field-error">{{ errorKey | translate }}</small>
+            }
+          </div>
+          <app-unlisted-category-field (categoryCreated)="packageCreated.emit()" />
+          <div class="field field-offer-type" [class.error]="!!unlistedOfferTypeError()">
+            <label for="book-unlisted-offer-type">
+              {{ 'PACKAGES.CREATE.OFFER_TYPE_LABEL' | translate }} <em>*</em>
+            </label>
+            <p-dropdown
+              inputId="book-unlisted-offer-type"
+              formControlName="offerType"
+              [options]="offerTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [placeholder]="'BOOKINGS.DETAILS.UNLISTED_OFFER_TYPE_PLACEHOLDER' | translate"
+              styleClass="unlisted-dropdown"
+              panelStyleClass="unlisted-dropdown-panel"
+            >
+              <ng-template pTemplate="selectedItem" let-item>
+                @if (item) {
+                  {{ item.label | translate }}
+                }
+              </ng-template>
+              <ng-template pTemplate="item" let-item>
+                {{ item.label | translate }}
+              </ng-template>
+            </p-dropdown>
+            @if (unlistedOfferTypeError(); as errorKey) {
+              <small class="field-error">{{ errorKey | translate }}</small>
+            }
+          </div>
+          <div class="field field-duration" [class.error]="!!unlistedDurationError()">
+            <label for="book-unlisted-duration">
+              {{ 'BOOKINGS.DETAILS.DURATION' | translate }} <em>*</em>
+            </label>
+            <div class="input-with-addon duration-input">
+              <i class="pi pi-clock" aria-hidden="true"></i>
+              <input
+                pInputText
+                id="book-unlisted-duration"
+                type="number"
+                min="1"
+                formControlName="durationMinutes"
+              />
+              <p-dropdown
+                formControlName="sessionDurationUnit"
+                [options]="durationUnitOptions"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="duration-unit-dropdown"
+              >
+                <ng-template pTemplate="selectedItem" let-item>
+                  @if (item) {
+                    {{ item.label | translate }}
+                  }
+                </ng-template>
+                <ng-template pTemplate="item" let-item>
+                  {{ item.label | translate }}
+                </ng-template>
+              </p-dropdown>
+            </div>
+            @if (unlistedDurationError(); as errorKey) {
+              <small class="field-error">{{ errorKey | translate }}</small>
+            }
+          </div>
+          <div class="field field-price" [class.error]="!!unlistedPriceError()">
+            <label for="book-unlisted-price">
+              {{ 'BOOKINGS.BOOK.TOTAL_PRICE' | translate }} <em>*</em>
+            </label>
+            <div class="input-with-addon price-input">
+              <p-inputNumber
+                inputId="book-unlisted-price"
+                formControlName="price"
+                [min]="0"
+                [useGrouping]="true"
+                locale="en-US"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                styleClass="price-input-number"
+                inputStyleClass="price-input-field"
+              />
+              @if (currencyService.hasCurrency()) {
+                <span class="addon">{{ currencyService.currencyLabel() }}</span>
+              }
+            </div>
+            @if (unlistedPriceError(); as errorKey) {
+              <small class="field-error">{{ errorKey | translate }}</small>
+            }
+          </div>
+          <div class="unlisted-actions">
+            <span class="unlisted-actions-spacer" aria-hidden="true"></span>
+            <button type="submit" class="add-unlisted-btn" [disabled]="unlistedSaving()">
+              <i class="pi pi-plus"></i>
+              {{ 'COMMON.ADD' | translate }}
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </section>
+
+  <div class="bottom-layout">
+    <section class="panel-card payments-section">
+      <h4>
+        <i class="pi pi-wallet"></i>
+        {{ 'BOOKINGS.BOOK.PAYMENTS_TITLE' | translate }} ({{ lineItems().length }})
+      </h4>
+
+      <ul class="payment-lines">
+        @for (item of lineItems(); track item.id) {
+          <li>
+            <div class="payment-line-main">
+              <button
+                type="button"
+                class="icon-btn delete-btn"
+                (click)="removeLineItem(item.id)"
+                [attr.aria-label]="'COMMON.DELETE' | translate"
+              >
+                <i class="pi pi-trash"></i>
+              </button>
+              <div class="payment-line-content">
+                <strong>{{ item.name }}</strong>
+                <small>
+                  {{ item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}
+                  ·
+                  {{ lineTotal(item) }}
+                  @if (currencyService.hasCurrency()) {
+                    {{ currencyService.currencyLabel() }}
+                  }
+                  @if (item.categoryName) {
+                    · {{ item.categoryName }}
+                  }
+                </small>
+              </div>
+              <span
+                class="payment-status"
+                [class.paid]="linePaymentStatus(item) === 'paid'"
+                [class.remaining]="linePaymentStatus(item) === 'remaining'"
+              >
+                {{
+                  (linePaymentStatus(item) === 'paid'
+                    ? 'BOOKINGS.BOOK.PAID'
+                    : 'BOOKINGS.BOOK.REMAINING'
+                  ) | translate
+                }}
+              </span>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <div class="payments-total">
+        <span>{{ 'BOOKINGS.BOOK.TOTAL' | translate }}</span>
+        <strong>
+          {{ paymentsTotal() }}
+          @if (currencyService.hasCurrency()) {
+            {{ currencyService.currencyLabel() }}
+          }
+        </strong>
+      </div>
+
+      <h5>{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h5>
+      <div class="payment-grid">
+        @for (method of paymentMethods; track method.id) {
+          <button
+            type="button"
+            class="payment-btn"
+            [class.active]="paymentMethod() === method.id"
+            (click)="selectPayment(method.id)"
+          >
+            <span class="payment-radio">
+              @if (paymentMethod() === method.id) {
+                <i class="pi pi-circle-fill"></i>
+              } @else {
+                <i class="pi pi-circle"></i>
+              }
+            </span>
+            <span class="payment-method-icon" [class]="method.iconClass">
+              <i [class]="method.icon" aria-hidden="true"></i>
+            </span>
+            <span>{{ method.labelKey | translate }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="panel-card summary-section">
+      <h4>
+        <i class="pi pi-list"></i>
+        {{ 'BOOKINGS.BOOK.SUMMARY' | translate }}
+      </h4>
+
+      <ul class="summary-list">
+        <li>
+          <span><i class="pi pi-gift"></i>{{ 'BOOKINGS.BOOK.SERVICE_COUNT' | translate }}</span>
+          <strong>{{ lineItems().length }}</strong>
+        </li>
+        <li>
+          <span><i class="pi pi-sync"></i>{{ 'BOOKINGS.BOOK.SESSION_COUNT' | translate }}</span>
+          <strong>{{ sessionCount() }}</strong>
+        </li>
+        <li>
+          <span
+            ><i class="pi pi-stopwatch"></i>{{ 'BOOKINGS.BOOK.TOTAL_DURATION' | translate }}</span
+          >
+          <strong>{{ serviceDuration() }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+        </li>
+        <li>
+          <span><i class="pi pi-percentage"></i>{{ 'BOOKINGS.BOOK.DISCOUNT' | translate }}</span>
+          <p-inputNumber
+            [ngModel]="discount()"
+            (ngModelChange)="discount.set($event ?? 0)"
+            [min]="0"
+          />
+        </li>
+      </ul>
+
+      <div class="grand-total">
+        <span>{{ 'BOOKINGS.BOOK.GRAND_TOTAL' | translate }}</span>
+        <strong>
+          {{ netTotal() }}
+          @if (currencyService.hasCurrency()) {
+            {{ currencyService.currencyLabel() }}
+          }
+        </strong>
+      </div>
+
+      <ul class="summary-list summary-balances">
+        <li>
+          <span><i class="pi pi-wallet"></i>{{ 'BOOKINGS.BOOK.AMOUNT_PAID' | translate }}</span>
+          <p-inputNumber
+            [ngModel]="collectedAmount()"
+            (ngModelChange)="paidAmount.set($event ?? 0)"
+            [min]="0"
+            [max]="netTotal()"
+          />
+        </li>
+        <li>
+          <span><i class="pi pi-clock"></i>{{ 'BOOKINGS.BOOK.AMOUNT_REMAINING' | translate }}</span>
+          <strong class="remaining-value">
+            {{ remainingAmount() }}
+            @if (currencyService.hasCurrency()) {
+              {{ currencyService.currencyLabel() }}
+            }
+          </strong>
+        </li>
+      </ul>
+
+      <div class="send-message">
+        <p-checkbox
+          [binary]="true"
+          [ngModel]="sendMessage()"
+          (ngModelChange)="sendMessage.set($event)"
+          inputId="sendMessage"
+        />
+        <label for="sendMessage">{{ 'BOOKINGS.BOOK.SEND_MESSAGE' | translate }}</label>
+      </div>
+    </section>
+  </div>
+
+  <div class="book-dialog-actions">
+    <button type="button" class="cancel-btn" (click)="close()">
+      {{ 'COMMON.CANCEL' | translate }}
+    </button>
+    <button type="button" class="confirm-btn" (click)="submit()">
+      <i class="pi pi-check"></i>
+      {{ 'BOOKINGS.BOOK.CONFIRM' | translate }}
+    </button>
+  </div>
+</p-dialog>

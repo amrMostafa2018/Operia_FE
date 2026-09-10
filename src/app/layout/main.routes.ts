@@ -31,7 +31,7 @@ export const mainRoutes: Routes = [
       {
         path: 'bookings',
         loadComponent: () =>
-          import('@app/features/bookings/bookings.component').then(m => m.BookingsComponent),
+          import('@app/features/bookings/appointments.component').then(m => m.AppointmentsComponent),
         canActivate: [permissionGuard],
         data: {
           permissions: [Policies.BookingsRead],

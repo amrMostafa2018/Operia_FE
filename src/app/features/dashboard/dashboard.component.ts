@@ -1,10 +1,23 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
-import { getPrevArrowIcon, getLeadingIconPos, getSubmitArrowIcon } from '@app/shared/utils/rtl.util';
+import {
+  getPrevArrowIcon,
+  getLeadingIconPos,
+  getSubmitArrowIcon,
+} from '@app/shared/utils/rtl.util';
 import {
   bookingStatusKey,
   bookingStatusSeverity,
@@ -17,30 +30,23 @@ import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { MenuModule } from 'primeng/menu';
 import { DialogModule } from 'primeng/dialog';
-import { FormsModule } from '@angular/forms';
 import { MessageService, MenuItem } from 'primeng/api';
-import { Booking, BookingStatus } from '@app/features/bookings/models/booking.model';
+import {
+  Booking,
+  BookingStatus,
+  BOOKING_STATUS_OPTIONS,
+} from '@app/features/bookings/models/booking.model';
 import { BookingService } from '@app/features/bookings/booking.service';
 import { InquiryBookingModalComponent } from '@app/features/bookings/inquiry-booking-modal/inquiry-booking-modal.component';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import { MOCK_STATS, StatCard } from './models/dashboard.model';
-import { BOOKING_STATUS_OPTIONS } from '@app/features/bookings/models/booking.model';
-
-import {
-  BookingRow,
-  BookingStatus,
-  MOCK_BOOKINGS,
-  MOCK_STATS,
-  StatCard,
-  STATUS_OPTIONS,
-  EMPLOYEE_OPTIONS,
-} from './models/dashboard.model';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     TranslatePipe,
+    RouterLink,
     TableModule,
     ButtonModule,
     TagModule,
@@ -58,19 +64,21 @@ import {
 })
 export class DashboardComponent {
   private readonly languageService = inject(LanguageService);
-  private readonly permissionService = inject(PermissionService);
+  private readonly permissions = inject(PermissionService);
+  private readonly bookingService = inject(BookingService);
+  private readonly toast = inject(MessageService);
+  private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly canNewBooking = computed(() =>
-    this.permissionService.hasPermission(Policies.BookingsManage)
-  );
+  readonly canNewBooking = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
   readonly canNewCustomer = computed(() =>
-    this.permissionService.hasPermission(Policies.CustomersManage)
+    this.permissions.hasPermission(Policies.CustomersManage)
   );
-  readonly canExport = computed(() => this.permissionService.hasPermission(Policies.DashboardExport));
+  readonly canExport = computed(() => this.permissions.hasPermission(Policies.DashboardExport));
+  readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
 
   readonly stats: StatCard[] = MOCK_STATS;
   readonly allBookings = signal<Booking[]>([]);
-  readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
 
   dateRange = signal<Date[] | null>(null);
   selectedEmployee = signal<string | null>(null);
@@ -84,8 +92,10 @@ export class DashboardComponent {
     { label: 'DASHBOARD.ALL_EMPLOYEES', value: null },
   ]);
 
-  readonly statusOptions = STATUS_OPTIONS;
-  readonly employeeOptions = EMPLOYEE_OPTIONS;
+  readonly statusOptions = [
+    { label: 'DASHBOARD.ALL_STATUS', value: null },
+    ...BOOKING_STATUS_OPTIONS.filter(option => option.value !== null),
+  ];
 
   readonly rowOptions = [
     { label: '10', value: 10 },
@@ -115,11 +125,9 @@ export class DashboardComponent {
   readonly nextIcon = computed(() => getSubmitArrowIcon(this.languageService.currentLang()));
   readonly prevIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
   readonly nextIconPos = computed(() =>
-    this.languageService.currentLang() === 'ar' ? 'left' : 'right',
+    this.languageService.currentLang() === 'ar' ? 'left' : 'right'
   );
-  readonly leadingIconPos = computed(() =>
-    getLeadingIconPos(this.languageService.currentLang()),
-  );
+  readonly leadingIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
 
   readonly today = computed(() => {
     const locale = this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-GB';

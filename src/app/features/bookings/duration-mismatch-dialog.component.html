@@ -1,0 +1,49 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="bookings-mismatch-dialog"
+  [style]="{ width: '480px' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <span class="mismatch-header-spacer" aria-hidden="true"></span>
+    <button
+      type="button"
+      class="dialog-close"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  <div class="mismatch-body">
+    <div class="warning-icon">
+      <i class="pi pi-exclamation-triangle"></i>
+    </div>
+    <h3 class="mismatch-heading">{{ 'BOOKINGS.MISMATCH.TITLE' | translate }}</h3>
+    <p>
+      {{
+        'BOOKINGS.MISMATCH.MESSAGE'
+          | translate: { serviceDuration: serviceDuration(), slotDuration: slotDuration() }
+      }}
+    </p>
+    <div class="actions">
+      <p-button
+        [label]="'BOOKINGS.MISMATCH.BACK' | translate"
+        [outlined]="true"
+        styleClass="back-btn"
+        (onClick)="back.emit()"
+      />
+      <p-button
+        [label]="'BOOKINGS.MISMATCH.CONFIRM' | translate"
+        styleClass="confirm-btn"
+        (onClick)="confirmAnyway.emit()"
+      />
+    </div>
+  </div>
+</p-dialog>

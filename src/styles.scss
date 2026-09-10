@@ -2,6 +2,7 @@
 @use 'styles/themes';
 @use 'styles/rtl';
 @use 'app/shared/styles/schedule-days-list';
+@use 'app/features/bookings/bookings-dialog-global';
 
 // ─── PrimeNG Theme ────────────────────────────────────────────────────────────
 // Using lara-light theme for good RTL support
@@ -354,10 +355,12 @@ a {
   .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter,
   .p-multiselect-header .p-multiselect-filter-container .p-inputtext {
     width: 100%;
-    margin: 0;
-    padding: 0.45rem 0.55rem;
-    padding-inline-end: 2rem;
-    padding-inline-start: 0.55rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 0.45rem 0.55rem !important;
+    padding-left: 0.55rem !important;
+    padding-right: 2rem !important;
     border: 1px solid #dfe0e9;
     border-radius: 7px;
     background: #fff;
@@ -375,19 +378,13 @@ a {
     }
   }
 
-  // PrimeNG Lara theme uses physical margins that break RTL and create empty panel space.
-  .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter {
-    margin: 0 !important;
-    padding-right: 0.55rem !important;
-  }
-
   .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter-icon,
   .p-multiselect-header .p-multiselect-filter-container .p-multiselect-filter-icon {
     position: absolute;
     top: 50%;
-    inset-inline-end: 0.65rem;
-    right: auto;
-    left: auto;
+    inset-inline: auto !important;
+    left: auto !important;
+    right: 0.65rem !important;
     margin: 0;
     transform: translateY(-50%);
     color: #6f7180;
@@ -440,6 +437,9 @@ a {
     background: #fff;
     color: var(--text-secondary);
     padding: 0.55rem 0.75rem;
+    white-space: normal;
+    line-height: 1.45;
+    text-align: start;
   }
 }
 

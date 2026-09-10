@@ -1,0 +1,106 @@
+@mixin bookings-dialog-no-scroll-rules {
+  &.p-dialog {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .p-dialog-content {
+    overflow: visible;
+    overflow-x: hidden;
+    max-height: none;
+  }
+}
+
+@mixin bookings-dialog-no-scroll($class) {
+  :host ::ng-deep .#{$class} {
+    @include bookings-dialog-no-scroll-rules;
+  }
+}
+
+@mixin bookings-dialog-header {
+  :host ::ng-deep {
+    .p-dialog-header {
+      position: relative;
+      padding-inline-end: 3rem;
+    }
+  }
+
+  :host-context([dir='rtl']) ::ng-deep .p-dialog-header {
+    padding-inline-start: 3rem;
+    padding-inline-end: 1.25rem;
+  }
+}
+
+@mixin unlisted-form-layout {
+  .unlisted-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 0.85rem 0.9rem;
+    align-items: start;
+    padding: 1rem 0.95rem;
+    border-top: 1px solid var(--surface-border);
+    background: #fff;
+  }
+
+  .unlisted-form .field,
+  .unlisted-form app-unlisted-category-field {
+    min-width: 0;
+  }
+
+  .unlisted-form .field label,
+  .unlisted-form app-unlisted-category-field label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .unlisted-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .unlisted-actions-spacer {
+    display: block;
+    min-height: 1.05rem;
+  }
+
+  .add-unlisted-btn {
+    width: 100%;
+  }
+
+  @media (max-width: 900px) {
+    .unlisted-form {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .unlisted-actions-spacer {
+      display: none;
+    }
+
+    .add-unlisted-btn {
+      width: auto;
+      min-width: 8.5rem;
+      align-self: flex-start;
+    }
+  }
+}
+
+@mixin bookings-dialog-close-button {
+  .dialog-close {
+    position: absolute;
+    top: 1.2rem;
+    inset-inline-end: 1.4rem;
+    z-index: 2;
+    border: 0;
+    background: transparent;
+    font-size: 1.2rem;
+    color: #4f5267;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

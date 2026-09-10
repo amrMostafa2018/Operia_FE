@@ -23,6 +23,7 @@
           icon="pi pi-plus"
           [iconPos]="leadingIconPos()"
           styleClass="action-btn primary-action"
+          routerLink="/bookings"
         />
       }
       @if (canNewCustomer()) {
@@ -90,13 +91,11 @@
       </div>
       <div class="table-filters">
         <p-dropdown
-          [options]="employeeOptions"
+          [options]="employees()"
           optionLabel="label"
           optionValue="value"
           [ngModel]="selectedEmployee()"
           (ngModelChange)="selectedEmployee.set($event)"
-          optionLabel="label"
-          optionValue="value"
           [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
           styleClass="filter-drop"
         >
@@ -115,8 +114,6 @@
           optionValue="value"
           [ngModel]="selectedStatus()"
           (ngModelChange)="selectedStatus.set($event)"
-          optionLabel="label"
-          optionValue="value"
           [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
           styleClass="filter-drop"
         >
@@ -287,11 +284,26 @@
   </ng-template>
   @if (detailBooking(); as b) {
     <div class="detail-grid">
-      <div><span>{{ 'BOOKINGS.COL_NUMBER' | translate }}</span><strong>{{ b.bookingNumber }}</strong></div>
-      <div><span>{{ 'BOOKINGS.COL_CUSTOMER' | translate }}</span><strong>{{ b.customerName }}</strong></div>
-      <div><span>{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</span><strong>{{ b.employeeName }}</strong></div>
-      <div><span>{{ 'BOOKINGS.COL_SERVICE' | translate }}</span><strong>{{ b.service }}</strong></div>
-      <div><span>{{ 'BOOKINGS.COL_FROM' | translate }}</span><strong>{{ b.startTime }} – {{ b.endTime }}</strong></div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_NUMBER' | translate }}</span
+        ><strong>{{ b.bookingNumber }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_CUSTOMER' | translate }}</span
+        ><strong>{{ b.customerName }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</span
+        ><strong>{{ b.employeeName }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_SERVICE' | translate }}</span
+        ><strong>{{ b.service }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_FROM' | translate }}</span
+        ><strong>{{ b.startTime }} – {{ b.endTime }}</strong>
+      </div>
       <div>
         <span>{{ 'BOOKINGS.COL_STATUS' | translate }}</span>
         <p-tag [value]="statusKey(b.status) | translate" [severity]="statusSeverity(b.status)" />

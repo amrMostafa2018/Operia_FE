@@ -623,7 +623,7 @@ export class PackagesComponent implements OnInit {
       isActive: value.status,
       offerType: value.offerType,
       description: value.description.trim(),
-      serviceCategoryId: value.serviceCategoryId ?? '',
+      serviceCategoryId: value.serviceCategoryId,
       subServiceCategoryId: value.subServiceCategoryId,
       sessionDurationMinutes: Number(value.sessionDurationValue) || 0,
       sessionCount: value.offerType === 'package' ? Number(value.sessionCount) || 0 : 0,

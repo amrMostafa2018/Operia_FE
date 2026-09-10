@@ -1,0 +1,475 @@
+<section class="appointments-page">
+  <div class="filter-section">
+    <div class="filter-bar">
+      <label class="filter-field mobile-field">
+        <span class="field-label">{{ 'BOOKINGS.FILTER_CLIENT_MOBILE' | translate }}</span>
+        <span class="field-control">
+          <i class="pi pi-phone"></i>
+          <input
+            pInputText
+            [ngModel]="filters().clientMobile"
+            (ngModelChange)="updateFilter('clientMobile', $event)"
+            (keyup.enter)="onMobileSearch()"
+            [placeholder]="'BOOKINGS.FILTER_CLIENT_MOBILE' | translate"
+          />
+          <button
+            type="button"
+            class="search-btn"
+            (click)="onMobileSearch()"
+            [attr.aria-label]="'BOOKINGS.FILTER_SEARCH' | translate"
+          >
+            <i class="pi pi-search"></i>
+          </button>
+        </span>
+      </label>
+
+      <label class="filter-field">
+        <span class="field-label">{{ 'BOOKINGS.FILTER_CLIENT_NAME' | translate }}</span>
+        <span class="field-control">
+          <i class="pi pi-user"></i>
+          <input
+            pInputText
+            [ngModel]="filters().clientName"
+            (ngModelChange)="updateFilter('clientName', $event)"
+            [placeholder]="'BOOKINGS.FILTER_CLIENT_NAME' | translate"
+          />
+        </span>
+      </label>
+
+      <label class="filter-field">
+        <span class="field-label">{{ 'BOOKINGS.FILTER_PACKAGE' | translate }}</span>
+        <span class="field-control">
+          <i class="pi pi-box"></i>
+          <p-dropdown
+            styleClass="filter-dropdown"
+            panelStyleClass="filter-dropdown-panel"
+            appendTo="body"
+            [options]="packages()"
+            optionLabel="name"
+            optionValue="id"
+            [showClear]="true"
+            [ngModel]="filters().packageId"
+            (ngModelChange)="updateFilter('packageId', $event)"
+            [placeholder]="'BOOKINGS.FILTER_PACKAGE' | translate"
+          />
+        </span>
+      </label>
+
+      <label class="filter-field">
+        <span class="field-label">{{ 'BOOKINGS.FILTER_DURATION' | translate }}</span>
+        <span class="field-control">
+          <i class="pi pi-clock"></i>
+          <p-dropdown
+            styleClass="filter-dropdown"
+            panelStyleClass="filter-dropdown-panel"
+            appendTo="body"
+            [options]="durations"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="filters().durationMinutes"
+            (ngModelChange)="updateFilter('durationMinutes', $event)"
+            [placeholder]="'BOOKINGS.FILTER_DURATION' | translate"
+          >
+            <ng-template pTemplate="selectedItem" let-item>
+              @if (item) {
+                {{ item.label }} {{ 'BOOKINGS.MINUTES' | translate }}
+              }
+            </ng-template>
+            <ng-template pTemplate="item" let-item>
+              {{ item.label }} {{ 'BOOKINGS.MINUTES' | translate }}
+            </ng-template>
+          </p-dropdown>
+        </span>
+      </label>
+
+      <label class="filter-field">
+        <span class="field-label">{{ 'BOOKINGS.FILTER_BRANCH' | translate }}</span>
+        <span class="field-control">
+          <i class="pi pi-map-marker"></i>
+          <p-dropdown
+            styleClass="filter-dropdown"
+            panelStyleClass="filter-dropdown-panel"
+            appendTo="body"
+            [options]="branches()"
+            optionLabel="name"
+            optionValue="id"
+            [ngModel]="filters().branchId"
+            (ngModelChange)="updateFilter('branchId', $event)"
+            [placeholder]="'BOOKINGS.FILTER_BRANCH' | translate"
+          />
+        </span>
+      </label>
+
+      <label class="filter-field">
+        <span class="field-label">{{ 'BOOKINGS.FILTER_EMPLOYEE' | translate }}</span>
+        <span class="field-control">
+          <i class="pi pi-user"></i>
+          <p-dropdown
+            styleClass="filter-dropdown"
+            panelStyleClass="filter-dropdown-panel"
+            appendTo="body"
+            [options]="employeeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="filters().employeeId"
+            (ngModelChange)="updateFilter('employeeId', $event)"
+            [placeholder]="'BOOKINGS.FILTER_EMPLOYEE' | translate"
+          >
+            <ng-template pTemplate="selectedItem" let-item>
+              @if (item) {
+                @if (item.value === null) {
+                  {{ item.label | translate }}
+                } @else {
+                  {{ item.label }}
+                }
+              }
+            </ng-template>
+            <ng-template pTemplate="item" let-item>
+              @if (item.value === null) {
+                {{ item.label | translate }}
+              } @else {
+                {{ item.label }}
+              }
+            </ng-template>
+          </p-dropdown>
+        </span>
+      </label>
+    </div>
+
+    <p class="filter-hint">
+      <i class="pi pi-info-circle"></i>
+      {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
+    </p>
+  </div>
+
+  <div class="calendar-layout">
+    <aside class="side-panel">
+      <div class="panel-date-head">
+        <p-button
+          [icon]="prevArrowIcon()"
+          [rounded]="true"
+          [text]="true"
+          (onClick)="shiftDate(-1)"
+        />
+        <strong>{{ formattedSelectedDate() }}</strong>
+        <p-button
+          [icon]="nextArrowIcon()"
+          [rounded]="true"
+          [text]="true"
+          (onClick)="shiftDate(1)"
+        />
+      </div>
+
+      <div class="view-toggle">
+        <button
+          type="button"
+          [class.active]="viewMode() === 'today'"
+          (click)="setViewMode('today')"
+        >
+          {{ 'BOOKINGS.VIEW_TODAY' | translate }}
+        </button>
+        <button
+          type="button"
+          [class.active]="viewMode() === '4days'"
+          (click)="setViewMode('4days')"
+        >
+          {{ 'BOOKINGS.VIEW_4_DAYS' | translate }}
+        </button>
+      </div>
+
+      <p-calendar
+        [inline]="true"
+        [ngModel]="selectedDate()"
+        (ngModelChange)="selectedDate.set($event)"
+      />
+
+      <div class="legend">
+        <h4>{{ 'BOOKINGS.LEGEND_TITLE' | translate }}</h4>
+        <div class="legend-card available">{{ 'BOOKINGS.LEGEND_AVAILABLE' | translate }}</div>
+        <div class="legend-card booked">{{ 'BOOKINGS.LEGEND_BOOKED' | translate }}</div>
+        <div class="legend-card completed">{{ 'BOOKINGS.LEGEND_COMPLETED' | translate }}</div>
+        <div class="legend-card closed">{{ 'BOOKINGS.LEGEND_CLOSED' | translate }}</div>
+        <div class="legend-card recommended">
+          <i class="pi pi-star-fill"></i>{{ 'BOOKINGS.LEGEND_RECOMMENDED' | translate }}
+        </div>
+      </div>
+
+      <p class="panel-hint">
+        <i class="pi pi-info-circle"></i>
+        {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
+      </p>
+    </aside>
+
+    <div class="calendar-main">
+      @if (viewMode() === '4days' && fourDayEmployee(); as employee) {
+        <div class="four-day-head">
+          <p-button
+            [icon]="prevArrowIcon()"
+            [rounded]="true"
+            [text]="true"
+            (onClick)="shiftDate(-4)"
+          />
+          <h2>{{ 'BOOKINGS.FOUR_DAY_TITLE' | translate: { name: employee.name } }}</h2>
+          <p-button
+            [icon]="nextArrowIcon()"
+            [rounded]="true"
+            [text]="true"
+            (onClick)="shiftDate(4)"
+          />
+        </div>
+      }
+
+      @if (columns().length === 0) {
+        <div class="empty-calendar">
+          <i class="pi pi-users"></i>
+          <p>{{ 'BOOKINGS.NO_STAFF_IN_BRANCH' | translate }}</p>
+        </div>
+      } @else {
+        <div class="calendar-board" [class.four-day-board]="viewMode() === '4days'">
+          <div class="calendar-days">
+            <div class="calendar-grid" [style.--calendar-col-count]="columns().length">
+              @for (column of columns(); track column.id) {
+                <div
+                  class="employee-column"
+                  [class.filtered-employee]="
+                    viewMode() === 'today' && filters().employeeId === column.employeeId
+                  "
+                >
+                  <div class="column-head">
+                    <span class="avatar" [style.background]="column.employee.avatarColor">
+                      @if (column.employee.photoUrl) {
+                        <img [src]="column.employee.photoUrl" [alt]="column.employee.name" />
+                      } @else {
+                        {{ column.employee.avatarInitials }}
+                      }
+                    </span>
+                    <div>
+                      <strong>{{ column.title }}</strong>
+                      <small>{{ column.subtitle }}</small>
+                    </div>
+                  </div>
+                  <div class="slots-stack">
+                    @for (minute of slotRows(); track minute) {
+                      <div class="slot-row">
+                        @if (cellFor(column, minute); as cell) {
+                          @if (showSlotCell(cell)) {
+                            <button
+                              type="button"
+                              class="slot-cell"
+                              [class.available]="cell.visual === 'available'"
+                              [class.closed]="cell.visual === 'closed'"
+                              [class.duration-blocked]="
+                                cell.visual === 'available' && !cell.selectable
+                              "
+                              [class.recommended]="cell.recommended"
+                              [class.selected]="isSlotSelected(column, minute)"
+                              [style.height.px]="
+                                isSlotSelected(column, minute)
+                                  ? bookingHeight(filters().durationMinutes)
+                                  : null
+                              "
+                              [disabled]="cell.visual === 'closed'"
+                              (click)="onSlotClick(column, minute)"
+                            >
+                              @if (cell.recommended) {
+                                <i class="pi pi-star-fill recommended-star"></i>
+                              }
+                              <span class="slot-time">{{
+                                isSlotSelected(column, minute)
+                                  ? formatSlotRange(selectedSlot())
+                                  : slotTimeLabel(minute)
+                              }}</span>
+                              @if (cell.visual === 'available') {
+                                <span class="slot-status">{{
+                                  'BOOKINGS.SLOT_AVAILABLE' | translate
+                                }}</span>
+                              } @else if (cell.visual === 'closed') {
+                                <span class="slot-status">{{
+                                  'BOOKINGS.SLOT_CLOSED' | translate
+                                }}</span>
+                              }
+                            </button>
+                          }
+                          @if (cell.offsetStartMinutes; as offset) {
+                            <button
+                              type="button"
+                              class="slot-cell available offset-start"
+                              [class.recommended]="cell.offsetRecommended"
+                              [class.selected]="isSlotSelected(column, offset)"
+                              [style.height.px]="bookingHeight(filters().durationMinutes)"
+                              (click)="selectAvailableSlot(column, offset)"
+                            >
+                              @if (cell.offsetRecommended) {
+                                <i class="pi pi-star-fill recommended-star"></i>
+                              }
+                              <span class="slot-time">{{
+                                formatTimeRangeFor(offset, filters().durationMinutes)
+                              }}</span>
+                              <span class="slot-status">{{
+                                'BOOKINGS.SLOT_AVAILABLE' | translate
+                              }}</span>
+                            </button>
+                          }
+                        }
+                      </div>
+                    }
+                    @for (booking of bookingsForColumn(column); track booking.id) {
+                      <button
+                        type="button"
+                        class="slot-cell booking-overlay"
+                        [class.booked]="booking.status === 'booked'"
+                        [class.completed]="booking.status === 'completed'"
+                        [style.top.px]="bookingTop(booking.startMinutes)"
+                        [style.height.px]="bookingHeight(booking.slotDurationMinutes)"
+                        (click)="onBookingClick(booking)"
+                      >
+                        <span class="slot-time">{{ bookingTimeLabel(booking) }}</span>
+                        <span class="slot-status">
+                          {{
+                            (booking.status === 'completed'
+                              ? 'BOOKINGS.SLOT_COMPLETED'
+                              : 'BOOKINGS.SLOT_BOOKED'
+                            ) | translate
+                          }}
+                        </span>
+                        <strong>{{ booking.clientName }}</strong>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="time-axis">
+            <div class="time-axis-head"></div>
+            @for (minute of slotRows(); track minute) {
+              <div class="time-label">{{ formatTime(minute) }}</div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (showFooterConfirm()) {
+    <footer class="footer-confirm">
+      <div class="footer-handle" aria-hidden="true"></div>
+      <div class="footer-content">
+        <div class="footer-summary">
+          <article class="footer-item footer-item-client">
+            <i class="pi pi-user"></i>
+            <div>
+              <small>{{ 'BOOKINGS.FOOTER_CLIENT' | translate }}</small>
+              <strong>{{ filters().clientName }}</strong>
+            </div>
+          </article>
+          @if (selectedPackageName(); as packageName) {
+            <article class="footer-item footer-item-package">
+              <i class="pi pi-box"></i>
+              <div>
+                <small>{{ 'BOOKINGS.FOOTER_PACKAGE' | translate }}</small>
+                <strong>{{ packageName }}</strong>
+              </div>
+            </article>
+          }
+          <article class="footer-item footer-item-duration">
+            <i class="pi pi-clock"></i>
+            <div>
+              <small>{{ 'BOOKINGS.FOOTER_DURATION' | translate }}</small>
+              <strong>{{ filters().durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+            </div>
+          </article>
+          <article class="footer-item footer-item-doctor">
+            <i class="pi pi-id-card"></i>
+            <div>
+              <small>{{ 'BOOKINGS.FOOTER_DOCTOR' | translate }}</small>
+              <strong>{{ selectedSlot()?.employeeName }}</strong>
+            </div>
+          </article>
+          <article class="footer-item footer-item-slot">
+            <i class="pi pi-calendar"></i>
+            <div>
+              <small>{{ 'BOOKINGS.FOOTER_SLOT' | translate }}</small>
+              <strong class="slot-when">
+                <span class="slot-when-time">{{ footerSlotTime() }}</span>
+                <span class="slot-when-date">{{ footerSlotDate() }}</span>
+              </strong>
+            </div>
+          </article>
+        </div>
+
+        <div class="footer-actions">
+          <p-button
+            [label]="'BOOKINGS.FOOTER_CANCEL' | translate"
+            icon="pi pi-times"
+            [outlined]="true"
+            styleClass="footer-cancel-btn"
+            (onClick)="onFooterCancel()"
+          />
+          <p-button
+            [label]="'BOOKINGS.FOOTER_CONFIRM' | translate"
+            icon="pi pi-check"
+            styleClass="footer-confirm-btn"
+            (onClick)="onFooterConfirm()"
+          />
+        </div>
+      </div>
+      <p class="footer-hint"><i class="pi pi-lock"></i>{{ 'BOOKINGS.FOOTER_HINT' | translate }}</p>
+    </footer>
+  }
+</section>
+
+<app-book-appointment-dialog
+  [visible]="bookDialogVisible()"
+  [selection]="selectedSlot()"
+  [clients]="clients()"
+  [catalogItems]="catalogItems()"
+  [catalogCategories]="catalogCategories()"
+  [catalogLoading]="catalogLoading()"
+  [initialClientName]="filters().clientName"
+  [initialClientMobile]="filters().clientMobile"
+  [initialPackageId]="filters().packageId"
+  (closed)="bookDialogVisible.set(false)"
+  (confirmBooking)="onBookDialogConfirm($event)"
+  (packageCreated)="onUnlistedPackageCreated()"
+/>
+
+<app-booking-details-dialog
+  [visible]="detailsDialogVisible()"
+  [booking]="activeBooking()"
+  [catalogItems]="catalogItems()"
+  [catalogCategories]="catalogCategories()"
+  (closed)="onDetailsDialogClosed()"
+  (saved)="onDetailsSaved($event)"
+  (closeBooking)="onDetailsClose($event)"
+  (cancelBooking)="onDetailsCancelRequest($event)"
+  (packageCreated)="onUnlistedPackageCreated()"
+/>
+
+<app-confirm-package-usage-dialog
+  [visible]="packageUsageVisible()"
+  [lineItems]="pendingCloseLineItems()"
+  (closed)="onPackageUsageClosed()"
+  (submitted)="onPackageUsageSubmit()"
+/>
+
+<app-duration-mismatch-dialog
+  [visible]="mismatchVisible()"
+  [serviceDuration]="mismatchServiceDuration()"
+  [slotDuration]="mismatchSlotDuration()"
+  (closed)="mismatchVisible.set(false)"
+  (back)="onMismatchBack()"
+  (confirmAnyway)="onMismatchConfirm()"
+/>
+
+<app-confirm-action-dialog
+  [visible]="cancelConfirmVisible()"
+  styleClass="bookings-confirm-dialog"
+  headerKey="BOOKINGS.DETAILS.CANCEL_CONFIRM_TITLE"
+  messageKey="BOOKINGS.DETAILS.CANCEL_CONFIRM_MESSAGE"
+  confirmLabelKey="BOOKINGS.DETAILS.CANCEL"
+  cancelLabelKey="COMMON.CANCEL"
+  (cancelled)="cancelConfirmVisible.set(false)"
+  (confirmed)="onCancelConfirmed()"
+/>

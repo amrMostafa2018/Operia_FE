@@ -1,4 +1,8 @@
 import { Policies } from '@core/models/permissions.model';
+import {
+  PAYMENT_METHOD_ICON_CLASSES,
+  PAYMENT_METHOD_ICONS,
+} from '@app/shared/constants/payment-method-icons';
 
 export type PaymentMethodId = 'cash' | 'bank_transfer' | 'instapay' | 'e_wallet' | 'fawry';
 
@@ -103,40 +107,36 @@ export const MOCK_PAYMENT_METHODS: PaymentMethodState[] = [
   {
     id: 'cash',
     enabled: true,
-    icon: 'pi pi-wallet',
-    iconClass: 'method-icon--cash',
+    icon: PAYMENT_METHOD_ICONS.cash,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.cash,
     labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.CASH',
   },
   {
     id: 'bank_transfer',
     enabled: true,
-    icon: 'pi pi-building-columns',
-    iconClass: 'method-icon--bank',
+    icon: PAYMENT_METHOD_ICONS.bankTransfer,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.bankTransfer,
     labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.BANK_TRANSFER',
   },
   {
     id: 'instapay',
     enabled: true,
-    icon: '',
-    iconClass: 'method-icon--instapay',
-    brandLines: ['INSTA', 'PAY'],
-    brandTextClass: 'method-brand-lines--instapay',
+    icon: PAYMENT_METHOD_ICONS.instapay,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.instapay,
     labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.INSTAPAY',
   },
   {
     id: 'e_wallet',
     enabled: true,
-    icon: 'pi pi-wallet',
-    iconClass: 'method-icon--wallet',
+    icon: PAYMENT_METHOD_ICONS.wallet,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.wallet,
     labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.E_WALLET',
   },
   {
     id: 'fawry',
     enabled: true,
-    icon: '',
-    iconClass: 'method-icon--fawry',
-    brandText: 'fawry',
-    brandTextClass: 'method-brand-text--fawry',
+    icon: PAYMENT_METHOD_ICONS.fawry,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.fawry,
     labelKey: 'SETTINGS_ACTIVITY.PAYMENTS.METHODS.FAWRY',
   },
 ];
