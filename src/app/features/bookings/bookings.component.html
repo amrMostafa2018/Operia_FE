@@ -1,0 +1,341 @@
+<section class="bookings-page">
+  <header class="page-head">
+    <div>
+      <h1><i class="pi pi-calendar"></i>{{ 'BOOKINGS.TITLE' | translate }}</h1>
+      <p>{{ 'BOOKINGS.SUBTITLE' | translate }}</p>
+    </div>
+    @if (canManage()) {
+      <p-button
+        [label]="'BOOKINGS.ADD' | translate"
+        icon="pi pi-plus"
+        (onClick)="openInquiry()"
+      />
+    }
+  </header>
+
+  <div class="summary-cards">
+    <div class="summary-card">
+      <span class="summary-card__label">{{ 'BOOKINGS.SUMMARY.TOTAL' | translate }}</span>
+      <strong>{{ summary().total }}</strong>
+    </div>
+    <div class="summary-card summary-card--completed">
+      <span class="summary-card__label">{{ 'BOOKINGS.SUMMARY.COMPLETED' | translate }}</span>
+      <strong>{{ summary().completed }}</strong>
+    </div>
+    <div class="summary-card summary-card--pending">
+      <span class="summary-card__label">{{ 'BOOKINGS.SUMMARY.PENDING' | translate }}</span>
+      <strong>{{ summary().pending }}</strong>
+    </div>
+    <div class="summary-card summary-card--cancelled">
+      <span class="summary-card__label">{{ 'BOOKINGS.SUMMARY.CANCELLED' | translate }}</span>
+      <strong>{{ summary().cancelled }}</strong>
+    </div>
+  </div>
+
+  <div class="view-mode-bar">
+    <div class="view-mode-toggle">
+      <button
+        type="button"
+        class="mode-btn"
+        [class.mode-btn--active]="displayMode() === 'calendar'"
+        (click)="setDisplayMode('calendar')"
+      >
+        <i class="pi pi-calendar"></i>
+        {{ 'BOOKINGS.CALENDAR.VIEW_CALENDAR' | translate }}
+      </button>
+      <button
+        type="button"
+        class="mode-btn"
+        [class.mode-btn--active]="displayMode() === 'table'"
+        (click)="setDisplayMode('table')"
+      >
+        <i class="pi pi-table"></i>
+        {{ 'BOOKINGS.CALENDAR.VIEW_TABLE' | translate }}
+      </button>
+    </div>
+    <div class="filters filters--compact">
+      <p-dropdown
+        [options]="employeeOptions()"
+        [ngModel]="selectedEmployee()"
+        (ngModelChange)="selectedEmployee.set($event); applyFilters(); loadCalendar()"
+        optionLabel="label"
+        optionValue="value"
+        [placeholder]="'BOOKINGS.ALL_EMPLOYEES' | translate"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          {{ item?.label | translate }}
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+      <p-dropdown
+        [options]="statusOptions"
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event); applyFilters(); loadCalendar()"
+        optionLabel="label"
+        optionValue="value"
+        [placeholder]="'BOOKINGS.ALL_STATUS' | translate"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          {{ item?.label | translate }}
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+    </div>
+  </div>
+
+  @if (displayMode() === 'calendar') {
+    <app-bookings-calendar
+      [bookings]="calendarBookings()"
+      [loading]="loading()"
+      [canManage]="canManage()"
+      (bookingSelected)="viewBooking($event)"
+      (addBookingRequested)="openCalendarAddBooking($event)"
+      (refreshRequested)="loadCalendar()"
+    />
+  } @else {
+  <div class="table-card">
+    <div class="filters">
+      <div class="filters__left">
+        <p-calendar
+          [ngModel]="dateRange()"
+          (ngModelChange)="dateRange.set($event)"
+          selectionMode="range"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'BOOKINGS.DATE_RANGE' | translate"
+          styleClass="date-picker"
+        />
+        <p-dropdown
+          [options]="employeeOptions()"
+          [ngModel]="selectedEmployee()"
+          (ngModelChange)="selectedEmployee.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'BOOKINGS.ALL_EMPLOYEES' | translate"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            {{ item?.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.label | translate }}
+          </ng-template>
+        </p-dropdown>
+        <p-dropdown
+          [options]="statusOptions"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'BOOKINGS.ALL_STATUS' | translate"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            {{ item?.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.label | translate }}
+          </ng-template>
+        </p-dropdown>
+        <p-button
+          icon="pi pi-search"
+          [outlined]="true"
+          (onClick)="applyFilters()"
+        />
+        <button type="button" class="clear" (click)="clearFilters()">
+          <i class="pi pi-replay"></i>{{ 'BOOKINGS.CLEAR' | translate }}
+        </button>
+      </div>
+      <span class="p-input-icon-right search-box">
+        <i class="pi pi-search"></i>
+        <input
+          #searchBox
+          pInputText
+          [value]="search()"
+          (keyup.enter)="search.set(searchBox.value); applyFilters()"
+          [placeholder]="'BOOKINGS.SEARCH' | translate"
+        />
+      </span>
+    </div>
+
+    <p-table [value]="bookings()" [loading]="loading()" styleClass="bookings-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'BOOKINGS.COL_NUMBER' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_CUSTOMER' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_SERVICE' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_DATE' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_FROM' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_TO' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_STATUS' | translate }}</th>
+          <th>{{ 'BOOKINGS.COL_ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-booking>
+        <tr>
+          <td class="mono">{{ booking.bookingNumber }}</td>
+          <td>
+            <div class="customer-cell">
+              <div class="customer-avatar">{{ booking.customerName[0] }}</div>
+              <div>
+                <div class="customer-name">{{ booking.customerName }}</div>
+                <div class="customer-phone" dir="ltr">{{ booking.customerPhone }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ booking.employeeName }}</td>
+          <td class="service-cell">{{ booking.service }}</td>
+          <td>{{ booking.date }}</td>
+          <td>{{ booking.startTime }}</td>
+          <td>{{ booking.endTime }}</td>
+          <td>
+            <p-tag
+              [value]="statusKey(booking.status) | translate"
+              [severity]="statusSeverity(booking.status)"
+              styleClass="status-tag"
+            />
+          </td>
+          <td>
+            <p-menu #menu [model]="getRowMenu(booking)" [popup]="true" appendTo="body" />
+            <button type="button" class="icon" (click)="menu.toggle($event)">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'COMMON.NO_DATA' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <footer class="table-footer">
+      <div class="rows-selector">
+        <p-dropdown
+          [options]="pageSizes"
+          [ngModel]="pageSize"
+          (ngModelChange)="onPageSizeChange($event)"
+          optionLabel="label"
+          optionValue="value"
+        />
+      </div>
+      <span class="showing">{{ 'BOOKINGS.SHOWING' | translate: { count: bookings().length, total: total() } }}</span>
+      <p-button
+        [label]="'BOOKINGS.EXPORT' | translate"
+        icon="pi pi-download"
+        [outlined]="true"
+        (onClick)="exportBookings()"
+      />
+    </footer>
+  </div>
+  }
+</section>
+
+<app-calendar-add-booking-dialog
+  [visible]="calendarAddOpen()"
+  [slot]="calendarSlot()"
+  (closed)="closeCalendarAddBooking()"
+  (continued)="onCalendarAddContinue($event)"
+/>
+
+<app-inquiry-booking-modal
+  [visible]="inquiryOpen()"
+  [inquiryDraft]="inquiryDraft()"
+  (closed)="closeInquiry()"
+  (bookingCreated)="onBookingCreated()"
+/>
+
+<app-confirm-action-dialog
+  [visible]="!!bookingPendingCancel()"
+  headerKey="BOOKINGS.CANCEL_TITLE"
+  messageKey="BOOKINGS.CANCEL_CONFIRM"
+  [messageParams]="{ number: bookingPendingCancel()?.bookingNumber ?? '' }"
+  cancelLabelKey="BOOKINGS.CANCEL"
+  confirmLabelKey="BOOKINGS.ACTIONS.CANCEL"
+  styleClass="cancel-booking-dialog"
+  [useNativeFooterButtons]="true"
+  confirmIcon="pi pi-times"
+  (cancelled)="cancelCancelRequest()"
+  (confirmed)="confirmCancel()"
+/>
+
+<p-dialog
+  [visible]="!!detailBooking()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '480px' }"
+  styleClass="booking-detail-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-title">
+      <i class="pi pi-eye"></i>
+      <b>{{ 'BOOKINGS.DETAIL_TITLE' | translate }}</b>
+    </div>
+    <button type="button" class="close" (click)="closeDetail()">
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+  @if (detailBooking(); as b) {
+    <div class="detail-grid">
+      <div><span>{{ 'BOOKINGS.COL_NUMBER' | translate }}</span><strong>{{ b.bookingNumber }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_CUSTOMER' | translate }}</span><strong>{{ b.customerName }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</span><strong>{{ b.employeeName }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_SERVICE' | translate }}</span><strong>{{ b.service }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_DATE' | translate }}</span><strong>{{ b.date }}</strong></div>
+      <div><span>{{ 'BOOKINGS.COL_FROM' | translate }}</span><strong>{{ b.startTime }} – {{ b.endTime }}</strong></div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_STATUS' | translate }}</span>
+        <p-tag
+          [value]="statusKey(b.status) | translate"
+          [severity]="statusSeverity(b.status)"
+        />
+      </div>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog
+  [visible]="!!reassignBooking()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '420px' }"
+  styleClass="reassign-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-title">
+      <i class="pi pi-user-edit"></i>
+      <b>{{ 'BOOKINGS.REASSIGN_TITLE' | translate }}</b>
+    </div>
+    <button type="button" class="close" (click)="closeReassign()">
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+  <label>
+    <span class="field-label">{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</span>
+    <p-dropdown
+      [options]="employees()"
+      [ngModel]="reassignEmployeeId()"
+      (ngModelChange)="reassignEmployeeId.set($event)"
+      optionLabel="fullName"
+      optionValue="id"
+    />
+  </label>
+  <div class="actions">
+    <button type="button" class="cancel" (click)="closeReassign()">
+      {{ 'BOOKINGS.CANCEL' | translate }}
+    </button>
+    <p-button
+      [label]="'BOOKINGS.REASSIGN_CONFIRM' | translate"
+      icon="pi pi-check"
+      (onClick)="confirmReassign()"
+    />
+  </div>
+</p-dialog>

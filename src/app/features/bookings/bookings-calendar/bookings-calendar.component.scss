@@ -1,0 +1,754 @@
+// Portal-aligned palette (matches bookings page purple baseline)
+$portal-primary: #4b28e8;
+$portal-primary-dark: #3f18e8;
+$portal-primary-text: #4521dd;
+$portal-primary-light: #f5f2ff;
+$portal-primary-tint: #eae9ff;
+$portal-heading: #191a4d;
+$portal-muted: #767b8d;
+$portal-body: #596174;
+$portal-label: #4c5567;
+$portal-border: #ececf4;
+$portal-card-border: #e8e7ef;
+$calendar-grid-bg: #fff;
+$booking-pending: #f97316;
+$booking-pending-bg: #fff7ed;
+$booking-pending-border: #fdba74;
+$booking-pending-text: #c2410c;
+
+.bookings-calendar {
+  background: #fff;
+  border: 1px solid $portal-card-border;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.calendar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid $portal-border;
+
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    color: $portal-heading;
+    font-weight: 600;
+  }
+}
+
+.calendar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid $portal-border;
+  border-radius: 7px;
+  background: #fff;
+  color: $portal-body;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+
+  i {
+    color: $portal-primary;
+  }
+
+  &:hover {
+    border-color: $portal-primary-tint;
+    background: $portal-primary-light;
+    color: $portal-primary;
+  }
+
+  &--search,
+  &--refresh {
+    background: #fff;
+    color: $portal-body;
+  }
+}
+
+.calendar-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid $portal-border;
+  background: #f8f9fc;
+
+  i {
+    color: $portal-muted;
+  }
+
+  input {
+    flex: 1;
+    border: 1px solid $portal-border;
+    border-radius: 7px;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: $portal-primary;
+      box-shadow: 0 0 0 2px rgba(75, 40, 232, 0.1);
+    }
+  }
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid $portal-border;
+}
+
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nav-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $portal-border;
+  background: #fff;
+  color: $portal-primary;
+  border-radius: 7px;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: $portal-primary-tint;
+    background: $portal-primary-light;
+  }
+}
+
+.today-btn {
+  border: 0;
+  background: $portal-primary;
+  color: #fff;
+  border-radius: 7px;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.45rem 0.85rem;
+  margin-inline-start: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 0.15s;
+
+  &:hover {
+    background: $portal-primary-dark;
+  }
+}
+
+.period-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: $portal-heading;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.duration-toggle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+
+  &__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $portal-label;
+    margin-inline-end: 0.25rem;
+  }
+}
+
+.duration-btn {
+  border: 1px solid $portal-border;
+  background: #fff;
+  color: $portal-label;
+  border-radius: 7px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &--active {
+    background: $portal-primary;
+    border-color: $portal-primary;
+    color: #fff;
+  }
+
+  &:hover:not(&--active) {
+    border-color: $portal-primary;
+    color: $portal-primary;
+    background: $portal-primary-light;
+  }
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid $portal-border;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.view-btn {
+  border: 0;
+  background: #fff;
+  color: $portal-body;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &--active {
+    background: $portal-primary-light;
+    color: $portal-primary;
+  }
+
+  &:not(:last-child) {
+    border-inline-end: 1px solid $portal-border;
+  }
+
+  &:hover:not(&--active) {
+    background: #fafafa;
+    color: $portal-primary;
+  }
+}
+
+.calendar-closed {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: $portal-muted;
+  font-size: 0.9rem;
+
+  i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    color: #a0a4b8;
+  }
+}
+
+.working-hours-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: $portal-primary-light;
+  border-bottom: 1px solid $portal-primary-tint;
+  font-size: 0.82rem;
+  color: $portal-primary-dark;
+  font-weight: 600;
+
+  i {
+    color: $portal-primary;
+  }
+}
+
+.calendar-loading {
+  text-align: center;
+  padding: 3rem;
+  color: $portal-muted;
+}
+
+.selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: $portal-primary-light;
+  border-bottom: 1px solid $portal-primary-tint;
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: $portal-primary-dark;
+    font-weight: 600;
+
+    i {
+      color: $portal-primary;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.clear-selection {
+  border: 1px solid $portal-border;
+  background: #fff;
+  color: $portal-primary-text;
+  border-radius: 7px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: $portal-primary-tint;
+    background: $portal-primary-light;
+  }
+}
+
+.add-booking-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  background: $portal-primary;
+  color: #fff;
+  border-radius: 7px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: $portal-primary-dark;
+  }
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+.slot-error {
+  margin: 0;
+  padding: 0.65rem 1.25rem;
+  background: #fff1f0;
+  color: #d92d20;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #fecaca;
+}
+
+.day-view {
+  background: $calendar-grid-bg;
+}
+
+.day-grid-scroll {
+  overflow: auto;
+  max-height: min(620px, calc(100dvh - 22rem));
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  background: $calendar-grid-bg;
+}
+
+.day-grid {
+  display: grid;
+  grid-template-columns: var(--week-time-col, 78px) 1fr;
+  background: $calendar-grid-bg;
+}
+
+.calendar-grid__time-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.35rem 0.4rem 0 0;
+  font-size: 0.72rem;
+  color: $portal-muted;
+  background: #fafafa;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.calendar-grid__cell {
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-height: 75px;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
+  background: $calendar-grid-bg;
+
+  &--selectable {
+    cursor: crosshair;
+  }
+
+  &--closed {
+    background: #f9fafb;
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.slot-selection {
+  position: absolute;
+  inset-inline-start: 4px;
+  inset-inline-end: 4px;
+  border: 2px dashed $portal-primary;
+  background: rgba(75, 40, 232, 0.12);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.week-view {
+  min-width: 0;
+}
+
+.week-grid-scroll {
+  overflow: auto;
+  max-height: min(620px, calc(100dvh - 22rem));
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  background: $calendar-grid-bg;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: var(--week-time-col, 78px) repeat(7, minmax(100px, 1fr));
+  min-width: 778px;
+  background: $calendar-grid-bg;
+}
+
+.week-grid__corner {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #fafafa;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
+}
+
+.week-grid__day-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 0.5rem;
+  text-align: center;
+  background: #fafafa;
+  border-bottom: 1px solid $portal-border;
+  border-inline-end: 1px solid $portal-border;
+
+  &--today {
+    background: #fff;
+    box-shadow: inset 0 -2px 0 $portal-primary;
+
+    .week-day-name,
+    .week-day-num {
+      color: $portal-primary;
+      font-weight: 700;
+    }
+  }
+}
+
+.week-day-name {
+  display: block;
+  font-size: 0.7rem;
+  color: $portal-muted;
+  font-weight: 600;
+}
+
+.week-day-num {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: $portal-heading;
+}
+
+.event-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 1;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #3b2e6e;
+  padding: 0 0.45rem;
+  font-size: 0.72rem;
+  text-align: start;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  line-height: 1.2;
+  box-sizing: border-box;
+  min-height: 0;
+
+  &--week {
+    inset-inline-start: 4px;
+    inset-inline-end: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1.2;
+
+    .event-time {
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 1;
+    }
+  }
+
+  &--compact {
+    font-size: 0.66rem;
+    padding: 0 0.3rem;
+
+    .event-customer,
+    .event-employee {
+      font-size: 0.72rem;
+    }
+  }
+
+  &--short {
+    font-size: 0.64rem;
+    padding: 0 0.3rem;
+
+    .event-status {
+      font-size: 0.5rem;
+      padding: 0.04rem 0.18rem;
+    }
+
+    .event-customer,
+    .event-employee {
+      font-size: 0.68rem;
+    }
+  }
+
+  &__line {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  &--pending {
+    background: $booking-pending-bg;
+    border: 1px solid $booking-pending-border;
+    color: $booking-pending-text;
+  }
+
+  &--completed {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+  }
+
+  &--cancelled {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-inline-start: 3px solid #ef4444;
+    color: #7f1d1d;
+  }
+}
+
+.event-status {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 0.12rem 0.3rem;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #b91c1c;
+  white-space: nowrap;
+
+  &--compact {
+    font-size: 0.55rem;
+    padding: 0.08rem 0.22rem;
+  }
+
+  &--week {
+    font-size: 0.58rem;
+    padding: 0.1rem 0.25rem;
+    line-height: 1.1;
+  }
+}
+
+.event-time {
+  flex-shrink: 0;
+  font-weight: 600;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.event-customer {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: inherit;
+  min-width: 0;
+
+  &--cancelled {
+    text-decoration: line-through;
+    color: #991b1b;
+    opacity: 0.9;
+  }
+}
+
+.event-separator {
+  flex-shrink: 0;
+  opacity: 0.55;
+  font-weight: 700;
+}
+
+.event-employee {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: inherit;
+  opacity: 1;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+@media (max-width: 900px) {
+  .calendar-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .calendar-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .nav-group {
+    justify-content: center;
+  }
+
+  .period-title {
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .duration-toggle {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.15rem;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &__label {
+      flex-shrink: 0;
+    }
+  }
+
+  .duration-btn {
+    flex-shrink: 0;
+    padding: 0.4rem 0.55rem;
+  }
+
+  .view-toggle {
+    align-self: center;
+  }
+
+  .day-view {
+    .day-grid-scroll {
+      max-height: min(620px, calc(100dvh - 20rem));
+    }
+
+    .event-block {
+      inset-inline-start: 6px;
+      inset-inline-end: 6px;
+      font-size: 0.78rem;
+
+      &__line {
+        flex-wrap: nowrap;
+        white-space: nowrap;
+      }
+
+      .event-time {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .week-grid {
+    --week-time-col: 64px;
+    grid-template-columns: var(--week-time-col) repeat(7, minmax(88px, 1fr));
+    min-width: 700px;
+  }
+
+  .day-grid {
+    --week-time-col: 64px;
+    grid-template-columns: var(--week-time-col) 1fr;
+  }
+
+  .calendar-grid__time-label {
+    font-size: 0.68rem;
+    padding-inline-end: 0.3rem;
+  }
+
+  .event-block--week {
+    inset-inline-start: 3px;
+    inset-inline-end: 3px;
+    font-size: 0.68rem;
+
+    .event-time {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .selection-bar {
+    flex-direction: column;
+    align-items: stretch;
+
+    &__actions {
+      justify-content: stretch;
+
+      .clear-selection,
+      .add-booking-btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+  }
+}

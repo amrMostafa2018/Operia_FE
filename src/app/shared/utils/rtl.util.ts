@@ -14,3 +14,15 @@ export function getLeadingIconPos(lang: string): 'left' | 'right' {
 export function getPrevArrowIcon(lang: string): string {
   return lang === 'ar' ? 'pi pi-arrow-right' : 'pi pi-arrow-left';
 }
+
+export function getNextArrowIcon(lang: string): string {
+  return lang === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right';
+}
+
+export function getPrevChevronIcon(lang: string): string {
+  return lang === 'ar' ? 'pi pi-chevron-right' : 'pi pi-chevron-left';
+}
+
+export function getNextChevronIcon(lang: string): string {
+  return lang === 'ar' ? 'pi pi-chevron-left' : 'pi pi-chevron-right';
+}

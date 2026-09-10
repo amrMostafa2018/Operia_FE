@@ -1,0 +1,56 @@
+.slot-picker {
+  margin-top: 0.75rem;
+}
+
+.slot-picker__hint {
+  font-size: 0.8rem;
+  color: #767b8d;
+  margin: 0 0 0.75rem;
+}
+
+.slot-picker__loading,
+.slot-picker__empty {
+  text-align: center;
+  color: #767b8d;
+  padding: 1.5rem;
+  background: #f8f8fc;
+  border-radius: 8px;
+  font-size: 0.875rem;
+
+  i {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #a0a4b8;
+  }
+}
+
+.slot-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.slot-chip {
+  border: 1px solid #e0e0ec;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.55rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #3f3f5c;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #4b28e8;
+    color: #4b28e8;
+    background: #f5f2ff;
+  }
+
+  &--selected {
+    background: #4b28e8;
+    border-color: #4b28e8;
+    color: #fff;
+  }
+}

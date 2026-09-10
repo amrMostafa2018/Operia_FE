@@ -1,0 +1,228 @@
+<section class="bookings-calendar">
+  <header class="calendar-top">
+    <h2>{{ 'BOOKINGS.CALENDAR.TITLE' | translate }}</h2>
+
+    <div class="calendar-actions">
+      <button type="button" class="action-btn action-btn--search" (click)="toggleSearch()">
+        <i class="pi pi-search"></i>
+      </button>
+      <button type="button" class="action-btn action-btn--refresh" (click)="onRefresh()">
+        <i class="pi pi-refresh"></i>
+      </button>
+    </div>
+  </header>
+
+  @if (searchOpen()) {
+    <div class="calendar-search">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        [placeholder]="'BOOKINGS.SEARCH' | translate"
+      />
+    </div>
+  }
+
+  <div class="calendar-toolbar">
+    <div class="nav-group">
+      <button type="button" class="nav-btn" (click)="goPrev()" [attr.aria-label]="'BOOKINGS.CALENDAR.PREV' | translate">
+        <i [class]="prevChevronIcon()"></i>
+      </button>
+      <button type="button" class="nav-btn" (click)="goNext()" [attr.aria-label]="'BOOKINGS.CALENDAR.NEXT' | translate">
+        <i [class]="nextChevronIcon()"></i>
+      </button>
+      <button type="button" class="today-btn" (click)="goToday()">
+        {{ 'BOOKINGS.CALENDAR.TODAY' | translate }}
+      </button>
+    </div>
+
+    <h3 class="period-title">{{ periodTitle() }}</h3>
+
+    @if (canManage()) {
+      <div class="duration-toggle">
+        <span class="duration-toggle__label">{{ 'BOOKINGS.CALENDAR.SLOT_DURATION' | translate }}</span>
+        @for (duration of durationOptions; track duration) {
+          <button
+            type="button"
+            class="duration-btn"
+            [class.duration-btn--active]="slotDuration() === duration"
+            (click)="setSlotDuration(duration)"
+          >
+            {{ durationLabel(duration) }} {{ 'BOOKINGS.CALENDAR.MINUTES_SHORT' | translate }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="view-toggle">
+      <button
+        type="button"
+        class="view-btn"
+        [class.view-btn--active]="viewMode() === 'week'"
+        (click)="setView('week')"
+      >
+        {{ 'BOOKINGS.CALENDAR.WEEK' | translate }}
+      </button>
+      <button
+        type="button"
+        class="view-btn"
+        [class.view-btn--active]="viewMode() === 'day'"
+        (click)="setView('day')"
+      >
+        {{ 'BOOKINGS.CALENDAR.DAY' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (viewMode() === 'day' && workingHoursLabel()) {
+    <div class="working-hours-banner">
+      <i class="pi pi-clock"></i>
+      {{ 'BOOKINGS.CALENDAR.WORKING_HOURS' | translate: { from: workingHoursFrom(), to: workingHoursTo() } }}
+    </div>
+  }
+
+  @if (canManage() && selectedSlot()) {
+    <div class="selection-bar">
+      <div class="selection-bar__info">
+        <i class="pi pi-clock"></i>
+        <span>{{ 'BOOKINGS.CALENDAR.SELECTED_SLOT' | translate }}: {{ selectionLabel() }}</span>
+      </div>
+      <div class="selection-bar__actions">
+        <button type="button" class="clear-selection" (click)="clearSelection()">
+          {{ 'BOOKINGS.CALENDAR.CLEAR_SELECTION' | translate }}
+        </button>
+        <button type="button" class="add-booking-btn" (click)="requestAddBooking()">
+          <i class="pi pi-plus"></i>
+          {{ 'BOOKINGS.CALENDAR.ADD_BOOKING' | translate }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (slotError()) {
+    <p class="slot-error">{{ slotError() | translate }}</p>
+  }
+
+  @if (loading()) {
+    <p class="calendar-loading">{{ 'COMMON.LOADING' | translate }}</p>
+  } @else if (viewMode() === 'day') {
+    @if (isClosedDay()) {
+      <p class="calendar-closed">
+        <i class="pi pi-calendar-times"></i>
+        {{ 'BOOKINGS.CALENDAR.CLOSED_DAY' | translate }}
+      </p>
+    } @else {
+      <div class="day-view">
+        <div class="day-grid-scroll">
+          <div class="day-grid">
+            @for (lane of dayHourLanes(); track lane.hour) {
+              <div class="calendar-grid__time-label">{{ lane.label }}</div>
+              <div
+                class="calendar-grid__cell"
+                [class.calendar-grid__cell--today]="isToday(currentDate())"
+                [class.calendar-grid__cell--selectable]="canManage()"
+                [style.min-height.px]="lane.height"
+                (click)="onHourLaneClick($event, currentDate(), lane.hour)"
+              >
+                @if (selectionRectForHour(currentDate(), lane); as selection) {
+                  <div
+                    class="slot-selection"
+                    [style.top.px]="selection.top"
+                    [style.height.px]="selection.height"
+                  ></div>
+                }
+                @for (booking of lane.bookings; track booking.id) {
+                  @if (bookingRectInHour(booking, lane); as block) {
+                    <button
+                      type="button"
+                      class="event-block"
+                      [class.event-block--short]="isShortBlock(block.height)"
+                      [ngClass]="statusClass(booking.status)"
+                      [style.top.px]="block.top"
+                      [style.height.px]="block.height"
+                      [attr.title]="booking.customerName + ' · ' + booking.employeeName"
+                      (click)="onEventClick(booking, $event)"
+                    >
+                      <div class="event-block__line">
+                        @if (isCancelled(booking)) {
+                          <span class="event-status">{{ statusKey(booking.status) | translate }}</span>
+                        }
+                        <span class="event-time">{{ eventLabel(booking) }}</span>
+                        <span class="event-separator">·</span>
+                        <span class="event-customer" [class.event-customer--cancelled]="isCancelled(booking)">
+                          {{ booking.customerName }}
+                        </span>
+                        <span class="event-separator">·</span>
+                        <span class="event-employee">{{ booking.employeeName }}</span>
+                      </div>
+                    </button>
+                  }
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  } @else if (viewMode() === 'week') {
+    <div class="week-view">
+      <div class="week-grid-scroll" #weekScroll>
+        <div class="week-grid">
+          <div class="week-grid__corner"></div>
+          @for (day of weekDays(); track day.iso) {
+            <div
+              class="week-grid__day-header"
+              [class.week-grid__day-header--today]="day.isToday"
+              #dayHeader
+            >
+              <span class="week-day-name">{{ weekdayHeaders()[day.date.getDay()] }}</span>
+              <span class="week-day-num">{{ day.date.getDate() }}</span>
+            </div>
+          }
+
+          @for (lane of weekHourLanes(); track lane.hour) {
+            <div class="calendar-grid__time-label">{{ lane.label }}</div>
+            @for (day of weekDays(); track day.iso) {
+              <div
+                class="calendar-grid__cell"
+                [class.calendar-grid__cell--today]="day.isToday"
+                [class.calendar-grid__cell--closed]="!isWorkingDay(day.date)"
+                [class.calendar-grid__cell--selectable]="canManage() && isWorkingDay(day.date)"
+                [style.min-height.px]="lane.height"
+                (click)="onHourLaneClick($event, day.date, lane.hour)"
+              >
+                @if (selectionRectForHour(day.date, lane); as selection) {
+                  <div
+                    class="slot-selection"
+                    [style.top.px]="selection.top"
+                    [style.height.px]="selection.height"
+                  ></div>
+                }
+                @for (booking of bookingsForHourOnDay(day.iso, lane.hour); track booking.id) {
+                  @if (bookingRectInHour(booking, lane); as block) {
+                    <button
+                      type="button"
+                      class="event-block event-block--week"
+                      [class.event-block--short]="isShortBlock(block.height)"
+                      [ngClass]="statusClass(booking.status)"
+                      [style.top.px]="block.top"
+                      [style.height.px]="block.height"
+                      [attr.title]="booking.customerName + ' · ' + booking.employeeName"
+                      (click)="onEventClick(booking, $event)"
+                    >
+                      @if (isCancelled(booking)) {
+                        <span class="event-status event-status--week">{{ statusKey(booking.status) | translate }}</span>
+                      }
+                      <span class="event-time">{{ eventLabel(booking) }}</span>
+                    </button>
+                  }
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>

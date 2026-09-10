@@ -1,0 +1,233 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '580px' }"
+  styleClass="inquiry-booking-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-title">
+      <i class="pi pi-calendar-plus"></i>
+      <div>
+        <b>{{ 'BOOKINGS.INQUIRY.TITLE' | translate }}</b>
+        <small>{{ 'BOOKINGS.INQUIRY.SUBTITLE' | translate }}</small>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="close"
+      (click)="close()"
+      [attr.aria-label]="'BOOKINGS.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  @if (step() === 'search') {
+    <form [formGroup]="searchForm" (ngSubmit)="searchCustomer()" novalidate>
+      <p class="step-label">{{ 'BOOKINGS.INQUIRY.STEP_SEARCH' | translate }}</p>
+      <div class="phone-row">
+        <label>
+          <span class="field-label">{{ 'BOOKINGS.INQUIRY.COUNTRY_CODE' | translate }}</span>
+          <input pInputText formControlName="countryCode" dir="ltr" readonly />
+        </label>
+        <label class="phone-field">
+          <span class="field-label"
+            >{{ 'BOOKINGS.INQUIRY.MOBILE' | translate }} <span class="required">*</span></span
+          >
+          <input
+            pInputText
+            formControlName="mobile"
+            dir="ltr"
+            [placeholder]="'BOOKINGS.INQUIRY.MOBILE_PLACEHOLDER' | translate"
+          />
+        </label>
+      </div>
+      @if (errorMessage()) {
+        <p class="error-box">
+          {{ errorMessage() | translate }}
+          <small>{{ 'BOOKINGS.INQUIRY.ADD_CUSTOMER_HINT' | translate }}</small>
+        </p>
+      }
+      <div class="actions">
+        <button type="button" class="cancel" (click)="close()">
+          {{ 'BOOKINGS.CANCEL' | translate }}
+        </button>
+        <p-button
+          type="submit"
+          [label]="'BOOKINGS.INQUIRY.SEARCH' | translate"
+          icon="pi pi-search"
+        />
+      </div>
+    </form>
+  }
+
+  @if (step() === 'packages') {
+    <p class="step-label">{{ 'BOOKINGS.INQUIRY.STEP_PACKAGES' | translate }}</p>
+    <div class="customer-banner">
+      <div class="avatar">{{ customer()?.fullName?.[0] }}</div>
+      <div>
+        <strong>{{ customer()?.fullName }}</strong>
+        <span dir="ltr">{{ customer()?.mobile }}</span>
+      </div>
+    </div>
+    <div class="package-list">
+      @for (pkg of packages(); track pkg.id) {
+        <button
+          type="button"
+          class="package-card"
+          [class.package-card--disabled]="!isPackageSelectable(pkg)"
+          [class.package-card--selected]="selectedPackage()?.id === pkg.id"
+          (click)="selectPackage(pkg)"
+        >
+          <div class="package-card__head">
+            <strong>{{ pkg.name }}</strong>
+            <span class="status-badge">{{ packageStatusKey(pkg.status) | translate }}</span>
+          </div>
+          <div class="package-card__meta">
+            <span
+              >{{ 'BOOKINGS.INQUIRY.REMAINING' | translate }}: {{ pkg.remainingSessions }}/{{
+                pkg.totalSessions
+              }}</span
+            >
+            @if (pkg.expiryDate) {
+              <span
+                >{{ 'BOOKINGS.INQUIRY.EXPIRES' | translate }}: {{ pkg.expiryDate }}</span
+              >
+            }
+          </div>
+        </button>
+      }
+    </div>
+    <div class="actions">
+      <button type="button" class="cancel" (click)="goBack()">
+        {{ 'BOOKINGS.BACK' | translate }}
+      </button>
+    </div>
+  }
+
+  @if (step() === 'schedule') {
+    <p class="step-label">{{ 'BOOKINGS.INQUIRY.STEP_SCHEDULE' | translate }}</p>
+    <form [formGroup]="scheduleForm" novalidate>
+      <label>
+        <span class="field-label"
+          >{{ 'BOOKINGS.INQUIRY.BRANCH' | translate }} <span class="required">*</span></span
+        >
+        <p-dropdown
+          formControlName="branchId"
+          [options]="branches()"
+          optionLabel="name"
+          optionValue="id"
+          (onChange)="onBranchChange($event.value)"
+          [placeholder]="'BOOKINGS.INQUIRY.SELECT_BRANCH' | translate"
+        />
+      </label>
+      <label>
+        <span class="field-label"
+          >{{ 'BOOKINGS.INQUIRY.SPECIALIST' | translate }} <span class="required">*</span></span
+        >
+        <p-dropdown
+          formControlName="employeeId"
+          [options]="employees()"
+          optionLabel="fullName"
+          optionValue="id"
+          (onChange)="onEmployeeChange()"
+          [placeholder]="'BOOKINGS.INQUIRY.SELECT_SPECIALIST' | translate"
+        />
+      </label>
+      <label>
+        <span class="field-label"
+          >{{ 'BOOKINGS.INQUIRY.DATE' | translate }} <span class="required">*</span></span
+        >
+        <p-calendar
+          formControlName="date"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [minDate]="today"
+          (onSelect)="onDateChange()"
+        />
+      </label>
+      <app-slot-picker
+        [slots]="slots()"
+        [loading]="slotsLoading()"
+        [selectedStart]="scheduleForm.controls.startTime.value"
+        [selectedEnd]="scheduleForm.controls.endTime.value"
+        (slotSelected)="onSlotSelected($event)"
+      />
+      @if (errorMessage()) {
+        <p class="error-box">{{ errorMessage() | translate }}</p>
+      }
+      <div class="actions">
+        <button type="button" class="cancel" (click)="goBack()">
+          {{ 'BOOKINGS.BACK' | translate }}
+        </button>
+        <p-button
+          type="button"
+          [label]="'BOOKINGS.INQUIRY.CONTINUE' | translate"
+          icon="pi pi-arrow-right"
+          (onClick)="confirmSchedule()"
+          [disabled]="scheduleForm.invalid"
+        />
+      </div>
+    </form>
+  }
+
+  @if (step() === 'confirm') {
+  @if (!createdBooking()) {
+    <p class="step-label">{{ 'BOOKINGS.INQUIRY.STEP_CONFIRM' | translate }}</p>
+    <div class="confirm-summary">
+      <div class="confirm-row">
+        <span>{{ 'BOOKINGS.INQUIRY.CUSTOMER' | translate }}</span>
+        <strong>{{ customer()?.fullName }}</strong>
+      </div>
+      <div class="confirm-row">
+        <span>{{ 'BOOKINGS.INQUIRY.PACKAGE' | translate }}</span>
+        <strong>{{ selectedPackage()?.name }}</strong>
+      </div>
+      <div class="confirm-row">
+        <span>{{ 'BOOKINGS.INQUIRY.BRANCH' | translate }}</span>
+        <strong>{{ selectedBranchName() }}</strong>
+      </div>
+      <div class="confirm-row">
+        <span>{{ 'BOOKINGS.INQUIRY.SPECIALIST' | translate }}</span>
+        <strong>{{ selectedEmployeeName() }}</strong>
+      </div>
+      <div class="confirm-row">
+        <span>{{ 'BOOKINGS.INQUIRY.DATE_TIME' | translate }}</span>
+        <strong
+          >{{ scheduleForm.controls.date.value | date: 'dd/MM/yyyy' }}
+          {{ scheduleForm.controls.startTime.value }} –
+          {{ scheduleForm.controls.endTime.value }}</strong
+        >
+      </div>
+    </div>
+    @if (errorMessage()) {
+      <p class="error-box">{{ errorMessage() | translate }}</p>
+    }
+    <div class="actions">
+      <button type="button" class="cancel" (click)="goBack()">
+        {{ 'BOOKINGS.BACK' | translate }}
+      </button>
+      <p-button
+        type="button"
+        [label]="'BOOKINGS.INQUIRY.CONFIRM_BOOKING' | translate"
+        icon="pi pi-check"
+        (onClick)="submitBooking()"
+      />
+    </div>
+  } @else {
+    <div class="success-box">
+      <i class="pi pi-check-circle"></i>
+      <h3>{{ 'BOOKINGS.INQUIRY.SUCCESS_TITLE' | translate }}</h3>
+      <p>{{ 'BOOKINGS.INQUIRY.SUCCESS_MESSAGE' | translate }}</p>
+      <strong class="booking-number">{{ createdBooking()?.bookingNumber }}</strong>
+      <p-button
+        type="button"
+        [label]="'BOOKINGS.CLOSE' | translate"
+        (onClick)="close()"
+        styleClass="mt-3"
+      />
+    </div>
+  }
+  }
+</p-dialog>
