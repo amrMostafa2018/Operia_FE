@@ -4,10 +4,13 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
+  [dismissableMask]="false"
+  [closeOnEscape]="false"
+  [autoZIndex]="true"
+  [baseZIndex]="12000"
   appendTo="body"
   styleClass="bookings-package-usage-dialog"
-  [style]="{ width: '520px' }"
-  (onHide)="close()"
+  [style]="{ width: 'min(580px, 94vw)' }"
 >
   <ng-template pTemplate="header">
     <div class="dialog-header">
@@ -28,7 +31,7 @@
   </ng-template>
 
   <form class="usage-form" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="field-row">
+    <div class="field-row" [class.invalid]="isInvalid('usageCount')">
       <span class="step">1</span>
       <div class="field-body">
         <label>{{ 'BOOKINGS.PACKAGE_USAGE.USAGE_COUNT' | translate }}</label>
@@ -43,10 +46,18 @@
           </small>
         }
       </div>
-      <p-inputNumber formControlName="usageCount" [min]="0" [useGrouping]="false" />
+      <div class="field-control count-control">
+        <p-inputNumber
+          formControlName="usageCount"
+          [min]="0"
+          [useGrouping]="false"
+          [showButtons]="false"
+          inputStyleClass="usage-count-input"
+        />
+      </div>
     </div>
 
-    <div class="field-row">
+    <div class="field-row service-row" [class.invalid]="isInvalid('serviceType')">
       <span class="step">2</span>
       <div class="field-body">
         <label>{{ 'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE' | translate }}</label>
@@ -57,34 +68,42 @@
           </small>
         }
       </div>
-      <input
-        pInputText
-        formControlName="serviceType"
-        [placeholder]="'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_PLACEHOLDER' | translate"
-      />
+      <div class="field-control">
+        <input
+          pInputText
+          class="control-input"
+          formControlName="serviceType"
+          [placeholder]="'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_PLACEHOLDER' | translate"
+        />
+      </div>
     </div>
 
-    <div class="field-row textarea-row">
+    <div class="field-row notes-row" [class.invalid]="isInvalid('notes')">
       <span class="step">3</span>
-      <div class="field-body">
-        <label>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES' | translate }}</label>
-        <small>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES_HINT' | translate }}</small>
-        @if (isInvalid('notes')) {
-          <small class="field-error">
-            {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.NOTES_MAX' | translate }}
-          </small>
-        }
-      </div>
-      <div class="textarea-wrap">
-        <textarea pInputTextarea formControlName="notes" rows="4"></textarea>
-        <span class="counter">{{ notesLength() }} / 200</span>
+      <div class="notes-stack">
+        <div class="field-body">
+          <label>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES' | translate }}</label>
+          <small>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES_HINT' | translate }}</small>
+          @if (isInvalid('notes')) {
+            <small class="field-error">
+              {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.NOTES_MAX' | translate }}
+            </small>
+          }
+        </div>
+        <div class="textarea-wrap">
+          <textarea
+            pInputTextarea
+            class="control-input notes-input"
+            formControlName="notes"
+            rows="4"
+          ></textarea>
+          <span class="counter">{{ notesLength() }} / 200</span>
+        </div>
       </div>
     </div>
 
-    <p-button
-      type="submit"
-      [label]="'BOOKINGS.PACKAGE_USAGE.SUBMIT' | translate"
-      styleClass="submit-btn"
-    />
+    <button type="submit" class="package-usage-submit">
+      {{ 'BOOKINGS.PACKAGE_USAGE.SUBMIT' | translate }}
+    </button>
   </form>
 </p-dialog>

@@ -328,9 +328,9 @@
 }
 
 .slot-cell.booking-overlay.completed {
-  background: #eef8f1;
-  color: #166534;
-  border: 2px solid #86efac;
+  background: #eef6ff;
+  color: #1d4ed8;
+  border: 2px solid #93c5fd;
 }
 
 .slot-time {
@@ -349,14 +349,18 @@
   border-inline: 1px solid transparent;
 }
 
+.slot-cell.available.duration-blocked {
+  cursor: not-allowed;
+}
+
 .slot-cell.booked {
   background: #fff0f3;
   color: #be123c;
 }
 
 .slot-cell.completed {
-  background: #eef8f1;
-  color: #166534;
+  background: #eef6ff;
+  color: #1d4ed8;
 }
 
 .slot-cell.closed {
@@ -452,6 +456,11 @@
 .legend-card.booked {
   background: #fff0f3;
   color: #be123c;
+}
+
+.legend-card.completed {
+  background: #eef6ff;
+  color: #1d4ed8;
 }
 
 .legend-card.closed {

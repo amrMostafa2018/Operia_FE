@@ -71,7 +71,9 @@
     font-size: 1rem;
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
   }
 
   .cancel-btn {
@@ -132,10 +134,29 @@
   }
 }
 
-.bookings-package-usage-dialog,
 .bookings-mismatch-dialog,
 .bookings-confirm-dialog {
   .p-dialog-content {
     padding: 0 1.25rem 1rem;
+  }
+}
+
+.bookings-package-usage-dialog {
+  &.p-dialog {
+    height: auto !important;
+    max-width: min(580px, 94vw);
+  }
+
+  .p-dialog-content {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    padding: 0 1.5rem 1.25rem;
+  }
+
+  .p-inputnumber,
+  .p-inputnumber-input {
+    width: 100%;
   }
 }

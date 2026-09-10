@@ -865,7 +865,8 @@
       "PACKAGE_USAGE": "Package usage confirmed successfully.",
       "BRANCHES_LOAD_FAILED": "Could not load branches.",
       "EMPLOYEES_LOAD_FAILED": "Could not load staff for this branch.",
-      "PACKAGES_LOAD_FAILED": "Could not load packages and services."
+      "PACKAGES_LOAD_FAILED": "Could not load packages and services.",
+      "SLOT_DURATION_BLOCKED": "This start time cannot be booked for {{duration}} minutes because the full interval is not free."
     }
   },
   "BOOKING_STATUS": {

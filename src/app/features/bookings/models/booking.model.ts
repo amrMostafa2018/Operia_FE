@@ -130,6 +130,7 @@ export interface CalendarSlotCell {
   startMinutes: number;
   endMinutes: number;
   visual: SlotVisualState;
+  selectable: boolean;
   recommended: boolean;
   booking?: BookingRecord;
   isRangeStart: boolean;
@@ -794,6 +795,10 @@ export function buildSlotGrid(
       visual = primary.status === 'completed' ? 'completed' : 'booked';
     }
 
+    const selectable =
+      visual === 'available' &&
+      isSlotAvailableForBooking(bookings, employeeId, date, start, durationMinutes, hours);
+
     const offsetStart = start + SLOT_SNAP_MINUTES;
     const offsetAvailable =
       !offsetBooking &&
@@ -808,7 +813,8 @@ export function buildSlotGrid(
       startMinutes: start,
       endMinutes: start + SLOT_INTERVAL_MINUTES,
       visual,
-      recommended: recommendedStart === start && visual === 'available',
+      selectable,
+      recommended: recommendedStart === start && selectable,
       booking,
       isRangeStart: !!bookingAtStart,
       isContinuation: overlapping.length > 0 && !bookingAtStart && !offsetBooking,

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
@@ -13,7 +12,6 @@ import { isFieldInvalid } from '@app/shared/utils/form-field.util';
   standalone: true,
   imports: [
     DialogModule,
-    ButtonModule,
     ReactiveFormsModule,
     InputNumberModule,
     InputTextModule,

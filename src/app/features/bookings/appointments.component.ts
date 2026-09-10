@@ -50,7 +50,9 @@ import {
   formatMinutesAsTime,
   formatTimeRange,
   generateBookingNumber,
+  hoursForDate,
   initialsFromName,
+  isSlotAvailableForBooking,
   MOCK_DURATIONS,
   PackageOption,
   parseTimeToMinutes,
@@ -361,10 +363,22 @@ export class AppointmentsComponent {
     if (key === 'durationMinutes' || key === 'packageId') {
       const slot = this.selectedSlot();
       if (slot) {
-        this.selectedSlot.set({
-          ...slot,
-          slotDurationMinutes: this.filters().durationMinutes,
-        });
+        const durationMinutes = this.filters().durationMinutes;
+        if (
+          !this.isStartAvailableForDuration(
+            slot.employeeId,
+            slot.date,
+            slot.startMinutes,
+            durationMinutes
+          )
+        ) {
+          this.selectedSlot.set(null);
+        } else {
+          this.selectedSlot.set({
+            ...slot,
+            slotDurationMinutes: durationMinutes,
+          });
+        }
       }
     }
   }
@@ -462,6 +476,11 @@ export class AppointmentsComponent {
       return;
     }
 
+    if (!cell.selectable) {
+      this.notifyDurationBlocked();
+      return;
+    }
+
     this.selectAvailableSlot(column, startMinutes);
   }
 
@@ -470,10 +489,40 @@ export class AppointmentsComponent {
     this.detailsDialogVisible.set(true);
   }
 
+  private isStartAvailableForDuration(
+    employeeId: string,
+    date: Date,
+    startMinutes: number,
+    durationMinutes: number
+  ): boolean {
+    const employee = this.employees().find(item => item.id === employeeId);
+    const hours = hoursForDate(employee?.workingDays ?? [], date);
+    return isSlotAvailableForBooking(
+      this.bookings(),
+      employeeId,
+      date,
+      startMinutes,
+      durationMinutes,
+      hours
+    );
+  }
+
   selectAvailableSlot(
     column: { employeeId: string; date: Date; title: string },
     startMinutes: number
   ): void {
+    if (
+      !this.isStartAvailableForDuration(
+        column.employeeId,
+        column.date,
+        startMinutes,
+        this.filters().durationMinutes
+      )
+    ) {
+      this.notifyDurationBlocked();
+      return;
+    }
+
     const employee = this.employees().find(item => item.id === column.employeeId);
     const branch = this.selectedBranch();
     const selection: SlotSelection = {
@@ -640,12 +689,20 @@ export class AppointmentsComponent {
     if (!booking) {
       return;
     }
-    if (bookingHasPackage(booking)) {
-      this.pendingCloseBookingId.set(bookingId);
-      this.packageUsageVisible.set(true);
+    this.pendingCloseBookingId.set(bookingId);
+    queueMicrotask(() => this.packageUsageVisible.set(true));
+  }
+
+  onDetailsDialogClosed(): void {
+    if (this.packageUsageVisible()) {
       return;
     }
-    this.completeBooking(bookingId);
+    this.detailsDialogVisible.set(false);
+  }
+
+  onPackageUsageClosed(): void {
+    this.packageUsageVisible.set(false);
+    this.pendingCloseBookingId.set(null);
   }
 
   onPackageUsageSubmit(): void {
@@ -653,30 +710,36 @@ export class AppointmentsComponent {
     if (!bookingId) {
       return;
     }
-    this.clients.update(items =>
-      items.map(client => ({
-        ...client,
-        packages: client.packages.map(pkg => ({
-          ...pkg,
-          usedSessions: Math.min(pkg.usedSessions + 1, pkg.totalSessions),
-        })),
-      }))
-    );
-    this.completeBooking(bookingId);
+    const booking = this.bookings().find(item => item.id === bookingId);
+    if (booking && bookingHasPackage(booking)) {
+      this.clients.update(items =>
+        items.map(client => {
+          if (client.id !== booking.clientId) {
+            return client;
+          }
+          return {
+            ...client,
+            packages: client.packages.map(pkg => ({
+              ...pkg,
+              usedSessions: Math.min(pkg.usedSessions + 1, pkg.totalSessions),
+            })),
+          };
+        })
+      );
+    }
+    this.completeBooking(bookingId, 'BOOKINGS.TOAST.PACKAGE_USAGE');
     this.packageUsageVisible.set(false);
     this.pendingCloseBookingId.set(null);
-    this.detailsDialogVisible.set(false);
-    this.showToast('BOOKINGS.TOAST.PACKAGE_USAGE');
   }
 
-  private completeBooking(bookingId: string): void {
+  private completeBooking(bookingId: string, toastKey = 'BOOKINGS.TOAST.CLOSED'): void {
     this.bookings.update(items =>
       items.map(booking =>
         booking.id === bookingId ? { ...booking, status: 'completed' as const } : booking
       )
     );
     this.detailsDialogVisible.set(false);
-    this.showToast('BOOKINGS.TOAST.CLOSED');
+    this.showToast(toastKey);
   }
 
   onDetailsCancelRequest(bookingId: string): void {
@@ -739,6 +802,15 @@ export class AppointmentsComponent {
       return '';
     }
     return formatTimeRange(selection.startMinutes, selection.slotDurationMinutes);
+  }
+
+  private notifyDurationBlocked(): void {
+    this.toast.add({
+      severity: 'warn',
+      summary: this.translate.instant('BOOKINGS.TOAST.SLOT_DURATION_BLOCKED', {
+        duration: this.filters().durationMinutes,
+      }),
+    });
   }
 
   private showToast(key: string): void {

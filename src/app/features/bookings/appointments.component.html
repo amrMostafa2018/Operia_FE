@@ -187,6 +187,7 @@
         <h4>{{ 'BOOKINGS.LEGEND_TITLE' | translate }}</h4>
         <div class="legend-card available">{{ 'BOOKINGS.LEGEND_AVAILABLE' | translate }}</div>
         <div class="legend-card booked">{{ 'BOOKINGS.LEGEND_BOOKED' | translate }}</div>
+        <div class="legend-card completed">{{ 'BOOKINGS.LEGEND_COMPLETED' | translate }}</div>
         <div class="legend-card closed">{{ 'BOOKINGS.LEGEND_CLOSED' | translate }}</div>
         <div class="legend-card recommended">
           <i class="pi pi-star-fill"></i>{{ 'BOOKINGS.LEGEND_RECOMMENDED' | translate }}
@@ -259,6 +260,9 @@
                             class="slot-cell"
                             [class.available]="cell.visual === 'available'"
                             [class.closed]="cell.visual === 'closed'"
+                            [class.duration-blocked]="
+                              cell.visual === 'available' && !cell.selectable
+                            "
                             [class.recommended]="cell.recommended"
                             [class.selected]="isSlotSelected(column, minute)"
                             [style.height.px]="
@@ -422,7 +426,7 @@
   [visible]="detailsDialogVisible()"
   [booking]="activeBooking()"
   [catalogItems]="catalogItems()"
-  (closed)="detailsDialogVisible.set(false)"
+  (closed)="onDetailsDialogClosed()"
   (saved)="onDetailsSaved($event)"
   (closeBooking)="onDetailsClose($event)"
   (cancelBooking)="onDetailsCancelRequest($event)"
@@ -430,7 +434,7 @@
 
 <app-confirm-package-usage-dialog
   [visible]="packageUsageVisible()"
-  (closed)="packageUsageVisible.set(false)"
+  (closed)="onPackageUsageClosed()"
   (submitted)="onPackageUsageSubmit()"
 />
 
