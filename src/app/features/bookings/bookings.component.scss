@@ -53,7 +53,7 @@
   }
 
   &--pending strong {
-    color: #f97316;
+    color: #d97706;
   }
 
   &--cancelled strong {
@@ -301,12 +301,6 @@ label {
 
   .status-tag.p-tag {
     @include data-table.status-tag-pill;
-  }
-
-  .status-tag.p-tag-warning {
-    background: #fff7ed;
-    color: #f97316;
-    border: 1px solid #fdba74;
   }
 
   .booking-detail-dialog .p-dialog-header,

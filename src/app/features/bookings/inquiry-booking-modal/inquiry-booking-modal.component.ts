@@ -31,7 +31,6 @@ import { SlotPickerComponent } from '../slot-picker/slot-picker.component';
 import {
   CalendarBookingDraft,
   CalendarSlotSelection,
-  toIsoDate,
 } from '../bookings-calendar/bookings-calendar.utils';
 
 type Step = 'search' | 'packages' | 'schedule' | 'confirm';
@@ -259,7 +258,7 @@ export class InquiryBookingModalComponent {
     }
 
     this.slotsLoading.set(true);
-    const dateStr = toIsoDate(date);
+    const dateStr = this.toIsoDate(date);
     const prefill = this.activeSchedulePrefill();
     const slotDuration =
       applyPrefill && prefill?.durationMinutes ? prefill.durationMinutes : pkg.sessionDurationMinutes;
@@ -328,7 +327,7 @@ export class InquiryBookingModalComponent {
           packageId: pkg.id,
           branchId,
           employeeId,
-          date: toIsoDate(date),
+          date: this.toIsoDate(date),
           startTime,
           endTime,
         })
@@ -373,5 +372,9 @@ export class InquiryBookingModalComponent {
 
   isPackageSelectable(pkg: MockPackage): boolean {
     return pkg.status === 'active' && pkg.remainingSessions > 0;
+  }
+
+  private toIsoDate(date: Date): string {
+    return date.toISOString().slice(0, 10);
   }
 }
