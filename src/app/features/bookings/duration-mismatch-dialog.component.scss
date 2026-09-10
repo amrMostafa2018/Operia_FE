@@ -1,3 +1,13 @@
+@use './bookings-dialog' as dialog;
+
+@include dialog.bookings-dialog-header;
+@include dialog.bookings-dialog-close-button;
+
+.mismatch-header-spacer {
+  display: block;
+  min-height: 0.25rem;
+}
+
 .mismatch-body {
   display: flex;
   flex-direction: column;
@@ -19,7 +29,8 @@
   font-size: 1.5rem;
 }
 
-h3 {
+h3,
+.mismatch-heading {
   margin: 0;
   color: var(--text-primary);
   font-size: 1.1rem;

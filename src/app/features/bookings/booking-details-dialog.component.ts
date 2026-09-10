@@ -9,23 +9,25 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
 import { CurrencyService } from '@core/services/currency.service';
+import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import {
   BookingLineItem,
   BookingRecord,
   BookingWordStatus,
-  MOCK_SERVICES,
+  formatTimeRange,
   PaymentMethodId,
   PAYMENT_METHODS,
+  ServiceCatalogItem,
   sumLineItemPrice,
 } from './models/booking.model';
 
@@ -43,7 +45,6 @@ export interface BookingDetailsSavePayload {
     CommonModule,
     DialogModule,
     ButtonModule,
-    TagModule,
     FormsModule,
     ReactiveFormsModule,
     InputTextModule,
@@ -57,10 +58,14 @@ export interface BookingDetailsSavePayload {
 export class BookingDetailsDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly permissions = inject(PermissionService);
+  private readonly languageService = inject(LanguageService);
+  private readonly translate = inject(TranslateService);
+  private readonly toast = inject(MessageService);
   readonly currencyService = inject(CurrencyService);
 
   readonly visible = input(false);
   readonly booking = input<BookingRecord | null>(null);
+  readonly catalogItems = input<ServiceCatalogItem[]>([]);
 
   readonly closed = output<void>();
   readonly saved = output<BookingDetailsSavePayload>();
@@ -68,13 +73,12 @@ export class BookingDetailsDialogComponent {
   readonly cancelBooking = output<string>();
 
   readonly paymentMethods = PAYMENT_METHODS;
-  readonly catalogServices = MOCK_SERVICES;
   readonly showUnlisted = signal(false);
   readonly showServicePicker = signal(false);
 
   readonly unlistedForm = this.fb.nonNullable.group({
-    name: [''],
-    price: [0],
+    name: ['', Validators.required],
+    price: [0, Validators.min(0)],
   });
 
   readonly draftLineItems = signal<BookingLineItem[]>([]);
@@ -89,11 +93,15 @@ export class BookingDetailsDialogComponent {
 
   readonly isEditable = computed(() => this.booking()?.status === 'booked' && this.canManage());
   readonly showActions = computed(
-    () => this.booking()?.status === 'booked' && (this.canManage() || this.canChangeStatus() || this.canCancel())
+    () =>
+      this.booking()?.status === 'booked' &&
+      (this.canManage() || this.canChangeStatus() || this.canCancel())
   );
 
   readonly totalAmount = computed(() => sumLineItemPrice(this.draftLineItems()));
-  readonly remainingAmount = computed(() => Math.max(this.totalAmount() - this.draftPaidAmount(), 0));
+  readonly remainingAmount = computed(() =>
+    Math.max(this.totalAmount() - this.draftPaidAmount(), 0)
+  );
 
   constructor() {
     effect(() => {
@@ -110,14 +118,14 @@ export class BookingDetailsDialogComponent {
     });
   }
 
-  statusSeverity(status: BookingWordStatus): 'success' | 'info' | 'danger' {
+  statusClass(status: BookingWordStatus): string {
     switch (status) {
       case 'booked':
-        return 'info';
+        return 'status-booked';
       case 'completed':
-        return 'success';
+        return 'status-completed';
       case 'cancelled':
-        return 'danger';
+        return 'status-cancelled';
     }
   }
 
@@ -132,6 +140,102 @@ export class BookingDetailsDialogComponent {
     }
   }
 
+  lineTypeKey(type: BookingLineItem['type']): string {
+    switch (type) {
+      case 'package':
+        return 'BOOKINGS.DETAILS.TYPE_PACKAGE';
+      case 'session':
+        return 'BOOKINGS.DETAILS.TYPE_SESSION';
+      default:
+        return 'BOOKINGS.DETAILS.TYPE_UNLISTED';
+    }
+  }
+
+  lineTypeClass(type: BookingLineItem['type']): string {
+    switch (type) {
+      case 'package':
+        return 'type-package';
+      case 'session':
+        return 'type-session';
+      default:
+        return 'type-unlisted';
+    }
+  }
+
+  lineIcon(item: BookingLineItem): string {
+    if (item.type === 'package') {
+      return 'pi pi-box';
+    }
+    if (item.type === 'session') {
+      return 'pi pi-sun';
+    }
+    return 'pi pi-ellipsis-h';
+  }
+
+  createdAtLabel(booking: BookingRecord): string {
+    return booking.createdAt.toLocaleString(this.languageService.currentLang(), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
+  scheduledLabel(booking: BookingRecord): string {
+    const date = booking.scheduledDate.toLocaleDateString(this.languageService.currentLang(), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    const time = formatTimeRange(booking.startMinutes, booking.slotDurationMinutes);
+    return `${date}، ${time}`;
+  }
+
+  packageRemainingSessions(item: BookingLineItem): number | null {
+    if (item.type !== 'package' && !item.packageSessionLinked) {
+      return null;
+    }
+    return 5;
+  }
+
+  unlistedNameError(): string | null {
+    const control = this.unlistedForm.controls.name;
+    if (!control.touched && !control.dirty) {
+      return null;
+    }
+    if (control.hasError('required')) {
+      return 'BOOKINGS.DETAILS.ERRORS.UNLISTED_NAME_REQUIRED';
+    }
+    return null;
+  }
+
+  unlistedPriceError(): string | null {
+    const control = this.unlistedForm.controls.price;
+    if (!control.touched && !control.dirty) {
+      return null;
+    }
+    if (control.hasError('min')) {
+      return 'BOOKINGS.DETAILS.ERRORS.UNLISTED_PRICE_MIN';
+    }
+    return null;
+  }
+
+  async copyBookingNumber(number: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(number);
+      this.toast.add({
+        severity: 'success',
+        summary: this.translate.instant('BOOKINGS.DETAILS.COPY_SUCCESS'),
+      });
+    } catch {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('BOOKINGS.DETAILS.COPY_FAILED'),
+      });
+    }
+  }
+
   removeLineItem(itemId: string): void {
     if (!this.isEditable()) {
       return;
@@ -143,7 +247,7 @@ export class BookingDetailsDialogComponent {
     if (!this.isEditable()) {
       return;
     }
-    const service = MOCK_SERVICES.find(item => item.id === serviceId);
+    const service = this.catalogItems().find(item => item.id === serviceId);
     if (!service) {
       return;
     }
@@ -166,10 +270,11 @@ export class BookingDetailsDialogComponent {
     if (!this.isEditable()) {
       return;
     }
-    const value = this.unlistedForm.getRawValue();
-    if (!value.name.trim()) {
+    this.unlistedForm.markAllAsTouched();
+    if (this.unlistedForm.invalid) {
       return;
     }
+    const value = this.unlistedForm.getRawValue();
     this.draftLineItems.update(items => [
       ...items,
       {

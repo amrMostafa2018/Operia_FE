@@ -1,3 +1,8 @@
+@use './bookings-dialog' as dialog;
+
+@include dialog.bookings-dialog-header;
+@include dialog.bookings-dialog-close-button;
+
 .dialog-header {
   display: flex;
   align-items: center;

@@ -8,6 +8,14 @@
 >
   <ng-template pTemplate="header">
     <b>{{ headerKey() | translate }}</b>
+    <button
+      type="button"
+      class="dialog-close"
+      (click)="cancelled.emit()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
   </ng-template>
 
   <p class="confirm-dialog-copy">{{ messageKey() | translate: messageParams() }}</p>

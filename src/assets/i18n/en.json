@@ -648,6 +648,7 @@
   "COMMON": {
     "SAVE": "Save",
     "CANCEL": "Cancel",
+    "CLOSE": "Close",
     "DELETE": "Delete",
     "EDIT": "Edit",
     "ADD": "Add",
@@ -727,9 +728,12 @@
     },
     "PAYMENT": {
       "CASH": "Cash",
+      "BANK_TRANSFER": "Bank transfer",
       "VODAFONE": "Vodafone Cash",
-      "INSTAPAY": "InstaPay",
-      "WALLET": "Wallet"
+      "INSTAPAY": "Instapay",
+      "WALLET": "Wallet",
+      "E_WALLET": "E-Wallet",
+      "FAWRY": "Fawry"
     },
     "SERVICE_TABS": {
       "ALL": "All",
@@ -741,20 +745,28 @@
     },
     "DETAILS": {
       "TITLE": "Booking details",
+      "SIDEBAR_TITLE": "Booking details",
       "BOOKING_NUMBER": "Booking number",
-      "CREATED_AT": "Created at",
+      "CREATED_AT": "Booking date",
       "STATUS": "Status",
       "CUSTOMER": "Customer",
+      "MOBILE": "Mobile number",
       "EMPLOYEE": "Employee",
       "BRANCH": "Branch",
       "SOURCE": "Source",
-      "SCHEDULED": "Scheduled time",
+      "SCHEDULED": "Appointment",
       "DURATION": "Duration",
       "SERVICES": "Selected services",
       "ADD_FROM_LIST": "Add service from list",
       "ADD_UNLISTED": "Add unlisted service",
       "UNLISTED_NAME": "Service name",
       "UNLISTED_PRICE": "Price",
+      "TYPE_PACKAGE": "Package",
+      "TYPE_SESSION": "Session",
+      "TYPE_UNLISTED": "Unlisted",
+      "REMAINING_SESSIONS": "Remaining sessions: {{count}}",
+      "FINANCIAL_TITLE": "Financial details",
+      "DUE_NOW": "Amount due now",
       "TOTAL_SERVICES": "Total services",
       "PAID": "Paid",
       "REMAINING": "Remaining",
@@ -762,8 +774,16 @@
       "CANCEL": "Cancel booking",
       "SAVE": "Save changes",
       "CLOSE": "Close booking",
+      "CLOSE_CONFIRMED": "Confirmed booking (close)",
+      "COPY_NUMBER": "Copy booking number",
+      "COPY_SUCCESS": "Booking number copied.",
+      "COPY_FAILED": "Could not copy booking number.",
       "CANCEL_CONFIRM_TITLE": "Cancel booking?",
-      "CANCEL_CONFIRM_MESSAGE": "Are you sure you want to cancel this booking? The slot will become available again."
+      "CANCEL_CONFIRM_MESSAGE": "Are you sure you want to cancel this booking? The slot will become available again.",
+      "ERRORS": {
+        "UNLISTED_NAME_REQUIRED": "Service name is required.",
+        "UNLISTED_PRICE_MIN": "Price cannot be negative."
+      }
     },
     "PACKAGE_USAGE": {
       "TITLE": "Close and confirm usage",
@@ -785,22 +805,51 @@
     },
     "BOOK": {
       "TITLE": "Book service",
+      "CLIENT_SECTION": "Client details",
+      "SERVICES_SECTION": "Categories and services",
       "CLIENT_MOBILE": "Mobile number",
       "CLIENT_NAME": "Client name",
+      "PACKAGE_SELECT": "Package",
+      "PACKAGE_TOTAL_SESSIONS": "Total sessions",
+      "PACKAGE_USED": "Used",
+      "PACKAGE_REMAINING": "Remaining",
+      "PACKAGE_EXPIRY_DATE": "Package expiry",
       "REGISTERED": "Registered client",
       "UNREGISTERED": "Unregistered client",
       "PACKAGE_PROGRESS": "{{used}} of {{total}} sessions used",
       "PACKAGE_EXPIRY": "Expires {{date}}",
+      "SEARCH_SERVICES": "Search for a service or package",
+      "CATALOG_LOADING": "Loading services and packages...",
+      "CATALOG_EMPTY": "No services or packages are available.",
+      "SESSION_LABEL": "Session",
+      "TAX": "Tax",
+      "TOTAL_PRICE": "Total price",
+      "PAYMENTS_TITLE": "Payments",
+      "PAID": "Paid",
+      "REMAINING": "Remaining",
+      "TOTAL": "Total",
       "SELECTED_SERVICES": "Selected services",
       "SUMMARY": "Booking summary",
-      "SERVICE_COUNT": "Services",
-      "SESSION_COUNT": "Sessions",
-      "TOTAL_DURATION": "Total duration",
+      "SERVICE_COUNT": "Selected services",
+      "SESSION_COUNT": "Total sessions",
+      "TOTAL_DURATION": "Booking duration",
       "SUBTOTAL": "Subtotal",
       "DISCOUNT": "Discount",
       "NET_TOTAL": "Net total",
+      "GRAND_TOTAL": "Total",
+      "DATE": "Date",
+      "TIME": "Time",
+      "DURATION": "Duration",
+      "STAFF": "Staff",
+      "BRANCH": "Branch",
+      "SCROLL_PREV": "Scroll services backward",
+      "SCROLL_NEXT": "Scroll services forward",
       "CONFIRM": "Confirm booking",
-      "SEND_MESSAGE": "Send confirmation message to client after booking"
+      "SEND_MESSAGE": "Send confirmation message to client after booking",
+      "ERRORS": {
+        "MOBILE_REQUIRED": "Mobile number is required.",
+        "NAME_REQUIRED": "Client name is required."
+      }
     },
     "MISMATCH": {
       "TITLE": "Booking duration warning",
@@ -815,7 +864,8 @@
       "CANCELLED": "Booking cancelled successfully.",
       "PACKAGE_USAGE": "Package usage confirmed successfully.",
       "BRANCHES_LOAD_FAILED": "Could not load branches.",
-      "EMPLOYEES_LOAD_FAILED": "Could not load staff for this branch."
+      "EMPLOYEES_LOAD_FAILED": "Could not load staff for this branch.",
+      "PACKAGES_LOAD_FAILED": "Could not load packages and services."
     }
   },
   "BOOKING_STATUS": {

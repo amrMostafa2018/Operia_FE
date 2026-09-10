@@ -651,6 +651,7 @@
   "COMMON": {
     "SAVE": "حفظ",
     "CANCEL": "إلغاء",
+    "CLOSE": "إغلاق",
     "DELETE": "حذف",
     "EDIT": "تعديل",
     "ADD": "إضافة",
@@ -730,9 +731,12 @@
     },
     "PAYMENT": {
       "CASH": "كاش",
+      "BANK_TRANSFER": "تحويل بنكي",
       "VODAFONE": "فودافون كاش",
-      "INSTAPAY": "InstaPay",
-      "WALLET": "محفظة"
+      "INSTAPAY": "Instapay",
+      "WALLET": "محفظة",
+      "E_WALLET": "محفظة إلكترونية",
+      "FAWRY": "فوري"
     },
     "SERVICE_TABS": {
       "ALL": "الكل",
@@ -744,20 +748,28 @@
     },
     "DETAILS": {
       "TITLE": "تفاصيل الحجز",
+      "SIDEBAR_TITLE": "تفاصيل الحجز",
       "BOOKING_NUMBER": "رقم الحجز",
-      "CREATED_AT": "تاريخ الإنشاء",
+      "CREATED_AT": "تاريخ الحجز",
       "STATUS": "الحالة",
       "CUSTOMER": "العميل",
+      "MOBILE": "رقم الموبايل",
       "EMPLOYEE": "الموظف",
       "BRANCH": "الفرع",
       "SOURCE": "المصدر",
-      "SCHEDULED": "الموعد المحدد",
+      "SCHEDULED": "الموعد",
       "DURATION": "مدة الجلسة",
       "SERVICES": "الخدمات المختارة",
       "ADD_FROM_LIST": "إضافة خدمة من قائمة الخدمات",
       "ADD_UNLISTED": "إضافة خدمة غير مدرجة",
       "UNLISTED_NAME": "اسم الخدمة",
       "UNLISTED_PRICE": "السعر",
+      "TYPE_PACKAGE": "باقة",
+      "TYPE_SESSION": "جلسة",
+      "TYPE_UNLISTED": "غير مدرجة",
+      "REMAINING_SESSIONS": "عدد الجلسات المتبقية: {{count}} جلسات",
+      "FINANCIAL_TITLE": "التفاصيل المالية",
+      "DUE_NOW": "المبلغ الواجب سداده الآن",
       "TOTAL_SERVICES": "إجمالي الخدمات",
       "PAID": "المدفوع",
       "REMAINING": "المتبقي",
@@ -765,8 +777,16 @@
       "CANCEL": "إلغاء الحجز",
       "SAVE": "حفظ التعديلات",
       "CLOSE": "إقفال الحجز",
+      "CLOSE_CONFIRMED": "حجز مؤكد (إقفال)",
+      "COPY_NUMBER": "نسخ رقم الحجز",
+      "COPY_SUCCESS": "تم نسخ رقم الحجز.",
+      "COPY_FAILED": "تعذر نسخ رقم الحجز.",
       "CANCEL_CONFIRM_TITLE": "إلغاء الحجز؟",
-      "CANCEL_CONFIRM_MESSAGE": "هل أنت متأكد من إلغاء هذا الحجز؟ سيصبح الموعد متاحاً مرة أخرى."
+      "CANCEL_CONFIRM_MESSAGE": "هل أنت متأكد من إلغاء هذا الحجز؟ سيصبح الموعد متاحاً مرة أخرى.",
+      "ERRORS": {
+        "UNLISTED_NAME_REQUIRED": "اسم الخدمة مطلوب.",
+        "UNLISTED_PRICE_MIN": "لا يمكن أن يكون السعر أقل من صفر."
+      }
     },
     "PACKAGE_USAGE": {
       "TITLE": "إقفال العملية وتأكيد الاستخدام",
@@ -788,22 +808,51 @@
     },
     "BOOK": {
       "TITLE": "حجز خدمة",
+      "CLIENT_SECTION": "بيانات العميل",
+      "SERVICES_SECTION": "بيانات الفئات والخدمات",
       "CLIENT_MOBILE": "رقم الموبايل",
       "CLIENT_NAME": "اسم العميل",
+      "PACKAGE_SELECT": "الباقة",
+      "PACKAGE_TOTAL_SESSIONS": "إجمالي الجلسات",
+      "PACKAGE_USED": "المستخدم",
+      "PACKAGE_REMAINING": "المتبقي",
+      "PACKAGE_EXPIRY_DATE": "تاريخ انتهاء الباقة",
       "REGISTERED": "عميل مسجل",
       "UNREGISTERED": "عميل غير مسجل",
       "PACKAGE_PROGRESS": "{{used}} من {{total}} جلسات مستخدمة",
       "PACKAGE_EXPIRY": "ينتهي {{date}}",
+      "SEARCH_SERVICES": "ابحث عن خدمة أو باقة",
+      "CATALOG_LOADING": "جاري تحميل الخدمات والباقات...",
+      "CATALOG_EMPTY": "لا توجد خدمات أو باقات متاحة.",
+      "SESSION_LABEL": "جلسة",
+      "TAX": "الضريبة",
+      "TOTAL_PRICE": "السعر الإجمالي",
+      "PAYMENTS_TITLE": "المدفوعات",
+      "PAID": "مدفوع",
+      "REMAINING": "باقي",
+      "TOTAL": "الإجمالي",
       "SELECTED_SERVICES": "الخدمات المختارة",
       "SUMMARY": "ملخص الحجز",
-      "SERVICE_COUNT": "عدد الخدمات",
-      "SESSION_COUNT": "عدد الجلسات",
-      "TOTAL_DURATION": "المدة الإجمالية",
+      "SERVICE_COUNT": "عدد الخدمات المختارة",
+      "SESSION_COUNT": "عدد الجلسات الإجمالي",
+      "TOTAL_DURATION": "مدة الحجز",
       "SUBTOTAL": "الإجمالي",
-      "DISCOUNT": "الخصم",
+      "DISCOUNT": "قيمة الخصم",
       "NET_TOTAL": "الصافي",
+      "GRAND_TOTAL": "الإجمالي",
+      "DATE": "التاريخ",
+      "TIME": "الوقت",
+      "DURATION": "مدة الجلسة",
+      "STAFF": "الموظف",
+      "BRANCH": "الفرع",
+      "SCROLL_PREV": "التمرير للخلف",
+      "SCROLL_NEXT": "التمرير للأمام",
       "CONFIRM": "تأكيد الحجز",
-      "SEND_MESSAGE": "إرسال رسالة تأكيد للعميل بعد الحجز"
+      "SEND_MESSAGE": "إرسال رسالة تأكيد للعميل بعد الحجز",
+      "ERRORS": {
+        "MOBILE_REQUIRED": "رقم الموبايل مطلوب.",
+        "NAME_REQUIRED": "اسم العميل مطلوب."
+      }
     },
     "MISMATCH": {
       "TITLE": "تنبيه بخصوص مدة الحجز",
@@ -818,7 +867,8 @@
       "CANCELLED": "تم إلغاء الحجز بنجاح.",
       "PACKAGE_USAGE": "تم تأكيد استخدام الباقة بنجاح.",
       "BRANCHES_LOAD_FAILED": "تعذر تحميل الفروع.",
-      "EMPLOYEES_LOAD_FAILED": "تعذر تحميل موظفي هذا الفرع."
+      "EMPLOYEES_LOAD_FAILED": "تعذر تحميل موظفي هذا الفرع.",
+      "PACKAGES_LOAD_FAILED": "تعذر تحميل الباقات والخدمات."
     }
   },
   "BOOKING_STATUS": {

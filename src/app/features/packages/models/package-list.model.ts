@@ -5,6 +5,7 @@ export type PackageDurationUnit = 'minute';
 export interface PackageCategoryOption {
   id: string;
   name: string;
+  icon?: string;
 }
 
 export interface PackageFormValue {

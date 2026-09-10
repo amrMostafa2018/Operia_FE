@@ -1,7 +1,7 @@
 <p-dialog
   [visible]="visible()"
   [modal]="true"
-  [closable]="true"
+  [closable]="false"
   [draggable]="false"
   [resizable]="false"
   appendTo="body"
@@ -17,6 +17,14 @@
         <p>{{ 'BOOKINGS.PACKAGE_USAGE.SUBTITLE' | translate }}</p>
       </div>
     </div>
+    <button
+      type="button"
+      class="dialog-close"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
   </ng-template>
 
   <form class="usage-form" [formGroup]="form" (ngSubmit)="submit()">

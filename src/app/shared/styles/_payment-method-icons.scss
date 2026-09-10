@@ -1,0 +1,25 @@
+@use '../../../styles/variables' as *;
+
+@mixin payment-method-icon-tones {
+  &.method-icon--cash {
+    background: rgba($success, 0.12);
+    color: $success;
+  }
+
+  &.method-icon--bank {
+    background: rgba($info, 0.12);
+    color: $info;
+  }
+
+  &.method-icon--wallet,
+  &.method-icon--mobile,
+  &.method-icon--instapay {
+    background: rgba($primary, 0.12);
+    color: $primary;
+  }
+
+  &.method-icon--fawry {
+    background: #ffcb05;
+    color: #0066b3;
+  }
+}

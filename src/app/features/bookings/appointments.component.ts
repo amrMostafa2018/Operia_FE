@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -20,6 +21,7 @@ import { LanguageService } from '@core/services/language.service';
 import { Policies } from '@core/models/permissions.model';
 import { BranchService } from '@app/features/branches/branch.service';
 import { BookableEmployee, EmployeeService } from '@app/features/employees/employee.service';
+import { PackageService } from '@app/features/packages/package.service';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import { getPrevArrowIcon } from '@app/shared/utils/rtl.util';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
@@ -34,8 +36,11 @@ import {
   bookingBlockTopPx,
   BOOKING_OVERLAY_GAP_PX,
   buildSlotGrid,
+  buildSlotRows,
   CalendarSlotCell,
   CalendarViewMode,
+  calendarDayRange,
+  CatalogCategoryTab,
   cloneBookings,
   cloneClients,
   defaultFilters,
@@ -47,16 +52,17 @@ import {
   generateBookingNumber,
   initialsFromName,
   MOCK_DURATIONS,
-  MOCK_PACKAGES,
+  PackageOption,
   parseTimeToMinutes,
   resolveEmployeeForFourDayView,
+  ServiceCatalogItem,
   SlotSelection,
   SLOT_INTERVAL_MINUTES,
-  sumLineItemDuration,
   sumLineItemPrice,
   toDateKey,
   bookingHasPackage,
 } from './models/booking.model';
+import { mapPackageToCatalogItem, mapPackageToFilterOption } from './booking-catalog.util';
 import {
   BookAppointmentDialogComponent,
   BookAppointmentPayload,
@@ -107,12 +113,16 @@ export class AppointmentsComponent {
   private readonly languageService = inject(LanguageService);
   private readonly branchesApi = inject(BranchService);
   private readonly employeesApi = inject(EmployeeService);
+  private readonly packagesApi = inject(PackageService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly branches = signal<BranchOption[]>([]);
   readonly employees = signal<EmployeeOption[]>([]);
   readonly durations = MOCK_DURATIONS;
-  readonly packages = MOCK_PACKAGES;
+  readonly packages = signal<PackageOption[]>([]);
+  readonly catalogItems = signal<ServiceCatalogItem[]>([]);
+  readonly catalogCategories = signal<CatalogCategoryTab[]>([]);
+  readonly catalogLoading = signal(false);
 
   readonly bookings = signal<BookingRecord[]>(cloneBookings());
   readonly clients = signal(cloneClients());
@@ -186,16 +196,15 @@ export class AppointmentsComponent {
     }));
   });
 
-  readonly slotRows = computed(() => {
-    const rows: number[] = [];
-    for (let minute = 8 * 60; minute < 18 * 60; minute += SLOT_INTERVAL_MINUTES) {
-      rows.push(minute);
-    }
-    return rows;
-  });
+  readonly calendarRange = computed(() => calendarDayRange(this.columns()));
+
+  readonly slotRows = computed(() =>
+    buildSlotRows(this.calendarRange().startMinutes, this.calendarRange().endMinutes)
+  );
 
   readonly gridCells = computed(() => {
     const map = new Map<string, CalendarSlotCell[]>();
+    const range = this.calendarRange();
     for (const column of this.columns()) {
       const key = `${column.employeeId}|${toDateKey(column.date)}`;
       map.set(
@@ -205,7 +214,9 @@ export class AppointmentsComponent {
           column.employeeId,
           column.date,
           this.filters().durationMinutes,
-          column.employee.workingDays
+          column.employee.workingDays,
+          range.startMinutes,
+          range.endMinutes
         )
       );
     }
@@ -234,7 +245,7 @@ export class AppointmentsComponent {
     if (!packageId) {
       return null;
     }
-    return this.packages.find(item => item.id === packageId)?.name ?? null;
+    return this.packages().find(item => item.id === packageId)?.name ?? null;
   });
 
   readonly formattedSelectedDate = computed(() =>
@@ -254,6 +265,7 @@ export class AppointmentsComponent {
 
   constructor() {
     this.loadBranches();
+    this.loadCatalog();
   }
 
   private loadBranches(): void {
@@ -287,6 +299,37 @@ export class AppointmentsComponent {
       });
   }
 
+  private loadCatalog(): void {
+    this.catalogLoading.set(true);
+    forkJoin({
+      packages: this.packagesApi.listAllActive(),
+      categories: this.packagesApi.listServiceCategories(),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ packages, categories }) => {
+          this.catalogLoading.set(false);
+          this.catalogCategories.set(
+            categories.map(category => ({
+              id: category.id,
+              label: category.name,
+            }))
+          );
+          this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
+          this.packages.set(
+            packages.filter(pkg => pkg.offerType === 'package').map(mapPackageToFilterOption)
+          );
+        },
+        error: () => {
+          this.catalogLoading.set(false);
+          this.toast.add({
+            severity: 'error',
+            summary: this.translate.instant('BOOKINGS.TOAST.PACKAGES_LOAD_FAILED'),
+          });
+        },
+      });
+  }
+
   private selectedBranch(): BranchOption | null {
     const branchId = this.filters().branchId;
     const list = this.branches();
@@ -307,7 +350,7 @@ export class AppointmentsComponent {
       }
     }
     if (key === 'packageId' && typeof value === 'string' && value) {
-      const packageOption = this.packages.find(item => item.id === value);
+      const packageOption = this.packages().find(item => item.id === value);
       if (packageOption) {
         this.filters.update(current => ({
           ...current,
@@ -505,48 +548,18 @@ export class AppointmentsComponent {
 
   onFooterConfirm(): void {
     const slot = this.selectedSlot();
-    const filters = this.filters();
-    if (!slot || !this.canManage()) {
+    if (!slot || !this.canManage() || !this.isClientFirstReady()) {
       return;
     }
 
-    const packageOption = this.packages.find(item => item.id === filters.packageId);
-    const duration = filters.durationMinutes;
-    const lineItems: BookingLineItem[] = packageOption
-      ? [
-          {
-            id: `line-${packageOption.id}`,
-            name: packageOption.name,
-            type: 'package',
-            quantity: 1,
-            price: 0,
-            durationMinutes: duration,
-            packageSessionLinked: true,
-          },
-        ]
-      : [];
-
-    const serviceDuration = duration;
-    this.tryCreateBooking(
-      {
-        selection: slot,
-        clientName: filters.clientName.trim(),
-        clientMobile: filters.clientMobile.trim(),
-        clientId: null,
-        lineItems,
-        paymentMethod: 'cash',
-        discount: 0,
-        serviceDuration,
-      },
-      'footer'
-    );
+    this.bookDialogVisible.set(true);
   }
 
   onBookDialogConfirm(payload: BookAppointmentPayload): void {
-    this.tryCreateBooking(payload, 'dialog');
+    this.tryCreateBooking(payload);
   }
 
-  private tryCreateBooking(payload: PendingBookingDraft, source: 'footer' | 'dialog'): void {
+  private tryCreateBooking(payload: PendingBookingDraft): void {
     if (payload.serviceDuration > payload.selection.slotDurationMinutes) {
       this.pendingDraft.set(payload);
       this.mismatchServiceDuration.set(payload.serviceDuration);
@@ -554,7 +567,7 @@ export class AppointmentsComponent {
       this.mismatchVisible.set(true);
       return;
     }
-    this.commitBooking(payload, source);
+    this.commitBooking(payload);
   }
 
   onMismatchConfirm(): void {
@@ -562,7 +575,7 @@ export class AppointmentsComponent {
     if (!draft) {
       return;
     }
-    this.commitBooking(draft, this.bookDialogVisible() ? 'dialog' : 'footer');
+    this.commitBooking(draft);
     this.pendingDraft.set(null);
     this.mismatchVisible.set(false);
   }
@@ -572,7 +585,7 @@ export class AppointmentsComponent {
     this.pendingDraft.set(null);
   }
 
-  private commitBooking(payload: PendingBookingDraft, _source: 'footer' | 'dialog'): void {
+  private commitBooking(payload: PendingBookingDraft): void {
     const total = sumLineItemPrice(payload.lineItems);
     const booking: BookingRecord = {
       id: `bk-${Date.now()}`,
@@ -691,7 +704,9 @@ export class AppointmentsComponent {
   }
 
   bookingTop(startMinutes: number): number {
-    return bookingBlockTopPx(startMinutes) + BOOKING_OVERLAY_GAP_PX;
+    return (
+      bookingBlockTopPx(startMinutes, this.calendarRange().startMinutes) + BOOKING_OVERLAY_GAP_PX
+    );
   }
 
   bookingHeight(durationMinutes: number): number {
@@ -708,9 +723,7 @@ export class AppointmentsComponent {
   }
 
   showSlotCell(cell: CalendarSlotCell): boolean {
-    return (
-      !cell.isContinuation && cell.visual !== 'booked' && cell.visual !== 'completed'
-    );
+    return !cell.isContinuation && cell.visual !== 'booked' && cell.visual !== 'completed';
   }
 
   bookingTimeLabel(booking: BookingRecord): string {

@@ -1,8 +1,13 @@
+import {
+  PAYMENT_METHOD_ICON_CLASSES,
+  PAYMENT_METHOD_ICONS,
+} from '@app/shared/constants/payment-method-icons';
+
 export type BookingWordStatus = 'booked' | 'completed' | 'cancelled';
 export type SlotVisualState = 'available' | 'booked' | 'completed' | 'closed';
 export type CalendarViewMode = 'today' | '4days';
 export type ServiceCategory = 'all' | 'services' | 'laser' | 'peeling' | 'skin' | 'other';
-export type PaymentMethodId = 'cash' | 'vodafone_cash' | 'instapay' | 'wallet';
+export type PaymentMethodId = 'cash' | 'bank_transfer' | 'instapay' | 'e_wallet' | 'fawry';
 
 export const DAY_START_MINUTES = 8 * 60;
 export const DAY_END_MINUTES = 18 * 60;
@@ -48,6 +53,7 @@ export interface PackageOption {
   id: string;
   name: string;
   durationMinutes: number;
+  serviceId: string;
 }
 
 export interface ClientPackage {
@@ -70,11 +76,17 @@ export interface ServiceCatalogItem {
   id: string;
   name: string;
   nameKey?: string;
-  category: Exclude<ServiceCategory, 'all'>;
+  category: string;
   durationMinutes: number;
   price: number;
   icon: string;
   type: 'package' | 'session';
+}
+
+export interface CatalogCategoryTab {
+  id: string;
+  label?: string;
+  labelKey?: string;
 }
 
 export interface BookingLineItem {
@@ -203,8 +215,8 @@ export const MOCK_DURATIONS: DurationOption[] = [
 ];
 
 export const MOCK_PACKAGES: PackageOption[] = [
-  { id: 'pkg-1', name: 'باقة ليزر جسم كامل', durationMinutes: 60 },
-  { id: 'pkg-2', name: 'باقة تنظيف بشرة', durationMinutes: 45 },
+  { id: 'pkg-1', name: 'باقة ليزر جسم كامل', durationMinutes: 60, serviceId: 'svc-4' },
+  { id: 'pkg-2', name: 'باقة تنظيف بشرة', durationMinutes: 45, serviceId: 'svc-3' },
 ];
 
 export const MOCK_CLIENTS: ClientRecord[] = [
@@ -313,11 +325,42 @@ export const SERVICE_CATEGORY_TABS: { key: ServiceCategory; labelKey: string }[]
   { key: 'other', labelKey: 'BOOKINGS.SERVICE_TABS.OTHER' },
 ];
 
-export const PAYMENT_METHODS: { id: PaymentMethodId; labelKey: string; icon: string }[] = [
-  { id: 'cash', labelKey: 'BOOKINGS.PAYMENT.CASH', icon: 'pi pi-money-bill' },
-  { id: 'vodafone_cash', labelKey: 'BOOKINGS.PAYMENT.VODAFONE', icon: 'pi pi-mobile' },
-  { id: 'instapay', labelKey: 'BOOKINGS.PAYMENT.INSTAPAY', icon: 'pi pi-credit-card' },
-  { id: 'wallet', labelKey: 'BOOKINGS.PAYMENT.WALLET', icon: 'pi pi-wallet' },
+export const PAYMENT_METHODS: {
+  id: PaymentMethodId;
+  labelKey: string;
+  icon: string;
+  iconClass: string;
+}[] = [
+  {
+    id: 'cash',
+    labelKey: 'BOOKINGS.PAYMENT.CASH',
+    icon: PAYMENT_METHOD_ICONS.cash,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.cash,
+  },
+  {
+    id: 'bank_transfer',
+    labelKey: 'BOOKINGS.PAYMENT.BANK_TRANSFER',
+    icon: PAYMENT_METHOD_ICONS.bankTransfer,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.bankTransfer,
+  },
+  {
+    id: 'instapay',
+    labelKey: 'BOOKINGS.PAYMENT.INSTAPAY',
+    icon: PAYMENT_METHOD_ICONS.instapay,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.instapay,
+  },
+  {
+    id: 'e_wallet',
+    labelKey: 'BOOKINGS.PAYMENT.E_WALLET',
+    icon: PAYMENT_METHOD_ICONS.wallet,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.wallet,
+  },
+  {
+    id: 'fawry',
+    labelKey: 'BOOKINGS.PAYMENT.FAWRY',
+    icon: PAYMENT_METHOD_ICONS.fawry,
+    iconClass: PAYMENT_METHOD_ICON_CLASSES.fawry,
+  },
 ];
 
 const CLOSED_SLOT_KEYS = new Set([
@@ -479,8 +522,11 @@ export function bookingBlockHeightPx(durationMinutes: number): number {
   return (durationMinutes / SLOT_INTERVAL_MINUTES) * SLOT_ROW_HEIGHT_PX;
 }
 
-export function bookingBlockTopPx(startMinutes: number): number {
-  return ((startMinutes - DAY_START_MINUTES) / SLOT_INTERVAL_MINUTES) * SLOT_ROW_HEIGHT_PX;
+export function bookingBlockTopPx(
+  startMinutes: number,
+  dayStartMinutes: number = DAY_START_MINUTES
+): number {
+  return ((startMinutes - dayStartMinutes) / SLOT_INTERVAL_MINUTES) * SLOT_ROW_HEIGHT_PX;
 }
 
 export function formatTimeRange(startMinutes: number, durationMinutes: number): string {
@@ -620,6 +666,52 @@ export function avatarColorFromId(id: string): string {
   return AVATAR_COLORS[hash];
 }
 
+export function floorToSlot(minutes: number): number {
+  return Math.floor(minutes / SLOT_INTERVAL_MINUTES) * SLOT_INTERVAL_MINUTES;
+}
+
+export function ceilToSlot(minutes: number): number {
+  return Math.ceil(minutes / SLOT_INTERVAL_MINUTES) * SLOT_INTERVAL_MINUTES;
+}
+
+export function calendarDayRange(columns: { employee: EmployeeOption; date: Date }[]): {
+  startMinutes: number;
+  endMinutes: number;
+} {
+  let earliestStart: number | null = null;
+  let latestEnd: number | null = null;
+
+  for (const column of columns) {
+    const hours = hoursForDate(column.employee.workingDays, column.date);
+    if (!hours || hours.fromMinutes === null || hours.toMinutes === null) {
+      continue;
+    }
+    earliestStart =
+      earliestStart === null ? hours.fromMinutes : Math.min(earliestStart, hours.fromMinutes);
+    latestEnd = latestEnd === null ? hours.toMinutes : Math.max(latestEnd, hours.toMinutes);
+  }
+
+  if (earliestStart === null || latestEnd === null || latestEnd <= earliestStart) {
+    return { startMinutes: DAY_START_MINUTES, endMinutes: DAY_END_MINUTES };
+  }
+
+  const startMinutes = floorToSlot(earliestStart);
+  let endMinutes = ceilToSlot(latestEnd);
+  if (endMinutes <= startMinutes) {
+    endMinutes = startMinutes + SLOT_INTERVAL_MINUTES;
+  }
+
+  return { startMinutes, endMinutes };
+}
+
+export function buildSlotRows(startMinutes: number, endMinutes: number): number[] {
+  const rows: number[] = [];
+  for (let minute = startMinutes; minute < endMinutes; minute += SLOT_INTERVAL_MINUTES) {
+    rows.push(minute);
+  }
+  return rows;
+}
+
 export function isSlotClosed(employeeId: string, date: Date, startMinutes: number): boolean {
   return CLOSED_SLOT_KEYS.has(slotKey(employeeId, date, startMinutes));
 }
@@ -632,9 +724,6 @@ export function isSlotAvailableForBooking(
   durationMinutes: number,
   hours: EmployeeWorkingHours | null
 ): boolean {
-  if (startMinutes + durationMinutes > DAY_END_MINUTES) {
-    return false;
-  }
   if (!isWithinWorkingHours(hours, startMinutes, durationMinutes)) {
     return false;
   }
@@ -652,11 +741,11 @@ export function findRecommendedStart(
   durationMinutes: number,
   hours: EmployeeWorkingHours | null
 ): number | null {
-  for (
-    let start = DAY_START_MINUTES;
-    start + durationMinutes <= DAY_END_MINUTES;
-    start += SLOT_SNAP_MINUTES
-  ) {
+  const searchStart = hours?.fromMinutes ?? DAY_START_MINUTES;
+  const searchEnd = hours?.toMinutes ?? DAY_END_MINUTES;
+  const alignedStart = Math.ceil(searchStart / SLOT_SNAP_MINUTES) * SLOT_SNAP_MINUTES;
+
+  for (let start = alignedStart; start + durationMinutes <= searchEnd; start += SLOT_SNAP_MINUTES) {
     if (isSlotAvailableForBooking(bookings, employeeId, date, start, durationMinutes, hours)) {
       return start;
     }
@@ -669,13 +758,15 @@ export function buildSlotGrid(
   employeeId: string,
   date: Date,
   durationMinutes: number,
-  workingDays: EmployeeWorkingHours[] = []
+  workingDays: EmployeeWorkingHours[] = [],
+  rangeStartMinutes: number = DAY_START_MINUTES,
+  rangeEndMinutes: number = DAY_END_MINUTES
 ): CalendarSlotCell[] {
   const hours = hoursForDate(workingDays, date);
   const recommendedStart = findRecommendedStart(bookings, employeeId, date, durationMinutes, hours);
   const cells: CalendarSlotCell[] = [];
 
-  for (let start = DAY_START_MINUTES; start < DAY_END_MINUTES; start += SLOT_INTERVAL_MINUTES) {
+  for (let start = rangeStartMinutes; start < rangeEndMinutes; start += SLOT_INTERVAL_MINUTES) {
     const key = slotKey(employeeId, date, start);
     const overlapping = bookings.filter(
       booking =>

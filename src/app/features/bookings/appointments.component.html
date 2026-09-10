@@ -44,7 +44,7 @@
             styleClass="filter-dropdown"
             panelStyleClass="filter-dropdown-panel"
             appendTo="body"
-            [options]="packages"
+            [options]="packages()"
             optionLabel="name"
             optionValue="id"
             [showClear]="true"
@@ -408,8 +408,12 @@
   [visible]="bookDialogVisible()"
   [selection]="selectedSlot()"
   [clients]="clients()"
+  [catalogItems]="catalogItems()"
+  [catalogCategories]="catalogCategories()"
+  [catalogLoading]="catalogLoading()"
   [initialClientName]="filters().clientName"
   [initialClientMobile]="filters().clientMobile"
+  [initialPackageId]="filters().packageId"
   (closed)="bookDialogVisible.set(false)"
   (confirmBooking)="onBookDialogConfirm($event)"
 />
@@ -417,6 +421,7 @@
 <app-booking-details-dialog
   [visible]="detailsDialogVisible()"
   [booking]="activeBooking()"
+  [catalogItems]="catalogItems()"
   (closed)="detailsDialogVisible.set(false)"
   (saved)="onDetailsSaved($event)"
   (closeBooking)="onDetailsClose($event)"
@@ -433,12 +438,14 @@
   [visible]="mismatchVisible()"
   [serviceDuration]="mismatchServiceDuration()"
   [slotDuration]="mismatchSlotDuration()"
+  (closed)="mismatchVisible.set(false)"
   (back)="onMismatchBack()"
   (confirmAnyway)="onMismatchConfirm()"
 />
 
 <app-confirm-action-dialog
   [visible]="cancelConfirmVisible()"
+  styleClass="bookings-confirm-dialog"
   headerKey="BOOKINGS.DETAILS.CANCEL_CONFIRM_TITLE"
   messageKey="BOOKINGS.DETAILS.CANCEL_CONFIRM_MESSAGE"
   confirmLabelKey="BOOKINGS.DETAILS.CANCEL"

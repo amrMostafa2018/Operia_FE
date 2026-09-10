@@ -7,12 +7,25 @@
   appendTo="body"
   styleClass="bookings-mismatch-dialog"
   [style]="{ width: '480px' }"
+  (onHide)="close()"
 >
+  <ng-template pTemplate="header">
+    <span class="mismatch-header-spacer" aria-hidden="true"></span>
+    <button
+      type="button"
+      class="dialog-close"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
   <div class="mismatch-body">
     <div class="warning-icon">
       <i class="pi pi-exclamation-triangle"></i>
     </div>
-    <h3>{{ 'BOOKINGS.MISMATCH.TITLE' | translate }}</h3>
+    <h3 class="mismatch-heading">{{ 'BOOKINGS.MISMATCH.TITLE' | translate }}</h3>
     <p>
       {{
         'BOOKINGS.MISMATCH.MESSAGE'

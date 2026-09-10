@@ -18,4 +18,9 @@ export class DurationMismatchDialogComponent {
 
   readonly back = output<void>();
   readonly confirmAnyway = output<void>();
+  readonly closed = output<void>();
+
+  close(): void {
+    this.closed.emit();
+  }
 }
