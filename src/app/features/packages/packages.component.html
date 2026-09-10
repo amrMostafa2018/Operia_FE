@@ -339,15 +339,12 @@
                   <ng-template pTemplate="selectedItem" let-item>
                     @if (item) {
                       {{
-                        'PACKAGES.CREATE.EXPIRY_MONTHS'
-                          | translate: { count: item.value ?? item }
+                        'PACKAGES.CREATE.EXPIRY_MONTHS' | translate: { count: item.value ?? item }
                       }}
                     }
                   </ng-template>
                   <ng-template pTemplate="item" let-item>
-                    {{
-                      'PACKAGES.CREATE.EXPIRY_MONTHS' | translate: { count: item.value ?? item }
-                    }}
+                    {{ 'PACKAGES.CREATE.EXPIRY_MONTHS' | translate: { count: item.value ?? item } }}
                   </ng-template>
                 </p-dropdown>
                 <i class="pi pi-calendar" aria-hidden="true"></i>
@@ -370,6 +367,8 @@
               [filter]="true"
               (onFilter)="onServiceCategoryFilter($event)"
               [placeholder]="'PACKAGES.CREATE.SERVICE_CATEGORY_PLACEHOLDER' | translate"
+              [emptyMessage]="'PACKAGES.CREATE.SERVICE_CATEGORY_EMPTY' | translate"
+              [emptyFilterMessage]="'PACKAGES.CREATE.SERVICE_CATEGORY_EMPTY_FILTER' | translate"
               styleClass="package-category-dropdown"
               panelStyleClass="package-category-dropdown-panel"
             />
@@ -379,8 +378,9 @@
                 class="add-category"
                 (click)="addServiceCategory()"
                 [disabled]="!serviceCategorySearchText().trim() || categorySaving() === 'service'"
+                [attr.aria-label]="'PACKAGES.CREATE.ADD_CATEGORY' | translate"
+                [title]="'PACKAGES.CREATE.ADD_CATEGORY' | translate"
               >
-                <span>{{ 'PACKAGES.CREATE.ADD_CATEGORY' | translate }}</span>
                 <i class="pi pi-plus" aria-hidden="true"></i>
               </button>
             }
@@ -404,6 +404,8 @@
               [filter]="true"
               (onFilter)="onSubServiceCategoryFilter($event)"
               [placeholder]="'PACKAGES.CREATE.SUB_CATEGORY_PLACEHOLDER' | translate"
+              [emptyMessage]="'PACKAGES.CREATE.SUB_CATEGORY_EMPTY' | translate"
+              [emptyFilterMessage]="'PACKAGES.CREATE.SUB_CATEGORY_EMPTY_FILTER' | translate"
               styleClass="package-category-dropdown"
               panelStyleClass="package-category-dropdown-panel"
             />
@@ -412,9 +414,14 @@
                 type="button"
                 class="add-category"
                 (click)="addSubServiceCategory()"
-                [disabled]="!serviceCategoryIdValue() || !subServiceCategorySearchText().trim() || categorySaving() === 'sub'"
+                [disabled]="
+                  !serviceCategoryIdValue() ||
+                  !subServiceCategorySearchText().trim() ||
+                  categorySaving() === 'sub'
+                "
+                [attr.aria-label]="'PACKAGES.CREATE.ADD_CATEGORY' | translate"
+                [title]="'PACKAGES.CREATE.ADD_CATEGORY' | translate"
               >
-                <span>{{ 'PACKAGES.CREATE.ADD_CATEGORY' | translate }}</span>
                 <i class="pi pi-plus" aria-hidden="true"></i>
               </button>
             }

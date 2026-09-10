@@ -97,7 +97,31 @@ export interface BookingLineItem {
   price: number;
   durationMinutes: number;
   packageSessionLinked?: boolean;
+  categoryId?: string | null;
+  categoryName?: string | null;
 }
+
+export const EMPTY_UNLISTED_FORM = {
+  name: '',
+  serviceCategoryId: null as string | null,
+  offerType: 'singleSession' as const,
+  durationMinutes: 30,
+  sessionDurationUnit: 'minute' as const,
+  price: 0,
+};
+
+export const UNLISTED_OFFER_TYPE_OPTIONS: {
+  label: string;
+  value: 'package' | 'singleSession';
+}[] = [
+  { label: 'PACKAGES.CREATE.OFFER_TYPE_SINGLE', value: 'singleSession' },
+  { label: 'PACKAGES.CREATE.OFFER_TYPE_PACKAGE', value: 'package' },
+];
+
+export const UNLISTED_DURATION_UNIT_OPTIONS: {
+  label: string;
+  value: 'minute';
+}[] = [{ label: 'PACKAGES.CREATE.DURATION_UNIT_MINUTE', value: 'minute' }];
 
 export interface BookingRecord {
   id: string;
@@ -837,6 +861,15 @@ export function sumLineItemPrice(items: BookingLineItem[]): number {
 
 export function bookingHasPackage(booking: BookingRecord): boolean {
   return booking.lineItems.some(item => item.type === 'package' || item.packageSessionLinked);
+}
+
+export function bookingPerformedServiceOptions(lineItems: BookingLineItem[]): SelectOption[] {
+  const packages = lineItems.filter(item => item.type === 'package' || item.packageSessionLinked);
+  const source = packages.length > 0 ? packages : lineItems;
+  return source.map(item => ({
+    label: item.name,
+    value: item.id,
+  }));
 }
 
 export function filterEmployees(

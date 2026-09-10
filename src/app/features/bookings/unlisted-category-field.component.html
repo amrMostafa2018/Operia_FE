@@ -1,0 +1,35 @@
+<label [attr.for]="categoryInputId">
+  {{ 'BOOKINGS.DETAILS.UNLISTED_CATEGORY' | translate }} <em>*</em>
+</label>
+<div class="dropdown-with-add">
+  <p-dropdown
+    formControlName="serviceCategoryId"
+    [options]="categories()"
+    optionLabel="label"
+    optionValue="value"
+    appendTo="body"
+    [filter]="true"
+    (onFilter)="onFilter($event)"
+    [inputId]="categoryInputId"
+    [placeholder]="'BOOKINGS.DETAILS.UNLISTED_CATEGORY_PLACEHOLDER' | translate"
+    [emptyMessage]="'BOOKINGS.DETAILS.UNLISTED_CATEGORY_EMPTY' | translate"
+    [emptyFilterMessage]="'BOOKINGS.DETAILS.UNLISTED_CATEGORY_EMPTY_FILTER' | translate"
+    styleClass="unlisted-dropdown"
+    panelStyleClass="unlisted-dropdown-panel"
+  />
+  @if (canManage()) {
+    <button
+      type="button"
+      class="add-category"
+      (click)="addCategory()"
+      [disabled]="!searchText().trim() || saving()"
+      [attr.aria-label]="'PACKAGES.CREATE.ADD_CATEGORY' | translate"
+      [title]="'PACKAGES.CREATE.ADD_CATEGORY' | translate"
+    >
+      <i class="pi pi-plus" aria-hidden="true"></i>
+    </button>
+  }
+</div>
+@if (categoryError(); as errorKey) {
+  <small class="field-error">{{ errorKey | translate }}</small>
+}

@@ -34,7 +34,9 @@
     <div class="field-row" [class.invalid]="isInvalid('usageCount')">
       <span class="step">1</span>
       <div class="field-body">
-        <label>{{ 'BOOKINGS.PACKAGE_USAGE.USAGE_COUNT' | translate }}</label>
+        <label for="package-usage-count">{{
+          'BOOKINGS.PACKAGE_USAGE.USAGE_COUNT' | translate
+        }}</label>
         <small>{{ 'BOOKINGS.PACKAGE_USAGE.USAGE_HINT' | translate }}</small>
         @if (isInvalid('usageCount')) {
           <small class="field-error">
@@ -48,6 +50,7 @@
       </div>
       <div class="field-control count-control">
         <p-inputNumber
+          inputId="package-usage-count"
           formControlName="usageCount"
           [min]="0"
           [useGrouping]="false"
@@ -60,7 +63,9 @@
     <div class="field-row service-row" [class.invalid]="isInvalid('serviceType')">
       <span class="step">2</span>
       <div class="field-body">
-        <label>{{ 'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE' | translate }}</label>
+        <label for="package-usage-service-type">{{
+          'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE' | translate
+        }}</label>
         <small>{{ 'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_HINT' | translate }}</small>
         @if (isInvalid('serviceType')) {
           <small class="field-error">
@@ -69,11 +74,19 @@
         }
       </div>
       <div class="field-control">
-        <input
-          pInputText
-          class="control-input"
+        <p-dropdown
+          inputId="package-usage-service-type"
           formControlName="serviceType"
+          [options]="serviceOptions()"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          [autoZIndex]="true"
+          [baseZIndex]="13000"
           [placeholder]="'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_PLACEHOLDER' | translate"
+          [emptyMessage]="'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_EMPTY' | translate"
+          styleClass="service-type-dropdown"
+          panelStyleClass="package-usage-dropdown-panel"
         />
       </div>
     </div>
@@ -82,7 +95,7 @@
       <span class="step">3</span>
       <div class="notes-stack">
         <div class="field-body">
-          <label>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES' | translate }}</label>
+          <label for="package-usage-notes">{{ 'BOOKINGS.PACKAGE_USAGE.NOTES' | translate }}</label>
           <small>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES_HINT' | translate }}</small>
           @if (isInvalid('notes')) {
             <small class="field-error">
@@ -93,6 +106,7 @@
         <div class="textarea-wrap">
           <textarea
             pInputTextarea
+            id="package-usage-notes"
             class="control-input notes-input"
             formControlName="notes"
             rows="4"

@@ -72,6 +72,7 @@ import {
 import {
   BookingDetailsDialogComponent,
   BookingDetailsSavePayload,
+  BookingClosePayload,
 } from './booking-details-dialog.component';
 import { ConfirmPackageUsageDialogComponent } from './confirm-package-usage-dialog.component';
 import { DurationMismatchDialogComponent } from './duration-mismatch-dialog.component';
@@ -84,6 +85,7 @@ interface PendingBookingDraft {
   lineItems: BookingLineItem[];
   paymentMethod: BookingRecord['paymentMethod'];
   discount: number;
+  paidAmount: number;
   serviceDuration: number;
 }
 
@@ -142,6 +144,7 @@ export class AppointmentsComponent {
 
   readonly activeBookingId = signal<string | null>(null);
   readonly pendingCloseBookingId = signal<string | null>(null);
+  readonly pendingCloseLineItems = signal<BookingLineItem[]>([]);
   readonly pendingDraft = signal<PendingBookingDraft | null>(null);
   readonly mismatchServiceDuration = signal(0);
   readonly mismatchSlotDuration = signal(0);
@@ -299,6 +302,10 @@ export class AppointmentsComponent {
           });
         },
       });
+  }
+
+  onUnlistedPackageCreated(): void {
+    this.loadCatalog();
   }
 
   private loadCatalog(): void {
@@ -580,19 +587,29 @@ export class AppointmentsComponent {
     return formatTimeRange(startMinutes, SLOT_INTERVAL_MINUTES);
   }
 
-  footerSlotLabel(): string {
+  footerSlotTime(): string {
     const slot = this.selectedSlot();
     if (!slot) {
       return '';
     }
-    const time = formatTimeRange(slot.startMinutes, slot.slotDurationMinutes);
-    const date = slot.date.toLocaleDateString(this.languageService.currentLang(), {
+    return formatTimeRange(slot.startMinutes, slot.slotDurationMinutes);
+  }
+
+  footerSlotDate(): string {
+    const slot = this.selectedSlot();
+    if (!slot) {
+      return '';
+    }
+    return slot.date.toLocaleDateString(this.languageService.currentLang(), {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
-    return `${time}، ${date}`;
+  }
+
+  onFooterCancel(): void {
+    this.selectedSlot.set(null);
   }
 
   onFooterConfirm(): void {
@@ -654,7 +671,7 @@ export class AppointmentsComponent {
       lineItems: payload.lineItems,
       paymentMethod: payload.paymentMethod,
       totalAmount: Math.max(total - payload.discount, 0),
-      paidAmount: 0,
+      paidAmount: payload.paidAmount,
       discount: payload.discount,
       createdAt: new Date(),
     };
@@ -684,12 +701,13 @@ export class AppointmentsComponent {
     this.showToast('BOOKINGS.TOAST.SAVED');
   }
 
-  onDetailsClose(bookingId: string): void {
-    const booking = this.bookings().find(item => item.id === bookingId);
+  onDetailsClose(payload: BookingClosePayload): void {
+    const booking = this.bookings().find(item => item.id === payload.bookingId);
     if (!booking) {
       return;
     }
-    this.pendingCloseBookingId.set(bookingId);
+    this.pendingCloseBookingId.set(payload.bookingId);
+    this.pendingCloseLineItems.set(payload.lineItems.map(item => ({ ...item })));
     queueMicrotask(() => this.packageUsageVisible.set(true));
   }
 
@@ -703,6 +721,7 @@ export class AppointmentsComponent {
   onPackageUsageClosed(): void {
     this.packageUsageVisible.set(false);
     this.pendingCloseBookingId.set(null);
+    this.pendingCloseLineItems.set([]);
   }
 
   onPackageUsageSubmit(): void {
@@ -730,6 +749,7 @@ export class AppointmentsComponent {
     this.completeBooking(bookingId, 'BOOKINGS.TOAST.PACKAGE_USAGE');
     this.packageUsageVisible.set(false);
     this.pendingCloseBookingId.set(null);
+    this.pendingCloseLineItems.set([]);
   }
 
   private completeBooking(bookingId: string, toastKey = 'BOOKINGS.TOAST.CLOSED'): void {

@@ -1,20 +1,29 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
+import { BookingLineItem, bookingPerformedServiceOptions } from './models/booking.model';
 
 @Component({
   selector: 'app-confirm-package-usage-dialog',
   standalone: true,
   imports: [
     DialogModule,
+    DropdownModule,
     ReactiveFormsModule,
     InputNumberModule,
-    InputTextModule,
     InputTextareaModule,
     TranslatePipe,
   ],
@@ -26,9 +35,12 @@ export class ConfirmPackageUsageDialogComponent {
   private readonly fb = inject(FormBuilder);
 
   readonly visible = input(false);
+  readonly lineItems = input<BookingLineItem[]>([]);
 
   readonly submitted = output<{ usageCount: number; serviceType: string; notes: string }>();
   readonly closed = output<void>();
+
+  readonly serviceOptions = computed(() => bookingPerformedServiceOptions(this.lineItems()));
 
   readonly form = this.fb.nonNullable.group({
     usageCount: [0, [Validators.required, Validators.min(0)]],
@@ -38,9 +50,12 @@ export class ConfirmPackageUsageDialogComponent {
 
   constructor() {
     effect(() => {
-      if (this.visible()) {
-        this.form.reset({ usageCount: 0, serviceType: '', notes: '' });
+      if (!this.visible()) {
+        return;
       }
+      const options = this.serviceOptions();
+      const defaultId = options.length === 1 ? options[0].value : '';
+      this.form.reset({ usageCount: 0, serviceType: defaultId, notes: '' });
     });
   }
 
@@ -58,7 +73,12 @@ export class ConfirmPackageUsageDialogComponent {
       return;
     }
     const value = this.form.getRawValue();
-    this.submitted.emit(value);
+    const selected = this.serviceOptions().find(option => option.value === value.serviceType);
+    this.submitted.emit({
+      usageCount: value.usageCount,
+      serviceType: selected?.label ?? value.serviceType,
+      notes: value.notes,
+    });
   }
 
   close(): void {

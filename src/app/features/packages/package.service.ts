@@ -34,7 +34,7 @@ export interface PackagePayload {
   isActive: boolean;
   offerType: PackageOfferType;
   description: string;
-  serviceCategoryId: string;
+  serviceCategoryId: string | null;
   subServiceCategoryId: string | null;
   sessionDurationMinutes: number;
   sessionCount: number;

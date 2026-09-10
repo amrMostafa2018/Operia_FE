@@ -68,14 +68,14 @@
     text-align: right;
   }
 
-  .p-dropdown-panel .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter-icon {
-    inset-inline-end: auto;
-    inset-inline-start: 0.65rem;
+  .p-dropdown-panel .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter {
+    padding-left: 0.55rem;
+    padding-right: 2rem;
   }
 
-  .p-dropdown-panel .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter {
-    padding-inline-start: 2rem !important;
-    padding-inline-end: 0.55rem !important;
+  .p-dropdown-panel .p-dropdown-header .p-dropdown-filter-container .p-dropdown-filter-icon {
+    left: auto;
+    right: 0.65rem;
   }
 
   // Icon + label spacing: PrimeNG uses physical margin-right/left, which collapses in RTL.
@@ -100,7 +100,8 @@
     margin-inline-end: 0.5rem;
   }
 
-  button:not(.p-button) > .pi:first-child:not(:only-child):not(.nav-icon):not(.input-icon):not(.phone-row-icon),
+  button:not(.p-button)
+    > .pi:first-child:not(:only-child):not(.nav-icon):not(.input-icon):not(.phone-row-icon),
   a:not(.nav-item) > .pi:first-child:not(:only-child):not(.nav-icon),
   p > .pi:first-child:not(:only-child),
   h1 > .pi:first-child,
@@ -168,13 +169,13 @@
     }
 
     .p-multiselect-header .p-multiselect-filter-container .p-inputtext {
-      padding-inline-end: 0.55rem;
-      padding-inline-start: 2rem;
+      padding-left: 0.55rem;
+      padding-right: 2rem;
     }
 
     .p-multiselect-header .p-multiselect-filter-container .p-multiselect-filter-icon {
-      inset-inline-end: auto;
-      inset-inline-start: 0.65rem;
+      left: auto;
+      right: 0.65rem;
     }
 
     .p-multiselect-items .p-multiselect-item {

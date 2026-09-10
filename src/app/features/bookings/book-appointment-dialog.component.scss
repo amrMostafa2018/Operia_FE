@@ -4,6 +4,7 @@
 
 @include dialog.bookings-dialog-header;
 @include dialog.bookings-dialog-close-button;
+@include dialog.unlisted-form-layout;
 
 .dialog-header {
   display: flex;
@@ -119,7 +120,7 @@
 }
 
 .field-error {
-  color: var(--color-danger);
+  color: #ef4444;
   font-size: 0.76rem;
 }
 
@@ -451,14 +452,97 @@
   }
 }
 
-.unlisted-form {
-  display: grid;
-  grid-template-columns: 1.4fr 120px 120px auto;
-  gap: 0.75rem;
-  align-items: end;
-  padding: 0.9rem;
-  border-top: 1px solid var(--surface-border);
+.unlisted-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.unlisted-form .field input {
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.unlisted-form .field label em {
+  color: #ef4444;
+  font-style: normal;
+}
+
+.unlisted-form .field.error .input-with-addon,
+.unlisted-form .field.error input:not(.p-inputnumber-input),
+.unlisted-form .field.error .p-dropdown {
+  border-color: #ef4444;
+}
+
+.input-with-addon {
+  display: flex;
+  align-items: stretch;
+  height: 42px;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid #d7d9e5;
+  border-radius: 7px;
   background: #fff;
+  overflow: hidden;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0;
+  }
+
+  > i {
+    display: flex;
+    align-items: center;
+    padding-inline: 0.75rem;
+    color: #74788c;
+    font-size: 0.9rem;
+  }
+
+  .addon {
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    background: #f5f5f8;
+    color: #5e6175;
+    border-inline-start: 1px solid #e7e7ee;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+
+  &:hover {
+    border-color: #a7a3bd;
+  }
+
+  &:focus-within {
+    border-color: #5525e8;
+    box-shadow: 0 0 0 3px rgba(85, 37, 232, 0.12);
+  }
+}
+
+.input-with-addon.price-input {
+  p-inputnumber,
+  .price-input-number {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+.unlisted-form .field input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.unlisted-form .field input[type='number']::-webkit-outer-spin-button,
+.unlisted-form .field input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .add-unlisted-btn {
@@ -466,13 +550,20 @@
   border-radius: $border-radius;
   background: #4b24da;
   color: #fff;
-  padding: 0.65rem 1rem;
+  min-height: 42px;
+  padding: 0.65rem 1.1rem;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   cursor: pointer;
   font-weight: 600;
   white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .bottom-layout {
@@ -650,6 +741,19 @@
   }
 }
 
+.summary-balances {
+  margin-top: 0.85rem;
+
+  li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+}
+
+.remaining-value {
+  color: #ea580c;
+}
+
 .send-message {
   display: flex;
   align-items: center;
@@ -663,8 +767,7 @@
   .client-form,
   .package-stats,
   .bottom-layout,
-  .payment-grid,
-  .unlisted-form {
+  .payment-grid {
     grid-template-columns: 1fr;
   }
 
