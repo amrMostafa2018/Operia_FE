@@ -488,27 +488,6 @@
         </strong>
       </div>
 
-      <ul class="summary-list summary-balances">
-        <li>
-          <span><i class="pi pi-wallet"></i>{{ 'BOOKINGS.BOOK.AMOUNT_PAID' | translate }}</span>
-          <p-inputNumber
-            [ngModel]="collectedAmount()"
-            (ngModelChange)="paidAmount.set($event ?? 0)"
-            [min]="0"
-            [max]="netTotal()"
-          />
-        </li>
-        <li>
-          <span><i class="pi pi-clock"></i>{{ 'BOOKINGS.BOOK.AMOUNT_REMAINING' | translate }}</span>
-          <strong class="remaining-value">
-            {{ remainingAmount() }}
-            @if (currencyService.hasCurrency()) {
-              {{ currencyService.currencyLabel() }}
-            }
-          </strong>
-        </li>
-      </ul>
-
       <div class="send-message">
         <p-checkbox
           [binary]="true"
