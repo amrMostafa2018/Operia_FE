@@ -1,0 +1,249 @@
+<div class="register-page">
+  <div class="page-header">
+    <div class="page-title">
+      <i class="pi pi-list"></i>
+      <h1>{{ 'NAV.BOOKING_REGISTER' | translate }}</h1>
+    </div>
+    <nav class="breadcrumb" [attr.aria-label]="'COMMON.ARIA.BREADCRUMB' | translate">
+      <span>{{ 'NAV.BOOKINGS' | translate }}</span>
+      <i class="pi pi-angle-left" aria-hidden="true"></i>
+      <span class="breadcrumb-current">{{ 'NAV.BOOKING_REGISTER' | translate }}</span>
+    </nav>
+  </div>
+
+  <div class="summary-cards">
+    <article class="summary-card summary-card--total">
+      <i class="pi pi-calendar"></i>
+      <div>
+        <span>{{ 'BOOKING_REGISTER.SUMMARY.TOTAL' | translate }}</span>
+        <strong>{{ summary().total }}</strong>
+      </div>
+    </article>
+    <article class="summary-card summary-card--cancelled">
+      <i class="pi pi-times-circle"></i>
+      <div>
+        <span>{{ 'BOOKING_REGISTER.SUMMARY.CANCELLED' | translate }}</span>
+        <strong>{{ summary().cancelled }}</strong>
+      </div>
+    </article>
+    <article class="summary-card summary-card--completed">
+      <i class="pi pi-check-circle"></i>
+      <div>
+        <span>{{ 'BOOKING_REGISTER.SUMMARY.COMPLETED' | translate }}</span>
+        <strong>{{ summary().completed }}</strong>
+      </div>
+    </article>
+    <article class="summary-card summary-card--waiting">
+      <i class="pi pi-clock"></i>
+      <div>
+        <span>{{ 'BOOKING_REGISTER.SUMMARY.WAITING' | translate }}</span>
+        <strong>{{ summary().waiting }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-fields">
+      <div class="filter-field">
+        <span class="filter-label">{{ 'BOOKING_REGISTER.DATE_FROM' | translate }}</span>
+        <p-calendar
+          [ngModel]="draftDateFrom()"
+          (ngModelChange)="onDateFromChange($event)"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          [showClear]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'BOOKING_REGISTER.DATE_FROM' | translate"
+          styleClass="date-picker"
+        />
+      </div>
+      <div class="filter-field">
+        <span class="filter-label">{{ 'BOOKING_REGISTER.DATE_TO' | translate }}</span>
+        <p-calendar
+          [ngModel]="draftDateTo()"
+          (ngModelChange)="onDateToChange($event)"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          [showClear]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'BOOKING_REGISTER.DATE_TO' | translate"
+          styleClass="date-picker"
+        />
+      </div>
+      <div class="filter-field filter-field--mobile">
+        <span class="filter-label">{{ 'BOOKING_REGISTER.FILTER.MOBILE' | translate }}</span>
+        <input
+          pInputText
+          class="filter-input"
+          [ngModel]="draftMobile()"
+          (ngModelChange)="onMobileChange($event)"
+          [placeholder]="'BOOKING_REGISTER.FILTER.MOBILE' | translate"
+        />
+      </div>
+      <div class="filter-field filter-field--customer">
+        <span class="filter-label">{{ 'BOOKING_REGISTER.FILTER.CUSTOMER' | translate }}</span>
+        <input
+          pInputText
+          class="filter-input"
+          [ngModel]="draftCustomerName()"
+          (ngModelChange)="onCustomerChange($event)"
+          [placeholder]="'BOOKING_REGISTER.FILTER.CUSTOMER' | translate"
+        />
+      </div>
+      <div class="filter-field filter-field--employee">
+        <span class="filter-label">{{ 'BOOKING_REGISTER.FILTER.EMPLOYEE' | translate }}</span>
+        <p-dropdown
+          [options]="employeeOptions()"
+          [ngModel]="draftEmployeeId()"
+          (ngModelChange)="onEmployeeChange($event)"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="true"
+          [placeholder]="'BOOKING_REGISTER.FILTER.ALL_EMPLOYEES' | translate"
+          styleClass="filter-drop"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.label | translate }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.label | translate }}
+          </ng-template>
+        </p-dropdown>
+      </div>
+      <div class="filter-field filter-field--status">
+        <span class="filter-label">{{ 'BOOKING_REGISTER.FILTER.STATUS' | translate }}</span>
+        <p-dropdown
+          [options]="statusOptions"
+          [ngModel]="draftStatus()"
+          (ngModelChange)="onStatusChange($event)"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="true"
+          [placeholder]="'BOOKING_REGISTER.FILTER.ALL_STATUS' | translate"
+          styleClass="filter-drop"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.label | translate }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.label | translate }}
+          </ng-template>
+        </p-dropdown>
+      </div>
+    </div>
+    <button type="button" class="clear filter-clear" (click)="clearFilters()">
+      <i class="pi pi-replay"></i>{{ 'BOOKING_REGISTER.CLEAR' | translate }}
+    </button>
+  </div>
+
+  <div class="table-section">
+    <p-table
+      [value]="filteredRows()"
+      [rows]="rows()"
+      [first]="first()"
+      [paginator]="true"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="register-paginator"
+      styleClass="register-table"
+      (onPage)="onPageChange($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_NUM' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_MOBILE' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_CUSTOMER' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_SERVICE' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_EMPLOYEE' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_FROM' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_TO' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_STATUS' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-booking let-i="rowIndex">
+        <tr>
+          <td>{{ rowNumber(i) }}</td>
+          <td>
+            <div class="mobile-cell">
+              <span class="booking-code">{{ booking.bookingCode }}</span>
+              <span class="booking-phone" dir="ltr">{{ booking.customerPhone }}</span>
+            </div>
+          </td>
+          <td>{{ booking.customerName }}</td>
+          <td>
+            <div class="service-cell">
+              <span class="service-name">{{ booking.serviceName }}</span>
+              <span class="service-type">{{ serviceTypeKey(booking.serviceType) | translate }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="employee-cell">
+              <span class="employee-avatar">{{ customerInitial(booking.employeeName) }}</span>
+              <span>{{ booking.employeeName }}</span>
+            </div>
+          </td>
+          <td>{{ booking.startTime }}</td>
+          <td>{{ booking.endTime }}</td>
+          <td>
+            <p-tag
+              [value]="statusKey(booking.status) | translate"
+              [severity]="statusSeverity(booking.status)"
+              styleClass="status-tag"
+            />
+          </td>
+          <td>
+            <p-menu #menu [model]="getRowMenu(booking)" [popup]="true" appendTo="body" />
+            <button type="button" class="row-menu-btn" (click)="menu.toggle($event)">
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'COMMON.NO_DATA' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="paginatorleft">
+        @if (canRead()) {
+          <div class="export-action">
+            <p-button
+              [label]="'BOOKING_REGISTER.EXPORT' | translate"
+              icon="pi pi-download"
+              [iconPos]="leadingIconPos()"
+              styleClass="export-btn"
+              [outlined]="true"
+              (onClick)="exportReport()"
+            />
+          </div>
+        }
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<app-booking-register-details-dialog
+  [visible]="detailsOpen()"
+  [booking]="selectedBooking()"
+  (closed)="closeDetails()"
+  (statusConfirmed)="onStatusConfirmed($event)"
+/>
+
+<app-change-history-dialog
+  [visible]="historyOpen()"
+  [events]="historyEvents()"
+  (closed)="closeHistory()"
+/>

@@ -106,6 +106,12 @@ export class AppSidebarComponent {
       permissions: [Policies.BookingsRead],
     },
     {
+      labelKey: 'NAV.BOOKING_REGISTER',
+      icon: 'pi pi-list',
+      route: '/booking-register',
+      permissions: [Policies.BookingsRead],
+    },
+    {
       labelKey: 'NAV.CUSTOMERS',
       icon: 'pi pi-users',
       route: '/customers',

@@ -40,6 +40,19 @@ export const mainRoutes: Routes = [
         title: 'Bookings - Operia',
       },
       {
+        path: 'booking-register',
+        loadComponent: () =>
+          import('@app/features/booking-register/booking-register.component').then(
+            m => m.BookingRegisterComponent
+          ),
+        canActivate: [permissionGuard],
+        data: {
+          permissions: [Policies.BookingsRead],
+          featureKey: 'NAV.BOOKING_REGISTER',
+        },
+        title: 'Booking Register - Operia',
+      },
+      {
         path: 'customers',
         loadComponent: placeholder,
         canActivate: [permissionGuard],

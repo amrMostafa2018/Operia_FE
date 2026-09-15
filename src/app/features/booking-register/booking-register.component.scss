@@ -1,0 +1,450 @@
+@use '../../../styles/variables' as *;
+@use '../../shared/styles/data-table' as data-table;
+
+.register-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 1400px;
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: flex-start;
+  gap: 0.35rem;
+  text-align: start;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  i {
+    color: var(--color-primary);
+    font-size: 1.1rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+
+  i {
+    font-size: 0.7rem;
+  }
+
+  .breadcrumb-current {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  width: 100%;
+
+  @media (max-width: $bp-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 88px;
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  background: var(--surface-card);
+  padding: 1rem 1.1rem;
+  box-shadow: $shadow-sm;
+
+  i {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  span {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+  }
+
+  strong {
+    font-size: 1.55rem;
+    color: var(--text-primary);
+  }
+
+  &--total i {
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    color: var(--color-primary);
+  }
+
+  &--cancelled i {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  &--completed i {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  &--waiting i {
+    background: #ffedd5;
+    color: #d97706;
+  }
+}
+
+.filter-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 100%;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  padding: 1rem 1.25rem;
+  box-shadow: $shadow-sm;
+  overflow: visible;
+}
+
+.filter-fields {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  flex: 1;
+  overflow: visible;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
+  overflow: visible;
+
+  ::ng-deep .date-picker.p-calendar {
+    display: inline-flex;
+    width: 100%;
+  }
+}
+
+.filter-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.filter-input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--surface-card);
+}
+
+.filter-clear {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.clear {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e1e0eb;
+  background: #fff;
+  color: #4e2be2;
+  border-radius: 7px;
+  padding: 0.5rem 1.25rem;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.clear i {
+  margin-inline-end: 0.4rem;
+}
+
+.table-section {
+  @include data-table.data-table-shell;
+  width: 100%;
+}
+
+::ng-deep {
+  .filter-drop .p-dropdown {
+    font-size: 0.82rem;
+    min-width: 140px;
+  }
+
+  .date-picker .p-inputtext {
+    font-size: 0.875rem;
+    padding: 0.45rem 0.75rem;
+    min-width: 9.5rem;
+  }
+
+  .date-picker.p-calendar {
+    width: 100%;
+  }
+
+  .register-table {
+    @include data-table.primeng-data-table-theme;
+  }
+
+  .register-table .p-datatable-table {
+    min-width: 1100px;
+  }
+
+  .status-tag.p-tag {
+    @include data-table.status-tag-pill;
+  }
+
+  .export-action {
+    display: inline-flex;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .export-btn.p-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem !important;
+    padding: 0.5rem 0.95rem !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    background: transparent !important;
+
+    &:enabled:hover {
+      background: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-primary) !important;
+    }
+
+    .p-button-icon-left,
+    .p-button-icon-right {
+      margin: 0 !important;
+    }
+  }
+
+  .register-paginator.p-paginator,
+  .register-table .p-paginator {
+    justify-content: flex-start;
+    gap: 0.35rem 0.65rem;
+    border-top: 1px solid var(--surface-border);
+    padding: 0.85rem 1.25rem;
+    background: var(--surface-card);
+    font-size: 0.82rem;
+
+    .p-paginator-left-content,
+    .p-paginator-right-content {
+      margin: 0 !important;
+    }
+
+    .p-paginator-left-content {
+      margin-inline-end: 0.75rem !important;
+      flex-shrink: 0;
+    }
+
+    .p-paginator-current {
+      margin-inline-start: auto !important;
+      margin-inline-end: 0.75rem !important;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last,
+    .p-paginator-page {
+      min-width: 2rem;
+      height: 2rem;
+      border-radius: $border-radius;
+    }
+
+    .p-paginator-pages .p-paginator-page.p-highlight {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    .p-paginator-rpp-options {
+      margin-inline-start: 0.35rem;
+
+      .p-dropdown {
+        min-width: 5.25rem;
+        height: 2rem;
+        align-items: center;
+        border-radius: $border-radius;
+      }
+
+      .p-dropdown-label {
+        padding-inline: 0.75rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .p-dropdown-trigger {
+        width: 2rem;
+      }
+    }
+  }
+}
+
+.mobile-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.booking-code {
+  color: #4b24da;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.booking-phone {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.service-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.service-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.service-type {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.employee-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+}
+
+.employee-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.row-menu-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.35rem;
+}
+
+.empty-msg {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2.5rem !important;
+
+  i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: $bp-md) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+  }
+
+  .filter-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .filter-field {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filter-field:nth-child(1),
+  .filter-field:nth-child(2) {
+    grid-column: 1 / -1;
+  }
+
+  .filter-field--mobile,
+  .filter-field--customer {
+    grid-column: 1 / -1;
+  }
+
+  ::ng-deep {
+    .filter-drop,
+    .filter-drop .p-dropdown {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .date-picker.p-calendar,
+    .date-picker .p-inputtext {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  .filter-clear {
+    width: 100%;
+    justify-content: center;
+  }
+}

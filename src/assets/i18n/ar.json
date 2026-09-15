@@ -240,6 +240,7 @@
     },
     "DASHBOARD": "لوحة التحكم",
     "BOOKINGS": "الحجوزات",
+    "BOOKING_REGISTER": "سجل الحجوزات",
     "CUSTOMERS": "العملاء",
     "EMPLOYEES": "الموظفون",
     "PACKAGES": "الخدمات والعروض",
@@ -692,6 +693,95 @@
     },
     "ARIA": {
       "BREADCRUMB": "مسار التنقل"
+    }
+  },
+  "BOOKING_REGISTER": {
+    "DATE_FROM": "من تاريخ",
+    "DATE_TO": "إلى تاريخ",
+    "CLEAR": "مسح",
+    "SUMMARY": {
+      "TOTAL": "إجمالي الحجوزات",
+      "CANCELLED": "ملغاة",
+      "COMPLETED": "مكتملة",
+      "WAITING": "انتظار"
+    },
+    "FILTER": {
+      "SECTION_TITLE": "عمليات الحجوزات",
+      "MOBILE": "بحث برقم الموبايل",
+      "CUSTOMER": "بحث باسم العميل",
+      "EMPLOYEE": "الموظف",
+      "STATUS": "الحالة",
+      "ALL_EMPLOYEES": "كل الموظفين",
+      "ALL_STATUS": "كل الحالات",
+      "SEARCH": "بحث"
+    },
+    "SERVICE_TYPE": {
+      "PACKAGE": "باقة",
+      "SESSION": "جلسة",
+      "UNLISTED": "خدمة غير مدرجة"
+    },
+    "TABLE": {
+      "COL_NUM": "#",
+      "COL_MOBILE": "كود / رقم الموبايل",
+      "COL_CUSTOMER": "اسم العميل",
+      "COL_SERVICE": "الخدمة",
+      "COL_EMPLOYEE": "الموظف",
+      "COL_FROM": "من وقت",
+      "COL_TO": "إلى وقت",
+      "COL_STATUS": "الحالة",
+      "COL_ACTIONS": "إجراءات",
+      "PAGE_SIZE": "عدد العمليات",
+      "PAGE_REPORT": "عرض {first} إلى {last} من {totalRecords} حجز"
+    },
+    "EXPORT": "تصدير التقرير",
+    "EXPORT_PENDING": "سيتوفر التصدير عند جاهزية واجهة البرمجة.",
+    "STATUS": {
+      "WAITING": "انتظار",
+      "CONFIRM": "تأكيد حالة الحجز",
+      "COMPLETED": "مكتملة",
+      "CANCELLED": "ملغاة"
+    },
+    "MENU": {
+      "DETAILS": "تفاصيل الحجز",
+      "HISTORY": "سجل التعديلات"
+    },
+    "DETAILS": {
+      "TITLE": "تفاصيل الحجز",
+      "CUSTOMER": "اسم العميل",
+      "MOBILE": "رقم الموبايل",
+      "SERVICE": "الخدمة",
+      "EMPLOYEE": "الموظف",
+      "DATE": "التاريخ",
+      "FROM": "من وقت",
+      "TO": "إلى وقت",
+      "DURATION": "المدة",
+      "STATUS": "الحالة",
+      "CONFIRM_STATUS": "تأكيد حالة الحجز",
+      "CONFIRM_SUCCESS": "تم تأكيد حالة الحجز.",
+      "NOTES": "الملاحظات",
+      "NOTES_COUNT": "{{count}} ملاحظة",
+      "NO_NOTES": "لا توجد ملاحظات",
+      "PAYMENT": {
+        "TITLE": "بيانات الدفع",
+        "METHOD": "طريقة الدفع",
+        "PAID": "المدفوع",
+        "DISCOUNT": "الخصم",
+        "TOTAL": "الإجمالي",
+        "REMAINING": "المتبقي"
+      }
+    },
+    "HISTORY": {
+      "TITLE": "سجل التعديلات",
+      "CREATED": "تم إنشاء الحجز",
+      "EMPLOYEE_CHANGED": "تم تعديل الموظف",
+      "TIME_CHANGED": "تغيير وقت الانتهاء",
+      "STATUS_CONFIRMED": "تأكيد حالة الحجز",
+      "ROLE_RECEPTION": "موظف الاستقبال",
+      "ROLE_ADMIN": "المسؤول",
+      "CREATED_DESC": "تم إنشاء الحجز بنجاح",
+      "EMPLOYEE_CHANGED_DESC": "تم تغيير الموظف من {{from}} إلى {{to}}",
+      "TIME_CHANGED_DESC": "تم تغيير وقت الانتهاء من {{from}} إلى {{to}}",
+      "STATUS_CONFIRMED_DESC": "تم تأكيد الحجز"
     }
   },
   "BOOKINGS": {

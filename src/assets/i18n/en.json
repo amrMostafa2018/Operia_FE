@@ -240,6 +240,7 @@
     },
     "DASHBOARD": "Dashboard",
     "BOOKINGS": "Bookings",
+    "BOOKING_REGISTER": "Booking Register",
     "CUSTOMERS": "Customers",
     "EMPLOYEES": "Employees",
     "PACKAGES": "Services & Offers",
@@ -689,6 +690,95 @@
     },
     "ARIA": {
       "BREADCRUMB": "Breadcrumb"
+    }
+  },
+  "BOOKING_REGISTER": {
+    "DATE_FROM": "From date",
+    "DATE_TO": "To date",
+    "CLEAR": "Clear",
+    "SUMMARY": {
+      "TOTAL": "Total bookings",
+      "CANCELLED": "Cancelled",
+      "COMPLETED": "Completed",
+      "WAITING": "Waiting"
+    },
+    "FILTER": {
+      "SECTION_TITLE": "Booking operations",
+      "MOBILE": "Search by mobile",
+      "CUSTOMER": "Search by customer name",
+      "EMPLOYEE": "Employee",
+      "STATUS": "Status",
+      "ALL_EMPLOYEES": "All employees",
+      "ALL_STATUS": "All statuses",
+      "SEARCH": "Search"
+    },
+    "SERVICE_TYPE": {
+      "PACKAGE": "Package",
+      "SESSION": "Session",
+      "UNLISTED": "Unlisted service"
+    },
+    "TABLE": {
+      "COL_NUM": "#",
+      "COL_MOBILE": "Code / mobile",
+      "COL_CUSTOMER": "Customer name",
+      "COL_SERVICE": "Service",
+      "COL_EMPLOYEE": "Employee",
+      "COL_FROM": "From",
+      "COL_TO": "To",
+      "COL_STATUS": "Status",
+      "COL_ACTIONS": "Actions",
+      "PAGE_SIZE": "Rows per page",
+      "PAGE_REPORT": "Showing {first} to {last} of {totalRecords} bookings"
+    },
+    "EXPORT": "Export report",
+    "EXPORT_PENDING": "Export will be available when the API is ready.",
+    "STATUS": {
+      "WAITING": "Waiting",
+      "CONFIRM": "Confirm booking status",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "MENU": {
+      "DETAILS": "Booking details",
+      "HISTORY": "Modification log"
+    },
+    "DETAILS": {
+      "TITLE": "Booking details",
+      "CUSTOMER": "Customer name",
+      "MOBILE": "Mobile number",
+      "SERVICE": "Service",
+      "EMPLOYEE": "Employee",
+      "DATE": "Date",
+      "FROM": "From",
+      "TO": "To",
+      "DURATION": "Duration",
+      "STATUS": "Status",
+      "CONFIRM_STATUS": "Confirm booking status",
+      "CONFIRM_SUCCESS": "Booking status confirmed.",
+      "NOTES": "Notes",
+      "NOTES_COUNT": "{{count}} note(s)",
+      "NO_NOTES": "No notes",
+      "PAYMENT": {
+        "TITLE": "Payment details",
+        "METHOD": "Payment method",
+        "PAID": "Paid",
+        "DISCOUNT": "Discount",
+        "TOTAL": "Total",
+        "REMAINING": "Remaining"
+      }
+    },
+    "HISTORY": {
+      "TITLE": "Modification log",
+      "CREATED": "Booking created",
+      "EMPLOYEE_CHANGED": "Employee changed",
+      "TIME_CHANGED": "End time changed",
+      "STATUS_CONFIRMED": "Booking status confirmed",
+      "ROLE_RECEPTION": "Receptionist",
+      "ROLE_ADMIN": "Administrator",
+      "CREATED_DESC": "Booking created successfully",
+      "EMPLOYEE_CHANGED_DESC": "Employee changed from {{from}} to {{to}}",
+      "TIME_CHANGED_DESC": "End time changed from {{from}} to {{to}}",
+      "STATUS_CONFIRMED_DESC": "Booking confirmed"
     }
   },
   "BOOKINGS": {

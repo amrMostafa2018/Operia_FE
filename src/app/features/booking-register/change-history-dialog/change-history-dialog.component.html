@@ -1,0 +1,54 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="false"
+  appendTo="body"
+  [styleClass]="dialogStyleClass()"
+  [style]="{ width: 'min(760px, 96vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-title">
+      <span class="title-icon" aria-hidden="true">
+        <i class="pi pi-history"></i>
+      </span>
+      <h3>{{ 'BOOKING_REGISTER.HISTORY.TITLE' | translate }}</h3>
+    </div>
+    <button
+      type="button"
+      class="close-btn"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  <div class="history-body">
+    <div class="history-timeline">
+      @for (event of events(); track event.id; let last = $last) {
+        <article class="history-event" [class.history-event--last]="last">
+          <div class="history-main">
+            <div class="history-track">
+              <span class="timeline-marker" [ngClass]="event.markerClass"></span>
+            </div>
+            <div class="history-action">
+              <h4 [ngClass]="titleClass(event)">{{ titleKey(event) | translate }}</h4>
+              <p class="description">
+                {{ event.descriptionKey | translate: event.descriptionParams ?? {} }}
+              </p>
+            </div>
+          </div>
+
+          <div class="history-meta">
+            <p class="actor">{{ actorLabel(event) }}</p>
+            <p class="timestamp">{{ timestampLabel(event.timestamp) }}</p>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</p-dialog>
