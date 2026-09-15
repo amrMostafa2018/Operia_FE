@@ -76,6 +76,7 @@ import {
 } from './booking-details-dialog.component';
 import { ConfirmPackageUsageDialogComponent } from './confirm-package-usage-dialog.component';
 import { DurationMismatchDialogComponent } from './duration-mismatch-dialog.component';
+import { SaleHandoffService, SaleHandoffDraft } from './sale-handoff.service';
 
 interface PendingBookingDraft {
   selection: SlotSelection;
@@ -118,6 +119,7 @@ export class AppointmentsComponent {
   private readonly branchesApi = inject(BranchService);
   private readonly employeesApi = inject(EmployeeService);
   private readonly packagesApi = inject(PackageService);
+  private readonly saleHandoff = inject(SaleHandoffService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly branches = signal<BranchOption[]>([]);
@@ -148,6 +150,7 @@ export class AppointmentsComponent {
   readonly pendingDraft = signal<PendingBookingDraft | null>(null);
   readonly mismatchServiceDuration = signal(0);
   readonly mismatchSlotDuration = signal(0);
+  readonly saleHandoffDraft = signal<SaleHandoffDraft | null>(null);
 
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
 
@@ -271,6 +274,26 @@ export class AppointmentsComponent {
   constructor() {
     this.loadBranches();
     this.loadCatalog();
+    this.applySaleHandoff();
+  }
+
+  private applySaleHandoff(): void {
+    const draft = this.saleHandoff.consumeDraft();
+    if (!draft) {
+      return;
+    }
+    this.saleHandoffDraft.set(draft);
+    this.filters.update(current => ({
+      ...current,
+      clientName: draft.clientName,
+      clientMobile: draft.clientMobile,
+      durationMinutes: draft.serviceDuration,
+    }));
+    this.toast.add({
+      severity: 'info',
+      summary: 'OPERIA',
+      detail: this.translate.instant('BOOKINGS.SELL.HANDOFF_HINT'),
+    });
   }
 
   private loadBranches(): void {
@@ -679,6 +702,7 @@ export class AppointmentsComponent {
     this.bookings.update(items => [...items, booking]);
     this.bookDialogVisible.set(false);
     this.selectedSlot.set(null);
+    this.saleHandoffDraft.set(null);
     this.showToast('BOOKINGS.TOAST.BOOKED');
   }
 

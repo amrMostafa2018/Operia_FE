@@ -21,6 +21,12 @@ import {
 } from './models/mock-directory.model';
 import { parseTimeToMinutes } from './bookings-calendar/bookings-calendar.utils';
 import { WorkingHoursService } from './working-hours.service';
+import { SellServicePayload } from './sale-handoff.service';
+
+export interface RecordedSale extends SellServicePayload {
+  id: string;
+  createdAt: string;
+}
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -132,6 +138,7 @@ const INITIAL_BOOKINGS: Booking[] = [
 export class BookingService {
   private readonly workingHours = inject(WorkingHoursService);
   private readonly bookings$ = new BehaviorSubject<Booking[]>([...INITIAL_BOOKINGS]);
+  private readonly sales: RecordedSale[] = [];
   private packages = [...MOCK_PACKAGES];
 
   get bookings(): Observable<Booking[]> {
@@ -338,6 +345,16 @@ export class BookingService {
     // placeholder — real export wired when API is ready
   }
 
+  recordSale(payload: SellServicePayload): Observable<RecordedSale> {
+    const sale: RecordedSale = {
+      ...payload,
+      id: `sale-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    this.sales.push(sale);
+    return of(sale);
+  }
+
   private applyFilters(all: Booking[], filters: BookingFilters): Booking[] {
     let result = [...all];
     if (filters.dateFrom) {
@@ -362,6 +379,14 @@ export class BookingService {
     }
     if (filters.status) {
       result = result.filter(b => b.status === filters.status);
+    }
+    if (filters.customerMobile?.trim()) {
+      const mobile = filters.customerMobile.trim();
+      result = result.filter(b => b.customerPhone.includes(mobile));
+    }
+    if (filters.customerName?.trim()) {
+      const name = filters.customerName.trim().toLowerCase();
+      result = result.filter(b => b.customerName.toLowerCase().includes(name));
     }
     return result;
   }

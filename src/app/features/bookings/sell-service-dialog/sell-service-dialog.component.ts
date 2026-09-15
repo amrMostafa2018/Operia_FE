@@ -49,33 +49,19 @@ import {
   UNLISTED_OFFER_TYPE_OPTIONS,
   PAYMENT_METHODS,
   ServiceCatalogItem,
-  SlotSelection,
-  formatTimeRange,
   sumLineItemDuration,
   sumLineItemPrice,
-} from './models/booking.model';
-import { UnlistedCategoryFieldComponent } from './unlisted-category-field.component';
+} from '../models/booking.model';
+import { SellServicePayload } from '../sale-handoff.service';
+import { UnlistedCategoryFieldComponent } from '../unlisted-category-field.component';
 import {
   applyUnlistedPackageApiErrors,
   toLineItemFromCreatedPackage,
   toUnlistedPackagePayload,
-} from './unlisted-package.util';
-
-export interface BookAppointmentPayload {
-  selection: SlotSelection;
-  clientName: string;
-  clientMobile: string;
-  clientId: string | null;
-  lineItems: BookingLineItem[];
-  paymentMethod: PaymentMethodId;
-  discount: number;
-  paidAmount: number;
-  sendMessage: boolean;
-  serviceDuration: number;
-}
+} from '../unlisted-package.util';
 
 @Component({
-  selector: 'app-book-appointment-dialog',
+  selector: 'app-sell-service-dialog',
   standalone: true,
   imports: [
     CommonModule,
@@ -90,11 +76,11 @@ export interface BookAppointmentPayload {
     TranslatePipe,
     UnlistedCategoryFieldComponent,
   ],
-  templateUrl: './book-appointment-dialog.component.html',
-  styleUrl: './book-appointment-dialog.component.scss',
+  templateUrl: './sell-service-dialog.component.html',
+  styleUrl: './sell-service-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy {
+export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   readonly currencyService = inject(CurrencyService);
   private readonly languageService = inject(LanguageService);
@@ -108,21 +94,14 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   private carouselResizeObserver?: ResizeObserver;
 
   readonly visible = input(false);
-  readonly selection = input<SlotSelection | null>(null);
   readonly clients = input<ClientRecord[]>([]);
   readonly catalogItems = input<ServiceCatalogItem[]>([]);
   readonly catalogCategories = input<CatalogCategoryTab[]>([]);
   readonly catalogLoading = input(false);
-  readonly initialClientName = input('');
-  readonly initialClientMobile = input('');
-  readonly initialPackageId = input<string | null>(null);
-  readonly initialLineItems = input<BookingLineItem[]>([]);
-  readonly initialDiscount = input(0);
-  readonly initialPaidAmount = input(0);
-  readonly initialPaymentMethod = input<PaymentMethodId>('cash');
 
   readonly closed = output<void>();
-  readonly confirmBooking = output<BookAppointmentPayload>();
+  readonly confirmLater = output<SellServicePayload>();
+  readonly bookNow = output<SellServicePayload>();
   readonly packageCreated = output<void>();
 
   readonly categoryTabs = computed<CatalogCategoryTab[]>(() => [
@@ -265,17 +244,14 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         if (!this.visible()) {
           return;
         }
-        this.clientForm.reset({
-          mobile: this.initialClientMobile(),
-          name: this.initialClientName(),
-        });
+        this.clientForm.reset({ mobile: '', name: '' });
         this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
-        this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
-        this.selectedQuantities.set(this.buildQuantitiesFromLineItems(this.initialLineItems()));
-        this.selectedPackageId.set(this.initialPackageId());
-        this.discount.set(this.initialDiscount());
-        this.paidAmount.set(this.initialPaidAmount());
-        this.paymentMethod.set(this.initialPaymentMethod());
+        this.unlistedItems.set([]);
+        this.selectedQuantities.set({});
+        this.selectedPackageId.set(null);
+        this.discount.set(0);
+        this.paidAmount.set(0);
+        this.paymentMethod.set('cash');
         this.sendMessage.set(true);
         this.showUnlisted.set(false);
         this.activeCategory.set('all');
@@ -435,19 +411,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
     this.canScrollLeft.set(overflowLeft);
     this.canScrollRight.set(overflowRight);
-  }
-
-  slotDateLabel(slot: SlotSelection): string {
-    return slot.date.toLocaleDateString(this.languageService.currentLang(), {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  }
-
-  slotTimeLabel(slot: SlotSelection): string {
-    return formatTimeRange(slot.startMinutes, slot.slotDurationMinutes);
   }
 
   lineTypeKey(type: BookingLineItem['type']): string {
@@ -612,14 +575,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       });
   }
 
-  submit(): void {
+  private buildPayload(): SellServicePayload | null {
     this.clientForm.markAllAsTouched();
-    if (this.clientForm.invalid || !this.selection()) {
-      return;
+    if (this.clientForm.invalid || this.lineItems().length === 0) {
+      return null;
     }
     const client = this.matchedClient();
-    this.confirmBooking.emit({
-      selection: this.selection()!,
+    return {
       clientName: this.clientForm.controls.name.value.trim(),
       clientMobile: this.clientForm.controls.mobile.value.trim(),
       clientId: client?.id ?? null,
@@ -629,7 +591,23 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       paidAmount: this.collectedAmount(),
       sendMessage: this.sendMessage(),
       serviceDuration: this.serviceDuration(),
-    });
+    };
+  }
+
+  submitConfirmLater(): void {
+    const payload = this.buildPayload();
+    if (!payload) {
+      return;
+    }
+    this.confirmLater.emit(payload);
+  }
+
+  submitBookNow(): void {
+    const payload = this.buildPayload();
+    if (!payload) {
+      return;
+    }
+    this.bookNow.emit(payload);
   }
 
   close(): void {
@@ -654,38 +632,4 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return null;
   }
 
-  private initialServiceQuantities(): Record<string, number> {
-    const fromLineItems = this.buildQuantitiesFromLineItems(this.initialLineItems());
-    if (Object.keys(fromLineItems).length > 0) {
-      return fromLineItems;
-    }
-
-    const packageId = this.initialPackageId();
-    if (!packageId) {
-      return {};
-    }
-
-    const catalogItem = this.catalogItems().find(item => item.id === packageId);
-    if (!catalogItem) {
-      return {};
-    }
-
-    return { [catalogItem.id]: 1 };
-  }
-
-  private buildQuantitiesFromLineItems(items: BookingLineItem[]): Record<string, number> {
-    const quantities: Record<string, number> = {};
-    for (const item of items) {
-      if (item.type === 'unlisted') {
-        continue;
-      }
-      const serviceId = item.id.replace(/^line-/, '');
-      quantities[serviceId] = item.quantity;
-    }
-    return quantities;
-  }
-
-  private extractUnlistedItems(items: BookingLineItem[]): BookingLineItem[] {
-    return items.filter(item => item.type === 'unlisted');
-  }
 }

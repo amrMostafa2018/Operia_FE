@@ -51,6 +51,8 @@ export interface BookingFilters {
   search?: string;
   employeeId?: string | null;
   status?: BookingStatus | null;
+  customerMobile?: string;
+  customerName?: string;
 }
 
 export interface BookingListResult {

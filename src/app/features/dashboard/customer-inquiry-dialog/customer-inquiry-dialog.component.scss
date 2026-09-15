@@ -1,0 +1,268 @@
+@use '../../../../styles/variables' as *;
+@use '../../bookings/_bookings-dialog' as dialog;
+
+@include dialog.bookings-dialog-header;
+@include dialog.bookings-dialog-close-button;
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  padding: 0.55rem 0.75rem;
+  background: #fff;
+
+  i {
+    color: var(--text-secondary);
+  }
+
+  input {
+    border: none;
+    width: 100%;
+    outline: none;
+    background: transparent;
+  }
+}
+
+.search-btn {
+  display: none;
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.78rem;
+}
+
+.customer-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: $border-radius-lg;
+  background: #eef4ff;
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.customer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+
+  strong {
+    font-size: 0.95rem;
+  }
+
+  span {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+  }
+}
+
+.count-chip {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.record-card {
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  background: #fff;
+
+  &.is-expanded {
+    border-color: var(--color-primary);
+  }
+}
+
+.record-toggle {
+  width: 100%;
+  border: none;
+  background: #fafbff;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  text-align: start;
+}
+
+.record-index {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.type-badge {
+  background: #e8f4ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+}
+
+.record-name {
+  font-size: 0.88rem;
+}
+
+.record-body {
+  padding: 0.85rem 1rem 1rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+
+  small {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    margin-bottom: 0.2rem;
+  }
+
+  strong {
+    font-size: 0.84rem;
+  }
+}
+
+.sessions-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding: 0.75rem;
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius;
+
+  small {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+  }
+
+  strong {
+    font-size: 1rem;
+  }
+
+  .remaining strong {
+    color: var(--color-success);
+  }
+}
+
+.previous-sessions {
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+
+    i {
+      color: var(--color-primary);
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+
+    th,
+    td {
+      border-bottom: 1px solid var(--surface-border);
+      padding: 0.45rem 0.35rem;
+      text-align: start;
+    }
+
+    th {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-secondary);
+
+  i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: $bp-md) {
+  .meta-row,
+  .sessions-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .record-toggle {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      'index name chevron'
+      'badge status chevron';
+  }
+
+  .record-index {
+    grid-area: index;
+  }
+
+  .type-badge {
+    grid-area: badge;
+  }
+
+  .record-name {
+    grid-area: name;
+  }
+}

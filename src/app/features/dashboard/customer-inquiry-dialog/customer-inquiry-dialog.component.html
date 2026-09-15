@@ -1,0 +1,164 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="customer-inquiry-dialog"
+  [style]="{ width: 'min(920px, 96vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-header">
+      <h3>{{ 'CUSTOMER_INQUIRY.TITLE' | translate }}</h3>
+    </div>
+    <button
+      type="button"
+      class="dialog-close"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  <form class="search-form" [formGroup]="searchForm" (ngSubmit)="search()">
+    <span class="search-wrap">
+      <i class="pi pi-search"></i>
+      <input
+        pInputText
+        formControlName="mobile"
+        dir="ltr"
+        [placeholder]="'CUSTOMER_INQUIRY.SEARCH_PLACEHOLDER' | translate"
+      />
+    </span>
+    <button type="submit" class="search-btn">
+      <i class="pi pi-search"></i>
+    </button>
+    @if (mobileError(); as errorKey) {
+      <small class="field-error">{{ errorKey | translate }}</small>
+    }
+  </form>
+
+  @if (result(); as inquiry) {
+    <div class="customer-header">
+      <span class="avatar">{{ customerInitial(inquiry.customerName) }}</span>
+      <div class="customer-meta">
+        <strong>{{ inquiry.customerName }}</strong>
+        <span dir="ltr">{{ inquiry.mobile }}</span>
+      </div>
+      <span class="count-chip">
+        {{ inquiry.recordCount }} {{ 'CUSTOMER_INQUIRY.OPERATIONS' | translate }}
+      </span>
+    </div>
+
+    <div class="records-list">
+      @for (record of inquiry.records; track record.id) {
+        <article class="record-card" [class.is-expanded]="isExpanded(record)">
+          <button type="button" class="record-toggle" (click)="toggleRecord(record)">
+            <span class="record-index">{{ record.index }}</span>
+            <span class="type-badge">{{ serviceTypeKey(record.serviceType) | translate }}</span>
+            <strong class="record-name">{{ record.name }}</strong>
+            <p-tag
+              [value]="statusKey(record.status) | translate"
+              [severity]="
+                record.status === 'active'
+                  ? 'info'
+                  : record.status === 'completed'
+                    ? 'success'
+                    : record.status === 'expired'
+                      ? 'secondary'
+                      : 'danger'
+              "
+            />
+            <i
+              class="pi"
+              [class.pi-chevron-up]="isExpanded(record)"
+              [class.pi-chevron-down]="!isExpanded(record)"
+            ></i>
+          </button>
+
+          @if (isExpanded(record)) {
+            <div class="record-body">
+              <div class="meta-row">
+                <div>
+                  <small>{{ 'CUSTOMER_INQUIRY.PURCHASE_DATE' | translate }}</small>
+                  <strong>{{ formatDate(record.purchaseDate) }}</strong>
+                </div>
+                <div>
+                  <small>{{ 'CUSTOMER_INQUIRY.START_DATE' | translate }}</small>
+                  <strong>{{ formatDate(record.startDate) }}</strong>
+                </div>
+                <div>
+                  <small>{{ 'CUSTOMER_INQUIRY.VALID_FOR' | translate }}</small>
+                  @if (record.validDaysRemaining != null) {
+                    <strong>
+                      {{ record.validDaysRemaining }}
+                      {{ 'CUSTOMER_INQUIRY.DAYS_REMAINING' | translate }}
+                    </strong>
+                  } @else {
+                    <strong>—</strong>
+                  }
+                </div>
+              </div>
+
+              @if (record.totalSessions != null) {
+                <div class="sessions-summary">
+                  <div>
+                    <small>{{ 'CUSTOMER_INQUIRY.TOTAL' | translate }}</small>
+                    <strong>{{ record.totalSessions }}</strong>
+                  </div>
+                  <div>
+                    <small>{{ 'CUSTOMER_INQUIRY.USED' | translate }}</small>
+                    <strong>{{ record.usedSessions }}</strong>
+                  </div>
+                  <div class="remaining">
+                    <small>{{ 'CUSTOMER_INQUIRY.REMAINING' | translate }}</small>
+                    <strong>{{ record.remainingSessions }}</strong>
+                  </div>
+                </div>
+              }
+
+              @if (record.previousSessions.length) {
+                <div class="previous-sessions">
+                  <h4>
+                    <i class="pi pi-history"></i>
+                    {{ 'CUSTOMER_INQUIRY.PREVIOUS_SESSIONS' | translate }}
+                  </h4>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>{{ 'CUSTOMER_INQUIRY.COL_DATE' | translate }}</th>
+                        <th>{{ 'CUSTOMER_INQUIRY.COL_TIME' | translate }}</th>
+                        <th>{{ 'CUSTOMER_INQUIRY.COL_EMPLOYEE' | translate }}</th>
+                        <th>{{ 'CUSTOMER_INQUIRY.COL_NOTES' | translate }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (session of record.previousSessions; track session.number) {
+                        <tr>
+                          <td>{{ session.number }}</td>
+                          <td>{{ formatDate(session.date) }}</td>
+                          <td dir="ltr">{{ session.time }}</td>
+                          <td>{{ session.employee }}</td>
+                          <td>{{ session.notes }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+        </article>
+      }
+    </div>
+  } @else if (searched() && notFound()) {
+    <div class="empty-state">
+      <i class="pi pi-user-minus"></i>
+      <p>{{ 'CUSTOMER_INQUIRY.NOT_FOUND' | translate }}</p>
+    </div>
+  }
+</p-dialog>
