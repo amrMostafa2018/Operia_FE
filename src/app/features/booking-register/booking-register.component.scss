@@ -210,7 +210,16 @@
   .date-picker .p-inputtext {
     font-size: 0.875rem;
     padding: 0.45rem 0.75rem;
+    padding-left: 2rem;
     min-width: 9.5rem;
+    direction: ltr;
+    text-align: right;
+  }
+
+  .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
+    right: auto !important;
+    left: 3.15rem !important;
+    color: var(--text-secondary);
   }
 
   .date-picker.p-calendar {

@@ -203,22 +203,46 @@
     border-radius: $border-radius 0 0 $border-radius;
   }
 
-  // Calendar: consistent icon on the left in RTL (matches dropdown chevron placement)
+  // Calendar: trigger on the visual left; numeric dates stay LTR so they are not
+  // overlaid by the clear icon or reordered by the Unicode bidi algorithm.
   .p-calendar.p-calendar-w-btn {
     direction: ltr;
     flex-direction: row-reverse !important;
     width: 100%;
 
     .p-inputtext {
-      direction: rtl;
+      direction: ltr;
       text-align: right;
+      padding-left: 2rem;
+      padding-right: 0.75rem;
       border-top-right-radius: $border-radius !important;
       border-bottom-right-radius: $border-radius !important;
       border-top-left-radius: 0 !important;
       border-bottom-left-radius: 0 !important;
+
+      &::-ms-clear,
+      &::-webkit-search-cancel-button {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+    }
+
+    .p-calendar-clear-icon {
+      position: absolute;
+      top: 50%;
+      right: auto !important;
+      left: 3.15rem !important;
+      margin-top: 0 !important;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      z-index: 2;
     }
 
     .p-datepicker-trigger {
+      flex-shrink: 0;
+      width: 2.625rem;
+      min-width: 2.625rem;
       border-top-left-radius: $border-radius !important;
       border-bottom-left-radius: $border-radius !important;
       border-top-right-radius: 0 !important;
