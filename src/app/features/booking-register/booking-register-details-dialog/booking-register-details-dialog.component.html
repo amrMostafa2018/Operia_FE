@@ -1,3 +1,4 @@
+<!-- Adapts the register selection to the shared booking details and confirmation dialogs. -->
 <p-dialog
   [visible]="visible()"
   [modal]="true"
@@ -100,13 +101,6 @@
                 styleClass="status-tag"
               />
             }
-            @if (canChangeStatus()) {
-              <p-button
-                styleClass="confirm-status-btn"
-                [label]="'BOOKING_REGISTER.DETAILS.CONFIRM_STATUS' | translate"
-                (onClick)="confirmStatus()"
-              />
-            }
           </div>
         </section>
 
@@ -117,15 +111,23 @@
               {{ 'BOOKING_REGISTER.DETAILS.PAYMENT.TITLE' | translate }}
             </h4>
             <div class="payment-row">
-              <span class="payment-label">{{ 'BOOKING_REGISTER.DETAILS.PAYMENT.METHOD' | translate }}</span>
+              <span class="payment-label">{{
+                'BOOKING_REGISTER.DETAILS.PAYMENT.METHOD' | translate
+              }}</span>
               <span class="payment-value">{{ item.paymentMethodKey | translate }}</span>
             </div>
             <div class="payment-row">
-              <span class="payment-label">{{ 'BOOKING_REGISTER.DETAILS.PAYMENT.PAID' | translate }}</span>
-              <span class="payment-value payment-value--paid">{{ formatAmount(item.paidAmount) }}</span>
+              <span class="payment-label">{{
+                'BOOKING_REGISTER.DETAILS.PAYMENT.PAID' | translate
+              }}</span>
+              <span class="payment-value payment-value--paid">{{
+                formatAmount(item.paidAmount)
+              }}</span>
             </div>
             <div class="payment-row payment-row--total">
-              <span class="payment-label">{{ 'BOOKING_REGISTER.DETAILS.PAYMENT.TOTAL' | translate }}</span>
+              <span class="payment-label">{{
+                'BOOKING_REGISTER.DETAILS.PAYMENT.TOTAL' | translate
+              }}</span>
               <span class="payment-value">{{ formatAmount(item.totalAmount) }}</span>
             </div>
             <div class="payment-row">

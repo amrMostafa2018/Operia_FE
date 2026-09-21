@@ -1,3 +1,4 @@
+/* Styles booking details, editable lines, and payment choices. */
 @use '../../../styles/variables' as *;
 @use '../../shared/styles/payment-method-icons' as paymentIcons;
 @use './bookings-dialog' as dialog;
@@ -464,7 +465,7 @@
   flex-direction: column;
   gap: 0.35rem;
 
-  label {
+  .due-now-label {
     font-size: 0.8rem;
     color: var(--text-secondary);
   }
@@ -565,6 +566,12 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.65rem;
+}
+
+.payment-methods-state {
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
 }
 
 .payment-btn {

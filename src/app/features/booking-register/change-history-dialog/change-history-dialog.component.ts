@@ -5,6 +5,7 @@ import { DialogModule } from 'primeng/dialog';
 import { LanguageService } from '@core/services/language.service';
 import { BookingRegisterHistoryEvent } from '../models/booking-register.model';
 
+/** Displays the recorded change history for a booking. */
 @Component({
   selector: 'app-change-history-dialog',
   standalone: true,
@@ -49,6 +50,9 @@ export class ChangeHistoryDialogComponent {
   }
 
   actorLabel(event: BookingRegisterHistoryEvent): string {
+    if (!event.actorRoleKey) {
+      return event.actorName;
+    }
     const role = this.translate.instant(event.actorRoleKey);
     return `${event.actorName} (${role})`;
   }
@@ -61,8 +65,10 @@ export class ChangeHistoryDialogComponent {
         return 'BOOKING_REGISTER.HISTORY.EMPLOYEE_CHANGED';
       case 'time_changed':
         return 'BOOKING_REGISTER.HISTORY.TIME_CHANGED';
-      case 'status_confirmed':
-        return 'BOOKING_REGISTER.HISTORY.STATUS_CONFIRMED';
+      case 'updated':
+        return 'BOOKING_REGISTER.HISTORY.UPDATED';
+      case 'cancelled':
+        return 'BOOKING_REGISTER.HISTORY.CANCELLED';
     }
   }
 
@@ -74,7 +80,8 @@ export class ChangeHistoryDialogComponent {
         return 'history-title--employee';
       case 'time_changed':
         return 'history-title--time';
-      case 'status_confirmed':
+      case 'updated':
+      case 'cancelled':
         return 'history-title--status';
     }
   }

@@ -1,3 +1,4 @@
+<!-- Collects customer, service, Package, unlisted item, and payment selections. -->
 <p-dialog
   [visible]="visible()"
   [modal]="true"
@@ -72,28 +73,29 @@
 
     <form class="client-form" [formGroup]="clientForm">
       <div class="field">
-        <label>{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
+        <label for="booking-client-mobile">{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
         <span class="input-icon-wrap">
           <i class="pi pi-phone"></i>
-          <input pInputText formControlName="mobile" dir="ltr" />
+          <input id="booking-client-mobile" pInputText formControlName="mobile" dir="ltr" />
         </span>
         @if (mobileError(); as errorKey) {
           <small class="field-error">{{ errorKey | translate }}</small>
         }
       </div>
       <div class="field">
-        <label>{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
+        <label for="booking-client-name">{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
         <span class="input-icon-wrap">
           <i class="pi pi-user"></i>
-          <input pInputText formControlName="name" />
+          <input id="booking-client-name" pInputText formControlName="name" />
         </span>
         @if (nameError(); as errorKey) {
           <small class="field-error">{{ errorKey | translate }}</small>
         }
       </div>
       <div class="field">
-        <label>{{ 'BOOKINGS.BOOK.PACKAGE_SELECT' | translate }}</label>
+        <label for="booking-client-package">{{ 'BOOKINGS.BOOK.PACKAGE_SELECT' | translate }}</label>
         <p-dropdown
+          inputId="booking-client-package"
           [options]="packageOptions()"
           [ngModel]="selectedPackageId()"
           (ngModelChange)="selectedPackageId.set($event)"
@@ -395,18 +397,6 @@
                   }
                 </small>
               </div>
-              <span
-                class="payment-status"
-                [class.paid]="linePaymentStatus(item) === 'paid'"
-                [class.remaining]="linePaymentStatus(item) === 'remaining'"
-              >
-                {{
-                  (linePaymentStatus(item) === 'paid'
-                    ? 'BOOKINGS.BOOK.PAID'
-                    : 'BOOKINGS.BOOK.REMAINING'
-                  ) | translate
-                }}
-              </span>
             </div>
           </li>
         }
@@ -415,34 +405,56 @@
       <div class="payments-total">
         <span>{{ 'BOOKINGS.BOOK.TOTAL' | translate }}</span>
         <strong>
-          {{ paymentsTotal() }}
+          {{ subtotal() }}
           @if (currencyService.hasCurrency()) {
             {{ currencyService.currencyLabel() }}
           }
         </strong>
       </div>
 
-      <h5>{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h5>
-      <div class="payment-grid">
-        @for (method of paymentMethods; track method.id) {
-          <button
-            type="button"
-            class="payment-btn"
-            [class.active]="paymentMethod() === method.id"
-            (click)="selectPayment(method.id)"
-          >
-            <span class="payment-radio">
-              @if (paymentMethod() === method.id) {
-                <i class="pi pi-circle-fill"></i>
-              } @else {
-                <i class="pi pi-circle"></i>
-              }
-            </span>
-            <span class="payment-method-icon" [class]="method.iconClass">
-              <i [class]="method.icon" aria-hidden="true"></i>
-            </span>
-            <span>{{ method.labelKey | translate }}</span>
-          </button>
+      <div class="payment-methods-section">
+        <h5 class="payment-method-title">{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h5>
+        @if (paymentMethodsLoading()) {
+          <p class="payment-methods-state">
+            {{ 'BOOKINGS.DETAILS.PAYMENT_METHODS_LOADING' | translate }}
+          </p>
+        } @else if (paymentMethodsUnavailable()) {
+          <div class="payment-methods-state">
+            <span>{{ 'BOOKINGS.DETAILS.PAYMENT_METHODS_UNAVAILABLE' | translate }}</span>
+            <p-button
+              [label]="'COMMON.RETRY' | translate"
+              [text]="true"
+              (onClick)="loadPaymentMethods()"
+            />
+          </div>
+        } @else if (paymentMethods().length === 0) {
+          <p class="payment-methods-state">
+            {{ 'BOOKINGS.DETAILS.NO_PAYMENT_METHODS' | translate }}
+          </p>
+        } @else {
+          <div class="payment-grid">
+            @for (method of paymentMethods(); track method.id) {
+              <button
+                type="button"
+                class="payment-btn"
+                [class.active]="draftPaymentMethod() === method.id"
+                [attr.aria-pressed]="draftPaymentMethod() === method.id"
+                (click)="selectPaymentMethod(method.id)"
+              >
+                <span class="payment-radio">
+                  @if (draftPaymentMethod() === method.id) {
+                    <i class="pi pi-circle-fill"></i>
+                  } @else {
+                    <i class="pi pi-circle"></i>
+                  }
+                </span>
+                <span class="payment-method-icon" [class]="method.iconClass">
+                  <i [class]="method.icon" aria-hidden="true"></i>
+                </span>
+                <span>{{ method.labelKey | translate }}</span>
+              </button>
+            }
+          </div>
         }
       </div>
     </section>
@@ -470,11 +482,7 @@
         </li>
         <li>
           <span><i class="pi pi-percentage"></i>{{ 'BOOKINGS.BOOK.DISCOUNT' | translate }}</span>
-          <p-inputNumber
-            [ngModel]="discount()"
-            (ngModelChange)="discount.set($event ?? 0)"
-            [min]="0"
-          />
+          <strong>0</strong>
         </li>
       </ul>
 
@@ -487,16 +495,6 @@
           }
         </strong>
       </div>
-
-      <div class="send-message">
-        <p-checkbox
-          [binary]="true"
-          [ngModel]="sendMessage()"
-          (ngModelChange)="sendMessage.set($event)"
-          inputId="sendMessage"
-        />
-        <label for="sendMessage">{{ 'BOOKINGS.BOOK.SEND_MESSAGE' | translate }}</label>
-      </div>
     </section>
   </div>
 
@@ -504,7 +502,12 @@
     <button type="button" class="cancel-btn" (click)="close()">
       {{ 'COMMON.CANCEL' | translate }}
     </button>
-    <button type="button" class="confirm-btn" (click)="submit()">
+    <button
+      type="button"
+      class="confirm-btn"
+      [disabled]="customerLookupPending()"
+      (click)="submit()"
+    >
       <i class="pi pi-check"></i>
       {{ 'BOOKINGS.BOOK.CONFIRM' | translate }}
     </button>

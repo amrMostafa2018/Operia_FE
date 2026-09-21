@@ -23,19 +23,23 @@ import { parseTimeToMinutes } from './bookings-calendar/bookings-calendar.utils'
 import { WorkingHoursService } from './working-hours.service';
 import { SellServicePayload } from './sale-handoff.service';
 
+/** Describes recorded sale used by booking screens. */
 export interface RecordedSale extends SellServicePayload {
   id: string;
   createdAt: string;
 }
 
+/** Returns today's local date as an ISO calendar key for sample bookings. */
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Converts a clock value to minutes after midnight for booking comparisons. */
 function parseTime(time: string): number {
   return parseTimeToMinutes(time);
 }
 
+/** Generates a display identifier for a locally created booking. */
 function generateBookingNumber(mobile: string): string {
   const suffix = mobile.slice(-8);
   return `1${suffix}${Date.now().toString().slice(-4)}`;
@@ -134,6 +138,7 @@ const INITIAL_BOOKINGS: Booking[] = [
   },
 ];
 
+/** Provides booking data and mutations for existing booking screens. */
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly workingHours = inject(WorkingHoursService);
@@ -200,6 +205,7 @@ export class BookingService {
     return of([...MOCK_BRANCHES]);
   }
 
+  /** Loads employees allowed for the selected booking branch. */
   getBookableEmployees(branchId: string): Observable<typeof MOCK_EMPLOYEES> {
     return of(MOCK_EMPLOYEES.filter(e => e.branchIds.includes(branchId)));
   }
@@ -221,9 +227,7 @@ export class BookingService {
       )
       .map(b => ({ startTime: b.startTime, endTime: b.endTime }));
 
-    return of(
-      this.workingHours.generateAvailabilitySlots(date, sessionDurationMinutes, booked)
-    );
+    return of(this.workingHours.generateAvailabilitySlots(date, sessionDurationMinutes, booked));
   }
 
   createBooking(payload: CreateBookingPayload): Observable<Booking> {
@@ -277,8 +281,6 @@ export class BookingService {
       status: 'pending',
     };
 
-    pkg.usedSessions += 1;
-    pkg.remainingSessions -= 1;
     this.bookings$.next([...this.bookings$.getValue(), booking]);
     return of(booking);
   }
@@ -289,9 +291,7 @@ export class BookingService {
     if (idx < 0) throw new Error('BOOKINGS.ERRORS.NOT_FOUND');
 
     const current = all[idx];
-    const branch = payload.branchId
-      ? MOCK_BRANCHES.find(b => b.id === payload.branchId)
-      : null;
+    const branch = payload.branchId ? MOCK_BRANCHES.find(b => b.id === payload.branchId) : null;
     const employee = payload.employeeId
       ? MOCK_EMPLOYEES.find(e => e.id === payload.employeeId)
       : null;
@@ -341,7 +341,8 @@ export class BookingService {
     return of([...MOCK_EMPLOYEES]);
   }
 
-  exportBookings(_filters: BookingFilters): void {
+  exportBookings(filters: BookingFilters): void {
+    void filters;
     // placeholder — real export wired when API is ready
   }
 

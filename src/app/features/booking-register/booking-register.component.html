@@ -1,3 +1,4 @@
+<!-- Shows tenant-scoped register filters, summary, rows, export, and booking actions. -->
 <div class="register-page">
   <div class="page-header">
     <div class="page-title">
@@ -33,11 +34,11 @@
         <strong>{{ summary().completed }}</strong>
       </div>
     </article>
-    <article class="summary-card summary-card--waiting">
+    <article class="summary-card summary-card--booked">
       <i class="pi pi-clock"></i>
       <div>
-        <span>{{ 'BOOKING_REGISTER.SUMMARY.WAITING' | translate }}</span>
-        <strong>{{ summary().waiting }}</strong>
+        <span>{{ 'BOOKING_REGISTER.SUMMARY.BOOKED' | translate }}</span>
+        <strong>{{ summary().booked }}</strong>
       </div>
     </article>
   </div>
@@ -146,6 +147,8 @@
       [rows]="rows()"
       [first]="first()"
       [paginator]="true"
+      [lazy]="true"
+      [totalRecords]="totalRecords()"
       [rowsPerPageOptions]="rowsPerPageOptions"
       [showCurrentPageReport]="true"
       [currentPageReportTemplate]="pageReportTemplate()"
@@ -237,11 +240,35 @@
   </div>
 </div>
 
-<app-booking-register-details-dialog
+<app-booking-details-dialog
   [visible]="detailsOpen()"
-  [booking]="selectedBooking()"
+  [booking]="selectedBookingRecord()"
+  [catalogItems]="catalogItems()"
+  [catalogCategories]="catalogCategories()"
   (closed)="closeDetails()"
-  (statusConfirmed)="onStatusConfirmed($event)"
+  (saved)="onDetailsSaved($event)"
+  (cancelBooking)="requestCancellation($event)"
+  (packageCreated)="onCatalogChanged()"
+/>
+
+<app-duration-mismatch-dialog
+  [visible]="mismatchOpen()"
+  [serviceDuration]="mismatchServiceDuration()"
+  [slotDuration]="mismatchSlotDuration()"
+  confirmLabelKey="BOOKINGS.MISMATCH.CONFIRM_EDIT"
+  (closed)="clearMismatchEdit()"
+  (back)="clearMismatchEdit()"
+  (confirmAnyway)="confirmMismatchEdit()"
+/>
+
+<app-confirm-action-dialog
+  [visible]="cancelConfirmOpen()"
+  headerKey="BOOKING_REGISTER.DETAILS.CANCEL_TITLE"
+  messageKey="BOOKING_REGISTER.DETAILS.CANCEL_CONFIRM"
+  confirmLabelKey="BOOKING_REGISTER.DETAILS.CANCEL"
+  cancelLabelKey="COMMON.CANCEL"
+  (cancelled)="cancelConfirmOpen.set(false)"
+  (confirmed)="confirmCancellation()"
 />
 
 <app-change-history-dialog

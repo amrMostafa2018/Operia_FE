@@ -1,23 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
-import { MessageService } from 'primeng/api';
 import { CurrencyService } from '@core/services/currency.service';
 import { LanguageService } from '@core/services/language.service';
-import { PermissionService } from '@core/services/permission.service';
-import { Policies } from '@core/models/permissions.model';
 import {
   BookingRegisterRow,
   BookingRegisterStatus,
@@ -25,6 +13,7 @@ import {
   registerStatusSeverity,
 } from '../models/booking-register.model';
 
+/** Adapts register rows for the shared booking details dialog. */
 @Component({
   selector: 'app-booking-register-details-dialog',
   standalone: true,
@@ -34,9 +23,6 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BookingRegisterDetailsDialogComponent {
-  private readonly permissions = inject(PermissionService);
-  private readonly toast = inject(MessageService);
-  private readonly translate = inject(TranslateService);
   private readonly languageService = inject(LanguageService);
   private readonly currencyService = inject(CurrencyService);
 
@@ -44,31 +30,12 @@ export class BookingRegisterDetailsDialogComponent {
   readonly booking = input<BookingRegisterRow | null>(null);
 
   readonly closed = output<void>();
-  readonly statusConfirmed = output<string>();
-
-  readonly localStatus = signal<BookingRegisterStatus | null>(null);
-
-  readonly canChangeStatus = computed(() =>
-    this.permissions.hasPermission(Policies.BookingsChangeStatus)
-  );
-
-  constructor() {
-    effect(
-      () => {
-        if (this.booking()) {
-          this.localStatus.set(null);
-        }
-      },
-      { allowSignalWrites: true }
-    );
-  }
-
   readonly displayStatus = computed(() => {
     const booking = this.booking();
     if (!booking) {
       return null;
     }
-    return this.localStatus() ?? booking.status;
+    return booking.status;
   });
 
   readonly remainingAmount = computed(() => {
@@ -80,7 +47,6 @@ export class BookingRegisterDetailsDialogComponent {
   });
 
   close(): void {
-    this.localStatus.set(null);
     this.closed.emit();
   }
 
@@ -128,21 +94,5 @@ export class BookingRegisterDetailsDialogComponent {
 
   statusSeverity(status: BookingRegisterStatus) {
     return registerStatusSeverity(status);
-  }
-
-  confirmStatus(): void {
-    const booking = this.booking();
-    if (!booking || !this.canChangeStatus()) {
-      return;
-    }
-
-    this.localStatus.set('confirm');
-    this.statusConfirmed.emit(booking.id);
-    this.toast.add({
-      severity: 'success',
-      summary: 'OPERIA',
-      detail: this.translate.instant('BOOKING_REGISTER.DETAILS.CONFIRM_SUCCESS'),
-      life: 3000,
-    });
   }
 }

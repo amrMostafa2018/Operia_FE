@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,8 +26,10 @@ import { PackageService } from '@app/features/packages/package.service';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import { getPrevArrowIcon } from '@app/shared/utils/rtl.util';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
+import { extractApiFieldErrors, translateApiFieldErrors } from '@core/utils/api-error.util';
 import {
   addDays,
+  AppointmentAvailabilityBlock,
   AppointmentFilters,
   avatarColorFromId,
   BookingLineItem,
@@ -35,36 +38,37 @@ import {
   bookingBlockHeightPx,
   bookingBlockTopPx,
   BOOKING_OVERLAY_GAP_PX,
+  SLOT_INTERVAL_MINUTES,
+  buildAvailableSlots,
   buildSlotGrid,
   buildSlotRows,
+  CalendarAvailableSlot,
   CalendarSlotCell,
   CalendarViewMode,
   calendarDayRange,
   CatalogCategoryTab,
-  cloneBookings,
-  cloneClients,
   defaultFilters,
   defaultSelectedDate,
+  DurationOption,
   EmployeeOption,
   filterEmployees,
   formatMinutesAsTime,
   formatTimeRange,
-  generateBookingNumber,
   hoursForDate,
   initialsFromName,
   isSlotAvailableForBooking,
-  MOCK_DURATIONS,
   PackageOption,
   parseTimeToMinutes,
   resolveEmployeeForFourDayView,
   ServiceCatalogItem,
   SlotSelection,
-  SLOT_INTERVAL_MINUTES,
-  sumLineItemPrice,
+  sumLineItemDuration,
   toDateKey,
-  bookingHasPackage,
+  PaymentMethodId,
 } from './models/booking.model';
-import { mapPackageToCatalogItem, mapPackageToFilterOption } from './booking-catalog.util';
+import { AppointmentsApiService } from './appointments-api.service';
+import { mapCalendarBooking } from './booking-record.mapper';
+import { mapPackageToCatalogItem } from './booking-catalog.util';
 import {
   BookAppointmentDialogComponent,
   BookAppointmentPayload,
@@ -72,24 +76,22 @@ import {
 import {
   BookingDetailsDialogComponent,
   BookingDetailsSavePayload,
-  BookingClosePayload,
 } from './booking-details-dialog.component';
-import { ConfirmPackageUsageDialogComponent } from './confirm-package-usage-dialog.component';
 import { DurationMismatchDialogComponent } from './duration-mismatch-dialog.component';
 import { SaleHandoffService, SaleHandoffDraft } from './sale-handoff.service';
 
+/** Describes pending booking draft used by booking screens. */
 interface PendingBookingDraft {
   selection: SlotSelection;
   clientName: string;
   clientMobile: string;
   clientId: string | null;
   lineItems: BookingLineItem[];
-  paymentMethod: BookingRecord['paymentMethod'];
-  discount: number;
-  paidAmount: number;
   serviceDuration: number;
+  paymentMethod: PaymentMethodId | null;
 }
 
+/** Coordinates calendar availability and booking creation, editing, and cancellation. */
 @Component({
   selector: 'app-appointments',
   standalone: true,
@@ -104,7 +106,6 @@ interface PendingBookingDraft {
     ConfirmActionDialogComponent,
     BookAppointmentDialogComponent,
     BookingDetailsDialogComponent,
-    ConfirmPackageUsageDialogComponent,
     DurationMismatchDialogComponent,
   ],
   templateUrl: './appointments.component.html',
@@ -120,37 +121,54 @@ export class AppointmentsComponent {
   private readonly employeesApi = inject(EmployeeService);
   private readonly packagesApi = inject(PackageService);
   private readonly saleHandoff = inject(SaleHandoffService);
+  private readonly appointmentsApi = inject(AppointmentsApiService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly branches = signal<BranchOption[]>([]);
   readonly employees = signal<EmployeeOption[]>([]);
-  readonly durations = MOCK_DURATIONS;
   readonly packages = signal<PackageOption[]>([]);
   readonly catalogItems = signal<ServiceCatalogItem[]>([]);
   readonly catalogCategories = signal<CatalogCategoryTab[]>([]);
   readonly catalogLoading = signal(false);
+  readonly calendarLoading = signal(false);
+  readonly calendarUnavailable = signal(false);
 
-  readonly bookings = signal<BookingRecord[]>(cloneBookings());
-  readonly clients = signal(cloneClients());
+  readonly bookings = signal<BookingRecord[]>([]);
+  readonly availabilityBlocks = signal<AppointmentAvailabilityBlock[]>([]);
+  readonly clients = signal<import('./models/booking.model').ClientRecord[]>([]);
 
   readonly filters = signal<AppointmentFilters>(defaultFilters());
+  readonly durations = computed<DurationOption[]>(() => {
+    const selectedPackage = this.packages().find(pkg => pkg.id === this.filters().packageId);
+    if (!selectedPackage || selectedPackage.durationMinutes <= 0) {
+      return [];
+    }
+    return [
+      { label: String(selectedPackage.durationMinutes), value: selectedPackage.durationMinutes },
+    ];
+  });
+  readonly calendarDurationMinutes = computed(
+    () => this.filters().durationMinutes || SLOT_INTERVAL_MINUTES
+  );
   readonly selectedDate = signal<Date>(defaultSelectedDate());
   readonly viewMode = signal<CalendarViewMode>('today');
   readonly selectedSlot = signal<SlotSelection | null>(null);
 
   readonly bookDialogVisible = signal(false);
   readonly detailsDialogVisible = signal(false);
-  readonly packageUsageVisible = signal(false);
   readonly mismatchVisible = signal(false);
   readonly cancelConfirmVisible = signal(false);
 
   readonly activeBookingId = signal<string | null>(null);
-  readonly pendingCloseBookingId = signal<string | null>(null);
-  readonly pendingCloseLineItems = signal<BookingLineItem[]>([]);
   readonly pendingDraft = signal<PendingBookingDraft | null>(null);
+  readonly pendingEdit = signal<BookingDetailsSavePayload | null>(null);
   readonly mismatchServiceDuration = signal(0);
   readonly mismatchSlotDuration = signal(0);
   readonly saleHandoffDraft = signal<SaleHandoffDraft | null>(null);
+  readonly createRequestKey = signal<string | null>(null);
+  private calendarRequestId = 0;
+  private customerRequestId = 0;
+  private holdRefreshTimer?: ReturnType<typeof setTimeout>;
 
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
 
@@ -221,10 +239,29 @@ export class AppointmentsComponent {
           this.bookings(),
           column.employeeId,
           column.date,
-          this.filters().durationMinutes,
+          this.calendarDurationMinutes(),
           column.employee.workingDays,
           range.startMinutes,
-          range.endMinutes
+          range.endMinutes,
+          this.availabilityBlocks()
+        )
+      );
+    }
+    return map;
+  });
+
+  readonly availableSlots = computed(() => {
+    const map = new Map<string, CalendarAvailableSlot[]>();
+    for (const column of this.columns()) {
+      map.set(
+        `${column.employeeId}|${toDateKey(column.date)}`,
+        buildAvailableSlots(
+          this.bookings(),
+          column.employeeId,
+          column.date,
+          this.calendarDurationMinutes(),
+          column.employee.workingDays,
+          this.availabilityBlocks()
         )
       );
     }
@@ -272,11 +309,17 @@ export class AppointmentsComponent {
   readonly prevArrowIcon = computed(() => getPrevArrowIcon(this.languageService.currentLang()));
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.holdRefreshTimer) {
+        clearTimeout(this.holdRefreshTimer);
+      }
+    });
     this.loadBranches();
     this.loadCatalog();
     this.applySaleHandoff();
   }
 
+  /** Transfers a sale draft into the appointment customer and item selection. */
   private applySaleHandoff(): void {
     const draft = this.saleHandoff.consumeDraft();
     if (!draft) {
@@ -287,8 +330,8 @@ export class AppointmentsComponent {
       ...current,
       clientName: draft.clientName,
       clientMobile: draft.clientMobile,
-      durationMinutes: draft.serviceDuration,
     }));
+    this.onMobileSearch();
     this.toast.add({
       severity: 'info',
       summary: 'OPERIA',
@@ -296,21 +339,20 @@ export class AppointmentsComponent {
     });
   }
 
+  /** Loads only branches available to the signed-in user for booking. */
   private loadBranches(): void {
     this.branchesApi
-      .list({
-        pageNumber: 1,
-        pageSize: 100,
-        search: '',
-        sortBy: 'name',
-        sortDirection: 'asc',
-      })
+      .listBookable()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
-          const items = result.items.map(branch => ({ id: branch.id, name: branch.name }));
+          const items = result.map(branch => ({ id: branch.id, name: branch.name }));
           this.branches.set(items);
           const current = this.filters().branchId;
+          if (!items.length) {
+            this.updateFilter('branchId', null);
+            return;
+          }
           const stillExists = items.some(branch => branch.id === current);
           if (!stillExists && items[0]) {
             this.updateFilter('branchId', items[0].id);
@@ -331,7 +373,12 @@ export class AppointmentsComponent {
     this.loadCatalog();
   }
 
+  /** Loads current catalog items and category choices for booking edits. */
   private loadCatalog(): void {
+    if (!this.permissions.hasPermission(Policies.PackagesRead)) {
+      return;
+    }
+
     this.catalogLoading.set(true);
     forkJoin({
       packages: this.packagesApi.listAllActive(),
@@ -348,9 +395,6 @@ export class AppointmentsComponent {
             }))
           );
           this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
-          this.packages.set(
-            packages.filter(pkg => pkg.offerType === 'package').map(mapPackageToFilterOption)
-          );
         },
         error: () => {
           this.catalogLoading.set(false);
@@ -369,6 +413,18 @@ export class AppointmentsComponent {
   }
 
   updateFilter<K extends keyof AppointmentFilters>(key: K, value: AppointmentFilters[K]): void {
+    if (key === 'clientMobile' && value !== this.filters().clientMobile) {
+      this.customerRequestId++;
+      this.clients.set([]);
+      this.packages.set([]);
+      this.selectedSlot.set(null);
+      this.filters.update(current => ({
+        ...current,
+        clientName: '',
+        packageId: null,
+        durationMinutes: 0,
+      }));
+    }
     this.filters.update(current => ({ ...current, [key]: value }));
     if (key === 'branchId') {
       this.selectedSlot.set(null);
@@ -380,39 +436,21 @@ export class AppointmentsComponent {
       if (slot && value && slot.employeeId !== value) {
         this.selectedSlot.set(null);
       }
-    }
-    if (key === 'packageId' && typeof value === 'string' && value) {
-      const packageOption = this.packages().find(item => item.id === value);
-      if (packageOption) {
-        this.filters.update(current => ({
-          ...current,
-          durationMinutes: packageOption.durationMinutes,
-        }));
-      }
+      this.loadBookings();
     }
     if (key === 'durationMinutes' || key === 'packageId') {
-      const slot = this.selectedSlot();
-      if (slot) {
-        const durationMinutes = this.filters().durationMinutes;
-        if (
-          !this.isStartAvailableForDuration(
-            slot.employeeId,
-            slot.date,
-            slot.startMinutes,
-            durationMinutes
-          )
-        ) {
-          this.selectedSlot.set(null);
-        } else {
-          this.selectedSlot.set({
-            ...slot,
-            slotDurationMinutes: durationMinutes,
-          });
-        }
-      }
+      this.selectedSlot.set(null);
     }
   }
 
+  /** Sets the duration from the chosen owned Package or clears it when none is selected. */
+  onPackageSelected(packageId: string | null): void {
+    this.updateFilter('packageId', packageId);
+    const selectedPackage = this.packages().find(pkg => pkg.id === packageId);
+    this.updateFilter('durationMinutes', selectedPackage?.durationMinutes ?? 0);
+  }
+
+  /** Loads bookable employees for the selected branch and refreshes calendar selection. */
   private loadEmployees(branchId: string | null): void {
     if (!branchId) {
       this.employees.set([]);
@@ -428,6 +466,7 @@ export class AppointmentsComponent {
           const mapped = staff.map(employee => this.toEmployeeOption(employee, branchId));
           this.employees.set(mapped);
           this.ensureEmployeeSelected(mapped);
+          this.loadBookings();
         },
         error: () => {
           this.employees.set([]);
@@ -440,6 +479,7 @@ export class AppointmentsComponent {
       });
   }
 
+  /** Keeps the current employee if still bookable or chooses an allowed default. */
   private ensureEmployeeSelected(staff: EmployeeOption[] = this.employees()): void {
     const current = this.filters().employeeId;
     if (current && staff.some(employee => employee.id === current)) {
@@ -448,6 +488,7 @@ export class AppointmentsComponent {
     this.filters.update(filters => ({ ...filters, employeeId: staff[0]?.id ?? null }));
   }
 
+  /** Converts an API employee and branch assignment into a calendar option. */
   private toEmployeeOption(employee: BookableEmployee, branchId: string): EmployeeOption {
     return {
       id: employee.id,
@@ -471,10 +512,17 @@ export class AppointmentsComponent {
     if (mode === '4days' && !this.filters().employeeId) {
       this.ensureEmployeeSelected();
     }
+    this.loadBookings();
   }
 
   shiftDate(days: number): void {
     this.selectedDate.update(current => addDays(current, days));
+    this.loadBookings();
+  }
+
+  onDateSelected(date: Date): void {
+    this.selectedDate.set(date);
+    this.loadBookings();
   }
 
   cellFor(
@@ -485,38 +533,18 @@ export class AppointmentsComponent {
     return cells?.find(cell => cell.startMinutes === startMinutes);
   }
 
-  onSlotClick(
-    column: { employeeId: string; date: Date; title: string },
-    startMinutes: number
-  ): void {
-    const cell = this.cellFor(column, startMinutes);
-    if (!cell) {
-      return;
-    }
-
-    if (cell.visual === 'booked' || cell.visual === 'completed') {
-      if (cell.booking) {
-        this.activeBookingId.set(cell.booking.id);
-        this.detailsDialogVisible.set(true);
-      }
-      return;
-    }
-
-    if (cell.visual !== 'available') {
-      return;
-    }
-
-    if (!cell.selectable) {
-      this.notifyDurationBlocked();
-      return;
-    }
-
-    this.selectAvailableSlot(column, startMinutes);
+  availableSlotsForColumn(column: { employeeId: string; date: Date }): CalendarAvailableSlot[] {
+    return this.availableSlots().get(`${column.employeeId}|${toDateKey(column.date)}`) ?? [];
   }
 
   onBookingClick(booking: BookingRecord): void {
     this.activeBookingId.set(booking.id);
     this.detailsDialogVisible.set(true);
+  }
+
+  /** Refreshes availability after a conflict or failed calendar request. */
+  retryAvailability(): void {
+    this.loadBookings();
   }
 
   private isStartAvailableForDuration(
@@ -533,7 +561,8 @@ export class AppointmentsComponent {
       date,
       startMinutes,
       durationMinutes,
-      hours
+      hours,
+      this.availabilityBlocks()
     );
   }
 
@@ -541,15 +570,19 @@ export class AppointmentsComponent {
     column: { employeeId: string; date: Date; title: string },
     startMinutes: number
   ): void {
+    if (this.calendarLoading() || this.calendarUnavailable()) {
+      return;
+    }
+    const effectiveDuration = this.calendarDurationMinutes();
     if (
       !this.isStartAvailableForDuration(
         column.employeeId,
         column.date,
         startMinutes,
-        this.filters().durationMinutes
+        effectiveDuration
       )
     ) {
-      this.notifyDurationBlocked();
+      this.notifyDurationBlocked(effectiveDuration);
       return;
     }
 
@@ -562,7 +595,7 @@ export class AppointmentsComponent {
       branchName: branch?.name ?? '',
       date: column.date,
       startMinutes,
-      slotDurationMinutes: this.filters().durationMinutes,
+      slotDurationMinutes: effectiveDuration,
     };
 
     this.selectedSlot.set(selection);
@@ -595,19 +628,64 @@ export class AppointmentsComponent {
     );
   }
 
+  /** Finds a registered customer and ignores responses for an older mobile search. */
   onMobileSearch(): void {
     const mobile = this.filters().clientMobile.trim();
     if (!mobile) {
       return;
     }
-    const client = this.clients().find(item => item.mobile === mobile);
-    if (client) {
-      this.updateFilter('clientName', client.name);
-    }
-  }
-
-  slotTimeLabel(startMinutes: number): string {
-    return formatTimeRange(startMinutes, SLOT_INTERVAL_MINUTES);
+    const requestId = ++this.customerRequestId;
+    this.appointmentsApi
+      .findCustomer(mobile)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(customer => {
+        if (requestId !== this.customerRequestId || mobile !== this.filters().clientMobile.trim()) {
+          return;
+        }
+        if (!customer) {
+          this.updateFilter('clientName', '');
+          this.clients.set([]);
+          this.packages.set([]);
+          this.onPackageSelected(null);
+          return;
+        }
+        const client = {
+          id: customer.id,
+          name: customer.fullName,
+          mobile: customer.mobileNumber,
+          registered: true,
+          packages: customer.packages.map(pkg => ({
+            customerPackageId: pkg.customerPackageId,
+            packageId: pkg.packageId,
+            packageName: pkg.packageName,
+            usedSessions: pkg.usedSessions + pkg.reservedSessions,
+            totalSessions: pkg.totalSessions,
+            expiryDate: pkg.expiresOn ?? '',
+            offerType: pkg.offerType,
+          })),
+        };
+        this.clients.set([client]);
+        this.packages.set(
+          customer.packages
+            .filter(pkg => pkg.offerType === 'package')
+            .filter(
+              (pkg, index, all) => all.findIndex(item => item.packageId === pkg.packageId) === index
+            )
+            .map(pkg => ({
+              id: pkg.packageId,
+              name: pkg.packageName,
+              durationMinutes: pkg.sessionDurationMinutes,
+              serviceId: pkg.packageId,
+            }))
+        );
+        this.updateFilter('clientName', client.name);
+        const selectedPackageId = this.filters().packageId;
+        this.onPackageSelected(
+          selectedPackageId && this.packages().some(pkg => pkg.id === selectedPackageId)
+            ? selectedPackageId
+            : null
+        );
+      });
   }
 
   footerSlotTime(): string {
@@ -648,7 +726,19 @@ export class AppointmentsComponent {
     this.tryCreateBooking(payload);
   }
 
+  /** Rechecks the chosen interval and opens duration mismatch confirmation when needed. */
   private tryCreateBooking(payload: PendingBookingDraft): void {
+    if (
+      !this.isStartAvailableForDuration(
+        payload.selection.employeeId,
+        payload.selection.date,
+        payload.selection.startMinutes,
+        payload.selection.slotDurationMinutes
+      )
+    ) {
+      this.notifyDurationBlocked(payload.selection.slotDurationMinutes);
+      return;
+    }
     if (payload.serviceDuration > payload.selection.slotDurationMinutes) {
       this.pendingDraft.set(payload);
       this.mismatchServiceDuration.set(payload.serviceDuration);
@@ -660,6 +750,13 @@ export class AppointmentsComponent {
   }
 
   onMismatchConfirm(): void {
+    const edit = this.pendingEdit();
+    if (edit) {
+      this.commitBookingEdit(edit);
+      this.pendingEdit.set(null);
+      this.mismatchVisible.set(false);
+      return;
+    }
     const draft = this.pendingDraft();
     if (!draft) {
       return;
@@ -672,118 +769,160 @@ export class AppointmentsComponent {
   onMismatchBack(): void {
     this.mismatchVisible.set(false);
     this.pendingDraft.set(null);
+    this.pendingEdit.set(null);
   }
 
+  /** Sends a registered customer's booking with an idempotency key and current selections. */
   private commitBooking(payload: PendingBookingDraft): void {
-    const total = sumLineItemPrice(payload.lineItems);
-    const booking: BookingRecord = {
-      id: `bk-${Date.now()}`,
-      bookingNumber: generateBookingNumber(),
-      status: 'booked',
-      clientId: payload.clientId ?? `guest-${Date.now()}`,
-      clientName: payload.clientName,
-      clientMobile: payload.clientMobile,
-      employeeId: payload.selection.employeeId,
-      employeeName: payload.selection.employeeName,
-      branchId: payload.selection.branchId,
-      branchName: payload.selection.branchName,
-      sourceKey: 'BOOKINGS.SOURCE.CONTROL_PANEL',
-      scheduledDate: new Date(payload.selection.date),
-      startMinutes: payload.selection.startMinutes,
-      slotDurationMinutes: payload.selection.slotDurationMinutes,
-      lineItems: payload.lineItems,
-      paymentMethod: payload.paymentMethod,
-      totalAmount: Math.max(total - payload.discount, 0),
-      paidAmount: payload.paidAmount,
-      discount: payload.discount,
-      createdAt: new Date(),
-    };
-
-    this.bookings.update(items => [...items, booking]);
-    this.bookDialogVisible.set(false);
-    this.selectedSlot.set(null);
-    this.saleHandoffDraft.set(null);
-    this.showToast('BOOKINGS.TOAST.BOOKED');
-  }
-
-  onDetailsSaved(payload: BookingDetailsSavePayload): void {
-    this.bookings.update(items =>
-      items.map(booking => {
-        if (booking.id !== payload.bookingId) {
-          return booking;
-        }
-        const totalAmount = sumLineItemPrice(payload.lineItems);
-        return {
-          ...booking,
-          lineItems: payload.lineItems.map(item => ({ ...item })),
-          paymentMethod: payload.paymentMethod,
-          paidAmount: payload.paidAmount,
-          totalAmount,
-        };
-      })
-    );
-    this.showToast('BOOKINGS.TOAST.SAVED');
-  }
-
-  onDetailsClose(payload: BookingClosePayload): void {
-    const booking = this.bookings().find(item => item.id === payload.bookingId);
-    if (!booking) {
+    if (!payload.clientId) {
+      this.showToast('BOOKINGS.BOOK.CUSTOMER_NOT_REGISTERED', 'error');
       return;
     }
-    this.pendingCloseBookingId.set(payload.bookingId);
-    this.pendingCloseLineItems.set(payload.lineItems.map(item => ({ ...item })));
-    queueMicrotask(() => this.packageUsageVisible.set(true));
+
+    const items = payload.lineItems
+      .filter(item => !!item.catalogPackageId)
+      .map(item => ({
+        packageId: item.catalogPackageId!,
+        customerPackageId: item.customerPackageId ?? null,
+        quantity: item.quantity,
+        type: item.type,
+      }));
+    if (items.length !== payload.lineItems.length) {
+      this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');
+      return;
+    }
+
+    const requestKey = this.createRequestKey() ?? crypto.randomUUID();
+    this.createRequestKey.set(requestKey);
+    this.appointmentsApi
+      .create({
+        idempotencyKey: requestKey,
+        customerId: payload.clientId,
+        branchId: payload.selection.branchId,
+        employeeId: payload.selection.employeeId,
+        scheduledDate: toDateKey(payload.selection.date),
+        startMinutes: payload.selection.startMinutes,
+        endMinutes: payload.selection.startMinutes + payload.selection.slotDurationMinutes,
+        items,
+        paymentMethod: payload.paymentMethod,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          this.createRequestKey.set(null);
+          this.bookDialogVisible.set(false);
+          this.selectedSlot.set(null);
+          this.saleHandoffDraft.set(null);
+          this.loadBookings();
+          this.toast.add({
+            severity: 'success',
+            summary: this.translate.instant('BOOKINGS.TOAST.BOOKED'),
+            detail: this.translate.instant('BOOKINGS.TOAST.BOOKED_NUMBER', {
+              number: result.bookingNumber,
+            }),
+          });
+        },
+        error: error => this.handleMutationError(error),
+      });
+  }
+
+  /** Loads visible bookings and holds, discarding stale calendar responses. */
+  private loadBookings(): void {
+    const requestId = ++this.calendarRequestId;
+    this.calendarLoading.set(true);
+    this.calendarUnavailable.set(false);
+    this.clearHoldRefresh();
+    const branchId = this.filters().branchId;
+    if (!branchId) {
+      this.bookings.set([]);
+      this.availabilityBlocks.set([]);
+      this.calendarLoading.set(false);
+      return;
+    }
+    const from = this.selectedDate();
+    const to = this.viewMode() === '4days' ? addDays(from, 3) : from;
+    this.appointmentsApi
+      .calendar(branchId, toDateKey(from), toDateKey(to), this.filters().employeeId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          if (requestId !== this.calendarRequestId) {
+            return;
+          }
+          this.calendarLoading.set(false);
+          this.bookings.set(result.bookings.map(mapCalendarBooking));
+          const holds = result.holds.map(hold => ({
+            id: hold.id,
+            employeeId: hold.employeeId,
+            scheduledDate: new Date(`${hold.scheduledDate}T00:00:00`),
+            startMinutes: hold.startMinutes,
+            endMinutes: hold.endMinutes,
+            expiresAtUtc: new Date(hold.expiresAtUtc),
+          }));
+          this.availabilityBlocks.set(holds);
+          this.scheduleHoldRefresh(holds, new Date(result.serverNowUtc));
+        },
+        error: () => {
+          if (requestId !== this.calendarRequestId) {
+            return;
+          }
+          this.calendarLoading.set(false);
+          this.calendarUnavailable.set(true);
+          this.bookings.set([]);
+          this.availabilityBlocks.set([]);
+        },
+      });
+  }
+
+  /** Checks an edited item's duration against the booking interval before saving. */
+  onDetailsSaved(payload: BookingDetailsSavePayload): void {
+    const booking = this.bookings().find(item => item.id === payload.bookingId);
+    if (!booking?.version) {
+      return;
+    }
+    const serviceDuration = sumLineItemDuration(payload.lineItems);
+    if (serviceDuration > booking.slotDurationMinutes) {
+      this.pendingEdit.set(payload);
+      this.mismatchServiceDuration.set(serviceDuration);
+      this.mismatchSlotDuration.set(booking.slotDurationMinutes);
+      this.mismatchVisible.set(true);
+      return;
+    }
+    this.commitBookingEdit(payload);
+  }
+
+  /** Sends item and payment changes using the booking's current version. */
+  private commitBookingEdit(payload: BookingDetailsSavePayload): void {
+    const booking = this.bookings().find(item => item.id === payload.bookingId);
+    if (!booking?.version) {
+      return;
+    }
+    const items = payload.lineItems
+      .filter(item => !!item.catalogPackageId)
+      .map(item => ({
+        packageId: item.catalogPackageId!,
+        customerPackageId: item.customerPackageId ?? null,
+        quantity: item.quantity,
+        type: item.type,
+      }));
+    if (items.length !== payload.lineItems.length) {
+      this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');
+      return;
+    }
+    this.appointmentsApi
+      .update(booking.id, booking.version, items, payload.paymentMethod)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.loadBookings();
+          this.showToast('BOOKINGS.TOAST.SAVED');
+        },
+        error: error => this.handleMutationError(error),
+      });
   }
 
   onDetailsDialogClosed(): void {
-    if (this.packageUsageVisible()) {
-      return;
-    }
     this.detailsDialogVisible.set(false);
-  }
-
-  onPackageUsageClosed(): void {
-    this.packageUsageVisible.set(false);
-    this.pendingCloseBookingId.set(null);
-    this.pendingCloseLineItems.set([]);
-  }
-
-  onPackageUsageSubmit(): void {
-    const bookingId = this.pendingCloseBookingId();
-    if (!bookingId) {
-      return;
-    }
-    const booking = this.bookings().find(item => item.id === bookingId);
-    if (booking && bookingHasPackage(booking)) {
-      this.clients.update(items =>
-        items.map(client => {
-          if (client.id !== booking.clientId) {
-            return client;
-          }
-          return {
-            ...client,
-            packages: client.packages.map(pkg => ({
-              ...pkg,
-              usedSessions: Math.min(pkg.usedSessions + 1, pkg.totalSessions),
-            })),
-          };
-        })
-      );
-    }
-    this.completeBooking(bookingId, 'BOOKINGS.TOAST.PACKAGE_USAGE');
-    this.packageUsageVisible.set(false);
-    this.pendingCloseBookingId.set(null);
-    this.pendingCloseLineItems.set([]);
-  }
-
-  private completeBooking(bookingId: string, toastKey = 'BOOKINGS.TOAST.CLOSED'): void {
-    this.bookings.update(items =>
-      items.map(booking =>
-        booking.id === bookingId ? { ...booking, status: 'completed' as const } : booking
-      )
-    );
-    this.detailsDialogVisible.set(false);
-    this.showToast(toastKey);
   }
 
   onDetailsCancelRequest(bookingId: string): void {
@@ -791,19 +930,25 @@ export class AppointmentsComponent {
     this.cancelConfirmVisible.set(true);
   }
 
+  /** Cancels the selected booking with its version and reloads calendar availability. */
   onCancelConfirmed(): void {
     const bookingId = this.activeBookingId();
-    if (!bookingId) {
+    const booking = this.activeBooking();
+    if (!bookingId || !booking?.version) {
       return;
     }
-    this.bookings.update(items =>
-      items.map(booking =>
-        booking.id === bookingId ? { ...booking, status: 'cancelled' as const } : booking
-      )
-    );
-    this.cancelConfirmVisible.set(false);
-    this.detailsDialogVisible.set(false);
-    this.showToast('BOOKINGS.TOAST.CANCELLED');
+    this.appointmentsApi
+      .cancel(bookingId, booking.version)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.cancelConfirmVisible.set(false);
+          this.detailsDialogVisible.set(false);
+          this.loadBookings();
+          this.showToast('BOOKINGS.TOAST.CANCELLED');
+        },
+        error: error => this.handleMutationError(error),
+      });
   }
 
   formatTime(minutes: number): string {
@@ -830,7 +975,7 @@ export class AppointmentsComponent {
   }
 
   showSlotCell(cell: CalendarSlotCell): boolean {
-    return !cell.isContinuation && cell.visual !== 'booked' && cell.visual !== 'completed';
+    return cell.visual === 'closed' || cell.visual === 'held';
   }
 
   bookingTimeLabel(booking: BookingRecord): string {
@@ -841,25 +986,61 @@ export class AppointmentsComponent {
     return formatTimeRange(startMinutes, durationMinutes);
   }
 
-  formatSlotRange(selection: SlotSelection | null): string {
-    if (!selection) {
-      return '';
-    }
-    return formatTimeRange(selection.startMinutes, selection.slotDurationMinutes);
-  }
-
-  private notifyDurationBlocked(): void {
+  private notifyDurationBlocked(durationMinutes: number): void {
     this.toast.add({
       severity: 'warn',
       summary: this.translate.instant('BOOKINGS.TOAST.SLOT_DURATION_BLOCKED', {
-        duration: this.filters().durationMinutes,
+        duration: durationMinutes,
       }),
     });
   }
 
-  private showToast(key: string): void {
+  /** Refreshes the calendar after a write failure and shows translated field errors. */
+  private handleMutationError(error: unknown): void {
+    this.loadBookings();
+    if (!(error instanceof HttpErrorResponse) || ![400, 422].includes(error.status)) {
+      return;
+    }
+    const translated = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+      this.translate.instant(key)
+    );
+    const detail = Object.values(translated).filter(Boolean).join(' ');
+    if (detail) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail,
+      });
+    }
+  }
+
+  /** Cancels a pending hold-expiry calendar refresh. */
+  private clearHoldRefresh(): void {
+    if (this.holdRefreshTimer) {
+      clearTimeout(this.holdRefreshTimer);
+      this.holdRefreshTimer = undefined;
+    }
+  }
+
+  /** Reloads availability when the earliest visible hold should expire. */
+  private scheduleHoldRefresh(holds: AppointmentAvailabilityBlock[], serverNowUtc: Date): void {
+    this.clearHoldRefresh();
+    const expiries = holds
+      .map(hold => hold.expiresAtUtc?.getTime())
+      .filter((value): value is number => value !== undefined && Number.isFinite(value));
+    if (!expiries.length) {
+      return;
+    }
+    const delay = Math.max(
+      Math.min(Math.min(...expiries) - serverNowUtc.getTime() + 50, 2_147_483_647),
+      0
+    );
+    this.holdRefreshTimer = setTimeout(() => this.loadBookings(), delay);
+  }
+
+  private showToast(key: string, severity: 'success' | 'error' = 'success'): void {
     this.toast.add({
-      severity: 'success',
+      severity,
       summary: this.translate.instant(key),
     });
   }

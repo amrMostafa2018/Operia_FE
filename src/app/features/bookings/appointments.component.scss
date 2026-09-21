@@ -1,3 +1,4 @@
+/* Styles booking calendar intervals, active holds, closed hours, and dialogs. */
 @use '../../../styles/variables' as *;
 
 :host {
@@ -356,13 +357,14 @@
   border-radius: 8px;
 }
 
-.slot-cell.offset-start {
+.slot-cell.available-overlay {
   position: absolute;
   inset-inline: 6px;
   width: auto;
-  top: 50%;
-  z-index: 3;
+  z-index: 2;
   border-radius: 8px;
+  border: 1px solid #dcefe5;
+  overflow: hidden;
 }
 
 .slot-cell.booking-overlay {
@@ -404,10 +406,6 @@
   border-inline: 1px solid transparent;
 }
 
-.slot-cell.available.duration-blocked {
-  cursor: not-allowed;
-}
-
 .slot-cell.booked {
   background: #fff0f3;
   color: #be123c;
@@ -416,6 +414,12 @@
 .slot-cell.completed {
   background: #eef6ff;
   color: #1d4ed8;
+}
+
+.slot-cell.held {
+  background: #fff8e6;
+  color: #9a6700;
+  cursor: not-allowed;
 }
 
 .slot-cell.closed {
@@ -516,6 +520,11 @@
 .legend-card.completed {
   background: #eef6ff;
   color: #1d4ed8;
+}
+
+.legend-card.held {
+  background: #fff8e6;
+  color: #9a6700;
 }
 
 .legend-card.closed {

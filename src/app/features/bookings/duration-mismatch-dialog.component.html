@@ -1,3 +1,4 @@
+<!-- Confirms a service duration longer than the reserved appointment interval. -->
 <p-dialog
   [visible]="visible()"
   [modal]="true"
@@ -40,7 +41,7 @@
         (onClick)="back.emit()"
       />
       <p-button
-        [label]="'BOOKINGS.MISMATCH.CONFIRM' | translate"
+        [label]="confirmLabelKey() | translate"
         styleClass="confirm-btn"
         (onClick)="confirmAnyway.emit()"
       />

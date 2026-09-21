@@ -14,7 +14,17 @@ import {
   viewChild,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  catchError,
+  concat,
+  distinctUntilChanged,
+  map,
+  of,
+  startWith,
+  switchMap,
+  timer,
+} from 'rxjs';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -26,7 +36,6 @@ import {
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -37,6 +46,7 @@ import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { PackageService } from '@app/features/packages/package.service';
+import { AppointmentsApiService } from './appointments-api.service';
 import { getRtlStartScrollLeft } from '@app/shared/utils/rtl.util';
 import {
   BookingLineItem,
@@ -44,15 +54,15 @@ import {
   ClientPackage,
   ClientRecord,
   EMPTY_UNLISTED_FORM,
-  PaymentMethodId,
   UNLISTED_DURATION_UNIT_OPTIONS,
   UNLISTED_OFFER_TYPE_OPTIONS,
-  PAYMENT_METHODS,
   ServiceCatalogItem,
   SlotSelection,
   formatTimeRange,
   sumLineItemDuration,
   sumLineItemPrice,
+  PaymentMethodId,
+  PAYMENT_METHODS,
 } from './models/booking.model';
 import { UnlistedCategoryFieldComponent } from './unlisted-category-field.component';
 import {
@@ -61,19 +71,25 @@ import {
   toUnlistedPackagePayload,
 } from './unlisted-package.util';
 
+/** Describes book appointment payload used by the booking UI. */
 export interface BookAppointmentPayload {
   selection: SlotSelection;
   clientName: string;
   clientMobile: string;
   clientId: string | null;
   lineItems: BookingLineItem[];
-  paymentMethod: PaymentMethodId;
-  discount: number;
-  paidAmount: number;
-  sendMessage: boolean;
   serviceDuration: number;
+  paymentMethod: PaymentMethodId | null;
 }
 
+/** Describes customer lookup state used by the booking UI. */
+interface CustomerLookupState {
+  mobile: string;
+  client: ClientRecord | null;
+  pending: boolean;
+}
+
+/** Collects customer, item, and payment choices for a proposed appointment. */
 @Component({
   selector: 'app-book-appointment-dialog',
   standalone: true,
@@ -86,7 +102,6 @@ export interface BookAppointmentPayload {
     ReactiveFormsModule,
     InputTextModule,
     InputNumberModule,
-    CheckboxModule,
     TranslatePipe,
     UnlistedCategoryFieldComponent,
   ],
@@ -117,9 +132,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly initialClientMobile = input('');
   readonly initialPackageId = input<string | null>(null);
   readonly initialLineItems = input<BookingLineItem[]>([]);
-  readonly initialDiscount = input(0);
-  readonly initialPaidAmount = input(0);
-  readonly initialPaymentMethod = input<PaymentMethodId>('cash');
 
   readonly closed = output<void>();
   readonly confirmBooking = output<BookAppointmentPayload>();
@@ -129,13 +141,11 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     { id: 'all', labelKey: 'BOOKINGS.SERVICE_TABS.ALL' },
     ...this.catalogCategories(),
   ]);
-  readonly paymentMethods = PAYMENT_METHODS;
   readonly activeCategory = signal('all');
   readonly searchQuery = signal('');
   readonly selectedQuantities = signal<Record<string, number>>({});
   readonly unlistedItems = signal<BookingLineItem[]>([]);
   readonly selectedPackageId = signal<string | null>(null);
-  readonly sendMessage = signal(true);
   readonly showUnlisted = signal(false);
   readonly unlistedSaving = signal(false);
 
@@ -159,34 +169,100 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly durationUnitOptions = UNLISTED_DURATION_UNIT_OPTIONS;
   readonly offerTypeOptions = UNLISTED_OFFER_TYPE_OPTIONS;
 
-  readonly discount = signal(0);
-  readonly paidAmount = signal(0);
-  readonly paymentMethod = signal<PaymentMethodId>('cash');
   readonly canScrollLeft = signal(false);
   readonly canScrollRight = signal(false);
 
+  readonly paymentMethods = signal<typeof PAYMENT_METHODS>([]);
+  readonly paymentMethodsLoading = signal(false);
+  readonly paymentMethodsUnavailable = signal(false);
+  private paymentMethodsRequestId = 0;
+  readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
+
+  private readonly clientMobile = toSignal(this.clientForm.controls.mobile.valueChanges, {
+    initialValue: this.clientForm.controls.mobile.value,
+  });
+
+  private readonly appointmentsApi = inject(AppointmentsApiService);
+  private readonly customerLookup = toSignal(
+    this.clientForm.controls.mobile.valueChanges.pipe(
+      startWith(this.clientForm.controls.mobile.value),
+      map(mobile => mobile.trim()),
+      distinctUntilChanged(),
+      switchMap(mobile => {
+        const pending: CustomerLookupState = { mobile, client: null, pending: !!mobile };
+        if (!mobile) {
+          return of({ ...pending, pending: false });
+        }
+        return concat(
+          of(pending),
+          timer(250).pipe(
+            switchMap(() =>
+              this.appointmentsApi.findCustomer(mobile).pipe(
+                map(
+                  customer =>
+                    ({
+                      mobile,
+                      pending: false,
+                      client: customer
+                        ? ({
+                            id: customer.id,
+                            name: customer.fullName,
+                            mobile: customer.mobileNumber,
+                            registered: true,
+                            packages: customer.packages.map(pkg => ({
+                              customerPackageId: pkg.customerPackageId,
+                              packageId: pkg.packageId,
+                              packageName: pkg.packageName,
+                              usedSessions: pkg.usedSessions + pkg.reservedSessions,
+                              totalSessions: pkg.totalSessions,
+                              expiryDate: pkg.expiresOn ?? '',
+                              offerType: pkg.offerType,
+                            })),
+                          } satisfies ClientRecord)
+                        : null,
+                    }) satisfies CustomerLookupState
+                ),
+                catchError(() => of({ mobile, client: null, pending: false }))
+              )
+            )
+          )
+        );
+      })
+    ),
+    { initialValue: { mobile: '', client: null, pending: false } as CustomerLookupState }
+  );
+
   readonly matchedClient = computed(() => {
-    const mobile = this.clientForm.controls.mobile.value.trim();
+    const mobile = this.clientMobile().trim();
     if (!mobile) {
       return null;
     }
-    return this.clients().find(client => client.mobile === mobile) ?? null;
+    const local = this.clients().find(client => client.mobile === mobile) ?? null;
+    const lookup = this.customerLookup();
+    if (lookup.mobile !== mobile || lookup.pending) {
+      return local;
+    }
+    return lookup.client ?? local;
+  });
+
+  readonly customerLookupPending = computed(() => {
+    const mobile = this.clientMobile().trim();
+    const hasLocalMatch = this.clients().some(client => client.mobile === mobile);
+    const lookup = this.customerLookup();
+    return !!mobile && !hasLocalMatch && lookup.mobile === mobile && lookup.pending;
   });
 
   readonly packageOptions = computed(() => {
     const client = this.matchedClient();
     if (client?.packages.length) {
-      return client.packages.map(pkg => ({
-        label: pkg.packageName,
-        value: pkg.packageId,
-      }));
+      return client.packages
+        .filter(pkg => pkg.offerType !== 'session')
+        .map(pkg => ({
+          label: pkg.packageName,
+          value: pkg.packageId,
+        }));
     }
-    return this.catalogItems()
-      .filter(item => item.type === 'package')
-      .map(pkg => ({
-        label: pkg.name,
-        value: pkg.id,
-      }));
+    return [];
   });
 
   readonly selectedClientPackage = computed<ClientPackage | null>(() => {
@@ -207,6 +283,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         ? this.catalogItems()
         : this.catalogItems().filter(service => service.category === category);
 
+    const ownedPackageIds = new Set(
+      this.matchedClient()?.packages.map(clientPackage => clientPackage.packageId) ?? []
+    );
+    services = services.filter(
+      service => service.type !== 'package' || ownedPackageIds.has(service.id)
+    );
+
     if (query) {
       services = services.filter(service => service.name.toLowerCase().includes(query));
     }
@@ -222,14 +305,20 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       if (quantity <= 0) {
         continue;
       }
+      const reusableBalance =
+        quantity === 1
+          ? this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id)
+          : null;
       items.push({
         id: `line-${service.id}`,
         name: service.name,
         type: service.type,
         quantity,
-        price: service.type === 'package' ? 0 : service.price,
+        price: service.type === 'package' || reusableBalance ? 0 : service.price,
         durationMinutes: service.durationMinutes,
         packageSessionLinked: service.type === 'package',
+        catalogPackageId: service.id,
+        customerPackageId: reusableBalance?.customerPackageId ?? null,
       });
     }
 
@@ -240,15 +329,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   readonly serviceDuration = computed(() => sumLineItemDuration(this.lineItems()));
   readonly subtotal = computed(() => sumLineItemPrice(this.lineItems()));
-  readonly netTotal = computed(() => Math.max(this.subtotal() - this.discount(), 0));
-  readonly collectedAmount = computed(() =>
-    Math.min(Math.max(this.paidAmount(), 0), this.netTotal())
-  );
-  readonly remainingAmount = computed(() => Math.max(this.netTotal() - this.collectedAmount(), 0));
+  readonly netTotal = computed(() => this.subtotal());
   readonly sessionCount = computed(() =>
     this.lineItems().reduce((total, item) => total + item.quantity, 0)
   );
-  readonly paymentsTotal = computed(() => this.subtotal());
 
   readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
 
@@ -273,10 +357,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
         this.selectedQuantities.set(this.buildQuantitiesFromLineItems(this.initialLineItems()));
         this.selectedPackageId.set(this.initialPackageId());
-        this.discount.set(this.initialDiscount());
-        this.paidAmount.set(this.initialPaidAmount());
-        this.paymentMethod.set(this.initialPaymentMethod());
-        this.sendMessage.set(true);
         this.showUnlisted.set(false);
         this.activeCategory.set('all');
         this.searchQuery.set('');
@@ -296,12 +376,17 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
     effect(
       () => {
-        const client = this.matchedClient();
-        if (client) {
-          this.clientForm.controls.name.setValue(client.name, { emitEvent: false });
-          if (client.packages.length === 1) {
-            this.selectedPackageId.set(client.packages[0].packageId);
+        if (this.visible()) {
+          const client = this.matchedClient();
+          if (client) {
+            const mobile = client.mobile;
+            if (this.clients().every(c => c.mobile !== mobile)) {
+              this.clientForm.controls.name.setValue(client.name);
+            }
           }
+          this.loadPaymentMethods();
+        } else {
+          this.clientForm.reset({ mobile: '', name: '' });
         }
       },
       { allowSignalWrites: true }
@@ -472,10 +557,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     }
   }
 
-  linePaymentStatus(item: BookingLineItem): 'paid' | 'remaining' {
-    return item.type === 'package' || item.price === 0 ? 'remaining' : 'paid';
-  }
-
   lineTotal(item: BookingLineItem): number {
     return item.price * item.quantity;
   }
@@ -555,10 +636,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     this.unlistedItems.update(items => items.filter(item => item.id !== itemId));
   }
 
-  selectPayment(method: PaymentMethodId): void {
-    this.paymentMethod.set(method);
-  }
-
+  /** Validates and creates an unlisted service before adding it to the booking draft. */
   addUnlisted(): void {
     if (this.unlistedSaving()) {
       return;
@@ -612,24 +690,80 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       });
   }
 
+  /** Validates the booking draft and emits the selected customer, items, slot, and payment method. */
   submit(): void {
     this.clientForm.markAllAsTouched();
     if (this.clientForm.invalid || !this.selection()) {
       return;
     }
+    if (this.customerLookupPending()) {
+      return;
+    }
     const client = this.matchedClient();
+    if (!client) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('BOOKINGS.BOOK.CUSTOMER_NOT_REGISTERED'),
+      });
+      return;
+    }
+    if (this.lineItems().length === 0) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('BOOKINGS.BOOK.SERVICE_REQUIRED'),
+      });
+      return;
+    }
+
     this.confirmBooking.emit({
       selection: this.selection()!,
       clientName: this.clientForm.controls.name.value.trim(),
       clientMobile: this.clientForm.controls.mobile.value.trim(),
-      clientId: client?.id ?? null,
+      clientId: client.id,
       lineItems: this.lineItems(),
-      paymentMethod: this.paymentMethod(),
-      discount: this.discount(),
-      paidAmount: this.collectedAmount(),
-      sendMessage: this.sendMessage(),
       serviceDuration: this.serviceDuration(),
+      paymentMethod: this.draftPaymentMethod(),
     });
+  }
+
+  /** Loads currently enabled payment methods for the booking form. */
+  loadPaymentMethods(): void {
+    const requestId = ++this.paymentMethodsRequestId;
+    this.paymentMethodsLoading.set(true);
+    this.paymentMethodsUnavailable.set(false);
+    this.paymentMethods.set([]);
+    this.appointmentsApi
+      .getPaymentMethods()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: enabledIds => {
+          if (requestId !== this.paymentMethodsRequestId) {
+            return;
+          }
+          this.paymentMethodsLoading.set(false);
+          this.paymentMethods.set(PAYMENT_METHODS.filter(method => enabledIds.includes(method.id)));
+
+          if (enabledIds.length > 0 && !this.draftPaymentMethod()) {
+            this.draftPaymentMethod.set(enabledIds[0]);
+          }
+        },
+        error: () => {
+          if (requestId !== this.paymentMethodsRequestId) {
+            return;
+          }
+          this.paymentMethodsLoading.set(false);
+          this.paymentMethodsUnavailable.set(true);
+        },
+      });
+  }
+
+  /** Stores the selected enabled payment method in the booking draft. */
+  selectPaymentMethod(method: PaymentMethodId): void {
+    if (!this.paymentMethods().some(option => option.id === method)) {
+      return;
+    }
+    this.draftPaymentMethod.set(method);
   }
 
   close(): void {

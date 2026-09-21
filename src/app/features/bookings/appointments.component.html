@@ -1,3 +1,4 @@
+<!-- Renders client-first and slot-first booking controls with calendar availability. -->
 <section class="appointments-page">
   <div class="filter-section">
     <div class="filter-bar">
@@ -36,11 +37,12 @@
         </span>
       </label>
 
-      <label class="filter-field">
+      <label class="filter-field" for="appointments-package">
         <span class="field-label">{{ 'BOOKINGS.FILTER_PACKAGE' | translate }}</span>
         <span class="field-control">
           <i class="pi pi-box"></i>
           <p-dropdown
+            inputId="appointments-package"
             styleClass="filter-dropdown"
             panelStyleClass="filter-dropdown-panel"
             appendTo="body"
@@ -49,23 +51,25 @@
             optionValue="id"
             [showClear]="true"
             [ngModel]="filters().packageId"
-            (ngModelChange)="updateFilter('packageId', $event)"
+            (ngModelChange)="onPackageSelected($event)"
             [placeholder]="'BOOKINGS.FILTER_PACKAGE' | translate"
           />
         </span>
       </label>
 
-      <label class="filter-field">
+      <label class="filter-field" for="appointments-duration">
         <span class="field-label">{{ 'BOOKINGS.FILTER_DURATION' | translate }}</span>
         <span class="field-control">
           <i class="pi pi-clock"></i>
           <p-dropdown
+            inputId="appointments-duration"
             styleClass="filter-dropdown"
             panelStyleClass="filter-dropdown-panel"
             appendTo="body"
-            [options]="durations"
+            [options]="durations()"
             optionLabel="label"
             optionValue="value"
+            [disabled]="durations().length === 0"
             [ngModel]="filters().durationMinutes"
             (ngModelChange)="updateFilter('durationMinutes', $event)"
             [placeholder]="'BOOKINGS.FILTER_DURATION' | translate"
@@ -82,11 +86,12 @@
         </span>
       </label>
 
-      <label class="filter-field">
+      <label class="filter-field" for="appointments-branch">
         <span class="field-label">{{ 'BOOKINGS.FILTER_BRANCH' | translate }}</span>
         <span class="field-control">
           <i class="pi pi-map-marker"></i>
           <p-dropdown
+            inputId="appointments-branch"
             styleClass="filter-dropdown"
             panelStyleClass="filter-dropdown-panel"
             appendTo="body"
@@ -100,11 +105,12 @@
         </span>
       </label>
 
-      <label class="filter-field">
+      <label class="filter-field" for="appointments-employee">
         <span class="field-label">{{ 'BOOKINGS.FILTER_EMPLOYEE' | translate }}</span>
         <span class="field-control">
           <i class="pi pi-user"></i>
           <p-dropdown
+            inputId="appointments-employee"
             styleClass="filter-dropdown"
             panelStyleClass="filter-dropdown-panel"
             appendTo="body"
@@ -138,7 +144,11 @@
 
     <p class="filter-hint">
       <i class="pi pi-info-circle"></i>
-      {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
+      @if (filters().durationMinutes > 0) {
+        {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
+      } @else {
+        {{ 'BOOKINGS.SLOT_FIRST_HINT' | translate }}
+      }
     </p>
   </div>
 
@@ -180,7 +190,7 @@
       <p-calendar
         [inline]="true"
         [ngModel]="selectedDate()"
-        (ngModelChange)="selectedDate.set($event)"
+        (ngModelChange)="onDateSelected($event)"
       />
 
       <div class="legend">
@@ -188,6 +198,7 @@
         <div class="legend-card available">{{ 'BOOKINGS.LEGEND_AVAILABLE' | translate }}</div>
         <div class="legend-card booked">{{ 'BOOKINGS.LEGEND_BOOKED' | translate }}</div>
         <div class="legend-card completed">{{ 'BOOKINGS.LEGEND_COMPLETED' | translate }}</div>
+        <div class="legend-card held">{{ 'BOOKINGS.LEGEND_HELD' | translate }}</div>
         <div class="legend-card closed">{{ 'BOOKINGS.LEGEND_CLOSED' | translate }}</div>
         <div class="legend-card recommended">
           <i class="pi pi-star-fill"></i>{{ 'BOOKINGS.LEGEND_RECOMMENDED' | translate }}
@@ -196,7 +207,11 @@
 
       <p class="panel-hint">
         <i class="pi pi-info-circle"></i>
-        {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
+        @if (filters().durationMinutes > 0) {
+          {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
+        } @else {
+          {{ 'BOOKINGS.SLOT_FIRST_HINT' | translate }}
+        }
       </p>
     </aside>
 
@@ -219,7 +234,15 @@
         </div>
       }
 
-      @if (columns().length === 0) {
+      @if (calendarUnavailable()) {
+        <div class="empty-calendar">
+          <i class="pi pi-exclamation-triangle"></i>
+          <p>{{ 'BOOKINGS.AVAILABILITY_UNAVAILABLE' | translate }}</p>
+          <button type="button" class="confirm-btn" (click)="retryAvailability()">
+            {{ 'COMMON.RETRY' | translate }}
+          </button>
+        </div>
+      } @else if (columns().length === 0) {
         <div class="empty-calendar">
           <i class="pi pi-users"></i>
           <p>{{ 'BOOKINGS.NO_STAFF_IN_BRANCH' | translate }}</p>
@@ -253,65 +276,46 @@
                       <div class="slot-row">
                         @if (cellFor(column, minute); as cell) {
                           @if (showSlotCell(cell)) {
-                            <button
-                              type="button"
+                            <div
                               class="slot-cell"
-                              [class.available]="cell.visual === 'available'"
                               [class.closed]="cell.visual === 'closed'"
-                              [class.duration-blocked]="
-                                cell.visual === 'available' && !cell.selectable
-                              "
-                              [class.recommended]="cell.recommended"
-                              [class.selected]="isSlotSelected(column, minute)"
-                              [style.height.px]="
-                                isSlotSelected(column, minute)
-                                  ? bookingHeight(filters().durationMinutes)
-                                  : null
-                              "
-                              [disabled]="cell.visual === 'closed'"
-                              (click)="onSlotClick(column, minute)"
+                              [class.held]="cell.visual === 'held'"
                             >
-                              @if (cell.recommended) {
-                                <i class="pi pi-star-fill recommended-star"></i>
-                              }
                               <span class="slot-time">{{
-                                isSlotSelected(column, minute)
-                                  ? formatSlotRange(selectedSlot())
-                                  : slotTimeLabel(minute)
+                                formatTimeRangeFor(minute, cell.endMinutes - minute)
                               }}</span>
-                              @if (cell.visual === 'available') {
-                                <span class="slot-status">{{
-                                  'BOOKINGS.SLOT_AVAILABLE' | translate
-                                }}</span>
-                              } @else if (cell.visual === 'closed') {
+                              @if (cell.visual === 'closed') {
                                 <span class="slot-status">{{
                                   'BOOKINGS.SLOT_CLOSED' | translate
                                 }}</span>
+                              } @else if (cell.visual === 'held') {
+                                <span class="slot-status">{{
+                                  'BOOKINGS.SLOT_HELD' | translate
+                                }}</span>
                               }
-                            </button>
-                          }
-                          @if (cell.offsetStartMinutes; as offset) {
-                            <button
-                              type="button"
-                              class="slot-cell available offset-start"
-                              [class.recommended]="cell.offsetRecommended"
-                              [class.selected]="isSlotSelected(column, offset)"
-                              [style.height.px]="bookingHeight(filters().durationMinutes)"
-                              (click)="selectAvailableSlot(column, offset)"
-                            >
-                              @if (cell.offsetRecommended) {
-                                <i class="pi pi-star-fill recommended-star"></i>
-                              }
-                              <span class="slot-time">{{
-                                formatTimeRangeFor(offset, filters().durationMinutes)
-                              }}</span>
-                              <span class="slot-status">{{
-                                'BOOKINGS.SLOT_AVAILABLE' | translate
-                              }}</span>
-                            </button>
+                            </div>
                           }
                         }
                       </div>
+                    }
+                    @for (slot of availableSlotsForColumn(column); track slot.startMinutes) {
+                      <button
+                        type="button"
+                        class="slot-cell available available-overlay"
+                        [class.recommended]="$first"
+                        [class.selected]="isSlotSelected(column, slot.startMinutes)"
+                        [style.top.px]="bookingTop(slot.startMinutes)"
+                        [style.height.px]="bookingHeight(slot.endMinutes - slot.startMinutes)"
+                        (click)="selectAvailableSlot(column, slot.startMinutes)"
+                      >
+                        @if ($first) {
+                          <i class="pi pi-star-fill recommended-star"></i>
+                        }
+                        <span class="slot-time">{{
+                          formatTimeRangeFor(slot.startMinutes, slot.endMinutes - slot.startMinutes)
+                        }}</span>
+                        <span class="slot-status">{{ 'BOOKINGS.SLOT_AVAILABLE' | translate }}</span>
+                      </button>
                     }
                     @for (booking of bookingsForColumn(column); track booking.id) {
                       <button
@@ -431,9 +435,6 @@
   [initialClientMobile]="filters().clientMobile"
   [initialPackageId]="filters().packageId"
   [initialLineItems]="saleHandoffDraft()?.lineItems ?? []"
-  [initialDiscount]="saleHandoffDraft()?.discount ?? 0"
-  [initialPaidAmount]="saleHandoffDraft()?.paidAmount ?? 0"
-  [initialPaymentMethod]="saleHandoffDraft()?.paymentMethod ?? 'cash'"
   (closed)="bookDialogVisible.set(false)"
   (confirmBooking)="onBookDialogConfirm($event)"
   (packageCreated)="onUnlistedPackageCreated()"
@@ -446,23 +447,16 @@
   [catalogCategories]="catalogCategories()"
   (closed)="onDetailsDialogClosed()"
   (saved)="onDetailsSaved($event)"
-  (closeBooking)="onDetailsClose($event)"
   (cancelBooking)="onDetailsCancelRequest($event)"
   (packageCreated)="onUnlistedPackageCreated()"
-/>
-
-<app-confirm-package-usage-dialog
-  [visible]="packageUsageVisible()"
-  [lineItems]="pendingCloseLineItems()"
-  (closed)="onPackageUsageClosed()"
-  (submitted)="onPackageUsageSubmit()"
 />
 
 <app-duration-mismatch-dialog
   [visible]="mismatchVisible()"
   [serviceDuration]="mismatchServiceDuration()"
   [slotDuration]="mismatchSlotDuration()"
-  (closed)="mismatchVisible.set(false)"
+  [confirmLabelKey]="pendingEdit() ? 'BOOKINGS.MISMATCH.CONFIRM_EDIT' : 'BOOKINGS.MISMATCH.CONFIRM'"
+  (closed)="onMismatchBack()"
   (back)="onMismatchBack()"
   (confirmAnyway)="onMismatchConfirm()"
 />

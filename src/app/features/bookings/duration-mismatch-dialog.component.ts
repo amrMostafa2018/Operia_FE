@@ -3,6 +3,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 
+/** Confirms a selected interval that is shorter than the chosen services' total duration. */
 @Component({
   selector: 'app-duration-mismatch-dialog',
   standalone: true,
@@ -15,6 +16,7 @@ export class DurationMismatchDialogComponent {
   readonly visible = input(false);
   readonly serviceDuration = input(0);
   readonly slotDuration = input(0);
+  readonly confirmLabelKey = input('BOOKINGS.MISMATCH.CONFIRM');
 
   readonly back = output<void>();
   readonly confirmAnyway = output<void>();

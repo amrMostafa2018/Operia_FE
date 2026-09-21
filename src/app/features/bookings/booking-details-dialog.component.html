@@ -1,3 +1,4 @@
+<!-- Shows saved booking details and editable items, payment choice, and cancellation controls. -->
 <p-dialog
   [visible]="visible()"
   [modal]="true"
@@ -151,11 +152,11 @@
                       <span class="line-icon"><i [class]="lineIcon(item)"></i></span>
                       <div>
                         <strong>{{ item.name }}</strong>
-                        @if (packageRemainingSessions(item); as remaining) {
+                        @if (packageRemainingSessions(item) !== null) {
                           <small>
                             {{
                               'BOOKINGS.DETAILS.REMAINING_SESSIONS'
-                                | translate: { count: remaining }
+                                | translate: { count: packageRemainingSessions(item) }
                             }}
                           </small>
                         }
@@ -355,10 +356,10 @@
           </div>
 
           <div class="due-now-field">
-            <label>
+            <span class="due-now-label">
               <i class="pi pi-info-circle"></i>
               {{ 'BOOKINGS.DETAILS.DUE_NOW' | translate }}
-            </label>
+            </span>
             <strong class="due-now-value">
               {{ remainingAmount() }}
               @if (currencyService.hasCurrency()) {
@@ -368,29 +369,54 @@
           </div>
 
           <h5>{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h5>
-          <div class="payment-grid">
-            @for (method of paymentMethods; track method.id) {
-              <button
-                type="button"
-                class="payment-btn"
-                [class.active]="draftPaymentMethod() === method.id"
-                [disabled]="!isEditable()"
-                (click)="selectPayment(method.id)"
-              >
-                <span class="payment-radio">
-                  @if (draftPaymentMethod() === method.id) {
-                    <i class="pi pi-circle-fill"></i>
-                  } @else {
-                    <i class="pi pi-circle"></i>
-                  }
-                </span>
-                <span class="payment-method-icon" [class]="method.iconClass">
-                  <i [class]="method.icon" aria-hidden="true"></i>
-                </span>
-                <span>{{ method.labelKey | translate }}</span>
-              </button>
+          @if (paymentMethodsLoading()) {
+            <p class="payment-methods-state">
+              {{ 'BOOKINGS.DETAILS.PAYMENT_METHODS_LOADING' | translate }}
+            </p>
+          } @else if (paymentMethodsUnavailable()) {
+            <div class="payment-methods-state">
+              <span>{{ 'BOOKINGS.DETAILS.PAYMENT_METHODS_UNAVAILABLE' | translate }}</span>
+              <p-button
+                [label]="'COMMON.RETRY' | translate"
+                [text]="true"
+                (onClick)="loadPaymentMethods()"
+              />
+            </div>
+          } @else if (paymentMethods().length === 0) {
+            <p class="payment-methods-state">
+              {{ 'BOOKINGS.DETAILS.NO_PAYMENT_METHODS' | translate }}
+            </p>
+          } @else {
+            @if (savedMethodUnavailable()) {
+              <p class="payment-methods-state">
+                {{ 'BOOKINGS.DETAILS.PREVIOUS_PAYMENT_METHOD_DISABLED' | translate }}
+              </p>
             }
-          </div>
+            <div class="payment-grid">
+              @for (method of paymentMethods(); track method.id) {
+                <button
+                  type="button"
+                  class="payment-btn"
+                  [class.active]="draftPaymentMethod() === method.id"
+                  [disabled]="!isEditable()"
+                  [attr.aria-pressed]="draftPaymentMethod() === method.id"
+                  (click)="selectPaymentMethod(method.id)"
+                >
+                  <span class="payment-radio">
+                    @if (draftPaymentMethod() === method.id) {
+                      <i class="pi pi-circle-fill"></i>
+                    } @else {
+                      <i class="pi pi-circle"></i>
+                    }
+                  </span>
+                  <span class="payment-method-icon" [class]="method.iconClass">
+                    <i [class]="method.icon" aria-hidden="true"></i>
+                  </span>
+                  <span>{{ method.labelKey | translate }}</span>
+                </button>
+              }
+            </div>
+          }
         </section>
       </main>
     </div>
@@ -410,12 +436,6 @@
             <button type="button" class="footer-btn save-btn" (click)="save()">
               <i class="pi pi-save"></i>
               {{ 'BOOKINGS.DETAILS.SAVE' | translate }}
-            </button>
-          }
-          @if (canChangeStatus()) {
-            <button type="button" class="footer-btn close-btn" (click)="requestClose()">
-              <i class="pi pi-lock"></i>
-              {{ 'BOOKINGS.DETAILS.CLOSE_CONFIRMED' | translate }}
             </button>
           }
         </div>

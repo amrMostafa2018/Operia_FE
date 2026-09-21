@@ -32,6 +32,7 @@ import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { PackageService } from '@app/features/packages/package.service';
+import { AppointmentsApiService } from './appointments-api.service';
 import {
   BookingLineItem,
   BookingRecord,
@@ -53,18 +54,14 @@ import {
   toUnlistedPackagePayload,
 } from './unlisted-package.util';
 
+/** Describes booking details save payload used by the booking UI. */
 export interface BookingDetailsSavePayload {
   bookingId: string;
   lineItems: BookingLineItem[];
-  paymentMethod: PaymentMethodId;
-  paidAmount: number;
+  paymentMethod: PaymentMethodId | null;
 }
 
-export interface BookingClosePayload {
-  bookingId: string;
-  lineItems: BookingLineItem[];
-}
-
+/** Displays a saved booking and prepares edits or cancellation requests. */
 @Component({
   selector: 'app-booking-details-dialog',
   standalone: true,
@@ -91,6 +88,7 @@ export class BookingDetailsDialogComponent {
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(MessageService);
   private readonly packagesApi = inject(PackageService);
+  private readonly appointmentsApi = inject(AppointmentsApiService);
   private readonly destroyRef = inject(DestroyRef);
   readonly currencyService = inject(CurrencyService);
 
@@ -101,11 +99,14 @@ export class BookingDetailsDialogComponent {
 
   readonly closed = output<void>();
   readonly saved = output<BookingDetailsSavePayload>();
-  readonly closeBooking = output<BookingClosePayload>();
   readonly cancelBooking = output<string>();
   readonly packageCreated = output<void>();
 
-  readonly paymentMethods = PAYMENT_METHODS;
+  readonly paymentMethods = signal<typeof PAYMENT_METHODS>([]);
+  readonly paymentMethodsLoading = signal(false);
+  readonly paymentMethodsUnavailable = signal(false);
+  private paymentMethodsRequestId = 0;
+  private draftBookingKey: string | null = null;
   readonly showUnlisted = signal(false);
   readonly showServicePicker = signal(false);
   readonly unlistedSaving = signal(false);
@@ -126,20 +127,19 @@ export class BookingDetailsDialogComponent {
   readonly offerTypeOptions = UNLISTED_OFFER_TYPE_OPTIONS;
 
   readonly draftLineItems = signal<BookingLineItem[]>([]);
-  readonly draftPaymentMethod = signal<PaymentMethodId>('cash');
+  readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
   readonly draftPaidAmount = signal(0);
+  readonly savedMethodUnavailable = computed(() => {
+    const method = this.draftPaymentMethod();
+    return method !== null && !this.paymentMethods().some(option => option.id === method);
+  });
 
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
-  readonly canChangeStatus = computed(() =>
-    this.permissions.hasPermission(Policies.BookingsChangeStatus)
-  );
   readonly canCancel = computed(() => this.permissions.hasPermission(Policies.BookingsCancel));
 
   readonly isEditable = computed(() => this.booking()?.status === 'booked' && this.canManage());
   readonly showActions = computed(
-    () =>
-      this.booking()?.status === 'booked' &&
-      (this.canManage() || this.canChangeStatus() || this.canCancel())
+    () => this.booking()?.status === 'booked' && (this.canManage() || this.canCancel())
   );
 
   readonly totalAmount = computed(() => sumLineItemPrice(this.draftLineItems()));
@@ -155,18 +155,73 @@ export class BookingDetailsDialogComponent {
       'durationMinutes',
       'price',
     ]);
-    effect(() => {
-      const current = this.booking();
-      if (!current) {
-        return;
-      }
-      this.draftLineItems.set(current.lineItems.map(item => ({ ...item })));
-      this.draftPaymentMethod.set(current.paymentMethod);
-      this.draftPaidAmount.set(current.paidAmount);
-      this.showUnlisted.set(false);
-      this.showServicePicker.set(false);
-      this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
-    });
+    effect(
+      () => {
+        if (!this.visible()) {
+          this.draftBookingKey = null;
+          return;
+        }
+        const current = this.booking();
+        if (!current) {
+          return;
+        }
+        const bookingKey = `${current.id}:${current.version ?? ''}`;
+        if (bookingKey === this.draftBookingKey) {
+          return;
+        }
+        this.draftBookingKey = bookingKey;
+        this.draftLineItems.set(current.lineItems.map(item => ({ ...item })));
+        this.draftPaymentMethod.set(current.paymentMethod);
+        this.draftPaidAmount.set(current.paidAmount);
+        this.showUnlisted.set(false);
+        this.showServicePicker.set(false);
+        this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
+      },
+      { allowSignalWrites: true }
+    );
+    effect(
+      () => {
+        if (this.visible()) {
+          this.loadPaymentMethods();
+        }
+      },
+      { allowSignalWrites: true }
+    );
+  }
+
+  /** Loads currently enabled payment methods for the booking form. */
+  loadPaymentMethods(): void {
+    const requestId = ++this.paymentMethodsRequestId;
+    this.paymentMethodsLoading.set(true);
+    this.paymentMethodsUnavailable.set(false);
+    this.paymentMethods.set([]);
+    this.appointmentsApi
+      .getPaymentMethods()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: enabledIds => {
+          if (requestId !== this.paymentMethodsRequestId) {
+            return;
+          }
+          this.paymentMethodsLoading.set(false);
+          this.paymentMethods.set(PAYMENT_METHODS.filter(method => enabledIds.includes(method.id)));
+        },
+        error: () => {
+          if (requestId !== this.paymentMethodsRequestId) {
+            return;
+          }
+          this.paymentMethodsLoading.set(false);
+          this.paymentMethodsUnavailable.set(true);
+        },
+      });
+  }
+
+  /** Stores the selected enabled payment method in the booking draft. */
+  selectPaymentMethod(method: PaymentMethodId): void {
+    if (!this.isEditable() || !this.paymentMethods().some(option => option.id === method)) {
+      return;
+    }
+    this.draftPaymentMethod.set(method);
   }
 
   statusClass(status: BookingWordStatus): string {
@@ -247,7 +302,7 @@ export class BookingDetailsDialogComponent {
     if (item.type !== 'package' && !item.packageSessionLinked) {
       return null;
     }
-    return 5;
+    return item.packageRemainingSessions ?? null;
   }
 
   unlistedNameError(): string | null {
@@ -317,11 +372,14 @@ export class BookingDetailsDialogComponent {
         price: service.price,
         durationMinutes: service.durationMinutes,
         packageSessionLinked: service.type === 'package',
+        catalogPackageId: service.id,
+        customerPackageId: null,
       },
     ]);
     this.showServicePicker.set(false);
   }
 
+  /** Validates and creates an unlisted service before adding it to the booking draft. */
   addUnlisted(): void {
     if (!this.isEditable() || this.unlistedSaving()) {
       return;
@@ -375,13 +433,7 @@ export class BookingDetailsDialogComponent {
       });
   }
 
-  selectPayment(method: PaymentMethodId): void {
-    if (!this.isEditable()) {
-      return;
-    }
-    this.draftPaymentMethod.set(method);
-  }
-
+  /** Emits edited booking lines and payment method for the parent to persist. */
   save(): void {
     const current = this.booking();
     if (!current || !this.isEditable()) {
@@ -391,21 +443,10 @@ export class BookingDetailsDialogComponent {
       bookingId: current.id,
       lineItems: this.draftLineItems(),
       paymentMethod: this.draftPaymentMethod(),
-      paidAmount: this.draftPaidAmount(),
     });
   }
 
-  requestClose(): void {
-    const current = this.booking();
-    if (!current || !this.canChangeStatus()) {
-      return;
-    }
-    this.closeBooking.emit({
-      bookingId: current.id,
-      lineItems: this.draftLineItems(),
-    });
-  }
-
+  /** Requests the parent confirmation flow for this booking. */
   requestCancel(): void {
     const current = this.booking();
     if (!current || !this.canCancel()) {

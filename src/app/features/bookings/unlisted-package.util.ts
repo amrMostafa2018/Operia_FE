@@ -19,6 +19,7 @@ const UNLISTED_CATEGORY_CREATE_FIELD_ALIASES: Record<string, string> = {
   name: 'serviceCategoryId',
 };
 
+/** Converts the unlisted-service form into the catalog API payload and its default offer values. */
 export function toUnlistedPackagePayload(value: {
   name: string;
   offerType: PackageOfferType;
@@ -45,22 +46,26 @@ export function toUnlistedPackagePayload(value: {
   };
 }
 
+/** Adds a newly created catalog offer to the booking as an unlisted line item. */
 export function toLineItemFromCreatedPackage(pkg: PackageDetail): BookingLineItem {
   const isPackage = pkg.offerType === 'package';
 
   return {
     id: `line-${pkg.id}-${Date.now()}`,
     name: pkg.name,
-    type: isPackage ? 'package' : 'session',
+    type: 'unlisted',
     quantity: 1,
     price: pkg.price,
     durationMinutes: pkg.sessionDurationMinutes,
     packageSessionLinked: isPackage,
     categoryId: pkg.serviceCategoryId || null,
     categoryName: pkg.serviceCategoryName || null,
+    catalogPackageId: pkg.id,
+    customerPackageId: null,
   };
 }
 
+/** Maps catalog API field errors back to the unlisted-service form. */
 export function applyUnlistedPackageApiErrors(
   form: FormGroup,
   error: HttpErrorResponse,
@@ -80,6 +85,7 @@ export function applyUnlistedPackageApiErrors(
   return Object.keys(translated).length > 0;
 }
 
+/** Shows a category creation error on the category control. */
 export function applyUnlistedCategoryCreateErrors(
   categoryControl: AbstractControl,
   error: HttpErrorResponse,

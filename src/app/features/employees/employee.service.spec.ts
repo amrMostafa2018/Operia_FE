@@ -1,3 +1,4 @@
+/** Covers employee API results used when selecting a booking employee. */
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -120,16 +121,17 @@ describe('EmployeeService', () => {
     const days: EmployeeWorkingDay[] = [
       { day: 'sat', enabled: true, fromTime: '10:00:00', toTime: '16:00:00' },
     ];
+    const schedule = { branches: [{ branchId: 'branch-1', branchName: 'Main', days }] };
 
     service.getSchedule('employee-1').subscribe();
     const getRequest = http.expectOne(`${environment.apiUrl}/employees/employee-1/schedule`);
     expect(getRequest.request.method).toBe('GET');
-    getRequest.flush({ days });
+    getRequest.flush(schedule);
 
-    service.updateSchedule('employee-1', { days }).subscribe();
+    service.updateSchedule('employee-1', schedule).subscribe();
     const putRequest = http.expectOne(`${environment.apiUrl}/employees/employee-1/schedule`);
     expect(putRequest.request.method).toBe('PUT');
-    expect(putRequest.request.body).toEqual({ days });
-    putRequest.flush({ days });
+    expect(putRequest.request.body).toEqual(schedule);
+    putRequest.flush(schedule);
   });
 });

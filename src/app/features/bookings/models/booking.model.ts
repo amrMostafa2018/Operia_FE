@@ -3,11 +3,17 @@ import {
   PAYMENT_METHOD_ICONS,
 } from '@app/shared/constants/payment-method-icons';
 
+/** Lifecycle status returned by the booking API and shown in Appointments. */
 export type BookingWordStatus = 'booked' | 'completed' | 'cancelled';
+/** Status used by older local booking fixtures. */
 export type BookingStatus = 'pending' | 'completed' | 'cancelled';
-export type SlotVisualState = 'available' | 'booked' | 'completed' | 'closed';
+/** Describes slot visual state used by the booking UI. */
+export type SlotVisualState = 'available' | 'booked' | 'completed' | 'held' | 'closed';
+/** Describes calendar view mode used by booking screens. */
 export type CalendarViewMode = 'today' | '4days';
+/** Describes service category used by booking screens. */
 export type ServiceCategory = 'all' | 'services' | 'laser' | 'peeling' | 'skin' | 'other';
+/** Identifier of a payment method enabled in business settings. */
 export type PaymentMethodId = 'cash' | 'bank_transfer' | 'instapay' | 'e_wallet' | 'fawry';
 
 export const BOOKING_PAGE_SIZES = [10, 25, 50, 100, 500, 1000, 2000] as const;
@@ -19,6 +25,7 @@ export const BOOKING_STATUS_OPTIONS: { label: string; value: BookingStatus | nul
   { label: 'BOOKING_STATUS.CANCELLED', value: 'cancelled' },
 ];
 
+/** Describes booking used by booking screens. */
 export interface Booking {
   id: string;
   bookingNumber: string;
@@ -38,6 +45,7 @@ export interface Booking {
   status: BookingStatus;
 }
 
+/** Describes booking summary used by booking screens. */
 export interface BookingSummary {
   total: number;
   completed: number;
@@ -45,6 +53,7 @@ export interface BookingSummary {
   cancelled: number;
 }
 
+/** Describes booking filters used by the booking UI. */
 export interface BookingFilters {
   dateFrom?: Date | null;
   dateTo?: Date | null;
@@ -55,6 +64,7 @@ export interface BookingFilters {
   customerName?: string;
 }
 
+/** Describes booking list result exchanged with the API. */
 export interface BookingListResult {
   items: Booking[];
   totalCount: number;
@@ -63,12 +73,14 @@ export interface BookingListResult {
   totalPages: number;
 }
 
+/** Describes availability slot used by booking screens. */
 export interface AvailabilitySlot {
   start: string;
   end: string;
   isAvailable: boolean;
 }
 
+/** Describes create booking payload used by the booking UI. */
 export interface CreateBookingPayload {
   customerId: string;
   packageId: string;
@@ -79,6 +91,7 @@ export interface CreateBookingPayload {
   endTime: string;
 }
 
+/** Describes update booking payload used by the booking UI. */
 export interface UpdateBookingPayload {
   branchId?: string;
   employeeId?: string;
@@ -94,11 +107,13 @@ export const SLOT_SNAP_MINUTES = 15;
 export const SLOT_ROW_HEIGHT_PX = 58;
 export const BOOKING_OVERLAY_GAP_PX = 2;
 
+/** Describes select option used by booking screens. */
 export interface SelectOption<T = string> {
   label: string;
   value: T;
 }
 
+/** Describes employee working hours used by booking screens. */
 export interface EmployeeWorkingHours {
   day: string;
   enabled: boolean;
@@ -106,6 +121,7 @@ export interface EmployeeWorkingHours {
   toMinutes: number | null;
 }
 
+/** Describes employee option used by booking screens. */
 export interface EmployeeOption {
   id: string;
   name: string;
@@ -117,16 +133,19 @@ export interface EmployeeOption {
   workingDays: EmployeeWorkingHours[];
 }
 
+/** Describes branch option used by booking screens. */
 export interface BranchOption {
   id: string;
   name: string;
 }
 
+/** Describes duration option used by booking screens. */
 export interface DurationOption {
   label: string;
   value: number;
 }
 
+/** Describes package option used by booking screens. */
 export interface PackageOption {
   id: string;
   name: string;
@@ -134,14 +153,18 @@ export interface PackageOption {
   serviceId: string;
 }
 
+/** Describes client package used by booking screens. */
 export interface ClientPackage {
+  customerPackageId: string;
   packageId: string;
   packageName: string;
   usedSessions: number;
   totalSessions: number;
   expiryDate: string;
+  offerType?: 'package' | 'session';
 }
 
+/** Describes client record used by booking screens. */
 export interface ClientRecord {
   id: string;
   name: string;
@@ -150,6 +173,7 @@ export interface ClientRecord {
   packages: ClientPackage[];
 }
 
+/** Describes service catalog item used by booking screens. */
 export interface ServiceCatalogItem {
   id: string;
   name: string;
@@ -161,12 +185,14 @@ export interface ServiceCatalogItem {
   type: 'package' | 'session';
 }
 
+/** Describes catalog category tab used by booking screens. */
 export interface CatalogCategoryTab {
   id: string;
   label?: string;
   labelKey?: string;
 }
 
+/** Saved service or Package line, including its catalog and customer-purchase links. */
 export interface BookingLineItem {
   id: string;
   name: string;
@@ -177,6 +203,9 @@ export interface BookingLineItem {
   packageSessionLinked?: boolean;
   categoryId?: string | null;
   categoryName?: string | null;
+  catalogPackageId?: string | null;
+  customerPackageId?: string | null;
+  packageRemainingSessions?: number | null;
 }
 
 export const EMPTY_UNLISTED_FORM = {
@@ -201,6 +230,7 @@ export const UNLISTED_DURATION_UNIT_OPTIONS: {
   value: 'minute';
 }[] = [{ label: 'PACKAGES.CREATE.DURATION_UNIT_MINUTE', value: 'minute' }];
 
+/** Booking details shared by the calendar, register, and edit dialog. */
 export interface BookingRecord {
   id: string;
   bookingNumber: string;
@@ -217,13 +247,25 @@ export interface BookingRecord {
   startMinutes: number;
   slotDurationMinutes: number;
   lineItems: BookingLineItem[];
-  paymentMethod: PaymentMethodId;
+  paymentMethod: PaymentMethodId | null;
   totalAmount: number;
   paidAmount: number;
   discount: number;
   createdAt: Date;
+  version?: string;
 }
 
+/** Temporary hold that prevents another booking from selecting its interval. */
+export interface AppointmentAvailabilityBlock {
+  id: string;
+  employeeId: string;
+  scheduledDate: Date;
+  startMinutes: number;
+  endMinutes: number;
+  expiresAtUtc?: Date;
+}
+
+/** Describes calendar slot cell used by booking screens. */
 export interface CalendarSlotCell {
   key: string;
   employeeId: string;
@@ -242,6 +284,13 @@ export interface CalendarSlotCell {
   offsetBooking?: BookingRecord;
 }
 
+/** Full selectable interval for the chosen session duration. */
+export interface CalendarAvailableSlot {
+  startMinutes: number;
+  endMinutes: number;
+}
+
+/** Branch, employee, date, and interval selected before booking confirmation. */
 export interface SlotSelection {
   employeeId: string;
   employeeName: string;
@@ -252,6 +301,7 @@ export interface SlotSelection {
   slotDurationMinutes: number;
 }
 
+/** Customer, Package, branch, employee, and duration selection for Appointments. */
 export interface AppointmentFilters {
   employeeId: string | null;
   branchId: string | null;
@@ -309,16 +359,13 @@ export const MOCK_EMPLOYEES: EmployeeOption[] = [
   },
 ];
 
-export const MOCK_DURATIONS: DurationOption[] = [
-  { label: '15', value: 15 },
-  { label: '30', value: 30 },
-  { label: '45', value: 45 },
-  { label: '60', value: 60 },
-  { label: '90', value: 90 },
-];
-
 export const MOCK_PACKAGES: PackageOption[] = [
-  { id: 'pkg-1', name: 'إزالة الشعر بالليزر - الجسم الكامل', durationMinutes: 60, serviceId: 'svc-4' },
+  {
+    id: 'pkg-1',
+    name: 'إزالة الشعر بالليزر - الجسم الكامل',
+    durationMinutes: 60,
+    serviceId: 'svc-4',
+  },
   { id: 'pkg-2', name: 'تنظيف البشرة المتقدم', durationMinutes: 45, serviceId: 'svc-3' },
 ];
 
@@ -330,6 +377,7 @@ export const MOCK_CLIENTS: ClientRecord[] = [
     registered: true,
     packages: [
       {
+        customerPackageId: 'customer-package-1',
         packageId: 'pkg-1',
         packageName: 'إزالة الشعر بالليزر - الجسم الكامل',
         usedSessions: 3,
@@ -352,6 +400,7 @@ export const MOCK_CLIENTS: ClientRecord[] = [
     registered: true,
     packages: [
       {
+        customerPackageId: 'customer-package-2',
         packageId: 'pkg-2',
         packageName: 'تنظيف البشرة المتقدم',
         usedSessions: 1,
@@ -466,18 +515,12 @@ export const PAYMENT_METHODS: {
   },
 ];
 
-const CLOSED_SLOT_KEYS = new Set([
-  'emp-1|2026-08-18|540',
-  'emp-1|2026-08-18|570',
-  'emp-2|2026-08-18|720',
-  'emp-2|2026-08-18|750',
-  'emp-3|2026-08-18|600',
-]);
-
+/** Creates a local calendar date from one-based month input. */
 function createDate(year: number, month: number, day: number): Date {
   return new Date(year, month - 1, day);
 }
 
+/** Provides sample bookings for screens that still use local demo data. */
 function createInitialBookings(): BookingRecord[] {
   const scheduled = createDate(2026, 8, 18);
   return [
@@ -586,6 +629,7 @@ function createInitialBookings(): BookingRecord[] {
   ];
 }
 
+/** Returns fresh sample bookings so callers cannot mutate the shared fixtures. */
 export function cloneBookings(): BookingRecord[] {
   return createInitialBookings().map(booking => ({
     ...booking,
@@ -595,6 +639,7 @@ export function cloneBookings(): BookingRecord[] {
   }));
 }
 
+/** Returns fresh sample customers and owned Package lists. */
 export function cloneClients(): ClientRecord[] {
   return MOCK_CLIENTS.map(client => ({
     ...client,
@@ -602,6 +647,7 @@ export function cloneClients(): ClientRecord[] {
   }));
 }
 
+/** Formats a local calendar date as YYYY-MM-DD without UTC conversion. */
 export function toDateKey(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -609,22 +655,26 @@ export function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Moves a local date by whole calendar days without mutating the input. */
 export function addDays(date: Date, days: number): Date {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
 }
 
+/** Formats minutes after midnight as a 24-hour clock value. */
 export function formatMinutesAsTime(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
+/** Scales booking duration to the calendar's 30-minute row height. */
 export function bookingBlockHeightPx(durationMinutes: number): number {
   return (durationMinutes / SLOT_INTERVAL_MINUTES) * SLOT_ROW_HEIGHT_PX;
 }
 
+/** Positions a booking relative to the visible calendar start time. */
 export function bookingBlockTopPx(
   startMinutes: number,
   dayStartMinutes: number = DAY_START_MINUTES
@@ -632,14 +682,17 @@ export function bookingBlockTopPx(
   return ((startMinutes - dayStartMinutes) / SLOT_INTERVAL_MINUTES) * SLOT_ROW_HEIGHT_PX;
 }
 
+/** Formats a booking start and duration as a visible time range. */
 export function formatTimeRange(startMinutes: number, durationMinutes: number): string {
   return `${formatMinutesAsTime(startMinutes)} - ${formatMinutesAsTime(startMinutes + durationMinutes)}`;
 }
 
+/** Builds a stable key from employee, local date, and slot start. */
 export function slotKey(employeeId: string, date: Date, startMinutes: number): string {
   return `${employeeId}|${toDateKey(date)}|${startMinutes}`;
 }
 
+/** Generates a display number for local sample bookings. */
 export function generateBookingNumber(): string {
   const now = new Date();
   const stamp = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
@@ -647,11 +700,13 @@ export function generateBookingNumber(): string {
   return `OP-${stamp}-${random}`;
 }
 
+/** Finds a local sample customer after removing mobile whitespace. */
 export function findClientByMobile(mobile: string, clients: ClientRecord[]): ClientRecord | null {
   const normalized = mobile.replace(/\s+/g, '');
   return clients.find(client => client.mobile.replace(/\s+/g, '') === normalized) ?? null;
 }
 
+/** Checks whether a booking occupies any part of a 30-minute calendar cell. */
 export function bookingOverlapsSlot(
   booking: BookingRecord,
   employeeId: string,
@@ -666,6 +721,7 @@ export function bookingOverlapsSlot(
   return startMinutes < end && slotEnd > booking.startMinutes;
 }
 
+/** Checks whether a booking begins exactly at a calendar cell boundary. */
 export function bookingAtSlotStart(
   booking: BookingRecord,
   employeeId: string,
@@ -679,6 +735,7 @@ export function bookingAtSlotStart(
   );
 }
 
+/** Finds bookings starting within a calendar row, including offset starts. */
 export function bookingStartsInRow(
   booking: BookingRecord,
   employeeId: string,
@@ -696,10 +753,12 @@ export function bookingStartsInRow(
 const WEEKDAY_CODES = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 const AVATAR_COLORS = ['#7c3aed', '#2563eb', '#0891b2', '#db2777', '#ea580c', '#16a34a'];
 
+/** Converts a local date to the working-day code used by employee schedules. */
 export function weekdayCode(date: Date): string {
   return WEEKDAY_CODES[date.getDay()];
 }
 
+/** Parses a clock value into minutes after midnight for calendar arithmetic. */
 export function parseTimeToMinutes(value: string | null | undefined): number | null {
   if (!value) {
     return null;
@@ -713,6 +772,7 @@ export function parseTimeToMinutes(value: string | null | undefined): number | n
   return hours * 60 + minutes;
 }
 
+/** Returns enabled employee hours for the selected local day, if any. */
 export function hoursForDate(
   workingDays: EmployeeWorkingHours[],
   date: Date
@@ -724,6 +784,7 @@ export function hoursForDate(
   return day;
 }
 
+/** Requires the full proposed interval to fit inside enabled employee hours. */
 export function isWithinWorkingHours(
   hours: EmployeeWorkingHours | null,
   startMinutes: number,
@@ -735,6 +796,7 @@ export function isWithinWorkingHours(
   return startMinutes >= hours.fromMinutes && startMinutes + durationMinutes <= hours.toMinutes;
 }
 
+/** Checks interval overlap for an employee on a local date. */
 export function bookingOverlapsRange(
   booking: BookingRecord,
   employeeId: string,
@@ -750,6 +812,7 @@ export function bookingOverlapsRange(
   return startMinutes < bookingEnd && rangeEnd > booking.startMinutes;
 }
 
+/** Derives up to two avatar initials from a customer's or employee's name. */
 export function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
@@ -761,6 +824,7 @@ export function initialsFromName(name: string): string {
   return `${parts[0][0]}${parts[1][0]}`;
 }
 
+/** Chooses a stable avatar color from an identifier. */
 export function avatarColorFromId(id: string): string {
   let hash = 0;
   for (let index = 0; index < id.length; index += 1) {
@@ -769,14 +833,17 @@ export function avatarColorFromId(id: string): string {
   return AVATAR_COLORS[hash];
 }
 
+/** Rounds minutes down to a 30-minute calendar row boundary. */
 export function floorToSlot(minutes: number): number {
   return Math.floor(minutes / SLOT_INTERVAL_MINUTES) * SLOT_INTERVAL_MINUTES;
 }
 
+/** Rounds minutes up to a 30-minute calendar row boundary. */
 export function ceilToSlot(minutes: number): number {
   return Math.ceil(minutes / SLOT_INTERVAL_MINUTES) * SLOT_INTERVAL_MINUTES;
 }
 
+/** Keeps the 08:00–18:00 reference day visible and extends it for longer employee schedules. */
 export function calendarDayRange(columns: { employee: EmployeeOption; date: Date }[]): {
   startMinutes: number;
   endMinutes: number;
@@ -798,15 +865,13 @@ export function calendarDayRange(columns: { employee: EmployeeOption; date: Date
     return { startMinutes: DAY_START_MINUTES, endMinutes: DAY_END_MINUTES };
   }
 
-  const startMinutes = floorToSlot(earliestStart);
-  let endMinutes = ceilToSlot(latestEnd);
-  if (endMinutes <= startMinutes) {
-    endMinutes = startMinutes + SLOT_INTERVAL_MINUTES;
-  }
+  const startMinutes = Math.min(DAY_START_MINUTES, floorToSlot(earliestStart));
+  const endMinutes = Math.max(DAY_END_MINUTES, ceilToSlot(latestEnd));
 
   return { startMinutes, endMinutes };
 }
 
+/** Builds the 30-minute labels used by the calendar time axis. */
 export function buildSlotRows(startMinutes: number, endMinutes: number): number[] {
   const rows: number[] = [];
   for (let minute = startMinutes; minute < endMinutes; minute += SLOT_INTERVAL_MINUTES) {
@@ -815,47 +880,107 @@ export function buildSlotRows(startMinutes: number, endMinutes: number): number[
   return rows;
 }
 
-export function isSlotClosed(employeeId: string, date: Date, startMinutes: number): boolean {
-  return CLOSED_SLOT_KEYS.has(slotKey(employeeId, date, startMinutes));
-}
-
+/** Requires working hours and no overlapping booking or active hold for the full interval. */
 export function isSlotAvailableForBooking(
   bookings: BookingRecord[],
   employeeId: string,
   date: Date,
   startMinutes: number,
   durationMinutes: number,
-  hours: EmployeeWorkingHours | null
+  hours: EmployeeWorkingHours | null,
+  availabilityBlocks: AppointmentAvailabilityBlock[] = []
 ): boolean {
   if (!isWithinWorkingHours(hours, startMinutes, durationMinutes)) {
     return false;
   }
-  return !bookings.some(
+  const endMinutes = startMinutes + durationMinutes;
+  const overlapsBooking = bookings.some(
     booking =>
       booking.status !== 'cancelled' &&
       bookingOverlapsRange(booking, employeeId, date, startMinutes, durationMinutes)
   );
+  const overlapsBlock = availabilityBlocks.some(
+    block =>
+      block.employeeId === employeeId &&
+      toDateKey(block.scheduledDate) === toDateKey(date) &&
+      block.startMinutes < endMinutes &&
+      block.endMinutes > startMinutes
+  );
+  return !overlapsBooking && !overlapsBlock;
 }
 
+/** Finds the first available start in 15-minute steps within employee hours. */
 export function findRecommendedStart(
   bookings: BookingRecord[],
   employeeId: string,
   date: Date,
   durationMinutes: number,
-  hours: EmployeeWorkingHours | null
+  hours: EmployeeWorkingHours | null,
+  availabilityBlocks: AppointmentAvailabilityBlock[] = []
 ): number | null {
   const searchStart = hours?.fromMinutes ?? DAY_START_MINUTES;
   const searchEnd = hours?.toMinutes ?? DAY_END_MINUTES;
   const alignedStart = Math.ceil(searchStart / SLOT_SNAP_MINUTES) * SLOT_SNAP_MINUTES;
 
   for (let start = alignedStart; start + durationMinutes <= searchEnd; start += SLOT_SNAP_MINUTES) {
-    if (isSlotAvailableForBooking(bookings, employeeId, date, start, durationMinutes, hours)) {
+    if (
+      isSlotAvailableForBooking(
+        bookings,
+        employeeId,
+        date,
+        start,
+        durationMinutes,
+        hours,
+        availabilityBlocks
+      )
+    ) {
       return start;
     }
   }
   return null;
 }
 
+/** Builds consecutive selectable intervals of the chosen duration, skipping occupied time. */
+export function buildAvailableSlots(
+  bookings: BookingRecord[],
+  employeeId: string,
+  date: Date,
+  durationMinutes: number,
+  workingDays: EmployeeWorkingHours[],
+  availabilityBlocks: AppointmentAvailabilityBlock[] = []
+): CalendarAvailableSlot[] {
+  const hours = hoursForDate(workingDays, date);
+  const effectiveDuration = durationMinutes > 0 ? durationMinutes : SLOT_INTERVAL_MINUTES;
+  if (!hours || hours.fromMinutes === null || hours.toMinutes === null) {
+    return [];
+  }
+
+  const slots: CalendarAvailableSlot[] = [];
+  let start = Math.ceil(hours.fromMinutes / SLOT_SNAP_MINUTES) * SLOT_SNAP_MINUTES;
+
+  while (start + effectiveDuration <= hours.toMinutes) {
+    if (
+      isSlotAvailableForBooking(
+        bookings,
+        employeeId,
+        date,
+        start,
+        effectiveDuration,
+        hours,
+        availabilityBlocks
+      )
+    ) {
+      slots.push({ startMinutes: start, endMinutes: start + effectiveDuration });
+      start += effectiveDuration;
+    } else {
+      start += SLOT_SNAP_MINUTES;
+    }
+  }
+
+  return slots;
+}
+
+/** Builds 30-minute visual cells, including bookings, holds, closed hours, and offset availability. */
 export function buildSlotGrid(
   bookings: BookingRecord[],
   employeeId: string,
@@ -863,10 +988,18 @@ export function buildSlotGrid(
   durationMinutes: number,
   workingDays: EmployeeWorkingHours[] = [],
   rangeStartMinutes: number = DAY_START_MINUTES,
-  rangeEndMinutes: number = DAY_END_MINUTES
+  rangeEndMinutes: number = DAY_END_MINUTES,
+  availabilityBlocks: AppointmentAvailabilityBlock[] = []
 ): CalendarSlotCell[] {
   const hours = hoursForDate(workingDays, date);
-  const recommendedStart = findRecommendedStart(bookings, employeeId, date, durationMinutes, hours);
+  const recommendedStart = findRecommendedStart(
+    bookings,
+    employeeId,
+    date,
+    durationMinutes,
+    hours,
+    availabilityBlocks
+  );
   const cells: CalendarSlotCell[] = [];
 
   for (let start = rangeStartMinutes; start < rangeEndMinutes; start += SLOT_INTERVAL_MINUTES) {
@@ -885,6 +1018,13 @@ export function buildSlotGrid(
         bookingStartsInRow(booking, employeeId, date, start) &&
         booking.startMinutes !== start
     );
+    const held = availabilityBlocks.some(
+      block =>
+        block.employeeId === employeeId &&
+        toDateKey(block.scheduledDate) === toDateKey(date) &&
+        block.startMinutes < start + SLOT_INTERVAL_MINUTES &&
+        block.endMinutes > start
+    );
 
     let visual: SlotVisualState = 'available';
     let booking: BookingRecord | undefined;
@@ -895,16 +1035,35 @@ export function buildSlotGrid(
       const primary = bookingAtStart ?? offsetBooking ?? overlapping[0];
       booking = primary;
       visual = primary.status === 'completed' ? 'completed' : 'booked';
+    } else if (held) {
+      visual = 'held';
     }
 
+    const effectiveDuration = durationMinutes > 0 ? durationMinutes : SLOT_INTERVAL_MINUTES;
     const selectable =
       visual === 'available' &&
-      isSlotAvailableForBooking(bookings, employeeId, date, start, durationMinutes, hours);
+      isSlotAvailableForBooking(
+        bookings,
+        employeeId,
+        date,
+        start,
+        effectiveDuration,
+        hours,
+        availabilityBlocks
+      );
 
     const offsetStart = start + SLOT_SNAP_MINUTES;
     const offsetAvailable =
       !offsetBooking &&
-      isSlotAvailableForBooking(bookings, employeeId, date, offsetStart, durationMinutes, hours);
+      isSlotAvailableForBooking(
+        bookings,
+        employeeId,
+        date,
+        offsetStart,
+        effectiveDuration,
+        hours,
+        availabilityBlocks
+      );
     const showOffset = offsetAvailable && visual !== 'available';
 
     cells.push({
@@ -929,18 +1088,22 @@ export function buildSlotGrid(
   return cells;
 }
 
+/** Adds the durations of all selected service units. */
 export function sumLineItemDuration(items: BookingLineItem[]): number {
   return items.reduce((total, item) => total + item.durationMinutes * item.quantity, 0);
 }
 
+/** Adds the prices of all selected service units. */
 export function sumLineItemPrice(items: BookingLineItem[]): number {
   return items.reduce((total, item) => total + item.price * item.quantity, 0);
 }
 
+/** Reports whether a booking contains a Package session line. */
 export function bookingHasPackage(booking: BookingRecord): boolean {
   return booking.lineItems.some(item => item.type === 'package' || item.packageSessionLinked);
 }
 
+/** Builds service choices available to the deferred close-booking flow. */
 export function bookingPerformedServiceOptions(lineItems: BookingLineItem[]): SelectOption[] {
   const packages = lineItems.filter(item => item.type === 'package' || item.packageSessionLinked);
   const source = packages.length > 0 ? packages : lineItems;
@@ -950,6 +1113,7 @@ export function bookingPerformedServiceOptions(lineItems: BookingLineItem[]): Se
   }));
 }
 
+/** Limits calendar employees to the selected branch and employee filter. */
 export function filterEmployees(
   employees: EmployeeOption[],
   employeeId: string | null
@@ -960,6 +1124,7 @@ export function filterEmployees(
   return employees.filter(employee => employee.id === employeeId);
 }
 
+/** Keeps the selected employee when allowed, otherwise chooses the first filtered employee. */
 export function resolveEmployeeForFourDayView(
   employees: EmployeeOption[],
   employeeId: string | null
@@ -968,19 +1133,21 @@ export function resolveEmployeeForFourDayView(
   return filtered[0] ?? null;
 }
 
+/** Returns the initial local calendar date. */
 export function defaultSelectedDate(): Date {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return today;
 }
 
+/** Returns the initial appointment filters and empty customer selection. */
 export function defaultFilters(): AppointmentFilters {
   return {
     employeeId: null,
     branchId: null,
-    durationMinutes: 60,
-    packageId: 'pkg-1',
-    clientName: 'أحمد علي محمد',
-    clientMobile: '01012345678',
+    durationMinutes: 0,
+    packageId: null,
+    clientName: '',
+    clientMobile: '',
   };
 }
