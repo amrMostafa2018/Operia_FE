@@ -224,11 +224,30 @@ export function packageUsesSessions(pkg: Pick<ClientPackage, 'sessionCount'>): b
 
 const BOOKING_ITEM_MAX_QUANTITY = 100;
 
+/** True when the customer already owns a catalog package balance. */
+export function customerOwnsCatalogPackage(
+  catalogPackageId: string,
+  ownedPackages: readonly ClientPackage[]
+): boolean {
+  return ownedPackages.some(pkg => pkg.packageId === catalogPackageId);
+}
+
+/** True when a booking line already reserves the owned package session for this catalog item. */
+export function isOwnedPackageReservedOnBookingLine(line: BookingLineItem): boolean {
+  return (
+    line.type === 'package' &&
+    !!line.packageSessionLinked &&
+    (line.newPurchaseUnits ?? 0) === 0 &&
+    !!line.customerPackageId
+  );
+}
+
 /** Units that create new customer-package purchases and are charged at catalog price. */
 export function bookAppointmentNewPurchaseUnits(
-  service: Pick<ServiceCatalogItem, 'type'>,
+  service: Pick<ServiceCatalogItem, 'type' | 'id'>,
   quantity: number,
-  ownedPackage: ClientPackage | null
+  ownedPackage: ClientPackage | null,
+  ownedPackages: readonly ClientPackage[] = []
 ): number {
   if (quantity <= 0) {
     return 0;
@@ -238,8 +257,11 @@ export function bookAppointmentNewPurchaseUnits(
     return ownedPackage != null && quantity === 1 ? 0 : quantity;
   }
 
-  // Package lines are purchase-only on bookings; charge only units beyond one owned copy.
-  return ownedPackage != null ? Math.max(0, quantity - 1) : quantity;
+  const customerOwnsCatalog =
+    ownedPackage != null || customerOwnsCatalogPackage(service.id, ownedPackages);
+
+  // Match backend packagePurchase pricing: one owned catalog copy is never charged again.
+  return customerOwnsCatalog ? Math.max(0, quantity - 1) : quantity;
 }
 
 export function bookAppointmentMaxQuantity(_service: Pick<ServiceCatalogItem, 'type'>): number {
@@ -265,28 +287,264 @@ export function bookAppointmentOwnedPackageLineItem(
   };
 }
 
+/** Sessions already linked to a package balance on the same booking draft. */
+export function linkedPackageSessionCount(
+  lineItems: readonly BookingLineItem[],
+  customerPackageId: string,
+  excludeLineId?: string
+): number {
+  return lineItems.filter(
+    line =>
+      line.id !== excludeLineId &&
+      line.type === 'session' &&
+      line.packageSessionLinked &&
+      line.customerPackageId === customerPackageId
+  ).length;
+}
+
+/** Fills package-line metadata from the customer's owned packages when the API snapshot is partial. */
+export function enrichPackageLineFromOwnedPackages(
+  line: BookingLineItem,
+  ownedPackages: readonly ClientPackage[]
+): BookingLineItem {
+  if (line.type !== 'package' || !line.catalogPackageId) {
+    return line;
+  }
+
+  const owned =
+    (line.customerPackageId
+      ? ownedPackages.find(pkg => pkg.customerPackageId === line.customerPackageId)
+      : null) ?? ownedPackages.find(pkg => pkg.packageId === line.catalogPackageId);
+  if (!owned) {
+    return line;
+  }
+
+  return {
+    ...line,
+    customerPackageId: line.customerPackageId ?? owned.customerPackageId,
+    packageRemainingSessions:
+      line.packageRemainingSessions ?? displayedPackageRemainingUnits(owned),
+    packagePulseCount: line.packagePulseCount ?? owned.pulseCount ?? null,
+  };
+}
+
+/** Remaining package sessions available on this booking after linked session lines. */
+export function remainingPackageSessionsOnBookingLine(
+  packageLine: BookingLineItem,
+  lineItems: readonly BookingLineItem[],
+  excludeLineId?: string
+): number {
+  const enriched = enrichPackageLineFromOwnedPackages(packageLine, []);
+  if (enriched.type !== 'package' || !enriched.customerPackageId) {
+    return 0;
+  }
+
+  const snapshotRemaining = enriched.packageRemainingSessions;
+  if (snapshotRemaining == null) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    snapshotRemaining -
+      linkedPackageSessionCount(lineItems, enriched.customerPackageId, excludeLineId)
+  );
+}
+
+/** Remaining package balance for a booking line using snapshot and owned-package fallbacks. */
+export function effectivePackageRemainingOnBookingLine(
+  packageLine: BookingLineItem,
+  ownedPackages: readonly ClientPackage[],
+  lineItems: readonly BookingLineItem[],
+  excludeLineId?: string
+): number {
+  const enriched = enrichPackageLineFromOwnedPackages(packageLine, ownedPackages);
+  const fromSnapshot = remainingPackageSessionsOnBookingLine(enriched, lineItems, excludeLineId);
+  if (fromSnapshot > 0) {
+    return fromSnapshot;
+  }
+
+  if (!enriched.customerPackageId) {
+    return 0;
+  }
+
+  const owned = ownedPackages.find(pkg => pkg.customerPackageId === enriched.customerPackageId);
+  if (!owned) {
+    return 0;
+  }
+
+  const linked = linkedPackageSessionCount(lineItems, enriched.customerPackageId, excludeLineId);
+  return Math.max(0, displayedPackageRemainingUnits(owned) - linked);
+}
+
+/** Builds a client-package view from a package line snapshot on the booking. */
+export function clientPackageFromBookingLine(line: BookingLineItem): ClientPackage | null {
+  if (line.type !== 'package' || !line.customerPackageId || !line.catalogPackageId) {
+    return null;
+  }
+
+  const remaining = line.packageRemainingSessions ?? 0;
+  if (remaining <= 0) {
+    return null;
+  }
+
+  return {
+    customerPackageId: line.customerPackageId,
+    packageId: line.catalogPackageId,
+    packageName: line.name,
+    usedSessions: 0,
+    totalSessions: remaining,
+    expiryDate: '',
+    offerType: 'package',
+    sessionCount: line.packagePulseCount ? null : remaining,
+    pulseCount: line.packagePulseCount ?? null,
+  };
+}
+
+/** Where owned-package resolution may look for a matching balance. */
+export type ResolveOwnedPackageMode = 'bookAppointment' | 'bookingDetails';
+
+/** Finds a directly owned single-session package for the same catalog product. */
+export function resolveDirectOwnedSessionPackage(
+  service: ServiceCatalogItem,
+  ownedPackages: readonly ClientPackage[],
+  item?: Pick<BookingLineItem, 'customerPackageId' | 'price'>
+): ClientPackage | null {
+  if (service.type !== 'session') {
+    return null;
+  }
+
+  const direct = ownedPackages.find(
+    pkg => pkg.packageId === service.id && displayedPackageRemainingUnits(pkg) > 0
+  );
+  if (direct) {
+    return direct;
+  }
+
+  if (!item?.customerPackageId || item.price !== 0) {
+    return null;
+  }
+
+  const linked = ownedPackages.find(pkg => pkg.customerPackageId === item.customerPackageId);
+  if (linked?.packageId === service.id && displayedPackageRemainingUnits(linked) > 0) {
+    return linked;
+  }
+
+  return null;
+}
+
+/** Finds the owned customer package that should cover a catalog line. */
+export function resolveOwnedPackageForCatalogLine(
+  service: ServiceCatalogItem,
+  ownedPackages: readonly ClientPackage[],
+  lineItems: readonly BookingLineItem[],
+  excludeLineId?: string,
+  mode: ResolveOwnedPackageMode = 'bookAppointment'
+): ClientPackage | null {
+  const hasRemaining = (pkg: ClientPackage) => displayedPackageRemainingUnits(pkg) > 0;
+
+  const direct = ownedPackages.find(pkg => pkg.packageId === service.id && hasRemaining(pkg));
+  if (direct) {
+    if (
+      service.type === 'package' &&
+      lineItems.some(
+        line =>
+          line.id !== excludeLineId &&
+          line.catalogPackageId === service.id &&
+          isOwnedPackageReservedOnBookingLine(line)
+      )
+    ) {
+      return null;
+    }
+
+    return direct;
+  }
+
+  if (service.type !== 'session' || mode === 'bookingDetails') {
+    return null;
+  }
+
+  for (const line of lineItems) {
+    if (excludeLineId && line.id === excludeLineId) {
+      continue;
+    }
+    if (line.type !== 'package' && !line.packageSessionLinked) {
+      continue;
+    }
+    const customerPackageId = line.customerPackageId;
+    if (!customerPackageId) {
+      continue;
+    }
+
+    if (line.type === 'package') {
+      const packageLine = enrichPackageLineFromOwnedPackages(line, ownedPackages);
+      const remainingOnBooking = effectivePackageRemainingOnBookingLine(
+        packageLine,
+        ownedPackages,
+        lineItems,
+        excludeLineId
+      );
+      if (remainingOnBooking <= 0) {
+        continue;
+      }
+
+      const resolvedCustomerPackageId = packageLine.customerPackageId ?? customerPackageId;
+      const pkg = ownedPackages.find(item => item.customerPackageId === resolvedCustomerPackageId);
+      if (pkg) {
+        return pkg;
+      }
+
+      const snapshot = clientPackageFromBookingLine({
+        ...packageLine,
+        customerPackageId: resolvedCustomerPackageId,
+        packageRemainingSessions: remainingOnBooking,
+      });
+      if (snapshot) {
+        return snapshot;
+      }
+
+      continue;
+    }
+
+    const pkg = ownedPackages.find(item => item.customerPackageId === customerPackageId);
+    if (pkg && hasRemaining(pkg)) {
+      return pkg;
+    }
+  }
+
+  return null;
+}
+
 /** Builds a catalog carousel line; package quantities are always treated as purchases. */
 export function bookAppointmentCatalogQuantityLineItem(
   service: ServiceCatalogItem,
   quantity: number,
-  ownedPackage: ClientPackage | null
+  ownedPackages: readonly ClientPackage[],
+  lineItems: readonly BookingLineItem[] = []
 ): BookingLineItem {
+  const ownedPackage =
+    service.type === 'session'
+      ? resolveDirectOwnedSessionPackage(service, ownedPackages)
+      : resolveOwnedPackageForCatalogLine(service, ownedPackages, lineItems, `line-${service.id}`);
   const newPurchaseUnits =
     service.type === 'package'
       ? quantity
-      : bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage);
+      : bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage, ownedPackages);
+  const usesOwnedSession = service.type === 'session' && ownedPackage != null && quantity === 1;
 
   return {
     id: `line-${service.id}`,
     name: service.name,
     type: service.type,
     quantity,
-    price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    price: usesOwnedSession ? 0 : bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
     newPurchaseUnits,
     durationMinutes: service.durationMinutes,
-    packageSessionLinked: false,
+    packageSessionLinked: usesOwnedSession,
     catalogPackageId: service.id,
-    customerPackageId: bookAppointmentCustomerPackageId(),
+    customerPackageId: usesOwnedSession
+      ? ownedPackage.customerPackageId
+      : bookAppointmentCustomerPackageId(),
   };
 }
 
@@ -303,15 +561,83 @@ export function bookAppointmentCatalogUnitPrice(
   return ownedPackage != null && quantity === 1 ? 0 : service.price;
 }
 
+/** True when a saved booking session line already consumed a directly owned session balance. */
+export function isPersistedOwnedSessionLineItem(
+  item: Pick<
+    BookingLineItem,
+    'type' | 'price' | 'packageSessionLinked' | 'customerPackageId' | 'catalogPackageId'
+  >
+): boolean {
+  return (
+    item.type === 'session' &&
+    item.price === 0 &&
+    (!!item.packageSessionLinked || !!item.customerPackageId)
+  );
+}
+
+/** True when a saved session line still maps to a directly owned session product. */
+export function isPersistedDirectOwnedSessionLineItem(
+  item: BookingLineItem,
+  service: ServiceCatalogItem,
+  ownedPackages: readonly ClientPackage[]
+): boolean {
+  if (item.type !== 'session') {
+    return false;
+  }
+
+  if (!item.packageSessionLinked && item.price !== 0 && !item.customerPackageId) {
+    return false;
+  }
+
+  if (!item.customerPackageId) {
+    return item.price === 0 && !!item.packageSessionLinked;
+  }
+
+  const linked = ownedPackages.find(pkg => pkg.customerPackageId === item.customerPackageId);
+  if (linked) {
+    return linked.packageId === service.id;
+  }
+
+  if (ownedPackages.length === 0 && item.packageSessionLinked) {
+    return true;
+  }
+
+  return item.price === 0 && !!item.packageSessionLinked;
+}
+
+/** True when a session line uses an owned customer package and should not be billed. */
+export function isOwnedSessionLineItem(
+  item: Pick<BookingLineItem, 'type' | 'price' | 'packageSessionLinked' | 'customerPackageId'>
+): boolean {
+  return isPersistedOwnedSessionLineItem(item);
+}
+
 /** Billable amount for one booking line item. */
 export function bookAppointmentLineTotal(
-  item: Pick<BookingLineItem, 'type' | 'price' | 'quantity' | 'newPurchaseUnits'>
+  item: Pick<
+    BookingLineItem,
+    | 'type'
+    | 'price'
+    | 'quantity'
+    | 'newPurchaseUnits'
+    | 'packageSessionLinked'
+    | 'customerPackageId'
+  >
 ): number {
   if (item.type === 'package') {
     return item.price * (item.newPurchaseUnits ?? 0);
   }
 
+  if (isOwnedSessionLineItem(item)) {
+    return 0;
+  }
+
   return item.price * item.quantity;
+}
+
+/** True when a booking line should show a price in the UI. */
+export function bookingLineDisplaysPrice(item: BookingLineItem): boolean {
+  return bookAppointmentLineTotal(item) > 0;
 }
 
 /** Booking lines that require payment (excludes owned-package usage with zero charge). */
@@ -343,6 +669,54 @@ export function bookAppointmentApiItemType(item: BookingLineItem): string {
   }
 
   return item.type;
+}
+
+/**
+ * Customer package id sent to the API.
+ * Sessions covered by a multi-session package on the same booking stay linked in the UI only.
+ */
+export function bookingLineCustomerPackageIdForApi(
+  item: BookingLineItem,
+  lineItems: readonly BookingLineItem[]
+): string | null {
+  if (!item.customerPackageId) {
+    return null;
+  }
+
+  if (
+    item.type === 'session' &&
+    item.packageSessionLinked &&
+    item.catalogPackageId &&
+    lineItems.some(
+      line =>
+        line.type === 'package' &&
+        line.customerPackageId === item.customerPackageId &&
+        line.catalogPackageId &&
+        line.catalogPackageId !== item.catalogPackageId
+    )
+  ) {
+    return null;
+  }
+
+  return item.customerPackageId;
+}
+
+/** Maps a booking line item to the booking API payload shape. */
+export function mapBookingLineToApiItem(
+  item: BookingLineItem,
+  lineItems: readonly BookingLineItem[]
+): {
+  packageId: string;
+  customerPackageId: string | null;
+  quantity: number;
+  type: string;
+} {
+  return {
+    packageId: item.catalogPackageId!,
+    customerPackageId: bookingLineCustomerPackageIdForApi(item, lineItems),
+    quantity: item.quantity,
+    type: bookAppointmentApiItemType(item),
+  };
 }
 
 /** Describes client record used by booking screens. */
@@ -1282,32 +1656,103 @@ export function sumLineItemPrice(items: BookingLineItem[]): number {
   return items.reduce((total, item) => total + bookAppointmentLineTotal(item), 0);
 }
 
+function packageBalanceFieldsFromOwned(
+  ownedPackage: ClientPackage | null
+): Pick<BookingLineItem, 'packageRemainingSessions' | 'packagePulseCount'> {
+  if (!ownedPackage) {
+    return {};
+  }
+
+  return {
+    packageRemainingSessions: displayedPackageRemainingUnits(ownedPackage),
+    packagePulseCount: ownedPackage.pulseCount ?? null,
+  };
+}
+
 /** Builds a catalog line for booking details using owned-package purchase rules. */
 export function bookingDetailsLineItemFromCatalog(
   service: ServiceCatalogItem,
   quantity: number,
-  ownedPackage: ClientPackage | null,
+  ownedPackages: readonly ClientPackage[],
+  lineItems: readonly BookingLineItem[] = [],
   lineId?: string
 ): BookingLineItem {
+  const id = lineId ?? `line-${service.id}-${lineItems.length}-${Date.now()}`;
+  const enrichedLineItems = lineItems.map(line =>
+    enrichPackageLineFromOwnedPackages(line, ownedPackages)
+  );
+  const ownedPackage =
+    service.type === 'session'
+      ? resolveDirectOwnedSessionPackage(service, ownedPackages)
+      : resolveOwnedPackageForCatalogLine(
+          service,
+          ownedPackages,
+          enrichedLineItems,
+          id,
+          'bookingDetails'
+        );
+  const usesOwnedSession = service.type === 'session' && ownedPackage != null && quantity === 1;
+  const newPurchaseUnits = bookAppointmentNewPurchaseUnits(
+    service,
+    quantity,
+    ownedPackage,
+    ownedPackages
+  );
+  const catalogOwnedPackage =
+    ownedPackage ?? ownedPackages.find(pkg => pkg.packageId === service.id) ?? null;
+  const usesOwnedPackageOnBooking =
+    service.type === 'package' && newPurchaseUnits === 0 && ownedPackage != null;
+
   return {
-    id: lineId ?? `line-${service.id}-${Date.now()}`,
+    id,
     name: service.name,
     type: service.type,
     quantity,
-    price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
-    newPurchaseUnits: bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage),
+    price: usesOwnedSession ? 0 : bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    newPurchaseUnits,
     durationMinutes: service.durationMinutes,
-    packageSessionLinked: false,
+    packageSessionLinked: usesOwnedSession || usesOwnedPackageOnBooking,
     catalogPackageId: service.id,
-    customerPackageId: bookAppointmentCustomerPackageId(),
+    customerPackageId: usesOwnedSession
+      ? (ownedPackage?.customerPackageId ?? null)
+      : itemCustomerPackageIdForPackageLine(service, ownedPackage, quantity, ownedPackages),
+    ...packageBalanceFieldsFromOwned(usesOwnedPackageOnBooking ? catalogOwnedPackage : null),
   };
+}
+
+function itemCustomerPackageIdForPackageLine(
+  service: ServiceCatalogItem,
+  ownedPackage: ClientPackage | null,
+  quantity: number,
+  ownedPackages: readonly ClientPackage[] = []
+): string | null {
+  if (service.type !== 'package' || !ownedPackage) {
+    return bookAppointmentCustomerPackageId();
+  }
+
+  return bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage, ownedPackages) === 0
+    ? ownedPackage.customerPackageId
+    : bookAppointmentCustomerPackageId();
+}
+
+/** Recomputes purchase-only pricing for every editable booking line. */
+export function normalizeBookingDetailsLineItems(
+  items: BookingLineItem[],
+  catalogItems: ServiceCatalogItem[],
+  ownedPackages: readonly ClientPackage[]
+): BookingLineItem[] {
+  const enrichedItems = items.map(item => enrichPackageLineFromOwnedPackages(item, ownedPackages));
+  return enrichedItems.map(item =>
+    normalizeBookingDetailsLineItem(item, catalogItems, ownedPackages, enrichedItems)
+  );
 }
 
 /** Recomputes purchase-only pricing and API flags for an editable booking line. */
 export function normalizeBookingDetailsLineItem(
   item: BookingLineItem,
   catalogItems: ServiceCatalogItem[],
-  ownedPackages: ClientPackage[]
+  ownedPackages: readonly ClientPackage[],
+  lineItems: readonly BookingLineItem[] = []
 ): BookingLineItem {
   if (item.type === 'unlisted' || !item.catalogPackageId) {
     return item;
@@ -1315,28 +1760,77 @@ export function normalizeBookingDetailsLineItem(
 
   const service = catalogItems.find(catalogItem => catalogItem.id === item.catalogPackageId);
   if (!service) {
-    return item.type === 'package'
-      ? { ...item, packageSessionLinked: false }
-      : item;
+    return item.type === 'package' ? { ...item, packageSessionLinked: false } : item;
   }
 
+  const enrichedLineItems = lineItems.map(line =>
+    enrichPackageLineFromOwnedPackages(line, ownedPackages)
+  );
   const ownedPackage =
-    ownedPackages.find(pkg => pkg.packageId === item.catalogPackageId) ?? null;
+    service.type === 'session'
+      ? resolveDirectOwnedSessionPackage(service, ownedPackages, item)
+      : ((item.customerPackageId
+          ? ownedPackages.find(pkg => pkg.customerPackageId === item.customerPackageId)
+          : null) ??
+        resolveOwnedPackageForCatalogLine(
+          service,
+          ownedPackages,
+          enrichedLineItems,
+          item.id,
+          'bookingDetails'
+        ));
   const quantity = item.quantity;
+  const usesOwnedSession =
+    service.type === 'session' &&
+    quantity === 1 &&
+    (ownedPackage != null || isPersistedDirectOwnedSessionLineItem(item, service, ownedPackages));
+
+  const catalogOwnedPackage =
+    ownedPackage ?? ownedPackages.find(pkg => pkg.packageId === service.id) ?? null;
+
   if (service.type === 'package') {
+    const newPurchaseUnits = bookAppointmentNewPurchaseUnits(
+      service,
+      quantity,
+      ownedPackage,
+      ownedPackages
+    );
+    const usesOwnedPackageOnBooking =
+      newPurchaseUnits === 0 &&
+      (ownedPackage != null ||
+        isOwnedPackageReservedOnBookingLine(item) ||
+        (!!item.customerPackageId && (item.packageSessionLinked ?? false)));
+    const balanceFields = packageBalanceFieldsFromOwned(
+      usesOwnedPackageOnBooking ? catalogOwnedPackage : null
+    );
+
     return {
       ...item,
       price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
-      newPurchaseUnits: bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage),
-      packageSessionLinked: false,
-      customerPackageId: bookAppointmentCustomerPackageId(),
+      newPurchaseUnits,
+      packageSessionLinked: usesOwnedPackageOnBooking,
+      customerPackageId:
+        item.customerPackageId ??
+        itemCustomerPackageIdForPackageLine(service, ownedPackage, quantity, ownedPackages),
+      packageRemainingSessions:
+        balanceFields.packageRemainingSessions ?? item.packageRemainingSessions ?? null,
+      packagePulseCount: balanceFields.packagePulseCount ?? item.packagePulseCount ?? null,
     };
   }
 
   return {
     ...item,
-    price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
-    newPurchaseUnits: bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage),
+    price: usesOwnedSession ? 0 : bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    newPurchaseUnits: bookAppointmentNewPurchaseUnits(
+      service,
+      quantity,
+      ownedPackage,
+      ownedPackages
+    ),
+    packageSessionLinked: usesOwnedSession,
+    customerPackageId: usesOwnedSession
+      ? (ownedPackage?.customerPackageId ?? item.customerPackageId ?? null)
+      : bookAppointmentCustomerPackageId(),
   };
 }
 

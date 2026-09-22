@@ -166,9 +166,9 @@
                       <span class="type-badge" [class]="lineTypeClass(item.type)">
                         {{ lineTypeKey(item.type) | translate }}
                       </span>
-                      @if (item.type !== 'package') {
+                      @if (showsLinePrice(item)) {
                         <strong class="line-price">
-                          {{ item.price * item.quantity }}
+                          {{ lineTotal(item) }}
                           @if (currencyService.hasCurrency()) {
                             {{ currencyService.currencyLabel() }}
                           }
@@ -335,37 +335,6 @@
                 }
               </strong>
             </article>
-            <article>
-              <small>{{ 'BOOKINGS.DETAILS.PAID' | translate }}</small>
-              <strong class="paid-value">
-                {{ draftPaidAmount() }}
-                @if (currencyService.hasCurrency()) {
-                  {{ currencyService.currencyLabel() }}
-                }
-              </strong>
-            </article>
-            <article>
-              <small>{{ 'BOOKINGS.DETAILS.REMAINING' | translate }}</small>
-              <strong class="remaining-value">
-                {{ remainingAmount() }}
-                @if (currencyService.hasCurrency()) {
-                  {{ currencyService.currencyLabel() }}
-                }
-              </strong>
-            </article>
-          </div>
-
-          <div class="due-now-field">
-            <span class="due-now-label">
-              <i class="pi pi-info-circle"></i>
-              {{ 'BOOKINGS.DETAILS.DUE_NOW' | translate }}
-            </span>
-            <strong class="due-now-value">
-              {{ remainingAmount() }}
-              @if (currencyService.hasCurrency()) {
-                {{ currencyService.currencyLabel() }}
-              }
-            </strong>
           </div>
 
           <h5>{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h5>

@@ -921,6 +921,7 @@
       "COPY_SUCCESS": "Booking number copied.",
       "COPY_FAILED": "Could not copy booking number.",
       "UNLISTED_ADDED": "Service added.",
+      "PACKAGE_ALREADY_ON_BOOKING": "This package is already on the booking.",
       "UNLISTED_NO_PERMISSION": "You do not have permission to add a service or offer.",
       "CANCEL_CONFIRM_TITLE": "Cancel booking?",
       "CANCEL_CONFIRM_MESSAGE": "Are you sure you want to cancel this booking? The slot will become available again.",

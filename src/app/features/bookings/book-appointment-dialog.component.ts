@@ -320,15 +320,14 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       items.push(bookAppointmentOwnedPackageLineItem(clientPackage, service));
     }
 
+    const ownedPackages = this.matchedClient()?.packages ?? [];
     for (const service of catalogItems) {
       const rawQuantity = quantities[service.id] ?? 0;
       const quantity = Math.min(rawQuantity, bookAppointmentMaxQuantity(service));
       if (quantity <= 0) {
         continue;
       }
-      const ownedPackage =
-        this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id) ?? null;
-      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackage));
+      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackages, items));
     }
 
     items.push(...this.unlistedItems());

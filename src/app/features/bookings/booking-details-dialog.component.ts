@@ -38,6 +38,8 @@ import {
   BookingLineItem,
   BookingRecord,
   BookingWordStatus,
+  bookAppointmentLineTotal,
+  bookingLineDisplaysPrice,
   bookingDetailsLineItemFromCatalog,
   CatalogCategoryTab,
   ClientPackage,
@@ -45,7 +47,9 @@ import {
   displayedPackageUsedUnits,
   EMPTY_UNLISTED_FORM,
   formatTimeRange,
+  isOwnedPackageReservedOnBookingLine,
   normalizeBookingDetailsLineItem,
+  normalizeBookingDetailsLineItems,
   PaymentMethodId,
   PAYMENT_METHODS,
   ServiceCatalogItem,
@@ -227,10 +231,17 @@ export class BookingDetailsDialogComponent {
 
   private initializeDraftLineItems(booking: BookingRecord, ownedPackages: ClientPackage[]): void {
     this.draftLineItems.set(
-      booking.lineItems.map(item =>
-        normalizeBookingDetailsLineItem(item, this.catalogItems(), ownedPackages)
+      normalizeBookingDetailsLineItems(
+        booking.lineItems,
+        this.catalogItems(),
+        ownedPackages
       )
     );
+  }
+
+  private renormalizeDraftLineItems(items: BookingLineItem[]): BookingLineItem[] {
+    const ownedPackages = this.matchedClient()?.packages ?? [];
+    return normalizeBookingDetailsLineItems(items, this.catalogItems(), ownedPackages);
   }
 
   /** Loads currently enabled payment methods for the booking form. */
@@ -342,6 +353,14 @@ export class BookingDetailsDialogComponent {
     return `${date}، ${time}`;
   }
 
+  lineTotal(item: BookingLineItem): number {
+    return bookAppointmentLineTotal(item);
+  }
+
+  showsLinePrice(item: BookingLineItem): boolean {
+    return bookingLineDisplaysPrice(item);
+  }
+
   packageRemainingSessions(item: BookingLineItem): number | null {
     if (item.type !== 'package' && !item.packageSessionLinked) {
       return null;
@@ -412,12 +431,30 @@ export class BookingDetailsDialogComponent {
     if (!service) {
       return;
     }
-    const ownedPackage =
-      this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id) ?? null;
-    this.draftLineItems.update(items => [
-      ...items,
-      bookingDetailsLineItemFromCatalog(service, 1, ownedPackage),
-    ]);
+    const ownedPackages = this.matchedClient()?.packages ?? [];
+    const existing = this.draftLineItems().find(
+      item => item.catalogPackageId === serviceId && item.type === service.type
+    );
+    if (existing && isOwnedPackageReservedOnBookingLine(existing)) {
+      this.toast.add({
+        severity: 'warn',
+        summary: this.translate.instant('BOOKINGS.DETAILS.PACKAGE_ALREADY_ON_BOOKING'),
+      });
+      this.showServicePicker.set(false);
+      return;
+    }
+
+    this.draftLineItems.update(items => {
+      const current = items.find(
+        item => item.catalogPackageId === serviceId && item.type === service.type
+      );
+      const next = current
+        ? items.map(item =>
+            item.id === current.id ? { ...item, quantity: item.quantity + 1 } : item
+          )
+        : [...items, bookingDetailsLineItemFromCatalog(service, 1, ownedPackages, items)];
+      return this.renormalizeDraftLineItems(next);
+    });
     this.showServicePicker.set(false);
   }
 

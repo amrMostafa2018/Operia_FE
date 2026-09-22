@@ -924,6 +924,7 @@
       "COPY_SUCCESS": "تم نسخ رقم الحجز.",
       "COPY_FAILED": "تعذر نسخ رقم الحجز.",
       "UNLISTED_ADDED": "تم إضافة الخدمة.",
+      "PACKAGE_ALREADY_ON_BOOKING": "هذه الباقة مضافة بالفعل على الحجز.",
       "UNLISTED_NO_PERMISSION": "ليست لديك صلاحية إضافة خدمة أو عرض.",
       "CANCEL_CONFIRM_TITLE": "إلغاء الحجز؟",
       "CANCEL_CONFIRM_MESSAGE": "هل أنت متأكد من إلغاء هذا الحجز؟ سيصبح الموعد متاحاً مرة أخرى.",

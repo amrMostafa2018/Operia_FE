@@ -55,6 +55,7 @@ import {
   bookAppointmentCatalogQuantityLineItem,
   bookAppointmentMaxQuantity,
   bookAppointmentOwnedPackageLineItem,
+  bookAppointmentLineTotal,
   bookAppointmentPaymentLineItems,
   sumLineItemDuration,
   sumLineItemPrice,
@@ -214,6 +215,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
       items.push(bookAppointmentOwnedPackageLineItem(clientPackage, service));
     }
 
+    const ownedPackages = this.matchedClient()?.packages ?? [];
     for (const service of catalogItems) {
       const quantity = Math.min(
         quantities[service.id] ?? 0,
@@ -222,9 +224,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
       if (quantity <= 0) {
         continue;
       }
-      const ownedPackage =
-        this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id) ?? null;
-      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackage));
+      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackages, items));
     }
 
     items.push(...this.unlistedItems());
@@ -452,7 +452,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   lineTotal(item: BookingLineItem): number {
-    return item.price * item.quantity;
+    return bookAppointmentLineTotal(item);
   }
 
   mobileError(): string | null {

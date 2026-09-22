@@ -63,7 +63,7 @@ import {
   resolveEmployeeForFourDayView,
   ServiceCatalogItem,
   SlotSelection,
-  bookAppointmentApiItemType,
+  mapBookingLineToApiItem,
   sumLineItemDuration,
   toDateKey,
   PaymentMethodId,
@@ -796,12 +796,7 @@ export class AppointmentsComponent {
 
     const items = payload.lineItems
       .filter(item => !!item.catalogPackageId)
-      .map(item => ({
-        packageId: item.catalogPackageId!,
-        customerPackageId: item.customerPackageId ?? null,
-        quantity: item.quantity,
-        type: bookAppointmentApiItemType(item),
-      }));
+      .map(item => mapBookingLineToApiItem(item, payload.lineItems));
     if (items.length !== payload.lineItems.length) {
       this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');
       return;
@@ -922,12 +917,7 @@ export class AppointmentsComponent {
     }
     const items = payload.lineItems
       .filter(item => !!item.catalogPackageId)
-      .map(item => ({
-        packageId: item.catalogPackageId!,
-        customerPackageId: item.customerPackageId ?? null,
-        quantity: item.quantity,
-        type: bookAppointmentApiItemType(item),
-      }));
+      .map(item => mapBookingLineToApiItem(item, payload.lineItems));
     if (items.length !== payload.lineItems.length) {
       this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');
       return;
