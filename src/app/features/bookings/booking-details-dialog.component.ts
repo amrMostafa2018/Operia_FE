@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -32,14 +33,19 @@ import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { PackageService } from '@app/features/packages/package.service';
-import { AppointmentsApiService } from './appointments-api.service';
+import { AppointmentsApiService, BookingCustomerDto } from './appointments-api.service';
 import {
   BookingLineItem,
   BookingRecord,
   BookingWordStatus,
+  bookingDetailsLineItemFromCatalog,
   CatalogCategoryTab,
+  ClientPackage,
+  ClientRecord,
+  displayedPackageUsedUnits,
   EMPTY_UNLISTED_FORM,
   formatTimeRange,
+  normalizeBookingDetailsLineItem,
   PaymentMethodId,
   PAYMENT_METHODS,
   ServiceCatalogItem,
@@ -129,6 +135,8 @@ export class BookingDetailsDialogComponent {
   readonly draftLineItems = signal<BookingLineItem[]>([]);
   readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
   readonly draftPaidAmount = signal(0);
+  readonly matchedClient = signal<ClientRecord | null>(null);
+  private customerPackagesRequestId = 0;
   readonly savedMethodUnavailable = computed(() => {
     const method = this.draftPaymentMethod();
     return method !== null && !this.paymentMethods().some(option => option.id === method);
@@ -170,7 +178,7 @@ export class BookingDetailsDialogComponent {
           return;
         }
         this.draftBookingKey = bookingKey;
-        this.draftLineItems.set(current.lineItems.map(item => ({ ...item })));
+        this.loadCustomerPackages(current);
         this.draftPaymentMethod.set(current.paymentMethod);
         this.draftPaidAmount.set(current.paidAmount);
         this.showUnlisted.set(false);
@@ -186,6 +194,42 @@ export class BookingDetailsDialogComponent {
         }
       },
       { allowSignalWrites: true }
+    );
+  }
+
+  /** Loads owned packages for purchase-only pricing when editing booking lines. */
+  loadCustomerPackages(booking: BookingRecord): void {
+    const requestId = ++this.customerPackagesRequestId;
+    this.matchedClient.set(null);
+    this.initializeDraftLineItems(booking, []);
+    this.appointmentsApi
+      .findCustomer(booking.clientMobile)
+      .pipe(
+        map(customer => (customer ? this.toClientRecord(customer) : null)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: client => {
+          if (requestId !== this.customerPackagesRequestId) {
+            return;
+          }
+          this.matchedClient.set(client);
+          this.initializeDraftLineItems(booking, client?.packages ?? []);
+        },
+        error: () => {
+          if (requestId !== this.customerPackagesRequestId) {
+            return;
+          }
+          this.initializeDraftLineItems(booking, []);
+        },
+      });
+  }
+
+  private initializeDraftLineItems(booking: BookingRecord, ownedPackages: ClientPackage[]): void {
+    this.draftLineItems.set(
+      booking.lineItems.map(item =>
+        normalizeBookingDetailsLineItem(item, this.catalogItems(), ownedPackages)
+      )
     );
   }
 
@@ -368,19 +412,11 @@ export class BookingDetailsDialogComponent {
     if (!service) {
       return;
     }
+    const ownedPackage =
+      this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id) ?? null;
     this.draftLineItems.update(items => [
       ...items,
-      {
-        id: `line-${service.id}-${Date.now()}`,
-        name: service.name,
-        type: service.type,
-        quantity: 1,
-        price: service.price,
-        durationMinutes: service.durationMinutes,
-        packageSessionLinked: service.type === 'package',
-        catalogPackageId: service.id,
-        customerPackageId: null,
-      },
+      bookingDetailsLineItemFromCatalog(service, 1, ownedPackage),
     ]);
     this.showServicePicker.set(false);
   }
@@ -463,6 +499,29 @@ export class BookingDetailsDialogComponent {
 
   close(): void {
     this.closed.emit();
+  }
+
+  private toClientRecord(customer: BookingCustomerDto): ClientRecord {
+    return {
+      id: customer.id,
+      name: customer.fullName,
+      mobile: customer.mobileNumber,
+      registered: true,
+      packages: customer.packages.map(pkg => ({
+        customerPackageId: pkg.customerPackageId,
+        packageId: pkg.packageId,
+        packageName: pkg.packageName,
+        usedSessions: displayedPackageUsedUnits({
+          ...pkg,
+          offerType: pkg.offerType,
+        }),
+        totalSessions: pkg.totalSessions,
+        expiryDate: pkg.expiresOn ?? '',
+        offerType: pkg.offerType,
+        sessionCount: pkg.sessionCount,
+        pulseCount: pkg.pulseCount,
+      })),
+    };
   }
 
   private unlistedControlError(

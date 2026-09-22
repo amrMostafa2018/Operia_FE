@@ -224,33 +224,11 @@ export function packageUsesSessions(pkg: Pick<ClientPackage, 'sessionCount'>): b
 
 const BOOKING_ITEM_MAX_QUANTITY = 100;
 
-/** True when this catalog package is the one selected for the booking session. */
-export function bookAppointmentIsBookingPackage(
-  service: Pick<ServiceCatalogItem, 'type' | 'id'>,
-  bookingPackageId: string | null
-): boolean {
-  return service.type === 'package' && !!bookingPackageId && service.id === bookingPackageId;
-}
-
-/** Units consumed from an owned package balance on this booking (0 or 1). */
-export function bookAppointmentOwnedReuseUnits(
-  ownedPackage: ClientPackage | null,
-  isBookingPackage: boolean
-): number {
-  if (!isBookingPackage || !ownedPackage) {
-    return 0;
-  }
-
-  const remaining = displayedPackageRemainingUnits(ownedPackage);
-  return remaining > 0 ? 1 : 0;
-}
-
 /** Units that create new customer-package purchases and are charged at catalog price. */
 export function bookAppointmentNewPurchaseUnits(
   service: Pick<ServiceCatalogItem, 'type'>,
   quantity: number,
-  ownedPackage: ClientPackage | null,
-  isBookingPackage: boolean
+  ownedPackage: ClientPackage | null
 ): number {
   if (quantity <= 0) {
     return 0;
@@ -260,25 +238,8 @@ export function bookAppointmentNewPurchaseUnits(
     return ownedPackage != null && quantity === 1 ? 0 : quantity;
   }
 
-  if (!isBookingPackage) {
-    // Purchase-only package line: first owned copy is not billed again.
-    return ownedPackage != null ? Math.max(0, quantity - 1) : quantity;
-  }
-
-  return Math.max(0, quantity - bookAppointmentOwnedReuseUnits(ownedPackage, true));
-}
-
-/** True when a catalog package line belongs in payments and the create-booking payload. */
-export function bookAppointmentIncludeLineItem(
-  service: Pick<ServiceCatalogItem, 'type'>,
-  isBookingPackage: boolean,
-  newPurchaseUnits: number
-): boolean {
-  return !(
-    service.type === 'package' &&
-    !isBookingPackage &&
-    newPurchaseUnits === 0
-  );
+  // Package lines are purchase-only on bookings; charge only units beyond one owned copy.
+  return ownedPackage != null ? Math.max(0, quantity - 1) : quantity;
 }
 
 export function bookAppointmentMaxQuantity(_service: Pick<ServiceCatalogItem, 'type'>): number {
@@ -312,29 +273,18 @@ export function bookAppointmentLineTotal(
 /** Calendar duration contributed by one catalog line. */
 export function bookAppointmentLineDuration(
   service: Pick<ServiceCatalogItem, 'type' | 'durationMinutes'>,
-  quantity: number,
-  isBookingPackage: boolean
+  quantity: number
 ): number {
   if (service.type === 'package') {
-    return isBookingPackage && quantity > 0 ? service.durationMinutes : 0;
+    return quantity > 0 ? service.durationMinutes : 0;
   }
 
   return service.durationMinutes * quantity;
 }
 
-/** Resolves the owned customer package to link when booking this catalog item. */
-export function bookAppointmentCustomerPackageId(
-  service: Pick<ServiceCatalogItem, 'type'>,
-  ownedPackage: ClientPackage | null,
-  isBookingPackage: boolean
-): string | null {
-  if (!ownedPackage || !isBookingPackage || service.type !== 'package') {
-    return null;
-  }
-
-  return bookAppointmentOwnedReuseUnits(ownedPackage, true) > 0
-    ? ownedPackage.customerPackageId
-    : null;
+/** Bookings no longer link a package session; purchases are recorded separately. */
+export function bookAppointmentCustomerPackageId(): string | null {
+  return null;
 }
 
 /** Maps a booking line item to the API item type. */
@@ -1278,9 +1228,67 @@ export function sumLineItemDuration(items: BookingLineItem[]): number {
   return items.reduce((total, item) => total + item.durationMinutes * item.quantity, 0);
 }
 
-/** Adds the prices of all selected service units. */
+/** Adds the billable prices of all selected service units. */
 export function sumLineItemPrice(items: BookingLineItem[]): number {
-  return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  return items.reduce((total, item) => total + bookAppointmentLineTotal(item), 0);
+}
+
+/** Builds a catalog line for booking details using owned-package purchase rules. */
+export function bookingDetailsLineItemFromCatalog(
+  service: ServiceCatalogItem,
+  quantity: number,
+  ownedPackage: ClientPackage | null,
+  lineId?: string
+): BookingLineItem {
+  return {
+    id: lineId ?? `line-${service.id}-${Date.now()}`,
+    name: service.name,
+    type: service.type,
+    quantity,
+    price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    newPurchaseUnits: bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage),
+    durationMinutes: service.durationMinutes,
+    packageSessionLinked: false,
+    catalogPackageId: service.id,
+    customerPackageId: bookAppointmentCustomerPackageId(),
+  };
+}
+
+/** Recomputes purchase-only pricing and API flags for an editable booking line. */
+export function normalizeBookingDetailsLineItem(
+  item: BookingLineItem,
+  catalogItems: ServiceCatalogItem[],
+  ownedPackages: ClientPackage[]
+): BookingLineItem {
+  if (item.type === 'unlisted' || !item.catalogPackageId) {
+    return item;
+  }
+
+  const service = catalogItems.find(catalogItem => catalogItem.id === item.catalogPackageId);
+  if (!service) {
+    return item.type === 'package'
+      ? { ...item, packageSessionLinked: false }
+      : item;
+  }
+
+  const ownedPackage =
+    ownedPackages.find(pkg => pkg.packageId === item.catalogPackageId) ?? null;
+  const quantity = item.quantity;
+  if (service.type === 'package') {
+    return {
+      ...item,
+      price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+      newPurchaseUnits: bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage),
+      packageSessionLinked: false,
+      customerPackageId: bookAppointmentCustomerPackageId(),
+    };
+  }
+
+  return {
+    ...item,
+    price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    newPurchaseUnits: bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage),
+  };
 }
 
 /** Reports whether a booking contains a Package session line. */

@@ -23,7 +23,7 @@ describe('BookingDetailsDialogComponent', () => {
         { provide: TranslateService, useValue: {} },
         { provide: MessageService, useValue: {} },
         { provide: PackageService, useValue: {} },
-        { provide: AppointmentsApiService, useValue: { getPaymentMethods: () => of([]) } },
+        { provide: AppointmentsApiService, useValue: { getPaymentMethods: () => of([]), findCustomer: () => of(null) } },
         { provide: CurrencyService, useValue: {} },
       ],
     })
