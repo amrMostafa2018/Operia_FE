@@ -49,6 +49,8 @@ import {
   UNLISTED_OFFER_TYPE_OPTIONS,
   PAYMENT_METHODS,
   ServiceCatalogItem,
+  displayedPackageRemainingUnits,
+  packageUsesPulses,
   sumLineItemDuration,
   sumLineItemPrice,
 } from '../models/booking.model';
@@ -89,6 +91,8 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   private readonly packagesApi = inject(PackageService);
   private readonly permissions = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly packageUsesPulses = packageUsesPulses;
+  readonly displayedPackageRemainingUnits = displayedPackageRemainingUnits;
 
   private readonly serviceTrack = viewChild<ElementRef<HTMLElement>>('serviceTrack');
   private carouselResizeObserver?: ResizeObserver;
@@ -631,5 +635,4 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
     }
     return null;
   }
-
 }

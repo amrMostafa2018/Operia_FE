@@ -56,11 +56,20 @@ import {
   EMPTY_UNLISTED_FORM,
   UNLISTED_DURATION_UNIT_OPTIONS,
   UNLISTED_OFFER_TYPE_OPTIONS,
+  bookAppointmentCatalogUnitPrice,
+  bookAppointmentCustomerPackageId,
+  bookAppointmentIncludeLineItem,
+  bookAppointmentIsBookingPackage,
+  bookAppointmentLineDuration,
+  bookAppointmentLineTotal,
+  bookAppointmentMaxQuantity,
+  bookAppointmentNewPurchaseUnits,
   ServiceCatalogItem,
   SlotSelection,
+  displayedPackageRemainingUnits,
+  displayedPackageUsedUnits,
   formatTimeRange,
-  sumLineItemDuration,
-  sumLineItemPrice,
+  packageUsesPulses,
   PaymentMethodId,
   PAYMENT_METHODS,
 } from './models/booking.model';
@@ -118,6 +127,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   private readonly packagesApi = inject(PackageService);
   private readonly permissions = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly packageUsesPulses = packageUsesPulses;
+  readonly displayedPackageRemainingUnits = displayedPackageRemainingUnits;
 
   private readonly serviceTrack = viewChild<ElementRef<HTMLElement>>('serviceTrack');
   private carouselResizeObserver?: ResizeObserver;
@@ -213,10 +224,15 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
                               customerPackageId: pkg.customerPackageId,
                               packageId: pkg.packageId,
                               packageName: pkg.packageName,
-                              usedSessions: pkg.usedSessions + pkg.reservedSessions,
+                              usedSessions: displayedPackageUsedUnits({
+                                ...pkg,
+                                offerType: pkg.offerType,
+                              }),
                               totalSessions: pkg.totalSessions,
                               expiryDate: pkg.expiresOn ?? '',
                               offerType: pkg.offerType,
+                              sessionCount: pkg.sessionCount,
+                              pulseCount: pkg.pulseCount,
                             })),
                           } satisfies ClientRecord)
                         : null,
@@ -293,27 +309,38 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   readonly lineItems = computed<BookingLineItem[]>(() => {
     const quantities = this.selectedQuantities();
+    const bookingPackageId = this.selectedPackageId();
     const items: BookingLineItem[] = [];
 
     for (const service of this.catalogItems()) {
-      const quantity = quantities[service.id] ?? 0;
+      const rawQuantity = quantities[service.id] ?? 0;
+      const quantity = Math.min(rawQuantity, bookAppointmentMaxQuantity(service));
       if (quantity <= 0) {
         continue;
       }
-      const reusableBalance =
-        quantity === 1
-          ? this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id)
-          : null;
+      const ownedPackage =
+        this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id) ?? null;
+      const isBookingPackage = bookAppointmentIsBookingPackage(service, bookingPackageId);
+      const newPurchaseUnits = bookAppointmentNewPurchaseUnits(
+        service,
+        quantity,
+        ownedPackage,
+        isBookingPackage
+      );
+      if (!bookAppointmentIncludeLineItem(service, isBookingPackage, newPurchaseUnits)) {
+        continue;
+      }
       items.push({
         id: `line-${service.id}`,
         name: service.name,
         type: service.type,
         quantity,
-        price: service.type === 'package' || reusableBalance ? 0 : service.price,
+        price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+        newPurchaseUnits,
         durationMinutes: service.durationMinutes,
-        packageSessionLinked: service.type === 'package',
+        packageSessionLinked: isBookingPackage,
         catalogPackageId: service.id,
-        customerPackageId: reusableBalance?.customerPackageId ?? null,
+        customerPackageId: bookAppointmentCustomerPackageId(service, ownedPackage, isBookingPackage),
       });
     }
 
@@ -322,8 +349,31 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return items;
   });
 
-  readonly serviceDuration = computed(() => sumLineItemDuration(this.lineItems()));
-  readonly subtotal = computed(() => sumLineItemPrice(this.lineItems()));
+  readonly serviceDuration = computed(() => {
+    const bookingPackageId = this.selectedPackageId();
+    let total = 0;
+
+    for (const service of this.catalogItems()) {
+      const quantity = this.selectedQuantities()[service.id] ?? 0;
+      if (quantity <= 0) {
+        continue;
+      }
+      total += bookAppointmentLineDuration(
+        service,
+        quantity,
+        bookAppointmentIsBookingPackage(service, bookingPackageId)
+      );
+    }
+
+    for (const item of this.unlistedItems()) {
+      total += item.durationMinutes * item.quantity;
+    }
+
+    return total;
+  });
+  readonly subtotal = computed(() =>
+    this.lineItems().reduce((total, item) => total + bookAppointmentLineTotal(item), 0)
+  );
   readonly netTotal = computed(() => this.subtotal());
   readonly sessionCount = computed(() =>
     this.lineItems().reduce((total, item) => total + item.quantity, 0)
@@ -389,13 +439,16 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
     effect(
       () => {
+        if (!this.visible()) {
+          return;
+        }
         const packageId = this.selectedPackageId();
         const catalogItem = this.catalogItems().find(item => item.id === packageId);
         if (!catalogItem) {
           return;
         }
         const current = this.selectedQuantities();
-        if ((current[catalogItem.id] ?? 0) > 0) {
+        if ((current[catalogItem.id] ?? 0) === 1) {
           return;
         }
         this.selectedQuantities.set({
@@ -553,7 +606,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   lineTotal(item: BookingLineItem): number {
-    return item.price * item.quantity;
+    return bookAppointmentLineTotal(item);
   }
 
   mobileError(): string | null {
@@ -611,8 +664,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   changeQuantity(service: ServiceCatalogItem, delta: number): void {
     const current = this.selectedQuantities();
-    const next = Math.max(0, (current[service.id] ?? 0) + delta);
+    const maxQuantity = bookAppointmentMaxQuantity(service);
+    const next = Math.min(maxQuantity, Math.max(0, (current[service.id] ?? 0) + delta));
     this.selectedQuantities.set({ ...current, [service.id]: next });
+  }
+
+  canIncreaseQuantity(service: ServiceCatalogItem): boolean {
+    return this.quantityFor(service.id) < bookAppointmentMaxQuantity(service);
   }
 
   quantityFor(serviceId: string): number {

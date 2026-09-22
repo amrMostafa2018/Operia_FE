@@ -155,7 +155,7 @@
                         @if (packageRemainingSessions(item) !== null) {
                           <small>
                             {{
-                              'BOOKINGS.DETAILS.REMAINING_SESSIONS'
+                              packageRemainingLabelKey(item)
                                 | translate: { count: packageRemainingSessions(item) }
                             }}
                           </small>

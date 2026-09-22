@@ -49,6 +49,7 @@ import {
   CatalogCategoryTab,
   defaultFilters,
   defaultSelectedDate,
+  displayedPackageUsedUnits,
   DurationOption,
   EmployeeOption,
   filterEmployees,
@@ -62,6 +63,7 @@ import {
   resolveEmployeeForFourDayView,
   ServiceCatalogItem,
   SlotSelection,
+  bookAppointmentApiItemType,
   sumLineItemDuration,
   toDateKey,
   PaymentMethodId,
@@ -667,10 +669,15 @@ export class AppointmentsComponent {
             customerPackageId: pkg.customerPackageId,
             packageId: pkg.packageId,
             packageName: pkg.packageName,
-            usedSessions: pkg.usedSessions + pkg.reservedSessions,
+            usedSessions: displayedPackageUsedUnits({
+              ...pkg,
+              offerType: pkg.offerType,
+            }),
             totalSessions: pkg.totalSessions,
             expiryDate: pkg.expiresOn ?? '',
             offerType: pkg.offerType,
+            sessionCount: pkg.sessionCount,
+            pulseCount: pkg.pulseCount,
           })),
         };
         this.clients.set([client]);
@@ -793,7 +800,7 @@ export class AppointmentsComponent {
         packageId: item.catalogPackageId!,
         customerPackageId: item.customerPackageId ?? null,
         quantity: item.quantity,
-        type: item.type,
+        type: bookAppointmentApiItemType(item),
       }));
     if (items.length !== payload.lineItems.length) {
       this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');
@@ -911,7 +918,7 @@ export class AppointmentsComponent {
         packageId: item.catalogPackageId!,
         customerPackageId: item.customerPackageId ?? null,
         quantity: item.quantity,
-        type: item.type,
+        type: bookAppointmentApiItemType(item),
       }));
     if (items.length !== payload.lineItems.length) {
       this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');

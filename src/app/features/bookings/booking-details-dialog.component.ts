@@ -305,6 +305,12 @@ export class BookingDetailsDialogComponent {
     return item.packageRemainingSessions ?? null;
   }
 
+  packageRemainingLabelKey(item: BookingLineItem): string {
+    return item.packagePulseCount != null && item.packagePulseCount > 0
+      ? 'BOOKINGS.DETAILS.REMAINING_PULSES'
+      : 'BOOKINGS.DETAILS.REMAINING_SESSIONS';
+  }
+
   unlistedNameError(): string | null {
     return this.unlistedControlError(this.unlistedForm.controls.name, {
       required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_NAME_REQUIRED',

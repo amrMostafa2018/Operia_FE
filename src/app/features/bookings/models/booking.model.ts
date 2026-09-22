@@ -162,6 +162,188 @@ export interface ClientPackage {
   totalSessions: number;
   expiryDate: string;
   offerType?: 'package' | 'session';
+  sessionCount?: number | null;
+  pulseCount?: number | null;
+}
+
+/** True when the package master defines a pulse balance (Package.PulseCount has a value). */
+export function packageUsesPulses(pkg: Pick<ClientPackage, 'pulseCount'>): boolean {
+  return pkg.pulseCount != null && pkg.pulseCount > 0;
+}
+
+/** True when remaining balance ignores reserved slots (pulse package offers only). */
+export function packageBalanceIgnoresReservedSessions(
+  pkg: Pick<ClientPackage, 'offerType' | 'pulseCount'>
+): boolean {
+  return pkg.offerType === 'package' && packageUsesPulses(pkg);
+}
+
+/**
+ * Units shown as المستخدم.
+ * Pulse package offers use Used only. Single-session and session packages also count reserved slots.
+ */
+export function displayedPackageUsedUnits(pkg: {
+  usedSessions: number;
+  reservedSessions: number;
+  pulseCount?: number | null;
+  offerType?: ClientPackage['offerType'];
+}): number {
+  return packageBalanceIgnoresReservedSessions(pkg)
+    ? pkg.usedSessions
+    : pkg.usedSessions + pkg.reservedSessions;
+}
+
+/**
+ * Units shown as المتبقي.
+ * Pulse packages: Total − Used.
+ * Single-session and session packages: Total − Used − ReservedSessions.
+ */
+export function displayedPackageRemainingUnits(pkg: {
+  totalSessions: number;
+  usedSessions: number;
+  reservedSessions?: number;
+  pulseCount?: number | null;
+  offerType?: ClientPackage['offerType'];
+}): number {
+  if (packageBalanceIgnoresReservedSessions(pkg)) {
+    return Math.max(0, pkg.totalSessions - pkg.usedSessions);
+  }
+
+  if (pkg.reservedSessions === undefined) {
+    // ClientPackage.usedSessions already includes reserved slots for session and single-session packages.
+    return Math.max(0, pkg.totalSessions - pkg.usedSessions);
+  }
+
+  return Math.max(0, pkg.totalSessions - pkg.usedSessions - pkg.reservedSessions);
+}
+
+/** True when the package master defines a session balance (Package.SessionCount has a value). */
+export function packageUsesSessions(pkg: Pick<ClientPackage, 'sessionCount'>): boolean {
+  return pkg.sessionCount != null && pkg.sessionCount > 0;
+}
+
+const BOOKING_ITEM_MAX_QUANTITY = 100;
+
+/** True when this catalog package is the one selected for the booking session. */
+export function bookAppointmentIsBookingPackage(
+  service: Pick<ServiceCatalogItem, 'type' | 'id'>,
+  bookingPackageId: string | null
+): boolean {
+  return service.type === 'package' && !!bookingPackageId && service.id === bookingPackageId;
+}
+
+/** Units consumed from an owned package balance on this booking (0 or 1). */
+export function bookAppointmentOwnedReuseUnits(
+  ownedPackage: ClientPackage | null,
+  isBookingPackage: boolean
+): number {
+  if (!isBookingPackage || !ownedPackage) {
+    return 0;
+  }
+
+  const remaining = displayedPackageRemainingUnits(ownedPackage);
+  return remaining > 0 ? 1 : 0;
+}
+
+/** Units that create new customer-package purchases and are charged at catalog price. */
+export function bookAppointmentNewPurchaseUnits(
+  service: Pick<ServiceCatalogItem, 'type'>,
+  quantity: number,
+  ownedPackage: ClientPackage | null,
+  isBookingPackage: boolean
+): number {
+  if (quantity <= 0) {
+    return 0;
+  }
+
+  if (service.type !== 'package') {
+    return ownedPackage != null && quantity === 1 ? 0 : quantity;
+  }
+
+  if (!isBookingPackage) {
+    // Purchase-only package line: first owned copy is not billed again.
+    return ownedPackage != null ? Math.max(0, quantity - 1) : quantity;
+  }
+
+  return Math.max(0, quantity - bookAppointmentOwnedReuseUnits(ownedPackage, true));
+}
+
+/** True when a catalog package line belongs in payments and the create-booking payload. */
+export function bookAppointmentIncludeLineItem(
+  service: Pick<ServiceCatalogItem, 'type'>,
+  isBookingPackage: boolean,
+  newPurchaseUnits: number
+): boolean {
+  return !(
+    service.type === 'package' &&
+    !isBookingPackage &&
+    newPurchaseUnits === 0
+  );
+}
+
+export function bookAppointmentMaxQuantity(_service: Pick<ServiceCatalogItem, 'type'>): number {
+  return BOOKING_ITEM_MAX_QUANTITY;
+}
+
+/** Unit price stored on a booking line item before new-purchase calculation. */
+export function bookAppointmentCatalogUnitPrice(
+  service: Pick<ServiceCatalogItem, 'type' | 'price'>,
+  ownedPackage: ClientPackage | null,
+  quantity: number
+): number {
+  if (service.type === 'package') {
+    return service.price;
+  }
+
+  return ownedPackage != null && quantity === 1 ? 0 : service.price;
+}
+
+/** Billable amount for one booking line item. */
+export function bookAppointmentLineTotal(
+  item: Pick<BookingLineItem, 'type' | 'price' | 'quantity' | 'newPurchaseUnits'>
+): number {
+  if (item.type === 'package') {
+    return item.price * (item.newPurchaseUnits ?? 0);
+  }
+
+  return item.price * item.quantity;
+}
+
+/** Calendar duration contributed by one catalog line. */
+export function bookAppointmentLineDuration(
+  service: Pick<ServiceCatalogItem, 'type' | 'durationMinutes'>,
+  quantity: number,
+  isBookingPackage: boolean
+): number {
+  if (service.type === 'package') {
+    return isBookingPackage && quantity > 0 ? service.durationMinutes : 0;
+  }
+
+  return service.durationMinutes * quantity;
+}
+
+/** Resolves the owned customer package to link when booking this catalog item. */
+export function bookAppointmentCustomerPackageId(
+  service: Pick<ServiceCatalogItem, 'type'>,
+  ownedPackage: ClientPackage | null,
+  isBookingPackage: boolean
+): string | null {
+  if (!ownedPackage || !isBookingPackage || service.type !== 'package') {
+    return null;
+  }
+
+  return bookAppointmentOwnedReuseUnits(ownedPackage, true) > 0
+    ? ownedPackage.customerPackageId
+    : null;
+}
+
+/** Maps a booking line item to the API item type. */
+export function bookAppointmentApiItemType(item: BookingLineItem): string {
+  if (item.type === 'package' && !item.packageSessionLinked) {
+    return 'packagePurchase';
+  }
+
+  return item.type;
 }
 
 /** Describes client record used by booking screens. */
@@ -206,6 +388,9 @@ export interface BookingLineItem {
   catalogPackageId?: string | null;
   customerPackageId?: string | null;
   packageRemainingSessions?: number | null;
+  packagePulseCount?: number | null;
+  /** Package units billed as new customer-package purchases. */
+  newPurchaseUnits?: number;
 }
 
 export const EMPTY_UNLISTED_FORM = {

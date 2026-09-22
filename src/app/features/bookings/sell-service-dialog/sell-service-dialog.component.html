@@ -84,16 +84,31 @@
     @if (selectedClientPackage(); as pkg) {
       <div class="package-stats">
         <article>
-          <small>{{ 'BOOKINGS.BOOK.PACKAGE_TOTAL_SESSIONS' | translate }}</small>
+          <small>{{
+            (packageUsesPulses(pkg)
+              ? 'BOOKINGS.BOOK.PACKAGE_TOTAL_PULSES'
+              : 'BOOKINGS.BOOK.PACKAGE_TOTAL_SESSIONS'
+            ) | translate
+          }}</small>
           <strong>{{ pkg.totalSessions }}</strong>
         </article>
         <article>
-          <small>{{ 'BOOKINGS.BOOK.PACKAGE_USED' | translate }}</small>
+          <small>{{
+            (packageUsesPulses(pkg)
+              ? 'BOOKINGS.BOOK.PACKAGE_USED_PULSES'
+              : 'BOOKINGS.BOOK.PACKAGE_USED_SESSIONS'
+            ) | translate
+          }}</small>
           <strong>{{ pkg.usedSessions }}</strong>
         </article>
         <article>
-          <small>{{ 'BOOKINGS.BOOK.PACKAGE_REMAINING' | translate }}</small>
-          <strong>{{ pkg.totalSessions - pkg.usedSessions }}</strong>
+          <small>{{
+            (packageUsesPulses(pkg)
+              ? 'BOOKINGS.BOOK.PACKAGE_REMAINING_PULSES'
+              : 'BOOKINGS.BOOK.PACKAGE_REMAINING_SESSIONS'
+            ) | translate
+          }}</small>
+          <strong>{{ displayedPackageRemainingUnits(pkg) }}</strong>
         </article>
         <article>
           <small>{{ 'BOOKINGS.BOOK.PACKAGE_EXPIRY_DATE' | translate }}</small>

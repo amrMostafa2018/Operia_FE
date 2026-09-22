@@ -597,8 +597,18 @@
   flex: 1;
 
   strong {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
     margin-bottom: 0.2rem;
+  }
+
+  .line-count {
+    flex-shrink: 0;
+    color: #4b24da;
+    font-size: 0.78rem;
+    font-weight: 700;
   }
 
   small {

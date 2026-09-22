@@ -16,6 +16,8 @@ export interface BookingCustomerPackageDto {
   availableSessions: number;
   expiresOn: string | null;
   offerType: 'package' | 'session';
+  sessionCount: number | null;
+  pulseCount: number | null;
 }
 
 /** Describes booking customer dto exchanged with the API. */
@@ -37,6 +39,8 @@ export interface CalendarBookingItemDto {
   packageId: string | null;
   customerPackageId: string | null;
   packageRemainingSessions: number | null;
+  packagePulseCount: number | null;
+  packageSessionLinked: boolean;
 }
 
 /** Describes calendar booking dto exchanged with the API. */
