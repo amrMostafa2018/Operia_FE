@@ -11,6 +11,7 @@ import {
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -38,6 +39,7 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyService } from '@core/services/currency.service';
@@ -56,12 +58,12 @@ import {
   EMPTY_UNLISTED_FORM,
   UNLISTED_DURATION_UNIT_OPTIONS,
   UNLISTED_OFFER_TYPE_OPTIONS,
-  bookAppointmentCatalogUnitPrice,
-  bookAppointmentCustomerPackageId,
+  bookAppointmentCatalogQuantityLineItem,
   bookAppointmentLineDuration,
   bookAppointmentLineTotal,
   bookAppointmentMaxQuantity,
-  bookAppointmentNewPurchaseUnits,
+  bookAppointmentOwnedPackageLineItem,
+  bookAppointmentPaymentLineItems,
   ServiceCatalogItem,
   SlotSelection,
   displayedPackageRemainingUnits,
@@ -105,6 +107,7 @@ interface CustomerLookupState {
     DialogModule,
     ButtonModule,
     DropdownModule,
+    MultiSelectModule,
     FormsModule,
     ReactiveFormsModule,
     InputTextModule,
@@ -130,7 +133,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   private readonly serviceTrack = viewChild<ElementRef<HTMLElement>>('serviceTrack');
   private carouselResizeObserver?: ResizeObserver;
-
   readonly visible = input(false);
   readonly selection = input<SlotSelection | null>(null);
   readonly clients = input<ClientRecord[]>([]);
@@ -154,7 +156,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly searchQuery = signal('');
   readonly selectedQuantities = signal<Record<string, number>>({});
   readonly unlistedItems = signal<BookingLineItem[]>([]);
-  readonly selectedPackageId = signal<string | null>(null);
+  readonly selectedPackageIds = signal<string[]>([]);
+  readonly showServicesSection = signal(false);
   readonly showUnlisted = signal(false);
   readonly unlistedSaving = signal(false);
 
@@ -281,14 +284,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return [];
   });
 
-  readonly selectedClientPackage = computed<ClientPackage | null>(() => {
-    const packageId = this.selectedPackageId();
-    if (!packageId) {
-      return null;
-    }
+  readonly selectedClientPackages = computed<ClientPackage[]>(() => {
     const client = this.matchedClient();
-    const clientPackage = client?.packages.find(pkg => pkg.packageId === packageId);
-    return clientPackage ?? null;
+    if (!client) {
+      return [];
+    }
+    const selectedIds = new Set(this.selectedPackageIds());
+    return client.packages.filter(pkg => selectedIds.has(pkg.packageId));
   });
 
   readonly filteredServices = computed(() => {
@@ -308,8 +310,17 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly lineItems = computed<BookingLineItem[]>(() => {
     const quantities = this.selectedQuantities();
     const items: BookingLineItem[] = [];
+    const catalogItems = this.catalogItems();
 
-    for (const service of this.catalogItems()) {
+    for (const clientPackage of this.selectedClientPackages()) {
+      const service = catalogItems.find(item => item.id === clientPackage.packageId);
+      if (!service) {
+        continue;
+      }
+      items.push(bookAppointmentOwnedPackageLineItem(clientPackage, service));
+    }
+
+    for (const service of catalogItems) {
       const rawQuantity = quantities[service.id] ?? 0;
       const quantity = Math.min(rawQuantity, bookAppointmentMaxQuantity(service));
       if (quantity <= 0) {
@@ -317,19 +328,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       }
       const ownedPackage =
         this.matchedClient()?.packages.find(pkg => pkg.packageId === service.id) ?? null;
-      const newPurchaseUnits = bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage);
-      items.push({
-        id: `line-${service.id}`,
-        name: service.name,
-        type: service.type,
-        quantity,
-        price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
-        newPurchaseUnits,
-        durationMinutes: service.durationMinutes,
-        packageSessionLinked: false,
-        catalogPackageId: service.id,
-        customerPackageId: bookAppointmentCustomerPackageId(),
-      });
+      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackage));
     }
 
     items.push(...this.unlistedItems());
@@ -337,27 +336,27 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return items;
   });
 
-  readonly serviceDuration = computed(() => {
-    let total = 0;
+  readonly paymentLineItems = computed(() => bookAppointmentPaymentLineItems(this.lineItems()));
 
-    for (const service of this.catalogItems()) {
-      const quantity = this.selectedQuantities()[service.id] ?? 0;
-      if (quantity <= 0) {
-        continue;
+  readonly serviceDuration = computed(() =>
+    this.lineItems().reduce((total, item) => {
+      if (item.type === 'unlisted') {
+        return total + item.durationMinutes * item.quantity;
       }
-      total += bookAppointmentLineDuration(service, quantity);
-    }
-
-    for (const item of this.unlistedItems()) {
-      total += item.durationMinutes * item.quantity;
-    }
-
-    return total;
-  });
+      return (
+        total +
+        bookAppointmentLineDuration(
+          { type: item.type, durationMinutes: item.durationMinutes },
+          item.quantity
+        )
+      );
+    }, 0)
+  );
   readonly subtotal = computed(() =>
-    this.lineItems().reduce((total, item) => total + bookAppointmentLineTotal(item), 0)
+    this.paymentLineItems().reduce((total, item) => total + bookAppointmentLineTotal(item), 0)
   );
   readonly netTotal = computed(() => this.subtotal());
+  readonly hasPayableItems = computed(() => this.paymentLineItems().length > 0);
   readonly sessionCount = computed(() =>
     this.lineItems().reduce((total, item) => total + item.quantity, 0)
   );
@@ -377,27 +376,47 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         if (!this.visible()) {
           return;
         }
-        this.clientForm.reset({
-          mobile: this.initialClientMobile(),
-          name: this.initialClientName(),
-        });
-        this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
-        this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
-        this.selectedQuantities.set(this.buildQuantitiesFromLineItems(this.initialLineItems()));
-        this.selectedPackageId.set(this.initialPackageId());
-        this.showUnlisted.set(false);
-        this.activeCategory.set('all');
-        this.searchQuery.set('');
-        queueMicrotask(() => {
-          this.bindCarouselObserver();
-          this.resetCarouselScroll();
-          this.updateScrollState();
-          window.setTimeout(() => {
+
+        untracked(() => {
+          this.clientForm.reset({
+            mobile: this.initialClientMobile(),
+            name: this.initialClientName(),
+          });
+          this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
+          this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
+          this.selectedQuantities.set(this.buildQuantitiesFromLineItems(this.initialLineItems()));
+          const selectedPackageIds = this.buildOwnedPackageIdsFromLineItems(this.initialLineItems());
+          const initialPackageId = this.initialPackageId();
+          if (initialPackageId && !selectedPackageIds.includes(initialPackageId)) {
+            selectedPackageIds.push(initialPackageId);
+          }
+          this.selectedPackageIds.set(selectedPackageIds);
+          this.showServicesSection.set(false);
+          this.showUnlisted.set(false);
+          this.activeCategory.set('all');
+          this.searchQuery.set('');
+          queueMicrotask(() => {
             this.bindCarouselObserver();
             this.resetCarouselScroll();
             this.updateScrollState();
-          }, 150);
+            window.setTimeout(() => {
+              this.bindCarouselObserver();
+              this.resetCarouselScroll();
+              this.updateScrollState();
+            }, 150);
+          });
         });
+      },
+      { allowSignalWrites: true }
+    );
+
+    effect(
+      () => {
+        const validIds = new Set(this.packageOptions().map(option => option.value));
+        const filtered = this.selectedPackageIds().filter(id => validIds.has(id));
+        if (filtered.length !== this.selectedPackageIds().length) {
+          this.selectedPackageIds.set(filtered);
+        }
       },
       { allowSignalWrites: true }
     );
@@ -427,6 +446,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         }
         this.filteredServices();
         this.isRtl();
+        this.showServicesSection();
         queueMicrotask(() => {
           this.bindCarouselObserver();
           this.resetCarouselScroll();
@@ -642,6 +662,12 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   removeLineItem(itemId: string): void {
+    const ownedMatch = itemId.match(/^line-owned-(.+)$/);
+    if (ownedMatch) {
+      this.removeSelectedPackageId(ownedMatch[1]);
+      return;
+    }
+
     const serviceId = itemId.replace(/^line-/, '');
     const current = this.selectedQuantities();
     if (serviceId in current) {
@@ -651,6 +677,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
     this.unlistedItems.update(items => items.filter(item => item.id !== itemId));
+  }
+
+  onPackageIdsChange(packageIds: string[] | null): void {
+    this.selectedPackageIds.set(packageIds ?? []);
   }
 
   /** Validates and creates an unlisted service before adding it to the booking draft. */
@@ -824,13 +854,33 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return { [catalogItem.id]: 1 };
   }
 
+  private buildOwnedPackageIdsFromLineItems(items: BookingLineItem[]): string[] {
+    const packageIds: string[] = [];
+    for (const item of items) {
+      if (!item.catalogPackageId) {
+        continue;
+      }
+      if (item.packageSessionLinked || (item.customerPackageId && (item.newPurchaseUnits ?? 0) === 0)) {
+        packageIds.push(item.catalogPackageId);
+      }
+    }
+    return packageIds;
+  }
+
   private buildQuantitiesFromLineItems(items: BookingLineItem[]): Record<string, number> {
     const quantities: Record<string, number> = {};
     for (const item of items) {
-      if (item.type === 'unlisted') {
+      if (item.type === 'unlisted' || item.packageSessionLinked) {
         continue;
       }
-      const serviceId = item.id.replace(/^line-/, '');
+      if (
+        item.type === 'package' &&
+        item.customerPackageId &&
+        (item.newPurchaseUnits ?? 0) === 0
+      ) {
+        continue;
+      }
+      const serviceId = item.catalogPackageId ?? item.id.replace(/^line-(?:owned-)?/, '');
       quantities[serviceId] = item.quantity;
     }
     return quantities;
@@ -838,5 +888,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   private extractUnlistedItems(items: BookingLineItem[]): BookingLineItem[] {
     return items.filter(item => item.type === 'unlisted');
+  }
+
+  private removeSelectedPackageId(packageId: string): void {
+    this.selectedPackageIds.update(ids => ids.filter(id => id !== packageId));
   }
 }

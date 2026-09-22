@@ -246,6 +246,50 @@ export function bookAppointmentMaxQuantity(_service: Pick<ServiceCatalogItem, 't
   return BOOKING_ITEM_MAX_QUANTITY;
 }
 
+/** Builds a booking line for an owned client package selected outside the catalog carousel. */
+export function bookAppointmentOwnedPackageLineItem(
+  clientPackage: ClientPackage,
+  service: ServiceCatalogItem
+): BookingLineItem {
+  return {
+    id: `line-owned-${clientPackage.packageId}`,
+    name: service.name,
+    type: service.type,
+    quantity: 1,
+    price: bookAppointmentCatalogUnitPrice(service, clientPackage, 1),
+    newPurchaseUnits: 0,
+    durationMinutes: service.durationMinutes,
+    packageSessionLinked: true,
+    catalogPackageId: service.id,
+    customerPackageId: clientPackage.customerPackageId,
+  };
+}
+
+/** Builds a catalog carousel line; package quantities are always treated as purchases. */
+export function bookAppointmentCatalogQuantityLineItem(
+  service: ServiceCatalogItem,
+  quantity: number,
+  ownedPackage: ClientPackage | null
+): BookingLineItem {
+  const newPurchaseUnits =
+    service.type === 'package'
+      ? quantity
+      : bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage);
+
+  return {
+    id: `line-${service.id}`,
+    name: service.name,
+    type: service.type,
+    quantity,
+    price: bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    newPurchaseUnits,
+    durationMinutes: service.durationMinutes,
+    packageSessionLinked: false,
+    catalogPackageId: service.id,
+    customerPackageId: bookAppointmentCustomerPackageId(),
+  };
+}
+
 /** Unit price stored on a booking line item before new-purchase calculation. */
 export function bookAppointmentCatalogUnitPrice(
   service: Pick<ServiceCatalogItem, 'type' | 'price'>,
@@ -268,6 +312,11 @@ export function bookAppointmentLineTotal(
   }
 
   return item.price * item.quantity;
+}
+
+/** Booking lines that require payment (excludes owned-package usage with zero charge). */
+export function bookAppointmentPaymentLineItems(items: BookingLineItem[]): BookingLineItem[] {
+  return items.filter(item => bookAppointmentLineTotal(item) > 0);
 }
 
 /** Calendar duration contributed by one catalog line. */

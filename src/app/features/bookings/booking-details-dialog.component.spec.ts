@@ -23,7 +23,10 @@ describe('BookingDetailsDialogComponent', () => {
         { provide: TranslateService, useValue: {} },
         { provide: MessageService, useValue: {} },
         { provide: PackageService, useValue: {} },
-        { provide: AppointmentsApiService, useValue: { getPaymentMethods: () => of([]), findCustomer: () => of(null) } },
+        {
+          provide: AppointmentsApiService,
+          useValue: { getPaymentMethods: () => of([]), findCustomer: () => of(null) },
+        },
         { provide: CurrencyService, useValue: {} },
       ],
     })
@@ -78,5 +81,54 @@ describe('BookingDetailsDialogComponent', () => {
     fixture.componentRef.setInput('visible', true);
     fixture.detectChanges();
     expect(fixture.componentInstance.draftLineItems()).toHaveSize(1);
+  });
+
+  it('shows an error toast and does not save when selected services are empty', async () => {
+    const toast = { add: jasmine.createSpy('add') };
+    await TestBed.configureTestingModule({
+      imports: [BookingDetailsDialogComponent],
+      providers: [
+        FormBuilder,
+        { provide: PermissionService, useValue: { hasPermission: () => true } },
+        { provide: LanguageService, useValue: {} },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+        { provide: MessageService, useValue: toast },
+        { provide: PackageService, useValue: {} },
+        {
+          provide: AppointmentsApiService,
+          useValue: { getPaymentMethods: () => of([]), findCustomer: () => of(null) },
+        },
+        { provide: CurrencyService, useValue: {} },
+      ],
+    })
+      .overrideComponent(BookingDetailsDialogComponent, { set: { template: '' } })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(BookingDetailsDialogComponent);
+    const booking = {
+      id: 'booking-1',
+      status: 'booked',
+      version: 'version-1',
+      paymentMethod: null,
+      paidAmount: 0,
+      clientMobile: '01000000000',
+      lineItems: [],
+    } as unknown as BookingRecord;
+    let saved = false;
+    fixture.componentInstance.saved.subscribe(() => {
+      saved = true;
+    });
+    fixture.componentRef.setInput('booking', booking);
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+
+    fixture.componentInstance.save();
+
+    expect(saved).toBeFalse();
+    expect(toast.add).toHaveBeenCalledWith({
+      severity: 'error',
+      summary: 'HTTP_ERRORS.SUMMARY',
+      detail: 'ERRORS.BookingItemsRequired',
+    });
   });
 });

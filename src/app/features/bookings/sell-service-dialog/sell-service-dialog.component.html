@@ -55,17 +55,23 @@
           <small class="field-error">{{ errorKey | translate }}</small>
         }
       </div>
-      <div class="field">
+      <div class="field field-package">
         <label>{{ 'BOOKINGS.BOOK.PACKAGE_SELECT' | translate }}</label>
-        <p-dropdown
+        <p-multiSelect
           [options]="packageOptions()"
-          [ngModel]="selectedPackageId()"
-          (ngModelChange)="selectedPackageId.set($event)"
+          [ngModel]="selectedPackageIds()"
+          (ngModelChange)="onPackageIdsChange($event)"
           [ngModelOptions]="{ standalone: true }"
           optionLabel="label"
           optionValue="value"
-          [placeholder]="'BOOKINGS.BOOK.PACKAGE_SELECT' | translate"
-          [showClear]="true"
+          display="chip"
+          appendTo="body"
+          [filter]="packageOptions().length > 5"
+          [maxSelectedLabels]="3"
+          [selectedItemsLabel]="'BOOKINGS.BOOK.PACKAGE_SELECTED_COUNT' | translate"
+          [placeholder]="'BOOKINGS.BOOK.PACKAGE_SELECT_PLACEHOLDER' | translate"
+          styleClass="booking-package-multiselect"
+          panelStyleClass="booking-package-multiselect-panel"
         />
       </div>
     </form>
@@ -81,49 +87,65 @@
       </span>
     }
 
-    @if (selectedClientPackage(); as pkg) {
+    @for (pkg of selectedClientPackages(); track pkg.packageId) {
       <div class="package-stats">
-        <article>
-          <small>{{
-            (packageUsesPulses(pkg)
-              ? 'BOOKINGS.BOOK.PACKAGE_TOTAL_PULSES'
-              : 'BOOKINGS.BOOK.PACKAGE_TOTAL_SESSIONS'
-            ) | translate
-          }}</small>
-          <strong>{{ pkg.totalSessions }}</strong>
-        </article>
-        <article>
-          <small>{{
-            (packageUsesPulses(pkg)
-              ? 'BOOKINGS.BOOK.PACKAGE_USED_PULSES'
-              : 'BOOKINGS.BOOK.PACKAGE_USED_SESSIONS'
-            ) | translate
-          }}</small>
-          <strong>{{ pkg.usedSessions }}</strong>
-        </article>
-        <article>
-          <small>{{
-            (packageUsesPulses(pkg)
-              ? 'BOOKINGS.BOOK.PACKAGE_REMAINING_PULSES'
-              : 'BOOKINGS.BOOK.PACKAGE_REMAINING_SESSIONS'
-            ) | translate
-          }}</small>
-          <strong>{{ displayedPackageRemainingUnits(pkg) }}</strong>
-        </article>
-        <article>
-          <small>{{ 'BOOKINGS.BOOK.PACKAGE_EXPIRY_DATE' | translate }}</small>
-          <strong>{{ pkg.expiryDate }}</strong>
-        </article>
+        <p class="package-stats-title">{{ pkg.packageName }}</p>
+        <div class="package-stats-grid">
+          <article>
+            <small>{{
+              (packageUsesPulses(pkg)
+                ? 'BOOKINGS.BOOK.PACKAGE_TOTAL_PULSES'
+                : 'BOOKINGS.BOOK.PACKAGE_TOTAL_SESSIONS'
+              ) | translate
+            }}</small>
+            <strong>{{ pkg.totalSessions }}</strong>
+          </article>
+          <article>
+            <small>{{
+              (packageUsesPulses(pkg)
+                ? 'BOOKINGS.BOOK.PACKAGE_USED_PULSES'
+                : 'BOOKINGS.BOOK.PACKAGE_USED_SESSIONS'
+              ) | translate
+            }}</small>
+            <strong>{{ pkg.usedSessions }}</strong>
+          </article>
+          <article>
+            <small>{{
+              (packageUsesPulses(pkg)
+                ? 'BOOKINGS.BOOK.PACKAGE_REMAINING_PULSES'
+                : 'BOOKINGS.BOOK.PACKAGE_REMAINING_SESSIONS'
+              ) | translate
+            }}</small>
+            <strong>{{ displayedPackageRemainingUnits(pkg) }}</strong>
+          </article>
+          <article>
+            <small>{{ 'BOOKINGS.BOOK.PACKAGE_EXPIRY_DATE' | translate }}</small>
+            <strong>{{ pkg.expiryDate }}</strong>
+          </article>
+        </div>
       </div>
     }
   </section>
 
-  <section class="panel-card services-section">
-    <h4>
-      <i class="pi pi-th-large"></i>
-      {{ 'BOOKINGS.BOOK.SERVICES_SECTION' | translate }}
-    </h4>
+  <section class="panel-card services-section" [class.is-collapsed]="!showServicesSection()">
+    <button
+      type="button"
+      class="services-section-toggle"
+      (click)="showServicesSection.set(!showServicesSection())"
+      [attr.aria-expanded]="showServicesSection()"
+    >
+      <span class="section-toggle-title">
+        <i class="pi pi-th-large"></i>
+        {{ 'BOOKINGS.BOOK.SERVICES_SECTION' | translate }}
+      </span>
+      <i
+        class="pi"
+        [class.pi-chevron-up]="showServicesSection()"
+        [class.pi-chevron-down]="!showServicesSection()"
+      ></i>
+    </button>
 
+    @if (showServicesSection()) {
     <div class="search-wrap">
       <i class="pi pi-search"></i>
       <input
@@ -339,17 +361,23 @@
         </form>
       }
     </div>
+    }
   </section>
 
   <div class="bottom-layout">
     <section class="panel-card payments-section">
       <h4>
         <i class="pi pi-wallet"></i>
-        {{ 'BOOKINGS.BOOK.PAYMENTS_TITLE' | translate }} ({{ lineItems().length }})
+        {{ 'BOOKINGS.BOOK.PAYMENTS_TITLE' | translate }} ({{ paymentLineItems().length }})
       </h4>
 
       <ul class="payment-lines">
-        @for (item of lineItems(); track item.id) {
+        @if (paymentLineItems().length === 0) {
+          <li class="payment-lines-empty">
+            {{ 'BOOKINGS.BOOK.PAYMENTS_EMPTY' | translate }}
+          </li>
+        }
+        @for (item of paymentLineItems(); track item.id) {
           <li>
             <div class="payment-line-main">
               <button
@@ -401,6 +429,7 @@
         </strong>
       </div>
 
+      @if (hasPayableItems()) {
       <h5>{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h5>
       <div class="payment-grid">
         @for (method of paymentMethods; track method.id) {
@@ -424,6 +453,7 @@
           </button>
         }
       </div>
+      }
     </section>
 
     <section class="panel-card summary-section">

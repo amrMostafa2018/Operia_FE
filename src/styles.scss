@@ -443,7 +443,8 @@ a {
   }
 }
 
-.p-multiselect-panel.employee-branch-multiselect-panel {
+.p-multiselect-panel.employee-branch-multiselect-panel,
+.p-multiselect-panel.booking-package-multiselect-panel {
   z-index: 400;
   min-width: min(100%, 18rem);
 

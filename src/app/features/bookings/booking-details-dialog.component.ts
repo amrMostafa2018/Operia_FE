@@ -481,6 +481,14 @@ export class BookingDetailsDialogComponent {
     if (!current || !this.isEditable()) {
       return;
     }
+    if (this.draftLineItems().length === 0) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.BookingItemsRequired'),
+      });
+      return;
+    }
     this.saved.emit({
       bookingId: current.id,
       lineItems: this.draftLineItems(),

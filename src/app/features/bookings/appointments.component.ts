@@ -912,6 +912,14 @@ export class AppointmentsComponent {
     if (!booking?.version) {
       return;
     }
+    if (payload.lineItems.length === 0) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.BookingItemsRequired'),
+      });
+      return;
+    }
     const items = payload.lineItems
       .filter(item => !!item.catalogPackageId)
       .map(item => ({
