@@ -17,7 +17,7 @@ export interface PackageFormValue {
   subServiceCategoryId: string | null;
   sessionDurationValue: number;
   sessionDurationUnit: PackageDurationUnit;
-  sessionCount: number;
+  sessionCount: number | null;
   pulseCount: number | null;
   packageExpiryMonths: number | null;
   price: number;
@@ -41,7 +41,7 @@ export interface PackageListItem {
 export interface PackageDetail extends PackageListItem {
   description: string;
   subServiceCategoryId: string | null;
-  sessionCount: number;
+  sessionCount: number | null;
   pulseCount: number | null;
   packageExpiryMonths: number | null;
   discountCode: string;

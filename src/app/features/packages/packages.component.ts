@@ -8,7 +8,14 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -58,8 +65,8 @@ const DEFAULT_FORM_VALUE: PackageFormValue = {
   subServiceCategoryId: null,
   sessionDurationValue: 30,
   sessionDurationUnit: 'minute',
-  sessionCount: 0,
-  pulseCount: 0,
+  sessionCount: null,
+  pulseCount: null,
   packageExpiryMonths: 12,
   price: 0,
   discountCode: '',
@@ -82,7 +89,6 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
     min: 'PACKAGES.CREATE.ERRORS.DURATION_MIN',
   },
   sessionCount: {
-    required: 'PACKAGES.CREATE.ERRORS.SESSION_COUNT_REQUIRED',
     min: 'PACKAGES.CREATE.ERRORS.SESSION_COUNT_MIN',
   },
   pulseCount: {
@@ -100,6 +106,23 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
     max: 'PACKAGES.CREATE.ERRORS.DISCOUNT_PERCENT_MAX',
   },
 };
+
+function sessionOrPulseXorValidator(group: AbstractControl): ValidationErrors | null {
+  const sessionCount = group.get('sessionCount')?.value as number | null;
+  const pulseCount = group.get('pulseCount')?.value as number | null;
+  const sessionFilled = sessionCount != null && sessionCount > 0;
+  const pulseFilled = pulseCount != null && pulseCount > 0;
+
+  if (!sessionFilled && !pulseFilled) {
+    return { sessionOrPulseRequired: true };
+  }
+
+  if (sessionFilled && pulseFilled) {
+    return { sessionAndPulseBothFilled: true };
+  }
+
+  return null;
+}
 
 @Component({
   selector: 'app-packages',
@@ -166,8 +189,8 @@ export class PackagesComponent implements OnInit {
     subServiceCategoryId: [null as string | null],
     sessionDurationValue: [30, [Validators.required, Validators.min(1)]],
     sessionDurationUnit: ['minute' as PackageDurationUnit, Validators.required],
-    sessionCount: [0],
-    pulseCount: [0 as number | null, [Validators.min(0)]],
+    sessionCount: [null as number | null],
+    pulseCount: [null as number | null, [Validators.min(0)]],
     packageExpiryMonths: [12 as number | null],
     price: [0, [Validators.required, Validators.min(0)]],
     discountCode: ['', [Validators.maxLength(50)]],
@@ -185,6 +208,24 @@ export class PackagesComponent implements OnInit {
   });
   readonly offerTypeValue = computed(() => this.formValue().offerType);
   readonly isPackageOffer = computed(() => this.offerTypeValue() === 'package');
+  readonly bothSessionAndPulseFilled = computed(() => {
+    const value = this.formValue();
+    return (
+      this.isPackageOffer() &&
+      value.sessionCount != null &&
+      value.sessionCount > 0 &&
+      value.pulseCount != null &&
+      value.pulseCount > 0
+    );
+  });
+  readonly neitherSessionNorPulseFilled = computed(() => {
+    const value = this.formValue();
+    return (
+      this.isPackageOffer() &&
+      (value.sessionCount == null || value.sessionCount <= 0) &&
+      (value.pulseCount == null || value.pulseCount <= 0)
+    );
+  });
   readonly statusValue = computed(() => this.formValue().status);
 
   readonly offerTypeOptions: { label: string; value: PackageOfferType }[] = [
@@ -315,8 +356,10 @@ export class PackagesComponent implements OnInit {
             subServiceCategoryId: detail.subServiceCategoryId,
             sessionDurationValue: detail.sessionDurationMinutes,
             sessionDurationUnit: 'minute',
-            sessionCount: detail.sessionCount ?? 0,
-            pulseCount: detail.pulseCount ?? 0,
+            sessionCount:
+              detail.sessionCount != null && detail.sessionCount > 0 ? detail.sessionCount : null,
+            pulseCount:
+              detail.pulseCount != null && detail.pulseCount > 0 ? detail.pulseCount : null,
             packageExpiryMonths: detail.packageExpiryMonths ?? 12,
             price: detail.price,
             discountCode: detail.discountCode ?? '',
@@ -598,6 +641,20 @@ export class PackagesComponent implements OnInit {
     return item.serviceCategoryName || '—';
   }
 
+  showSessionPulseGroupError(): boolean {
+    if (!this.isPackageOffer() || !this.form.touched) {
+      return false;
+    }
+
+    return this.bothSessionAndPulseFilled() || this.neitherSessionNorPulseFilled();
+  }
+
+  sessionPulseGroupErrorKey(): string {
+    return this.bothSessionAndPulseFilled()
+      ? 'PACKAGES.CREATE.ERRORS.SESSION_AND_PULSE_BOTH_FILLED'
+      : 'PACKAGES.CREATE.ERRORS.SESSION_OR_PULSE_REQUIRED';
+  }
+
   private resetForm(value: PackageFormValue): void {
     this.form.reset(value);
     this.syncPackageFieldValidators(value.offerType);
@@ -607,17 +664,29 @@ export class PackagesComponent implements OnInit {
 
   private syncPackageFieldValidators(type: PackageOfferType): void {
     const sessionCount = this.form.controls.sessionCount;
+    const pulseCount = this.form.controls.pulseCount;
+
     if (type === 'package') {
-      sessionCount.setValidators([Validators.required, Validators.min(1)]);
+      sessionCount.clearValidators();
+      pulseCount.setValidators([Validators.min(0)]);
+      this.form.setValidators(sessionOrPulseXorValidator);
     } else {
       sessionCount.clearValidators();
-      sessionCount.setValue(0, { emitEvent: false });
-      this.form.controls.pulseCount.setValue(0, { emitEvent: false });
+      pulseCount.clearValidators();
+      sessionCount.setValue(null, { emitEvent: false });
+      pulseCount.setValue(null, { emitEvent: false });
+      this.form.clearValidators();
     }
+
     sessionCount.updateValueAndValidity({ emitEvent: false });
+    pulseCount.updateValueAndValidity({ emitEvent: false });
+    this.form.updateValueAndValidity({ emitEvent: false });
   }
 
   private toPayload(value: PackageFormValue): PackagePayload {
+    const sessionFilled = value.sessionCount != null && value.sessionCount > 0;
+    const pulseFilled = value.pulseCount != null && value.pulseCount > 0;
+
     return {
       name: value.name.trim(),
       isActive: value.status,
@@ -626,8 +695,9 @@ export class PackagesComponent implements OnInit {
       serviceCategoryId: value.serviceCategoryId,
       subServiceCategoryId: value.subServiceCategoryId,
       sessionDurationMinutes: Number(value.sessionDurationValue) || 0,
-      sessionCount: value.offerType === 'package' ? Number(value.sessionCount) || 0 : 0,
-      pulseCount: value.offerType === 'package' ? value.pulseCount : null,
+      sessionCount:
+        value.offerType === 'package' ? (sessionFilled ? value.sessionCount : null) : null,
+      pulseCount: value.offerType === 'package' ? (pulseFilled ? value.pulseCount : null) : null,
       packageExpiryMonths: value.offerType === 'package' ? value.packageExpiryMonths : null,
       price: Number(value.price) || 0,
       discountCode: value.discountCode.trim(),

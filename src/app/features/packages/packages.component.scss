@@ -667,6 +667,30 @@
   line-height: 1.4;
 }
 
+.session-pulse-group {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.session-pulse-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.95rem 1rem;
+}
+
+.session-pulse-group.error .session-pulse-fields .input-with-addon {
+  border-color: #ef4444;
+}
+
+.session-pulse-error {
+  display: block;
+  margin: 0;
+  line-height: 1.45;
+}
+
 .name-status-row {
   display: flex;
   align-items: flex-start;
@@ -1123,6 +1147,10 @@
   .duration-price-row.is-package {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .session-pulse-group {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: $bp-sm) {
@@ -1138,6 +1166,14 @@
   .duration-price-row.is-package,
   .discount-metrics,
   .offer-type-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .session-pulse-group {
+    grid-column: span 1;
+  }
+
+  .session-pulse-fields {
     grid-template-columns: 1fr;
   }
 

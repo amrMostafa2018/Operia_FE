@@ -256,7 +256,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     const client = this.matchedClient();
     if (client?.packages.length) {
       return client.packages
-        .filter(pkg => pkg.offerType !== 'session')
+        .filter(
+          (pkg, index, all) => all.findIndex(item => item.packageId === pkg.packageId) === index
+        )
         .map(pkg => ({
           label: pkg.packageName,
           value: pkg.packageId,
@@ -282,13 +284,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       category === 'all'
         ? this.catalogItems()
         : this.catalogItems().filter(service => service.category === category);
-
-    const ownedPackageIds = new Set(
-      this.matchedClient()?.packages.map(clientPackage => clientPackage.packageId) ?? []
-    );
-    services = services.filter(
-      service => service.type !== 'package' || ownedPackageIds.has(service.id)
-    );
 
     if (query) {
       services = services.filter(service => service.name.toLowerCase().includes(query));

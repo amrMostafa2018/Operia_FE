@@ -315,7 +315,6 @@ export class AppointmentsComponent {
       }
     });
     this.loadBranches();
-    this.loadCatalog();
     this.applySaleHandoff();
   }
 
@@ -373,7 +372,18 @@ export class AppointmentsComponent {
     this.loadCatalog();
   }
 
-  /** Loads current catalog items and category choices for booking edits. */
+  private openBookDialog(): void {
+    this.loadCatalog();
+    this.bookDialogVisible.set(true);
+  }
+
+  private openDetailsDialog(bookingId: string): void {
+    this.activeBookingId.set(bookingId);
+    this.loadCatalog();
+    this.detailsDialogVisible.set(true);
+  }
+
+  /** Loads catalog items and category choices when a booking dialog opens. */
   private loadCatalog(): void {
     if (!this.permissions.hasPermission(Policies.PackagesRead)) {
       return;
@@ -538,8 +548,7 @@ export class AppointmentsComponent {
   }
 
   onBookingClick(booking: BookingRecord): void {
-    this.activeBookingId.set(booking.id);
-    this.detailsDialogVisible.set(true);
+    this.openDetailsDialog(booking.id);
   }
 
   /** Refreshes availability after a conflict or failed calendar request. */
@@ -604,7 +613,7 @@ export class AppointmentsComponent {
       return;
     }
 
-    this.bookDialogVisible.set(true);
+    this.openBookDialog();
   }
 
   isClientFirstReady(): boolean {
@@ -667,7 +676,6 @@ export class AppointmentsComponent {
         this.clients.set([client]);
         this.packages.set(
           customer.packages
-            .filter(pkg => pkg.offerType === 'package')
             .filter(
               (pkg, index, all) => all.findIndex(item => item.packageId === pkg.packageId) === index
             )
@@ -719,7 +727,7 @@ export class AppointmentsComponent {
       return;
     }
 
-    this.bookDialogVisible.set(true);
+    this.openBookDialog();
   }
 
   onBookDialogConfirm(payload: BookAppointmentPayload): void {

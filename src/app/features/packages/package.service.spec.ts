@@ -127,18 +127,19 @@ describe('PackageService', () => {
     request.flush([]);
   });
 
-  it('loads every active catalog page', () => {
+  it('loads all active packages without pagination', () => {
     let items: { id: string }[] = [];
     service.listAllActive().subscribe(result => {
       items = result;
     });
 
-    const first = http.expectOne(
-      req => req.url === `${environment.apiUrl}/packages` && req.params.get('pageNumber') === '1'
+    const request = http.expectOne(
+      req =>
+        req.url === `${environment.apiUrl}/packages` &&
+        req.params.get('ignorePagination') === 'true' &&
+        req.params.get('status') === 'active'
     );
-    expect(first.request.params.get('pageSize')).toBe('50');
-    expect(first.request.params.get('status')).toBe('active');
-    first.flush({
+    request.flush({
       items: [
         {
           id: 'p1',
@@ -152,20 +153,6 @@ describe('PackageService', () => {
           createdAt: '2026-09-01',
           endsAt: null,
         },
-      ],
-      pageNumber: 1,
-      pageSize: 50,
-      totalCount: 2,
-      totalPages: 2,
-      activeCount: 2,
-      cancelledCount: 0,
-    });
-
-    const second = http.expectOne(
-      req => req.url === `${environment.apiUrl}/packages` && req.params.get('pageNumber') === '2'
-    );
-    second.flush({
-      items: [
         {
           id: 'p2',
           name: 'Facial',
@@ -179,10 +166,10 @@ describe('PackageService', () => {
           endsAt: null,
         },
       ],
-      pageNumber: 2,
-      pageSize: 50,
+      pageNumber: 1,
+      pageSize: 2,
       totalCount: 2,
-      totalPages: 2,
+      totalPages: 1,
       activeCount: 2,
       cancelledCount: 0,
     });

@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import {
   PackageCategoryOption,
@@ -27,6 +27,7 @@ export interface PackageQuery {
   offerType?: PackageOfferType;
   serviceCategoryId?: string;
   status?: PackageListStatus;
+  ignorePagination?: boolean;
 }
 
 export interface PackagePayload {
@@ -37,7 +38,7 @@ export interface PackagePayload {
   serviceCategoryId: string | null;
   subServiceCategoryId: string | null;
   sessionDurationMinutes: number;
-  sessionCount: number;
+  sessionCount: number | null;
   pulseCount: number | null;
   packageExpiryMonths: number | null;
   price: number;
@@ -61,22 +62,12 @@ export class PackageService {
   }
 
   listAllActive(): Observable<PackageListItem[]> {
-    const pageSize = 50;
-    return this.list({ pageNumber: 1, pageSize, status: 'active' }).pipe(
-      switchMap(firstPage => {
-        if (firstPage.totalPages <= 1) {
-          return of(firstPage.items);
-        }
-
-        const remainingPages = Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
-          this.list({ pageNumber: index + 2, pageSize, status: 'active' })
-        );
-
-        return forkJoin(remainingPages).pipe(
-          map(pages => [firstPage.items, ...pages.map(page => page.items)].flat())
-        );
-      })
-    );
+    return this.list({
+      pageNumber: 1,
+      pageSize: 1,
+      status: 'active',
+      ignorePagination: true,
+    }).pipe(map(result => result.items));
   }
 
   get(id: string): Observable<PackageDetail> {

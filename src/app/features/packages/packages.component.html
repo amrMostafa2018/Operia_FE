@@ -462,26 +462,41 @@
             }
           </div>
           @if (isPackageOffer()) {
-            <div class="form-field" [class.error]="isFieldInvalid(form, 'pulseCount')">
-              <span class="field-label">{{ 'PACKAGES.CREATE.PULSE_COUNT_LABEL' | translate }}</span>
-              <div class="input-with-addon">
-                <input pInputText type="number" min="0" formControlName="pulseCount" />
-                <i class="pi pi-heart" aria-hidden="true"></i>
+            <div class="session-pulse-group" [class.error]="showSessionPulseGroupError()">
+              <div class="session-pulse-fields">
+                <div
+                  class="form-field"
+                  [class.error]="isFieldInvalid(form, 'pulseCount') || showSessionPulseGroupError()"
+                >
+                  <span class="field-label">{{ 'PACKAGES.CREATE.PULSE_COUNT_LABEL' | translate }}</span>
+                  <div class="input-with-addon">
+                    <input pInputText type="number" min="0" formControlName="pulseCount" />
+                    <i class="pi pi-heart" aria-hidden="true"></i>
+                  </div>
+                  @if (getFieldError('pulseCount'); as pulseCountError) {
+                    <small class="field-error">{{ pulseCountError }}</small>
+                  }
+                </div>
+                <div
+                  class="form-field"
+                  [class.error]="isFieldInvalid(form, 'sessionCount') || showSessionPulseGroupError()"
+                >
+                  <span class="field-label">
+                    {{ 'PACKAGES.CREATE.SESSION_COUNT_LABEL' | translate }}
+                  </span>
+                  <div class="input-with-addon">
+                    <input pInputText type="number" min="1" formControlName="sessionCount" />
+                    <i class="pi pi-calendar" aria-hidden="true"></i>
+                  </div>
+                  @if (getFieldError('sessionCount'); as sessionCountError) {
+                    <small class="field-error">{{ sessionCountError }}</small>
+                  }
+                </div>
               </div>
-              @if (getFieldError('pulseCount'); as pulseCountError) {
-                <small class="field-error">{{ pulseCountError }}</small>
-              }
-            </div>
-            <div class="form-field" [class.error]="isFieldInvalid(form, 'sessionCount')">
-              <span class="field-label">
-                {{ 'PACKAGES.CREATE.SESSION_COUNT_LABEL' | translate }} <em>*</em>
-              </span>
-              <div class="input-with-addon">
-                <input pInputText type="number" min="1" formControlName="sessionCount" />
-                <i class="pi pi-calendar" aria-hidden="true"></i>
-              </div>
-              @if (getFieldError('sessionCount'); as sessionCountError) {
-                <small class="field-error">{{ sessionCountError }}</small>
+              @if (showSessionPulseGroupError()) {
+                <small class="field-error session-pulse-error">
+                  {{ sessionPulseGroupErrorKey() | translate }}
+                </small>
               }
             </div>
           }
