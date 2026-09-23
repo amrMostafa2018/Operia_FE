@@ -30,6 +30,8 @@ export function mapCalendarBooking(record: CalendarBookingDto): BookingRecord {
       customerPackageId: item.customerPackageId,
       packageRemainingSessions: item.packageRemainingSessions,
       packagePulseCount: item.packagePulseCount,
+      newPurchaseUnits:
+        item.type === 'package' && !item.packageSessionLinked ? item.quantity : 0,
     })),
     paymentMethod: record.paymentMethod as BookingRecord['paymentMethod'],
     totalAmount: record.totalAmount,

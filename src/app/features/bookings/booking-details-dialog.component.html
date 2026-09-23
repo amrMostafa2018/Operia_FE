@@ -125,47 +125,40 @@
             </h4>
           </div>
 
-          @if (showServicePicker() && isEditable()) {
-            <div class="service-picker">
-              @for (service of catalogItems(); track service.id) {
-                <button type="button" (click)="addService(service.id)">{{ service.name }}</button>
-              }
-            </div>
-          }
-
-          <ul class="line-items">
-            @for (item of draftLineItems(); track item.id) {
-              <li>
-                <div class="line-main">
-                  @if (isEditable()) {
-                    <button
-                      type="button"
-                      class="icon-btn delete-btn"
-                      (click)="removeLineItem(item.id)"
-                      [attr.aria-label]="'COMMON.DELETE' | translate"
-                    >
-                      <i class="pi pi-trash"></i>
-                    </button>
-                  }
-                  <div class="line-content">
-                    <div class="line-title">
-                      <span class="line-icon"><i [class]="lineIcon(item)"></i></span>
-                      <div>
-                        <strong>{{ item.name }}</strong>
-                        @if (packageRemainingSessions(item) !== null) {
-                          <small>
-                            {{
-                              packageRemainingLabelKey(item)
-                                | translate: { count: packageRemainingSessions(item) }
-                            }}
-                          </small>
-                        }
-                      </div>
+          <div class="line-items-scroll">
+            <ul class="line-items">
+              @for (item of draftLineItems(); track lineItemTrackKey(item)) {
+                <li>
+                  <div class="line-row">
+                    @if (isEditable()) {
+                      <button
+                        type="button"
+                        class="icon-btn delete-btn"
+                        (click)="removeLineItem(item.id)"
+                        [attr.aria-label]="'COMMON.DELETE' | translate"
+                      >
+                        <i class="pi pi-trash"></i>
+                      </button>
+                    }
+                    <span class="line-icon"><i [class]="lineIcon(item)"></i></span>
+                    <div class="line-info">
+                      <strong class="line-name">{{ item.name }}</strong>
+                      @if (packageRemainingSessions(item) !== null) {
+                        <small class="line-sub">
+                          {{
+                            packageRemainingLabelKey(item)
+                              | translate: { count: packageRemainingSessions(item) }
+                          }}
+                        </small>
+                      }
                     </div>
                     <div class="line-meta">
                       <span class="type-badge" [class]="lineTypeClass(item.type)">
                         {{ lineTypeKey(item.type) | translate }}
                       </span>
+                      <small class="line-quantity">
+                        {{ 'BOOKINGS.BOOK.PACKAGE_COUNT' | translate: { count: item.quantity } }}
+                      </small>
                       @if (showsLinePrice(item)) {
                         <strong class="line-price">
                           {{ lineTotal(item) }}
@@ -176,20 +169,233 @@
                       }
                     </div>
                   </div>
-                </div>
-              </li>
-            }
-          </ul>
+                </li>
+              }
+            </ul>
+          </div>
 
           @if (isEditable()) {
             <button
               type="button"
               class="add-service-btn"
-              (click)="showServicePicker.set(!showServicePicker())"
+              [class.is-open]="showServicePicker()"
+              [attr.aria-expanded]="showServicePicker()"
+              (click)="toggleServicePicker()"
             >
               <i class="pi pi-plus"></i>
               {{ 'BOOKINGS.DETAILS.ADD_FROM_LIST' | translate }}
             </button>
+
+            @if (showServicePicker()) {
+              <div class="service-picker">
+                <div class="picker-source-tabs" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    class="picker-source-tab"
+                    [class.active]="pickerSource() === 'customer'"
+                    [attr.aria-selected]="pickerSource() === 'customer'"
+                    (click)="setPickerSource('customer')"
+                  >
+                    <i class="pi pi-user"></i>
+                    {{ 'BOOKINGS.DETAILS.PICKER_CUSTOMER_PACKAGES' | translate }}
+                    @if (customerPackages().length > 0) {
+                      <span class="picker-count">{{ customerPackages().length }}</span>
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    class="picker-source-tab"
+                    [class.active]="pickerSource() === 'catalog'"
+                    [attr.aria-selected]="pickerSource() === 'catalog'"
+                    (click)="setPickerSource('catalog')"
+                  >
+                    <i class="pi pi-th-large"></i>
+                    {{ 'BOOKINGS.DETAILS.PICKER_ALL_PACKAGES' | translate }}
+                  </button>
+                </div>
+
+                @if (pickerSource() === 'customer') {
+                  <p class="picker-hint">
+                    {{ 'BOOKINGS.DETAILS.PICKER_CUSTOMER_HINT' | translate }}
+                  </p>
+                  @if (customerPackagesLoading()) {
+                    <p class="picker-empty">
+                      {{ 'BOOKINGS.DETAILS.CUSTOMER_PACKAGES_LOADING' | translate }}
+                    </p>
+                  } @else if (customerPackages().length === 0) {
+                    <p class="picker-empty">
+                      {{ 'BOOKINGS.DETAILS.NO_CUSTOMER_PACKAGES' | translate }}
+                    </p>
+                  } @else {
+                    <div class="picker-grid">
+                      @for (pkg of customerPackages(); track pkg.customerPackageId) {
+                        <button
+                          type="button"
+                          class="picker-card"
+                          [class.is-selected]="
+                            isPackageOnBooking(pkg.packageId, pkg.customerPackageId)
+                          "
+                          [class.is-disabled]="!ownedPackageSelectable(pkg)"
+                          (click)="addOwnedPackage(pkg)"
+                        >
+                          @if (isPackageOnBooking(pkg.packageId, pkg.customerPackageId)) {
+                            <span class="picker-check"><i class="pi pi-check"></i></span>
+                          }
+                          <span class="picker-card-icon"><i class="pi pi-box"></i></span>
+                          <strong class="picker-card-name">{{ pkg.packageName }}</strong>
+                          <span class="type-badge type-package">
+                            {{ 'BOOKINGS.DETAILS.TYPE_PACKAGE' | translate }}
+                          </span>
+                          <small class="picker-card-meta">
+                            {{
+                              customerPackageRemainingLabel(pkg)
+                                | translate: { count: customerPackageRemaining(pkg) }
+                            }}
+                          </small>
+                          @if (pkg.expiryDate) {
+                            <small class="picker-card-meta">
+                              {{
+                                'BOOKINGS.DETAILS.PACKAGE_EXPIRY'
+                                  | translate: { date: packageExpiryLabel(pkg.expiryDate) }
+                              }}
+                            </small>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                } @else {
+                  <section class="catalog-section" [class.is-collapsed]="!showCatalogSection()">
+                    <button
+                      type="button"
+                      class="services-section-toggle"
+                      (click)="showCatalogSection.set(!showCatalogSection())"
+                      [attr.aria-expanded]="showCatalogSection()"
+                    >
+                      <span class="section-toggle-title">
+                        <i class="pi pi-th-large"></i>
+                        {{ 'BOOKINGS.BOOK.SERVICES_SECTION' | translate }}
+                      </span>
+                      <i
+                        class="pi"
+                        [class.pi-chevron-up]="showCatalogSection()"
+                        [class.pi-chevron-down]="!showCatalogSection()"
+                      ></i>
+                    </button>
+
+                    @if (showCatalogSection()) {
+                      <p class="picker-hint">
+                        {{ 'BOOKINGS.DETAILS.PICKER_ALL_HINT' | translate }}
+                      </p>
+                      <div class="search-wrap">
+                        <i class="pi pi-search"></i>
+                        <input
+                          pInputText
+                          [value]="searchQuery()"
+                          (input)="onCatalogSearch($event)"
+                          [placeholder]="'BOOKINGS.BOOK.SEARCH_SERVICES' | translate"
+                        />
+                      </div>
+                      <div class="service-tabs">
+                        @for (tab of categoryTabs(); track tab.id) {
+                          <button
+                            type="button"
+                            class="tab"
+                            [class.active]="activeCategory() === tab.id"
+                            (click)="setCategory(tab.id)"
+                          >
+                            @if (tab.labelKey) {
+                              {{ tab.labelKey | translate }}
+                            } @else {
+                              {{ tab.label }}
+                            }
+                          </button>
+                        }
+                      </div>
+                      <div class="service-carousel">
+                        <div class="service-carousel-viewport">
+                          <button
+                            type="button"
+                            class="carousel-arrow carousel-arrow-prev"
+                            [class.is-disabled]="!canActivateCatalogLeadingArrow()"
+                            [attr.aria-disabled]="!canActivateCatalogLeadingArrow()"
+                            (click)="$event.preventDefault(); $event.stopPropagation(); scrollCatalogLeadingArrow()"
+                            [attr.aria-label]="
+                              (isRtl() ? 'BOOKINGS.BOOK.SCROLL_NEXT' : 'BOOKINGS.BOOK.SCROLL_PREV')
+                                | translate
+                            "
+                          >
+                            <i [class]="catalogLeadingArrowIcon()"></i>
+                          </button>
+
+                          <div
+                            class="service-carousel-track"
+                            [class.is-rtl]="isRtl()"
+                            #catalogTrack
+                            (scroll)="onCatalogTrackScroll()"
+                          >
+                            @if (filteredCatalogItems().length === 0) {
+                              <p class="catalog-empty">
+                                {{ 'BOOKINGS.DETAILS.NO_PACKAGES' | translate }}
+                              </p>
+                            } @else {
+                              @for (service of filteredCatalogItems(); track service.id) {
+                                <article class="service-card">
+                                  <span class="service-icon"><i [class]="service.icon"></i></span>
+                                  <strong class="service-name">{{ service.name }}</strong>
+                                  <span class="type-badge" [class]="lineTypeClass(service.type)">
+                                    {{ lineTypeKey(service.type) | translate }}
+                                  </span>
+                                  <span class="duration"
+                                    >{{ service.durationMinutes }}
+                                    {{ 'BOOKINGS.MINUTES' | translate }}</span
+                                  >
+                                  <span class="price">
+                                    {{ service.price }}
+                                    @if (currencyService.hasCurrency()) {
+                                      {{ currencyService.currencyLabel() }}
+                                    }
+                                  </span>
+                                  <div class="qty" [class.is-rtl]="isRtl()">
+                                    <button type="button" (click)="changeCatalogQuantity(service, -1)">
+                                      -
+                                    </button>
+                                    <span>{{ catalogQuantityFor(service.id) }}</span>
+                                    <button
+                                      type="button"
+                                      [disabled]="!canIncreaseCatalogQuantity(service)"
+                                      (click)="changeCatalogQuantity(service, 1)"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </article>
+                              }
+                            }
+                          </div>
+
+                          <button
+                            type="button"
+                            class="carousel-arrow carousel-arrow-next"
+                            [class.is-disabled]="!canActivateCatalogTrailingArrow()"
+                            [attr.aria-disabled]="!canActivateCatalogTrailingArrow()"
+                            (click)="$event.preventDefault(); $event.stopPropagation(); scrollCatalogTrailingArrow()"
+                            [attr.aria-label]="
+                              (isRtl() ? 'BOOKINGS.BOOK.SCROLL_PREV' : 'BOOKINGS.BOOK.SCROLL_NEXT')
+                                | translate
+                            "
+                          >
+                            <i [class]="catalogTrailingArrowIcon()"></i>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </section>
+                }
+              </div>
+            }
 
             <div class="unlisted-panel">
               <button

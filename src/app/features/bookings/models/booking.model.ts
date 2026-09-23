@@ -260,7 +260,6 @@ export function bookAppointmentNewPurchaseUnits(
   const customerOwnsCatalog =
     ownedPackage != null || customerOwnsCatalogPackage(service.id, ownedPackages);
 
-  // Match backend packagePurchase pricing: one owned catalog copy is never charged again.
   return customerOwnsCatalog ? Math.max(0, quantity - 1) : quantity;
 }
 
@@ -274,7 +273,7 @@ export function bookAppointmentOwnedPackageLineItem(
   service: ServiceCatalogItem
 ): BookingLineItem {
   return {
-    id: `line-owned-${clientPackage.packageId}`,
+    id: `line-owned-${clientPackage.customerPackageId}`,
     name: service.name,
     type: service.type,
     quantity: 1,
@@ -308,6 +307,10 @@ export function enrichPackageLineFromOwnedPackages(
   ownedPackages: readonly ClientPackage[]
 ): BookingLineItem {
   if (line.type !== 'package' || !line.catalogPackageId) {
+    return line;
+  }
+
+  if (isBookingDetailsCatalogPurchaseLine(line)) {
     return line;
   }
 
@@ -1669,6 +1672,20 @@ function packageBalanceFieldsFromOwned(
   };
 }
 
+/** True when a booking-details catalog pick should stay a billed new purchase. */
+export function isBookingDetailsCatalogPurchaseLine(
+  item: Pick<
+    BookingLineItem,
+    'type' | 'packageSessionLinked' | 'newPurchaseUnits' | 'quantity' | 'customerPackageId'
+  >
+): boolean {
+  return (
+    (item.type === 'package' || item.type === 'session') &&
+    !item.packageSessionLinked &&
+    (item.newPurchaseUnits ?? 0) >= item.quantity
+  );
+}
+
 /** Builds a catalog line for booking details using owned-package purchase rules. */
 export function bookingDetailsLineItemFromCatalog(
   service: ServiceCatalogItem,
@@ -1735,13 +1752,36 @@ function itemCustomerPackageIdForPackageLine(
     : bookAppointmentCustomerPackageId();
 }
 
+/** Drops duplicate owned-package rows that share the same customer balance. */
+export function dedupeOwnedPackageBookingLines(
+  items: readonly BookingLineItem[]
+): BookingLineItem[] {
+  const seenOwnedPackageKeys = new Set<string>();
+  return items.filter(item => {
+    if (item.type !== 'package' || !item.packageSessionLinked) {
+      return true;
+    }
+
+    const key = item.customerPackageId ?? item.id;
+    if (seenOwnedPackageKeys.has(key)) {
+      return false;
+    }
+
+    seenOwnedPackageKeys.add(key);
+    return true;
+  });
+}
+
 /** Recomputes purchase-only pricing for every editable booking line. */
 export function normalizeBookingDetailsLineItems(
   items: BookingLineItem[],
   catalogItems: ServiceCatalogItem[],
   ownedPackages: readonly ClientPackage[]
 ): BookingLineItem[] {
-  const enrichedItems = items.map(item => enrichPackageLineFromOwnedPackages(item, ownedPackages));
+  const dedupedItems = dedupeOwnedPackageBookingLines(items);
+  const enrichedItems = dedupedItems.map(item =>
+    enrichPackageLineFromOwnedPackages(item, ownedPackages)
+  );
   return enrichedItems.map(item =>
     normalizeBookingDetailsLineItem(item, catalogItems, ownedPackages, enrichedItems)
   );
@@ -1788,13 +1828,28 @@ export function normalizeBookingDetailsLineItem(
   const catalogOwnedPackage =
     ownedPackage ?? ownedPackages.find(pkg => pkg.packageId === service.id) ?? null;
 
+  if (isBookingDetailsCatalogPurchaseLine(item)) {
+    return {
+      ...item,
+      price: service.price,
+      newPurchaseUnits: quantity,
+      packageSessionLinked: false,
+      customerPackageId: bookAppointmentCustomerPackageId(),
+      ...(service.type === 'package'
+        ? { packageRemainingSessions: null, packagePulseCount: null }
+        : {}),
+    };
+  }
+
   if (service.type === 'package') {
-    const newPurchaseUnits = bookAppointmentNewPurchaseUnits(
-      service,
-      quantity,
-      ownedPackage,
-      ownedPackages
-    );
+    const newPurchaseUnits = isOwnedPackageReservedOnBookingLine(item)
+      ? 0
+      : bookAppointmentNewPurchaseUnits(
+          service,
+          quantity,
+          ownedPackage,
+          ownedPackages
+        );
     const usesOwnedPackageOnBooking =
       newPurchaseUnits === 0 &&
       (ownedPackage != null ||

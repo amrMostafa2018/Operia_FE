@@ -1,13 +1,17 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   inject,
   input,
+  OnDestroy,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -33,23 +37,33 @@ import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { PackageService } from '@app/features/packages/package.service';
+import {
+  getCarouselNextIcon,
+  getCarouselPrevIcon,
+  getRtlStartScrollLeft,
+} from '@app/shared/utils/rtl.util';
 import { AppointmentsApiService, BookingCustomerDto } from './appointments-api.service';
 import {
   BookingLineItem,
   BookingRecord,
   BookingWordStatus,
   bookAppointmentLineTotal,
-  bookingLineDisplaysPrice,
+  bookAppointmentMaxQuantity,
+  bookAppointmentOwnedPackageLineItem,
   bookingDetailsLineItemFromCatalog,
+  bookingLineDisplaysPrice,
   CatalogCategoryTab,
   ClientPackage,
   ClientRecord,
+  customerOwnsCatalogPackage,
+  displayedPackageRemainingUnits,
   displayedPackageUsedUnits,
   EMPTY_UNLISTED_FORM,
   formatTimeRange,
+  isBookingDetailsCatalogPurchaseLine,
   isOwnedPackageReservedOnBookingLine,
-  normalizeBookingDetailsLineItem,
   normalizeBookingDetailsLineItems,
+  packageUsesPulses,
   PaymentMethodId,
   PAYMENT_METHODS,
   ServiceCatalogItem,
@@ -91,7 +105,7 @@ export interface BookingDetailsSavePayload {
   styleUrl: './booking-details-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BookingDetailsDialogComponent {
+export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly permissions = inject(PermissionService);
   private readonly languageService = inject(LanguageService);
@@ -100,6 +114,8 @@ export class BookingDetailsDialogComponent {
   private readonly packagesApi = inject(PackageService);
   private readonly appointmentsApi = inject(AppointmentsApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly catalogTrack = viewChild<ElementRef<HTMLElement>>('catalogTrack');
+  private carouselResizeObserver: ResizeObserver | null = null;
   readonly currencyService = inject(CurrencyService);
 
   readonly visible = input(false);
@@ -119,6 +135,20 @@ export class BookingDetailsDialogComponent {
   private draftBookingKey: string | null = null;
   readonly showUnlisted = signal(false);
   readonly showServicePicker = signal(false);
+  readonly pickerSource = signal<'customer' | 'catalog'>('customer');
+  readonly showCatalogSection = signal(false);
+  readonly catalogQuantities = signal<Record<string, number>>({});
+  readonly canScrollLeft = signal(false);
+  readonly canScrollRight = signal(false);
+  readonly canActivateCatalogLeadingArrow = computed(() =>
+    this.isRtl() ? this.canActivateCatalogNextInternal() : this.canActivateCatalogPrevInternal()
+  );
+  readonly canActivateCatalogTrailingArrow = computed(() =>
+    this.isRtl() ? this.canActivateCatalogPrevInternal() : this.canActivateCatalogNextInternal()
+  );
+  readonly activeCategory = signal('all');
+  readonly searchQuery = signal('');
+  readonly customerPackagesLoading = signal(false);
   readonly unlistedSaving = signal(false);
 
   readonly unlistedForm = this.fb.nonNullable.group({
@@ -154,10 +184,32 @@ export class BookingDetailsDialogComponent {
     () => this.booking()?.status === 'booked' && (this.canManage() || this.canCancel())
   );
 
+  readonly categoryTabs = computed<CatalogCategoryTab[]>(() => [
+    { id: 'all', labelKey: 'BOOKINGS.SERVICE_TABS.ALL' },
+    ...this.catalogCategories(),
+  ]);
+
+  readonly customerPackages = computed(() => this.matchedClient()?.packages ?? []);
+
+  readonly filteredCatalogItems = computed(() => {
+    const category = this.activeCategory();
+    const query = this.searchQuery().trim().toLowerCase();
+    let services =
+      category === 'all'
+        ? this.catalogItems()
+        : this.catalogItems().filter(service => service.category === category);
+
+    if (query) {
+      services = services.filter(service => service.name.toLowerCase().includes(query));
+    }
+    return services;
+  });
+
   readonly totalAmount = computed(() => sumLineItemPrice(this.draftLineItems()));
   readonly remainingAmount = computed(() =>
     Math.max(this.totalAmount() - this.draftPaidAmount(), 0)
   );
+  readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
 
   constructor() {
     setupServerErrorClearing(this.unlistedForm, this.destroyRef, [
@@ -187,6 +239,11 @@ export class BookingDetailsDialogComponent {
         this.draftPaidAmount.set(current.paidAmount);
         this.showUnlisted.set(false);
         this.showServicePicker.set(false);
+        this.pickerSource.set('customer');
+        this.showCatalogSection.set(false);
+        this.catalogQuantities.set({});
+        this.activeCategory.set('all');
+        this.searchQuery.set('');
         this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
       },
       { allowSignalWrites: true }
@@ -199,15 +256,36 @@ export class BookingDetailsDialogComponent {
       },
       { allowSignalWrites: true }
     );
+    effect(
+      () => {
+        if (!this.visible() || !this.showServicePicker() || this.pickerSource() !== 'catalog') {
+          return;
+        }
+        this.filteredCatalogItems();
+        this.isRtl();
+        this.showCatalogSection();
+        this.refreshCarouselState();
+      },
+      { allowSignalWrites: true }
+    );
+  }
+
+  ngAfterViewInit(): void {
+    this.refreshCarouselState();
+  }
+
+  ngOnDestroy(): void {
+    this.carouselResizeObserver?.disconnect();
   }
 
   /** Loads owned packages for purchase-only pricing when editing booking lines. */
   loadCustomerPackages(booking: BookingRecord): void {
     const requestId = ++this.customerPackagesRequestId;
+    this.customerPackagesLoading.set(true);
     this.matchedClient.set(null);
     this.initializeDraftLineItems(booking, []);
     this.appointmentsApi
-      .findCustomer(booking.clientMobile)
+      .findCustomer(booking.clientMobile, booking.id)
       .pipe(
         map(customer => (customer ? this.toClientRecord(customer) : null)),
         takeUntilDestroyed(this.destroyRef)
@@ -217,6 +295,7 @@ export class BookingDetailsDialogComponent {
           if (requestId !== this.customerPackagesRequestId) {
             return;
           }
+          this.customerPackagesLoading.set(false);
           this.matchedClient.set(client);
           this.initializeDraftLineItems(booking, client?.packages ?? []);
         },
@@ -224,19 +303,20 @@ export class BookingDetailsDialogComponent {
           if (requestId !== this.customerPackagesRequestId) {
             return;
           }
+          this.customerPackagesLoading.set(false);
           this.initializeDraftLineItems(booking, []);
         },
       });
   }
 
   private initializeDraftLineItems(booking: BookingRecord, ownedPackages: ClientPackage[]): void {
-    this.draftLineItems.set(
-      normalizeBookingDetailsLineItems(
-        booking.lineItems,
-        this.catalogItems(),
-        ownedPackages
-      )
+    const normalized = normalizeBookingDetailsLineItems(
+      booking.lineItems,
+      this.catalogItems(),
+      ownedPackages
     );
+    this.draftLineItems.set(normalized);
+    this.catalogQuantities.set(this.extractCatalogQuantities(normalized));
   }
 
   private renormalizeDraftLineItems(items: BookingLineItem[]): BookingLineItem[] {
@@ -357,11 +437,18 @@ export class BookingDetailsDialogComponent {
     return bookAppointmentLineTotal(item);
   }
 
+  lineItemTrackKey(item: BookingLineItem): string {
+    return item.id;
+  }
+
   showsLinePrice(item: BookingLineItem): boolean {
     return bookingLineDisplaysPrice(item);
   }
 
   packageRemainingSessions(item: BookingLineItem): number | null {
+    if (isBookingDetailsCatalogPurchaseLine(item)) {
+      return null;
+    }
     if (item.type !== 'package' && !item.packageSessionLinked) {
       return null;
     }
@@ -416,46 +503,239 @@ export class BookingDetailsDialogComponent {
     }
   }
 
-  removeLineItem(itemId: string): void {
+  removeLineItem(itemId: string, itemIndex?: number): void {
     if (!this.isEditable()) {
       return;
     }
-    this.draftLineItems.update(items => items.filter(item => item.id !== itemId));
+    const items = this.draftLineItems();
+    const index =
+      itemIndex ?? items.findIndex(item => item.id === itemId);
+    if (index < 0) {
+      return;
+    }
+    const next = [...items.slice(0, index), ...items.slice(index + 1)];
+    this.catalogQuantities.set(this.extractCatalogQuantities(next));
+    this.draftLineItems.set(
+      normalizeBookingDetailsLineItems(next, this.catalogItems(), this.matchedClient()?.packages ?? [])
+    );
   }
 
-  addService(serviceId: string): void {
+  toggleServicePicker(): void {
+    const opening = !this.showServicePicker();
+    this.showServicePicker.set(opening);
+    if (!opening) {
+      return;
+    }
+    this.activeCategory.set('all');
+    this.searchQuery.set('');
+    this.pickerSource.set('customer');
+  }
+
+  setPickerSource(source: 'customer' | 'catalog'): void {
+    this.pickerSource.set(source);
+    if (source === 'catalog') {
+      this.showCatalogSection.set(true);
+      this.refreshCarouselState();
+    }
+  }
+
+  setCategory(category: string): void {
+    this.activeCategory.set(category);
+    this.refreshCarouselState();
+  }
+
+  onCatalogSearch(event: Event): void {
+    this.searchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  isPackageOnBooking(packageId: string, customerPackageId?: string): boolean {
+    return this.draftLineItems().some(item => {
+      if (customerPackageId) {
+        return item.customerPackageId === customerPackageId;
+      }
+      return item.type === 'package' && item.catalogPackageId === packageId;
+    });
+  }
+
+  ownedPackageSelectable(pkg: ClientPackage): boolean {
+    return this.catalogItems().some(item => item.id === pkg.packageId);
+  }
+
+  /** True when the customer already has a balance for this catalog package. */
+  customerOwnsCatalogItem(serviceId: string): boolean {
+    const ownedPackages = this.matchedClient()?.packages ?? [];
+    return customerOwnsCatalogPackage(serviceId, ownedPackages);
+  }
+
+  customerPackageRemaining(pkg: ClientPackage): number {
+    return displayedPackageRemainingUnits(pkg);
+  }
+
+  customerPackageRemainingLabel(pkg: ClientPackage): string {
+    return packageUsesPulses(pkg)
+      ? 'BOOKINGS.DETAILS.REMAINING_PULSES'
+      : 'BOOKINGS.DETAILS.REMAINING_SESSIONS';
+  }
+
+  packageExpiryLabel(expiryDate: string): string {
+    if (!expiryDate) {
+      return '';
+    }
+    const parsed = new Date(expiryDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return expiryDate;
+    }
+    return parsed.toLocaleDateString(this.languageService.currentLang(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  addOwnedPackage(pkg: ClientPackage): void {
     if (!this.isEditable()) {
       return;
     }
-    const service = this.catalogItems().find(item => item.id === serviceId);
-    if (!service) {
+    if (!this.ownedPackageSelectable(pkg)) {
+      this.toast.add({
+        severity: 'warn',
+        summary: this.translate.instant('BOOKINGS.DETAILS.PACKAGE_NOT_IN_CATALOG'),
+      });
       return;
     }
-    const ownedPackages = this.matchedClient()?.packages ?? [];
-    const existing = this.draftLineItems().find(
-      item => item.catalogPackageId === serviceId && item.type === service.type
-    );
-    if (existing && isOwnedPackageReservedOnBookingLine(existing)) {
+    if (
+      this.draftLineItems().some(item => item.customerPackageId === pkg.customerPackageId)
+    ) {
       this.toast.add({
         severity: 'warn',
         summary: this.translate.instant('BOOKINGS.DETAILS.PACKAGE_ALREADY_ON_BOOKING'),
       });
-      this.showServicePicker.set(false);
+      return;
+    }
+    const service = this.catalogItems().find(item => item.id === pkg.packageId);
+    if (!service) {
+      return;
+    }
+    this.draftLineItems.update(items =>
+      this.renormalizeDraftLineItems([
+        ...items,
+        bookAppointmentOwnedPackageLineItem(pkg, service),
+      ])
+    );
+  }
+
+  changeCatalogQuantity(service: ServiceCatalogItem, delta: number): void {
+    if (!this.isEditable()) {
+      return;
+    }
+    const current = this.catalogQuantities();
+    const previous = current[service.id] ?? 0;
+    const next = Math.min(bookAppointmentMaxQuantity(service), Math.max(0, previous + delta));
+    if (next === previous) {
       return;
     }
 
-    this.draftLineItems.update(items => {
-      const current = items.find(
-        item => item.catalogPackageId === serviceId && item.type === service.type
+    if (delta > 0 && previous === 0 && this.customerOwnsCatalogItem(service.id)) {
+      this.toast.add({
+        severity: 'warn',
+        summary: this.translate.instant('BOOKINGS.DETAILS.PACKAGE_ALREADY_OWNED'),
+        detail: this.translate.instant('BOOKINGS.DETAILS.PACKAGE_ALREADY_OWNED_HINT'),
+      });
+    }
+
+    this.catalogQuantities.set({ ...current, [service.id]: next });
+    this.rebuildCatalogLinesInDraft();
+  }
+
+  catalogQuantityFor(serviceId: string): number {
+    return this.catalogQuantities()[serviceId] ?? 0;
+  }
+
+  canIncreaseCatalogQuantity(service: ServiceCatalogItem): boolean {
+    return this.catalogQuantityFor(service.id) < bookAppointmentMaxQuantity(service);
+  }
+
+  catalogLeadingArrowIcon(): string {
+    const lang = this.languageService.currentLang();
+    return this.isRtl() ? getCarouselNextIcon(lang) : getCarouselPrevIcon(lang);
+  }
+
+  catalogTrailingArrowIcon(): string {
+    const lang = this.languageService.currentLang();
+    return this.isRtl() ? getCarouselPrevIcon(lang) : getCarouselNextIcon(lang);
+  }
+
+  scrollCatalogLeadingArrow(): void {
+    if (this.isRtl()) {
+      this.scrollCatalogNextInternal();
+      return;
+    }
+    this.scrollCatalogPrevInternal();
+  }
+
+  scrollCatalogTrailingArrow(): void {
+    if (this.isRtl()) {
+      this.scrollCatalogPrevInternal();
+      return;
+    }
+    this.scrollCatalogNextInternal();
+  }
+
+  private canActivateCatalogPrevInternal(): boolean {
+    return this.isRtl() ? this.canScrollRight() : this.canScrollLeft();
+  }
+
+  private canActivateCatalogNextInternal(): boolean {
+    return this.isRtl() ? this.canScrollLeft() : this.canScrollRight();
+  }
+
+  private scrollCatalogPrevInternal(): void {
+    this.scrollCatalog(this.isRtl() ? 1 : -1);
+  }
+
+  private scrollCatalogNextInternal(): void {
+    this.scrollCatalog(this.isRtl() ? -1 : 1);
+  }
+
+  scrollCatalog(visualDirection: -1 | 1): void {
+    const track = this.catalogTrack()?.nativeElement;
+    if (!track) {
+      return;
+    }
+
+    const cards = Array.from(track.querySelectorAll<HTMLElement>('.service-card'));
+    if (cards.length === 0) {
+      this.updateScrollState();
+      return;
+    }
+
+    const trackRect = track.getBoundingClientRect();
+    const epsilon = 4;
+    let target: HTMLElement | undefined;
+
+    if (visualDirection < 0) {
+      const overflowingLeft = cards.filter(
+        card => card.getBoundingClientRect().left < trackRect.left - epsilon
       );
-      const next = current
-        ? items.map(item =>
-            item.id === current.id ? { ...item, quantity: item.quantity + 1 } : item
-          )
-        : [...items, bookingDetailsLineItemFromCatalog(service, 1, ownedPackages, items)];
-      return this.renormalizeDraftLineItems(next);
-    });
-    this.showServicePicker.set(false);
+      target = overflowingLeft[overflowingLeft.length - 1];
+    } else {
+      target = cards.find(card => card.getBoundingClientRect().right > trackRect.right + epsilon);
+    }
+
+    if (!target) {
+      this.updateScrollState();
+      return;
+    }
+
+    const cardRect = target.getBoundingClientRect();
+    const scrollDelta =
+      visualDirection < 0 ? cardRect.left - trackRect.left : cardRect.right - trackRect.right;
+    track.scrollTo({ left: track.scrollLeft + scrollDelta, behavior: 'smooth' });
+    window.setTimeout(() => this.updateScrollState(), 350);
+  }
+
+  onCatalogTrackScroll(): void {
+    this.updateScrollState();
   }
 
   /** Validates and creates an unlisted service before adding it to the booking draft. */
@@ -585,5 +865,115 @@ export class BookingDetailsDialogComponent {
       return String(control.getError('server'));
     }
     return null;
+  }
+
+  private rebuildCatalogLinesInDraft(): void {
+    const ownedPackages = this.matchedClient()?.packages ?? [];
+    const catalogItems = this.catalogItems();
+    const preserved = this.draftLineItems().filter(item => this.isPreservedBookingLine(item));
+    const catalogLines: BookingLineItem[] = [];
+
+    for (const service of catalogItems) {
+      const quantity = this.catalogQuantities()[service.id] ?? 0;
+      if (quantity <= 0) {
+        continue;
+      }
+      catalogLines.push({
+        ...bookingDetailsLineItemFromCatalog(
+          service,
+          quantity,
+          [],
+          [...preserved, ...catalogLines]
+        ),
+        id: `line-${service.id}`,
+      });
+    }
+
+    this.draftLineItems.set(
+      normalizeBookingDetailsLineItems(
+        [...preserved, ...catalogLines],
+        catalogItems,
+        ownedPackages
+      )
+    );
+  }
+
+  private isPreservedBookingLine(item: BookingLineItem): boolean {
+    if (item.type === 'unlisted' || item.id.startsWith('line-owned-')) {
+      return true;
+    }
+    if (item.catalogPackageId && item.id === `line-${item.catalogPackageId}`) {
+      return false;
+    }
+    return true;
+  }
+
+  private extractCatalogQuantities(items: readonly BookingLineItem[]): Record<string, number> {
+    const quantities: Record<string, number> = {};
+    for (const item of items) {
+      if (!item.catalogPackageId || this.isPreservedBookingLine(item)) {
+        continue;
+      }
+      quantities[item.catalogPackageId] = item.quantity;
+    }
+    return quantities;
+  }
+
+  private refreshCarouselState(): void {
+    queueMicrotask(() => {
+      this.bindCarouselObserver();
+      this.resetCarouselScroll();
+      this.updateScrollState();
+      window.setTimeout(() => {
+        this.bindCarouselObserver();
+        this.resetCarouselScroll();
+        this.updateScrollState();
+      }, 150);
+    });
+  }
+
+  private bindCarouselObserver(): void {
+    const track = this.catalogTrack()?.nativeElement;
+    if (!track) {
+      return;
+    }
+
+    this.carouselResizeObserver?.disconnect();
+    this.carouselResizeObserver = new ResizeObserver(() => this.updateScrollState());
+    this.carouselResizeObserver.observe(track);
+  }
+
+  private resetCarouselScroll(): void {
+    const track = this.catalogTrack()?.nativeElement;
+    if (!track) {
+      return;
+    }
+    track.scrollLeft = getRtlStartScrollLeft(track, this.isRtl());
+  }
+
+  private updateScrollState(): void {
+    const track = this.catalogTrack()?.nativeElement;
+    if (!track) {
+      this.canScrollLeft.set(false);
+      this.canScrollRight.set(false);
+      return;
+    }
+
+    const cards = Array.from(track.querySelectorAll<HTMLElement>('.service-card'));
+    if (cards.length === 0) {
+      this.canScrollLeft.set(false);
+      this.canScrollRight.set(false);
+      return;
+    }
+
+    const trackRect = track.getBoundingClientRect();
+    const firstRect = cards[0].getBoundingClientRect();
+    const lastRect = cards[cards.length - 1].getBoundingClientRect();
+    const epsilon = 4;
+    const overflowLeft = Math.min(firstRect.left, lastRect.left) < trackRect.left - epsilon;
+    const overflowRight = Math.max(firstRect.right, lastRect.right) > trackRect.right + epsilon;
+
+    this.canScrollLeft.set(overflowLeft);
+    this.canScrollRight.set(overflowRight);
   }
 }

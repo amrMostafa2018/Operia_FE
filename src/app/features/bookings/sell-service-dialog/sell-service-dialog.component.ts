@@ -521,7 +521,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   removeLineItem(itemId: string): void {
     const ownedMatch = itemId.match(/^line-owned-(.+)$/);
     if (ownedMatch) {
-      this.removeSelectedPackageId(ownedMatch[1]);
+      this.removeSelectedOwnedLine(ownedMatch[1]);
       return;
     }
 
@@ -656,5 +656,15 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
 
   private removeSelectedPackageId(packageId: string): void {
     this.selectedPackageIds.update(ids => ids.filter(id => id !== packageId));
+  }
+
+  private removeSelectedOwnedLine(ownedLineKey: string): void {
+    const client = this.matchedClient();
+    const ownedPackage =
+      client?.packages.find(pkg => pkg.customerPackageId === ownedLineKey) ??
+      client?.packages.find(pkg => pkg.packageId === ownedLineKey);
+    if (ownedPackage) {
+      this.removeSelectedPackageId(ownedPackage.packageId);
+    }
   }
 }

@@ -156,10 +156,12 @@ export class AppointmentsApiService {
   private readonly url = `${environment.apiUrl}/bookings`;
 
   /** Finds a registered customer and owned balances by mobile number. */
-  findCustomer(mobile: string): Observable<BookingCustomerDto | null> {
-    return this.http.get<BookingCustomerDto | null>(`${this.url}/customers/by-mobile`, {
-      params: new HttpParams().set('mobile', mobile),
-    });
+  findCustomer(mobile: string, bookingId?: string): Observable<BookingCustomerDto | null> {
+    let params = new HttpParams().set('mobile', mobile);
+    if (bookingId) {
+      params = params.set('bookingId', bookingId);
+    }
+    return this.http.get<BookingCustomerDto | null>(`${this.url}/customers/by-mobile`, { params });
   }
 
   /** Returns enabled payment method identifiers without account details. */
