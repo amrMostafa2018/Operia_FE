@@ -40,7 +40,18 @@ export interface CalendarBookingItemDto {
   customerPackageId: string | null;
   packageRemainingSessions: number | null;
   packagePulseCount: number | null;
+  packageTotal: number | null;
+  packageUsed: number | null;
   packageSessionLinked: boolean;
+}
+
+/** Describes one booking line outcome submitted when closing a booking. */
+export interface CloseBookingItemInput {
+  bookingItemId: string;
+  customerPackageId: string | null;
+  status: 'complete' | 'cancel';
+  pulsesUsed?: number | null;
+  notes?: string | null;
 }
 
 /** Describes calendar booking dto exchanged with the API. */
@@ -196,6 +207,18 @@ export class AppointmentsApiService {
     return this.http.post<{ id: string; status: string; version: string }>(
       `${this.url}/${encodeURIComponent(id)}/cancel`,
       { version }
+    );
+  }
+
+  /** Closes a booked appointment and finalises per-item package usage. */
+  closeBooking(
+    id: string,
+    version: string,
+    items: CloseBookingItemInput[]
+  ): Observable<{ id: string; status: string; version: string }> {
+    return this.http.post<{ id: string; status: string; version: string }>(
+      `${this.url}/${encodeURIComponent(id)}/close`,
+      { version, items }
     );
   }
 

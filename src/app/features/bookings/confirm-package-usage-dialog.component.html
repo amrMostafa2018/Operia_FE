@@ -9,21 +9,22 @@
   [autoZIndex]="true"
   [baseZIndex]="12000"
   appendTo="body"
-  styleClass="bookings-package-usage-dialog"
-  [style]="{ width: 'min(580px, 94vw)' }"
+  styleClass="bookings-package-usage-dialog bookings-close-dialog"
+  [style]="{ width: 'min(640px, 94vw)' }"
 >
   <ng-template pTemplate="header">
     <div class="dialog-header">
       <span class="header-icon"><i class="pi pi-shield"></i></span>
       <div>
-        <h3>{{ 'BOOKINGS.PACKAGE_USAGE.TITLE' | translate }}</h3>
-        <p>{{ 'BOOKINGS.PACKAGE_USAGE.SUBTITLE' | translate }}</p>
+        <h3>{{ 'BOOKINGS.CLOSE.TITLE' | translate }}</h3>
+        <p>{{ 'BOOKINGS.CLOSE.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <button
       type="button"
       class="dialog-close"
       (click)="close()"
+      [disabled]="saving()"
       [attr.aria-label]="'COMMON.CLOSE' | translate"
     >
       <i class="pi pi-times"></i>
@@ -31,93 +32,139 @@
   </ng-template>
 
   <form class="usage-form" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="field-row" [class.invalid]="isInvalid('usageCount')">
-      <span class="step">1</span>
-      <div class="field-body">
-        <label for="package-usage-count">{{
-          'BOOKINGS.PACKAGE_USAGE.USAGE_COUNT' | translate
-        }}</label>
-        <small>{{ 'BOOKINGS.PACKAGE_USAGE.USAGE_HINT' | translate }}</small>
-        @if (isInvalid('usageCount')) {
-          <small class="field-error">
-            @if (form.controls.usageCount.errors?.['required']) {
-              {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.USAGE_REQUIRED' | translate }}
-            } @else if (form.controls.usageCount.errors?.['min']) {
-              {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.USAGE_MIN' | translate }}
-            }
-          </small>
-        }
-      </div>
-      <div class="field-control count-control">
-        <p-inputNumber
-          inputId="package-usage-count"
-          formControlName="usageCount"
-          [min]="0"
-          [useGrouping]="false"
-          [showButtons]="false"
-          inputStyleClass="usage-count-input"
-        />
-      </div>
-    </div>
+    @if (formMatchesLines()) {
+      <p-tabView styleClass="close-booking-tabs">
+        @for (line of lineItems(); track line.id; let index = $index) {
+          @if (itemGroup(index); as group) {
+            <p-tabPanel>
+              <ng-template pTemplate="header">
+                <span class="tab-header" [class.tab-header--error]="tabHasError(index)">
+                  {{ line.name }}
+                  @if (tabHasError(index)) {
+                    <span class="tab-error-dot" aria-hidden="true"></span>
+                  }
+                </span>
+              </ng-template>
 
-    <div class="field-row service-row" [class.invalid]="isInvalid('serviceType')">
-      <span class="step">2</span>
-      <div class="field-body">
-        <label for="package-usage-service-type">{{
-          'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE' | translate
-        }}</label>
-        <small>{{ 'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_HINT' | translate }}</small>
-        @if (isInvalid('serviceType')) {
-          <small class="field-error">
-            {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.SERVICE_TYPE_REQUIRED' | translate }}
-          </small>
-        }
-      </div>
-      <div class="field-control">
-        <p-dropdown
-          inputId="package-usage-service-type"
-          formControlName="serviceType"
-          [options]="serviceOptions()"
-          optionLabel="label"
-          optionValue="value"
-          appendTo="body"
-          [autoZIndex]="true"
-          [baseZIndex]="13000"
-          [placeholder]="'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_PLACEHOLDER' | translate"
-          [emptyMessage]="'BOOKINGS.PACKAGE_USAGE.SERVICE_TYPE_EMPTY' | translate"
-          styleClass="service-type-dropdown"
-          panelStyleClass="package-usage-dropdown-panel"
-        />
-      </div>
-    </div>
+              <div class="tab-panel" [formGroup]="group">
+                @if (isPulseLine(line) || isSessionPackageLine(line)) {
+                  <div class="balance-row">
+                    <div class="balance-item">
+                      <span class="balance-label">{{ 'BOOKINGS.CLOSE.TOTAL' | translate }}</span>
+                      <strong>{{ lineTotal(line) ?? '—' }}</strong>
+                    </div>
+                    <div class="balance-item">
+                      <span class="balance-label">{{ 'BOOKINGS.CLOSE.USED' | translate }}</span>
+                      <strong>{{ lineUsed(line) ?? '—' }}</strong>
+                    </div>
+                    <div class="balance-item">
+                      <span class="balance-label">{{
+                        'BOOKINGS.CLOSE.REMAINING' | translate
+                      }}</span>
+                      <strong>{{ lineRemaining(line) ?? '—' }}</strong>
+                    </div>
+                  </div>
+                }
 
-    <div class="field-row notes-row" [class.invalid]="isInvalid('notes')">
-      <span class="step">3</span>
-      <div class="notes-stack">
-        <div class="field-body">
-          <label for="package-usage-notes">{{ 'BOOKINGS.PACKAGE_USAGE.NOTES' | translate }}</label>
-          <small>{{ 'BOOKINGS.PACKAGE_USAGE.NOTES_HINT' | translate }}</small>
-          @if (isInvalid('notes')) {
-            <small class="field-error">
-              {{ 'BOOKINGS.PACKAGE_USAGE.ERRORS.NOTES_MAX' | translate }}
-            </small>
+                @if (showPulseInput(line, index)) {
+                  <div class="field-row pulse-row" [class.invalid]="isInvalid(index, 'pulsesUsed')">
+                    <span class="step">1</span>
+                    <div class="field-body">
+                      <label [for]="'close-pulses-' + index">{{
+                        'BOOKINGS.CLOSE.PULSES_USED_LABEL' | translate
+                      }}</label>
+                      <small>{{ 'BOOKINGS.CLOSE.PULSES_USED_HINT' | translate }}</small>
+                      @if (isInvalid(index, 'pulsesUsed')) {
+                        <small class="field-error">
+                          @if (group.controls['pulsesUsed'].errors?.['required']) {
+                            {{ 'BOOKINGS.CLOSE.ERRORS.PULSES_REQUIRED' | translate }}
+                          } @else if (group.controls['pulsesUsed'].errors?.['min']) {
+                            {{ 'BOOKINGS.CLOSE.ERRORS.PULSES_MIN' | translate }}
+                          } @else if (group.controls['pulsesUsed'].errors?.['max']) {
+                            {{ 'BOOKINGS.CLOSE.ERRORS.PULSES_MAX' | translate }}
+                          }
+                        </small>
+                      }
+                    </div>
+                    <div class="field-control count-control">
+                      <p-inputNumber
+                        [inputId]="'close-pulses-' + index"
+                        formControlName="pulsesUsed"
+                        [min]="1"
+                        [max]="pulseMax(line, index)"
+                        [useGrouping]="false"
+                        [showButtons]="false"
+                        inputStyleClass="usage-count-input"
+                      />
+                    </div>
+                  </div>
+                }
+
+                <div class="field-row status-row" [class.invalid]="isInvalid(index, 'status')">
+                  <span class="step">{{ showPulseInput(line, index) ? 2 : 1 }}</span>
+                  <div class="field-body">
+                    <label [for]="'close-status-' + index">{{
+                      'BOOKINGS.CLOSE.STATUS_LABEL' | translate
+                    }}</label>
+                  </div>
+                  <div class="field-control">
+                    <p-dropdown
+                      [inputId]="'close-status-' + index"
+                      formControlName="status"
+                      [options]="statusOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      appendTo="body"
+                      [autoZIndex]="true"
+                      [baseZIndex]="13000"
+                      styleClass="service-type-dropdown"
+                      panelStyleClass="package-usage-dropdown-panel"
+                    >
+                      <ng-template pTemplate="selectedItem" let-selected>
+                        {{ selected.label | translate }}
+                      </ng-template>
+                      <ng-template pTemplate="item" let-option>
+                        {{ option.label | translate }}
+                      </ng-template>
+                    </p-dropdown>
+                  </div>
+                </div>
+
+                <div class="field-row notes-row" [class.invalid]="isInvalid(index, 'notes')">
+                  <span class="step">{{ showPulseInput(line, index) ? 3 : 2 }}</span>
+                  <div class="notes-stack">
+                    <div class="field-body">
+                      <label [for]="'close-notes-' + index">{{
+                        'BOOKINGS.CLOSE.NOTES_LABEL' | translate
+                      }}</label>
+                      <small>{{ 'BOOKINGS.CLOSE.NOTES_HINT' | translate }}</small>
+                      @if (isInvalid(index, 'notes')) {
+                        <small class="field-error">
+                          {{ 'BOOKINGS.CLOSE.ERRORS.NOTES_MAX' | translate }}
+                        </small>
+                      }
+                    </div>
+                    <div class="textarea-wrap">
+                      <textarea
+                        pInputTextarea
+                        [id]="'close-notes-' + index"
+                        class="control-input notes-input"
+                        formControlName="notes"
+                        rows="4"
+                      ></textarea>
+                      <span class="counter" dir="ltr">{{ notesLength(index) }} / 200</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </p-tabPanel>
           }
-        </div>
-        <div class="textarea-wrap">
-          <textarea
-            pInputTextarea
-            id="package-usage-notes"
-            class="control-input notes-input"
-            formControlName="notes"
-            rows="4"
-          ></textarea>
-          <span class="counter">{{ notesLength() }} / 200</span>
-        </div>
-      </div>
-    </div>
+        }
+      </p-tabView>
+    }
 
-    <button type="submit" class="package-usage-submit">
-      {{ 'BOOKINGS.PACKAGE_USAGE.SUBMIT' | translate }}
+    <button type="submit" class="package-usage-submit" [disabled]="saving()">
+      {{ 'BOOKINGS.CLOSE.SUBMIT' | translate }}
     </button>
   </form>
 </p-dialog>

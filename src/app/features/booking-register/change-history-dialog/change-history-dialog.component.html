@@ -37,6 +37,40 @@
             <p class="description">
               {{ event.descriptionKey | translate: event.descriptionParams ?? {} }}
             </p>
+            @if (event.closeItems?.length) {
+              <ul class="close-items">
+                @for (item of event.closeItems; track item.name + item.status + $index) {
+                  <li class="close-item">
+                    <div class="close-item-head">
+                      <strong>{{ item.name }}</strong>
+                      <span
+                        class="close-item-status"
+                        [class.close-item-status--complete]="item.status === 'complete'"
+                        [class.close-item-status--cancel]="item.status === 'cancel'"
+                      >
+                        {{ closeItemStatusKey(item) | translate }}
+                      </span>
+                    </div>
+                    @if (item.notes) {
+                      <p class="close-item-detail close-item-notes">
+                        {{
+                          'BOOKING_REGISTER.HISTORY.CLOSED_ITEM_NOTES'
+                            | translate: { notes: item.notes }
+                        }}
+                      </p>
+                    }
+                    @if (item.pulsesUsed != null && item.pulsesUsed > 0) {
+                      <p class="close-item-detail">
+                        {{
+                          'BOOKING_REGISTER.HISTORY.CLOSED_ITEM_PULSES'
+                            | translate: { count: item.pulsesUsed }
+                        }}
+                      </p>
+                    }
+                  </li>
+                }
+              </ul>
+            }
           </div>
           <div class="history-meta">
             <p class="actor">{{ actorLabel(event) }}</p>

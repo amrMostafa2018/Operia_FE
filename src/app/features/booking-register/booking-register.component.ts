@@ -27,6 +27,7 @@ import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import {
   BOOKING_REGISTER_PAGE_SIZES,
   BOOKING_REGISTER_STATUS_OPTIONS,
+  BookingRegisterCloseHistoryItem,
   BookingRegisterFilters,
   BookingRegisterHistoryEvent,
   BookingRegisterRow,
@@ -260,6 +261,11 @@ export class BookingRegisterComponent {
     this.selectedBookingRecord.set(null);
   }
 
+  onDetailsBookingClosed(): void {
+    this.closeDetails();
+    this.loadRows();
+  }
+
   /** Opens cancellation confirmation only for the selected Booked record. */
   requestCancellation(bookingId: string): void {
     const booking = this.selectedBooking();
@@ -344,12 +350,18 @@ export class BookingRegisterComponent {
                 ? 'created'
                 : event.action === 'Cancelled'
                   ? 'cancelled'
-                  : 'updated',
+                  : event.action === 'Closed'
+                    ? 'closed'
+                    : 'updated',
             actorName: event.changedByDisplayName ?? '—',
             timestamp: new Date(event.occurredAt),
             ...this.historyDescription(event.action, event.changesJson),
             markerClass:
-              event.action === 'Created' ? 'history-marker--created' : 'history-marker--status',
+              event.action === 'Created'
+                ? 'history-marker--created'
+                : event.action === 'Closed'
+                  ? 'history-marker--completed'
+                  : 'history-marker--status',
           }))
         );
         this.historyOpen.set(true);
@@ -534,12 +546,18 @@ export class BookingRegisterComponent {
   private historyDescription(
     action: string,
     changesJson: string | null
-  ): Pick<BookingRegisterHistoryEvent, 'descriptionKey' | 'descriptionParams'> {
+  ): Pick<BookingRegisterHistoryEvent, 'descriptionKey' | 'descriptionParams' | 'closeItems'> {
     if (action === 'Created') {
       return { descriptionKey: 'BOOKING_REGISTER.HISTORY.CREATED_DESC' };
     }
     if (action === 'Cancelled') {
       return { descriptionKey: 'BOOKING_REGISTER.HISTORY.CANCELLED_DESC' };
+    }
+    if (action === 'Closed') {
+      return {
+        descriptionKey: 'BOOKING_REGISTER.HISTORY.CLOSED_DESC',
+        closeItems: this.parseCloseHistoryItems(changesJson),
+      };
     }
     try {
       const changes = JSON.parse(changesJson ?? '{}') as {
@@ -558,6 +576,40 @@ export class BookingRegisterComponent {
     } catch {
       return { descriptionKey: 'BOOKING_REGISTER.HISTORY.UPDATED_DESC_FALLBACK' };
     }
+  }
+
+  private parseCloseHistoryItems(changesJson: string | null): BookingRegisterCloseHistoryItem[] {
+    try {
+      const changes = JSON.parse(changesJson ?? '{}') as {
+        Items?: Record<string, unknown>[];
+        items?: Record<string, unknown>[];
+      };
+      const items = changes.Items ?? changes.items ?? [];
+
+      return items.map(item => {
+        const status = this.readHistoryString(item, 'Status', 'status');
+        const pulses = item['PulsesUsed'] ?? item['pulsesUsed'];
+        return {
+          name: this.readHistoryString(item, 'Name', 'name') || '—',
+          status: status === 'cancel' ? 'cancel' : 'complete',
+          pulsesUsed: typeof pulses === 'number' ? pulses : null,
+          notes: this.readHistoryString(item, 'Notes', 'notes') || null,
+        } satisfies BookingRegisterCloseHistoryItem;
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  private readHistoryString(item: Record<string, unknown>, ...keys: string[]): string {
+    for (const key of keys) {
+      const value = item[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return '';
   }
 
   /** Shows localized validation messages returned by the booking API. */

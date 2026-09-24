@@ -218,6 +218,9 @@
     "BookingPackageEditNotAllowed": "The reserved package session cannot be added, removed or replaced while editing this booking.",
     "BookingPaymentMethodUnavailable": "The selected payment method is no longer enabled. Choose another method.",
     "BookingItemsRequired": "Choose at least one service before saving changes.",
+    "BookingNotBookedStatus": "Booking is not in Booked status.",
+    "PulsesExceedRemaining": "Pulses used cannot exceed remaining balance.",
+    "CloseItemsIncomplete": "Close request must include every booking line item.",
     "GalleryPhotoLimitExceeded": "A maximum of six business photos is allowed.",
     "BusinessProfileRequired": "Complete the business profile before changing activity settings.",
     "FieldRequired": "This field is required.",
@@ -801,6 +804,7 @@
       "TIME_CHANGED": "End time changed",
       "UPDATED": "Booking updated",
       "CANCELLED": "Booking cancelled",
+      "CLOSED": "Booking completed",
       "ROLE_RECEPTION": "Receptionist",
       "ROLE_ADMIN": "Administrator",
       "CREATED_DESC": "Booking created successfully",
@@ -808,7 +812,12 @@
       "TIME_CHANGED_DESC": "End time changed from {{from}} to {{to}}",
       "UPDATED_DESC": "Services changed from {{from}} to {{to}}",
       "UPDATED_DESC_FALLBACK": "Booking details were updated",
-      "CANCELLED_DESC": "Booking was cancelled"
+      "CANCELLED_DESC": "Booking was cancelled",
+      "CLOSED_DESC": "Booking was closed and marked as completed",
+      "CLOSED_ITEM_COMPLETE": "Completed",
+      "CLOSED_ITEM_CANCEL": "Not performed",
+      "CLOSED_ITEM_PULSES": "{{count}} pulses used",
+      "CLOSED_ITEM_NOTES": "Notes: {{notes}}"
     }
   },
   "BOOKINGS": {
@@ -967,6 +976,29 @@
         "NOTES_MAX": "Notes cannot exceed 200 characters."
       }
     },
+    "CLOSE": {
+      "TITLE": "Close and confirm usage",
+      "SUBTITLE": "Please confirm the outcome for every service on this booking",
+      "TOTAL": "Total",
+      "USED": "Used",
+      "REMAINING": "Remaining",
+      "PULSES_USED_LABEL": "Pulses used in this session",
+      "PULSES_USED_HINT": "Enter the number of pulses used",
+      "STATUS_LABEL": "Status",
+      "STATUS_COMPLETE": "Complete",
+      "STATUS_CANCEL": "Cancel",
+      "NOTES_LABEL": "Notes (optional)",
+      "NOTES_HINT": "You can add any extra notes",
+      "SUBMIT": "Close and confirm usage",
+      "VALIDATION_INCOMPLETE": "Please complete all required fields before confirming.",
+      "SUCCESS": "Booking closed successfully.",
+      "ERRORS": {
+        "PULSES_REQUIRED": "Pulses used is required.",
+        "PULSES_MIN": "Pulses used must be at least 1.",
+        "PULSES_MAX": "Pulses used cannot exceed the remaining balance.",
+        "NOTES_MAX": "Notes cannot exceed 200 characters."
+      }
+    },
     "BOOK": {
       "TITLE": "Book service",
       "CLIENT_SECTION": "Client details",
@@ -1063,7 +1095,6 @@
     "ALL_STATUS": "All statuses",
     "SHOWING": "Showing {{count}} of {{total}} bookings",
     "EXPORT": "Export Excel/CSV",
-    "CLOSE": "Close",
     "CANCEL": "Cancel",
     "BACK": "Back",
     "CANCEL_TITLE": "Cancel booking",

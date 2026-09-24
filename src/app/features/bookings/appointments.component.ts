@@ -938,6 +938,11 @@ export class AppointmentsComponent {
     this.detailsDialogVisible.set(false);
   }
 
+  onDetailsBookingClosed(): void {
+    this.detailsDialogVisible.set(false);
+    this.loadBookings();
+  }
+
   onDetailsCancelRequest(bookingId: string): void {
     this.activeBookingId.set(bookingId);
     this.cancelConfirmVisible.set(true);

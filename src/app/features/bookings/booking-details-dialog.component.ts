@@ -36,13 +36,14 @@ import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
+import { extractApiFieldErrors, translateApiFieldErrors } from '@core/utils/api-error.util';
 import { PackageService } from '@app/features/packages/package.service';
 import {
   getCarouselNextIcon,
   getCarouselPrevIcon,
   getRtlStartScrollLeft,
 } from '@app/shared/utils/rtl.util';
-import { AppointmentsApiService, BookingCustomerDto } from './appointments-api.service';
+import { AppointmentsApiService, BookingCustomerDto, CloseBookingItemInput } from './appointments-api.service';
 import {
   BookingLineItem,
   BookingRecord,
@@ -77,6 +78,7 @@ import {
   toLineItemFromCreatedPackage,
   toUnlistedPackagePayload,
 } from './unlisted-package.util';
+import { ConfirmPackageUsageDialogComponent } from './confirm-package-usage-dialog.component';
 
 /** Describes booking details save payload used by the booking UI. */
 export interface BookingDetailsSavePayload {
@@ -100,6 +102,7 @@ export interface BookingDetailsSavePayload {
     DropdownModule,
     TranslatePipe,
     UnlistedCategoryFieldComponent,
+    ConfirmPackageUsageDialogComponent,
   ],
   templateUrl: './booking-details-dialog.component.html',
   styleUrl: './booking-details-dialog.component.scss',
@@ -126,6 +129,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   readonly closed = output<void>();
   readonly saved = output<BookingDetailsSavePayload>();
   readonly cancelBooking = output<string>();
+  readonly bookingClosed = output<string>();
   readonly packageCreated = output<void>();
 
   readonly paymentMethods = signal<typeof PAYMENT_METHODS>([]);
@@ -133,6 +137,8 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   readonly paymentMethodsUnavailable = signal(false);
   private paymentMethodsRequestId = 0;
   private draftBookingKey: string | null = null;
+  readonly showCloseConfirm = signal(false);
+  readonly closeSaving = signal(false);
   readonly showUnlisted = signal(false);
   readonly showServicePicker = signal(false);
   readonly pickerSource = signal<'customer' | 'catalog'>('customer');
@@ -180,6 +186,12 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   readonly canCancel = computed(() => this.permissions.hasPermission(Policies.BookingsCancel));
 
   readonly isEditable = computed(() => this.booking()?.status === 'booked' && this.canManage());
+  readonly canClose = computed(
+    () =>
+      this.booking()?.status === 'booked' &&
+      this.canManage() &&
+      (this.booking()?.lineItems.length ?? 0) > 0
+  );
   readonly showActions = computed(
     () => this.booking()?.status === 'booked' && (this.canManage() || this.canCancel())
   );
@@ -822,8 +834,78 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     this.cancelBooking.emit(current.id);
   }
 
+  /** Opens the close-and-confirm usage dialog for every booking line. */
+  requestCloseBooking(): void {
+    const current = this.booking();
+    if (!current || !this.canClose()) {
+      return;
+    }
+    this.showCloseConfirm.set(true);
+  }
+
+  /** Persists close outcomes for all booking lines. */
+  onCloseConfirmed(items: CloseBookingItemInput[]): void {
+    const current = this.booking();
+    if (!current?.version || this.closeSaving()) {
+      return;
+    }
+
+    this.closeSaving.set(true);
+    this.appointmentsApi
+      .closeBooking(current.id, current.version, items)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.closeSaving.set(false);
+          this.showCloseConfirm.set(false);
+          this.toast.add({
+            severity: 'success',
+            summary: this.translate.instant('BOOKINGS.CLOSE.SUCCESS'),
+          });
+          this.bookingClosed.emit(current.id);
+          this.closed.emit();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.closeSaving.set(false);
+          this.showCloseApiErrors(error);
+        },
+      });
+  }
+
+  closeCloseConfirm(): void {
+    if (this.closeSaving()) {
+      return;
+    }
+    this.showCloseConfirm.set(false);
+  }
+
   close(): void {
     this.closed.emit();
+  }
+
+  private showCloseApiErrors(error: HttpErrorResponse): void {
+    const translated = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+      this.translate.instant(key)
+    );
+    const entries = Object.entries(translated);
+    if (entries.length > 0) {
+      for (const [, message] of entries) {
+        this.toast.add({
+          severity: 'error',
+          summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+          detail: message,
+        });
+      }
+      return;
+    }
+
+    this.toast.add({
+      severity: 'error',
+      summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+      detail:
+        (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
+        this.translate.instant('HTTP_ERRORS.SERVER'),
+    });
   }
 
   private toClientRecord(customer: BookingCustomerDto): ClientRecord {

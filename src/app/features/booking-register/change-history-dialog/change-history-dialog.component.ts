@@ -3,7 +3,10 @@ import { CommonModule } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
 import { LanguageService } from '@core/services/language.service';
-import { BookingRegisterHistoryEvent } from '../models/booking-register.model';
+import {
+  BookingRegisterCloseHistoryItem,
+  BookingRegisterHistoryEvent,
+} from '../models/booking-register.model';
 
 /** Displays the recorded change history for a booking. */
 @Component({
@@ -69,6 +72,10 @@ export class ChangeHistoryDialogComponent {
         return 'BOOKING_REGISTER.HISTORY.UPDATED';
       case 'cancelled':
         return 'BOOKING_REGISTER.HISTORY.CANCELLED';
+      case 'closed':
+        return 'BOOKING_REGISTER.HISTORY.CLOSED';
+      default:
+        return 'BOOKING_REGISTER.HISTORY.UPDATED';
     }
   }
 
@@ -80,9 +87,19 @@ export class ChangeHistoryDialogComponent {
         return 'history-title--employee';
       case 'time_changed':
         return 'history-title--time';
+      case 'closed':
+        return 'history-title--completed';
       case 'updated':
       case 'cancelled':
         return 'history-title--status';
+      default:
+        return 'history-title--status';
     }
+  }
+
+  closeItemStatusKey(item: BookingRegisterCloseHistoryItem): string {
+    return item.status === 'cancel'
+      ? 'BOOKING_REGISTER.HISTORY.CLOSED_ITEM_CANCEL'
+      : 'BOOKING_REGISTER.HISTORY.CLOSED_ITEM_COMPLETE';
   }
 }

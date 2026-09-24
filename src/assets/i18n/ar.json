@@ -218,6 +218,9 @@
     "BookingPackageEditNotAllowed": "لا يمكن إضافة جلسة الباقة المحجوزة أو حذفها أو استبدالها أثناء تعديل هذا الحجز.",
     "BookingPaymentMethodUnavailable": "طريقة الدفع المحددة لم تعد مفعّلة. اختر طريقة أخرى.",
     "BookingItemsRequired": "اختر خدمة واحدة على الأقل قبل حفظ التعديلات.",
+    "BookingNotBookedStatus": "الحجز ليس في حالة محجوز.",
+    "PulsesExceedRemaining": "النبضات المستخدمة لا يمكن أن تتجاوز الرصيد المتبقي.",
+    "CloseItemsIncomplete": "يجب تضمين جميع بنود الحجز في طلب الإقفال.",
     "GalleryPhotoLimitExceeded": "الحد الأقصى لصور النشاط هو ست صور.",
     "BusinessProfileRequired": "أكمل الملف التعريفي للنشاط قبل تعديل إعداداته.",
     "FieldRequired": "هذا الحقل مطلوب.",
@@ -804,6 +807,7 @@
       "TIME_CHANGED": "تغيير وقت الانتهاء",
       "UPDATED": "تم تعديل الحجز",
       "CANCELLED": "تم إلغاء الحجز",
+      "CLOSED": "اكتمل الحجز",
       "ROLE_RECEPTION": "موظف الاستقبال",
       "ROLE_ADMIN": "المسؤول",
       "CREATED_DESC": "تم إنشاء الحجز بنجاح",
@@ -811,7 +815,12 @@
       "TIME_CHANGED_DESC": "تم تغيير وقت الانتهاء من {{from}} إلى {{to}}",
       "UPDATED_DESC": "تم تغيير الخدمات من {{from}} إلى {{to}}",
       "UPDATED_DESC_FALLBACK": "تم تعديل تفاصيل الحجز",
-      "CANCELLED_DESC": "تم إلغاء الحجز"
+      "CANCELLED_DESC": "تم إلغاء الحجز",
+      "CLOSED_DESC": "تم إقفال الحجز وتغيير حالته إلى مكتمل",
+      "CLOSED_ITEM_COMPLETE": "مكتمل",
+      "CLOSED_ITEM_CANCEL": "لم يُنفَّذ",
+      "CLOSED_ITEM_PULSES": "عدد النبضات المستخدمة: {{count}}",
+      "CLOSED_ITEM_NOTES": "ملاحظات: {{notes}}"
     }
   },
   "BOOKINGS": {
@@ -970,6 +979,29 @@
         "NOTES_MAX": "لا يمكن أن تتجاوز الملاحظات 200 حرف."
       }
     },
+    "CLOSE": {
+      "TITLE": "إقفال العملية وتأكيد الاستخدام",
+      "SUBTITLE": "يرجى تأكيد نتيجة كل خدمة في هذا الحجز",
+      "TOTAL": "الإجمالي",
+      "USED": "المستخدم",
+      "REMAINING": "المتبقي",
+      "PULSES_USED_LABEL": "النبضات المستخدمة في هذه الجلسة",
+      "PULSES_USED_HINT": "أدخل عدد النبضات المستخدمة",
+      "STATUS_LABEL": "الحالة",
+      "STATUS_COMPLETE": "مكتمل",
+      "STATUS_CANCEL": "إلغاء",
+      "NOTES_LABEL": "ملاحظات (اختياري)",
+      "NOTES_HINT": "يمكن كتابة أي ملاحظات إضافية",
+      "SUBMIT": "إقفال العملية وتأكيد الاستخدام",
+      "VALIDATION_INCOMPLETE": "يرجى استكمال جميع الحقول المطلوبة قبل التأكيد.",
+      "SUCCESS": "تم إقفال الحجز بنجاح.",
+      "ERRORS": {
+        "PULSES_REQUIRED": "عدد النبضات المستخدمة مطلوب.",
+        "PULSES_MIN": "يجب ألا يقل عدد النبضات المستخدمة عن 1.",
+        "PULSES_MAX": "لا يمكن أن يتجاوز عدد النبضات المستخدمة الرصيد المتبقي.",
+        "NOTES_MAX": "لا يمكن أن تتجاوز الملاحظات 200 حرف."
+      }
+    },
     "BOOK": {
       "TITLE": "حجز خدمة",
       "CLIENT_SECTION": "بيانات العميل",
@@ -1066,7 +1098,6 @@
     "ALL_STATUS": "كل الحالات",
     "SHOWING": "عرض {{count}} من {{total}} حجز",
     "EXPORT": "تصدير Excel/CSV",
-    "CLOSE": "إغلاق",
     "CANCEL": "إلغاء",
     "BACK": "رجوع",
     "CANCEL_TITLE": "إلغاء الحجز",

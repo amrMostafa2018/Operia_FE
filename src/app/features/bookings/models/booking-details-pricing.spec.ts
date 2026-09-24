@@ -69,6 +69,53 @@ describe('booking details owned session pricing', () => {
     expect(bookingLineDisplaysPrice(normalized)).toBeFalse();
   });
 
+  it('does not reprice a saved zero-charge owned package as a catalog purchase', () => {
+    const sessionPackage: ServiceCatalogItem = {
+      id: 'package-10',
+      name: '10 Sessions Offer',
+      category: 'packages',
+      durationMinutes: 60,
+      price: 5000,
+      icon: 'pi pi-box',
+      type: 'package',
+    };
+    const ownedPackage: ClientPackage = {
+      customerPackageId: 'owned-package-10',
+      packageId: 'package-10',
+      packageName: '10 Sessions Offer',
+      usedSessions: 8,
+      totalSessions: 10,
+      expiryDate: '2026-12-31',
+      offerType: 'package',
+      sessionCount: 10,
+    };
+    const savedLine: BookingLineItem = {
+      id: 'line-package',
+      name: '10 Sessions Offer',
+      type: 'package',
+      quantity: 1,
+      price: 0,
+      durationMinutes: 60,
+      catalogPackageId: 'package-10',
+      customerPackageId: 'owned-package-10',
+      packageRemainingSessions: 2,
+      packageSessionLinked: false,
+      newPurchaseUnits: 0,
+    };
+
+    const normalized = normalizeBookingDetailsLineItem(
+      savedLine,
+      [sessionPackage],
+      [ownedPackage],
+      [savedLine]
+    );
+
+    expect(normalized.packageSessionLinked).toBeTrue();
+    expect(normalized.newPurchaseUnits).toBe(0);
+    expect(bookAppointmentLineTotal(normalized)).toBe(0);
+    expect(bookingLineDisplaysPrice(normalized)).toBeFalse();
+  });
+
   it('charges the first catalog add in booking details even when the customer already owns it', () => {
     const pulsePackage: ServiceCatalogItem = {
       id: 'pulse-1',
@@ -90,12 +137,7 @@ describe('booking details owned session pricing', () => {
       pulseCount: 5000,
     };
     const firstLine = bookingDetailsLineItemFromCatalog(pulsePackage, 1, [], []);
-    const secondLine = bookingDetailsLineItemFromCatalog(
-      pulsePackage,
-      1,
-      [],
-      [firstLine]
-    );
+    const secondLine = bookingDetailsLineItemFromCatalog(pulsePackage, 1, [], [firstLine]);
 
     expect(firstLine.packageSessionLinked).toBeFalse();
     expect(firstLine.customerPackageId).toBeNull();
@@ -141,12 +183,7 @@ describe('booking details owned session pricing', () => {
       pulsePackage
     );
 
-    const normalized = normalizeBookingDetailsLineItem(
-      ownedLine,
-      [pulsePackage],
-      [],
-      [ownedLine]
-    );
+    const normalized = normalizeBookingDetailsLineItem(ownedLine, [pulsePackage], [], [ownedLine]);
 
     expect(normalized.newPurchaseUnits).toBe(0);
     expect(normalized.packageSessionLinked).toBeTrue();

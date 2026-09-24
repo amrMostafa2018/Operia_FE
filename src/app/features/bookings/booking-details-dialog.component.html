@@ -613,8 +613,22 @@
               {{ 'BOOKINGS.DETAILS.SAVE' | translate }}
             </button>
           }
+          @if (canClose()) {
+            <button type="button" class="footer-btn close-btn" (click)="requestCloseBooking()">
+              <i class="pi pi-check-circle"></i>
+              {{ 'BOOKINGS.DETAILS.CLOSE' | translate }}
+            </button>
+          }
         </div>
       }
     }
   </ng-template>
 </p-dialog>
+
+<app-confirm-package-usage-dialog
+  [visible]="showCloseConfirm()"
+  [booking]="booking()"
+  [saving]="closeSaving()"
+  (confirmed)="onCloseConfirmed($event)"
+  (closed)="closeCloseConfirm()"
+/>

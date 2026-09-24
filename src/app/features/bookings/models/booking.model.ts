@@ -765,6 +765,8 @@ export interface BookingLineItem {
   customerPackageId?: string | null;
   packageRemainingSessions?: number | null;
   packagePulseCount?: number | null;
+  packageTotal?: number | null;
+  packageUsed?: number | null;
   /** Package units billed as new customer-package purchases. */
   newPurchaseUnits?: number;
 }
@@ -1676,13 +1678,19 @@ function packageBalanceFieldsFromOwned(
 export function isBookingDetailsCatalogPurchaseLine(
   item: Pick<
     BookingLineItem,
-    'type' | 'packageSessionLinked' | 'newPurchaseUnits' | 'quantity' | 'customerPackageId'
+    | 'type'
+    | 'packageSessionLinked'
+    | 'newPurchaseUnits'
+    | 'quantity'
+    | 'customerPackageId'
+    | 'price'
   >
 ): boolean {
   return (
     (item.type === 'package' || item.type === 'session') &&
     !item.packageSessionLinked &&
-    (item.newPurchaseUnits ?? 0) >= item.quantity
+    (item.newPurchaseUnits ?? 0) >= item.quantity &&
+    item.price > 0
   );
 }
 
@@ -1844,12 +1852,7 @@ export function normalizeBookingDetailsLineItem(
   if (service.type === 'package') {
     const newPurchaseUnits = isOwnedPackageReservedOnBookingLine(item)
       ? 0
-      : bookAppointmentNewPurchaseUnits(
-          service,
-          quantity,
-          ownedPackage,
-          ownedPackages
-        );
+      : bookAppointmentNewPurchaseUnits(service, quantity, ownedPackage, ownedPackages);
     const usesOwnedPackageOnBooking =
       newPurchaseUnits === 0 &&
       (ownedPackage != null ||
