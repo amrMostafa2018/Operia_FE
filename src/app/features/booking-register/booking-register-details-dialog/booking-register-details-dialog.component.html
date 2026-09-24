@@ -1,0 +1,160 @@
+<!-- Adapts the register selection to the shared booking details and confirmation dialogs. -->
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="false"
+  appendTo="body"
+  styleClass="booking-register-details-dialog"
+  [style]="{ width: 'min(880px, 96vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-title">
+      <i class="pi pi-eye"></i>
+      <h3>{{ 'BOOKING_REGISTER.DETAILS.TITLE' | translate }}</h3>
+    </div>
+    <button
+      type="button"
+      class="close-btn"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  @if (booking(); as item) {
+    <div class="details-body">
+      <section class="customer-strip">
+        <div class="avatar" aria-hidden="true">
+          {{ customerInitial(item.customerName) }}
+        </div>
+        <div class="customer-field customer-field--name">
+          <strong class="field-value">{{ item.customerName }}</strong>
+          <span class="field-label">{{ 'BOOKING_REGISTER.DETAILS.CUSTOMER' | translate }}</span>
+        </div>
+        <div class="customer-field customer-field--phone">
+          <span class="field-value phone" dir="ltr">{{ displayPhone(item.customerPhone) }}</span>
+          <span class="field-label">{{ 'BOOKING_REGISTER.DETAILS.MOBILE' | translate }}</span>
+        </div>
+      </section>
+
+      <div class="details-columns">
+        <section class="booking-info">
+          <ul class="summary-list">
+            <li>
+              <span class="summary-icon"><i class="pi pi-briefcase"></i></span>
+              <div class="summary-content">
+                <small>{{ 'BOOKING_REGISTER.DETAILS.SERVICE' | translate }}</small>
+                <strong>{{ item.serviceName }}</strong>
+              </div>
+            </li>
+            <li>
+              <span class="summary-icon"><i class="pi pi-user"></i></span>
+              <div class="summary-content">
+                <small>{{ 'BOOKING_REGISTER.DETAILS.EMPLOYEE' | translate }}</small>
+                <strong>{{ item.employeeName }}</strong>
+              </div>
+            </li>
+            <li>
+              <span class="summary-icon"><i class="pi pi-calendar"></i></span>
+              <div class="summary-content">
+                <small>{{ 'BOOKING_REGISTER.DETAILS.DATE' | translate }}</small>
+                <strong>{{ scheduledDateLabel(item) }}</strong>
+              </div>
+            </li>
+            <li>
+              <span class="summary-icon"><i class="pi pi-clock"></i></span>
+              <div class="summary-content">
+                <small>{{ 'BOOKING_REGISTER.DETAILS.FROM' | translate }}</small>
+                <strong>{{ formatTime(item.startTime) }}</strong>
+              </div>
+            </li>
+            <li>
+              <span class="summary-icon"><i class="pi pi-clock"></i></span>
+              <div class="summary-content">
+                <small>{{ 'BOOKING_REGISTER.DETAILS.TO' | translate }}</small>
+                <strong>{{ formatTime(item.endTime) }}</strong>
+              </div>
+            </li>
+            <li>
+              <span class="summary-icon"><i class="pi pi-stopwatch"></i></span>
+              <div class="summary-content">
+                <small>{{ 'BOOKING_REGISTER.DETAILS.DURATION' | translate }}</small>
+                <strong>{{ item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+              </div>
+            </li>
+          </ul>
+
+          <div class="status-block">
+            <div class="status-head">
+              <span class="summary-icon summary-icon--status"><i class="pi pi-eye"></i></span>
+              <small>{{ 'BOOKING_REGISTER.DETAILS.STATUS' | translate }}</small>
+            </div>
+            @if (displayStatus(); as status) {
+              <p-tag
+                [value]="statusKey(status) | translate"
+                [severity]="statusSeverity(status)"
+                styleClass="status-tag"
+              />
+            }
+          </div>
+        </section>
+
+        <section class="side-panel">
+          <div class="panel-card payment-card">
+            <h4>
+              <i class="pi pi-wallet"></i>
+              {{ 'BOOKING_REGISTER.DETAILS.PAYMENT.TITLE' | translate }}
+            </h4>
+            <div class="payment-row">
+              <span class="payment-label">{{
+                'BOOKING_REGISTER.DETAILS.PAYMENT.METHOD' | translate
+              }}</span>
+              <span class="payment-value">{{ item.paymentMethodKey | translate }}</span>
+            </div>
+            <div class="payment-row">
+              <span class="payment-label">{{
+                'BOOKING_REGISTER.DETAILS.PAYMENT.PAID' | translate
+              }}</span>
+              <span class="payment-value payment-value--paid">{{
+                formatAmount(item.paidAmount)
+              }}</span>
+            </div>
+            <div class="payment-row payment-row--total">
+              <span class="payment-label">{{
+                'BOOKING_REGISTER.DETAILS.PAYMENT.TOTAL' | translate
+              }}</span>
+              <span class="payment-value">{{ formatAmount(item.totalAmount) }}</span>
+            </div>
+            <div class="payment-row">
+              <span class="payment-label">
+                {{ 'BOOKING_REGISTER.DETAILS.PAYMENT.REMAINING' | translate }}
+              </span>
+              <span class="payment-value payment-value--remaining">
+                {{ formatAmount(remainingAmount()) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="panel-card notes-card">
+            <h4>
+              <i class="pi pi-comment"></i>
+              {{ 'BOOKING_REGISTER.DETAILS.NOTES' | translate }}
+            </h4>
+            <div class="notes-box">
+              @if (item.notesCount > 0) {
+                {{ 'BOOKING_REGISTER.DETAILS.NOTES_COUNT' | translate: { count: item.notesCount } }}
+              } @else {
+                {{ 'BOOKING_REGISTER.DETAILS.NO_NOTES' | translate }}
+              }
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  }
+</p-dialog>

@@ -1,5 +1,6 @@
 @use '../../../../styles/variables' as *;
 @use '../../../shared/styles/section-card';
+@use '../../../shared/styles/payment-method-icons' as paymentIcons;
 
 .payment-methods {
   display: flex;
@@ -58,6 +59,7 @@
 }
 
 .method-icon {
+  @include paymentIcons.payment-method-icon-tones;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,30 +76,6 @@
 
   .pi {
     font-size: 1.25rem;
-  }
-
-  &--cash {
-    background: rgba($success, 0.12);
-    color: $success;
-  }
-
-  &--bank {
-    background: rgba($info, 0.12);
-    color: $info;
-  }
-
-  &--wallet {
-    background: rgba($primary, 0.12);
-    color: $primary;
-  }
-
-  &--instapay {
-    background: linear-gradient(145deg, #3d3860 0%, #1a1a2e 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  &--fawry {
-    background: #ffcb05;
   }
 
   &--brand {
@@ -234,6 +212,7 @@
 }
 
 .accordion-method-icon {
+  @include paymentIcons.payment-method-icon-tones;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,38 +223,6 @@
 
   .pi {
     font-size: 1rem;
-  }
-
-  .method-brand-lines--instapay {
-    font-size: 0.4375rem;
-    letter-spacing: 0.04em;
-  }
-
-  .method-brand-text--fawry {
-    font-size: 0.625rem;
-  }
-
-  &.method-icon--cash {
-    background: rgba($success, 0.12);
-    color: $success;
-  }
-
-  &.method-icon--bank {
-    background: rgba($info, 0.12);
-    color: $info;
-  }
-
-  &.method-icon--wallet {
-    background: rgba($primary, 0.12);
-    color: $primary;
-  }
-
-  &.method-icon--instapay {
-    background: linear-gradient(145deg, #3d3860 0%, #1a1a2e 100%);
-  }
-
-  &.method-icon--fawry {
-    background: #ffcb05;
   }
 
   &--brand {

@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
+  effect,
   inject,
   OnInit,
   signal,
@@ -22,6 +24,8 @@ import {
   PHONE_INPUT_ONLY_COUNTRIES,
 } from '@app/shared/constants/phone-input.config';
 import { AppConfigService } from '@core/services/app-config.service';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
 import { MultiFileDragState } from '@app/shared/utils/file-drag.util';
 import { showUploadValidationToast, validateUploadFile } from '@app/shared/utils/file-upload.util';
@@ -98,7 +102,12 @@ export class IdentityContentComponent implements OnInit {
   private readonly appConfig = inject(AppConfigService);
   private readonly messageService = inject(MessageService);
   private readonly settingsService = inject(SettingsActivityService);
+  private readonly permissionService = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly canManage = computed(() =>
+    this.permissionService.hasPermission(Policies.SettingsIdentityManage)
+  );
 
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
@@ -116,6 +125,20 @@ export class IdentityContentComponent implements OnInit {
   private initialPhotos: PhotoSlot[] = [];
   private initialVisibleInfo = { mainAddress: '', about: '' };
   private readonly photoDragState = new MultiFileDragState(this.dragOverPhotoId);
+
+  constructor() {
+    effect(() => {
+      if (!this.form) {
+        return;
+      }
+
+      if (this.canManage()) {
+        this.form.enable({ emitEvent: false });
+      } else {
+        this.form.disable({ emitEvent: false });
+      }
+    });
+  }
 
   get acceptedImageAccept(): string {
     return this.appConfig.allowedMimeTypesAccept || 'image/jpeg,image/png,image/webp';
@@ -257,6 +280,9 @@ export class IdentityContentComponent implements OnInit {
   }
 
   onPhotoSelected(event: Event, photoId: string): void {
+    if (!this.canManage()) {
+      return;
+    }
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) {
@@ -268,6 +294,9 @@ export class IdentityContentComponent implements OnInit {
   }
 
   onPhotoDragEnter(event: DragEvent, photoId: string): void {
+    if (!this.canManage()) {
+      return;
+    }
     this.photoDragState.onEnter(event, photoId);
   }
 
@@ -280,6 +309,9 @@ export class IdentityContentComponent implements OnInit {
   }
 
   onPhotoDrop(event: DragEvent, photoId: string): void {
+    if (!this.canManage()) {
+      return;
+    }
     const file = this.photoDragState.onDrop(event, photoId);
     if (file) {
       this.processPhotoFile(file, photoId);

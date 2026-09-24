@@ -27,6 +27,7 @@
         <div class="day-row" [class.disabled]="!day.enabled">
           <p-inputSwitch
             [ngModel]="day.enabled"
+            [disabled]="!canManage()"
             (ngModelChange)="toggleDayEnabled(day.id, $event)"
           />
 
@@ -37,7 +38,7 @@
               [inputId]="'from-' + day.id"
               [ngModel]="day.fromTime"
               (ngModelChange)="updateFromTime(day.id, $event)"
-              [disabled]="!day.enabled"
+              [disabled]="!day.enabled || !canManage()"
               [placeholder]="!day.enabled ? '--:--' : ''"
               styleClass="time-picker time-picker--inline"
             />
@@ -46,7 +47,7 @@
               [inputId]="'to-' + day.id"
               [ngModel]="day.toTime"
               (ngModelChange)="updateToTime(day.id, $event)"
-              [disabled]="!day.enabled"
+              [disabled]="!day.enabled || !canManage()"
               [placeholder]="!day.enabled ? '--:--' : ''"
               styleClass="time-picker time-picker--inline"
             />
@@ -76,6 +77,7 @@
         [ngModel]="allowOutsideHours()"
         (ngModelChange)="allowOutsideHours.set($event)"
         [binary]="true"
+        [disabled]="!canManage()"
         inputId="allowOutside"
       />
       <div class="extra-text">
@@ -87,10 +89,12 @@
     </div>
   </section>
 
-  <app-settings-footer
-    [noteKey]="'SETTINGS_ACTIVITY.WORKING_DAYS.FOOTER_NOTE'"
-    [saving]="saving()"
-    (reset)="onReset()"
-    (save)="onSave()"
-  />
+  @if (canManage()) {
+    <app-settings-footer
+      [noteKey]="'SETTINGS_ACTIVITY.WORKING_DAYS.FOOTER_NOTE'"
+      [saving]="saving()"
+      (reset)="onReset()"
+      (save)="onSave()"
+    />
+  }
 </div>

@@ -186,18 +186,20 @@
   </div>
 
   <!-- Support link -->
-  <div class="sidebar-footer">
-    <a
-      class="nav-item support-item"
-      routerLink="/support"
-      routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: true }"
-      (click)="onLinkClick()"
-    >
-      <i class="pi pi-headphones nav-icon"></i>
-      @if (!collapsed()) {
-        <span class="nav-label">{{ 'NAV.SUPPORT' | translate }}</span>
-      }
-    </a>
-  </div>
+  @if (canSupport()) {
+    <div class="sidebar-footer">
+      <a
+        class="nav-item support-item"
+        routerLink="/support"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="onLinkClick()"
+      >
+        <i class="pi pi-headphones nav-icon"></i>
+        @if (!collapsed()) {
+          <span class="nav-label">{{ 'NAV.SUPPORT' | translate }}</span>
+        }
+      </a>
+    </div>
+  }
 </aside>

@@ -40,6 +40,9 @@ const EN_LOCALE: Translation = {
   firstDayOfWeek: 0,
   am: 'AM',
   pm: 'PM',
+  emptyMessage: 'No results found',
+  emptySearchMessage: 'No results found',
+  emptyFilterMessage: 'No results found',
 };
 
 const AR_LOCALE: Translation = {
@@ -88,6 +91,9 @@ const AR_LOCALE: Translation = {
   firstDayOfWeek: 6,
   am: 'ص',
   pm: 'م',
+  emptyMessage: 'لا توجد نتائج',
+  emptySearchMessage: 'لا توجد نتائج',
+  emptyFilterMessage: 'لا توجد نتائج',
 };
 
 export function getPrimeNgLocale(lang: AppLanguage): Translation {

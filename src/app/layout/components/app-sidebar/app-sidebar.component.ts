@@ -106,6 +106,12 @@ export class AppSidebarComponent {
       permissions: [Policies.BookingsRead],
     },
     {
+      labelKey: 'NAV.BOOKING_REGISTER',
+      icon: 'pi pi-list',
+      route: '/booking-register',
+      permissions: [Policies.BookingsRead],
+    },
+    {
       labelKey: 'NAV.CUSTOMERS',
       icon: 'pi pi-users',
       route: '/customers',
@@ -122,16 +128,16 @@ export class AppSidebarComponent {
 
   private readonly afterReportsNavItems: NavItem[] = [
     {
-      labelKey: 'NAV.EMPLOYEES',
-      icon: 'pi pi-id-card',
-      route: '/employees',
-      permissions: [Policies.EmployeesRead],
-    },
-    {
       labelKey: 'NAV.PACKAGES',
       icon: 'pi pi-box',
       route: '/packages',
       permissions: [Policies.PackagesRead],
+    },
+    {
+      labelKey: 'NAV.EMPLOYEES',
+      icon: 'pi pi-id-card',
+      route: '/employees',
+      permissions: [Policies.EmployeesRead],
     },
     {
       labelKey: 'NAV.BRANCHES',
@@ -161,25 +167,32 @@ export class AppSidebarComponent {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_IDENTITY',
       icon: '',
       route: '/settings/activity/identity',
-      permissions: [Policies.SettingsManage],
+      permissions: [Policies.SettingsIdentityRead, Policies.SettingsIdentityManage],
     },
     {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_PAYMENTS',
       icon: '',
       route: '/settings/activity/payments',
-      permissions: [Policies.SettingsManage],
+      permissions: [Policies.SettingsPaymentsRead, Policies.SettingsPaymentsManage],
     },
     {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_WORKING_DAYS',
       icon: '',
       route: '/settings/activity/working-days',
-      permissions: [Policies.SettingsManage],
+      permissions: [Policies.SettingsWorkingDaysRead, Policies.SettingsWorkingDaysManage],
     },
     {
       labelKey: 'NAV.SETTINGS_SECTION.ACTIVITY_SECURITY',
       icon: '',
       route: '/settings/activity/security',
-      permissions: [Policies.SettingsManage],
+      permissions: [
+        Policies.SettingsSecurityRead,
+        Policies.SettingsSecurityManage,
+        Policies.SettingsPasswordChange,
+        Policies.SettingsUsersBan,
+        Policies.SettingsUsersDelete,
+        Policies.SettingsAccountDeactivate,
+      ],
     },
   ];
 
@@ -200,6 +213,8 @@ export class AppSidebarComponent {
   readonly showFinanceSection = computed(() => this.visibleFinanceNavItems().length > 0);
 
   readonly showSettingsSection = computed(() => this.visibleSettingsNavItems().length > 0);
+
+  readonly canSupport = computed(() => this.permissionService.hasPermission(Policies.SupportRead));
 
   toggleFinance(): void {
     this.financeOpen.update(v => !v);

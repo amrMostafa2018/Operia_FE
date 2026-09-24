@@ -7,12 +7,14 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
+  currencyCode: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
   accessToken: null,
   isLoading: false,
+  currencyCode: null,
 };
 
 export const AuthStore = signalStore(
@@ -38,8 +40,14 @@ export const AuthStore = signalStore(
             ...user,
             permissions: capabilities.permissions,
           },
+          currencyCode: capabilities.currencyCode ?? null,
         });
+        return;
       }
+
+      patchState(store, {
+        currencyCode: capabilities.currencyCode ?? null,
+      });
     },
     setLoading(isLoading: boolean): void {
       patchState(store, { isLoading });

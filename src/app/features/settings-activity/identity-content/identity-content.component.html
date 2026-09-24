@@ -321,7 +321,8 @@
     </div>
 
     <div class="visible-info-footer">
-      <div class="visible-info-actions">
+      @if (canManage()) {
+        <div class="visible-info-actions">
         <p-button
           type="button"
           [label]="'SETTINGS_ACTIVITY.FOOTER.SAVE' | translate"
@@ -341,7 +342,8 @@
           [disabled]="saving()"
           (onClick)="onResetVisibleInfo()"
         />
-      </div>
+        </div>
+      }
 
       <div class="visible-info-banner">
         <i class="pi pi-lock" aria-hidden="true"></i>

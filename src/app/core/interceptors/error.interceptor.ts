@@ -12,7 +12,7 @@ import {
   OTP_AUTH_API_ENDPOINTS,
   urlIncludesAuthEndpoint,
 } from '@core/constants/auth-api-endpoint.enum';
-import { extractApiError, hasApiFieldErrors } from '@core/utils/api-error.util';
+import { extractApiError, hasApiFieldErrors, hasPackageCategoryDuplicateError } from '@core/utils/api-error.util';
 
 function resolveMessage(error: HttpErrorResponse, translate: TranslateService): string {
   switch (error.status) {
@@ -69,8 +69,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       const userMessage = resolveMessage(error, translate);
       const skipToast =
-        (error.status === 400 || error.status === 422 || error.status === 401) &&
-        hasApiFieldErrors(error);
+        ((error.status === 400 || error.status === 422 || error.status === 401) &&
+          hasApiFieldErrors(error)) ||
+        (error.status === 409 && hasPackageCategoryDuplicateError(error));
 
       const suppressLoginRedirect =
         urlIncludesAuthEndpoint(req.url, OTP_AUTH_API_ENDPOINTS) ||

@@ -1,0 +1,241 @@
+@mixin bookings-dialog-no-scroll-rules {
+  &.p-dialog {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .p-dialog-content {
+    overflow: visible;
+    overflow-x: hidden;
+    max-height: none;
+  }
+}
+
+@mixin bookings-dialog-no-scroll($class) {
+  :host ::ng-deep .#{$class} {
+    @include bookings-dialog-no-scroll-rules;
+  }
+}
+
+@mixin bookings-dialog-header {
+  :host ::ng-deep {
+    .p-dialog-header {
+      position: relative;
+      padding-inline-end: 3rem;
+    }
+  }
+
+  :host-context([dir='rtl']) ::ng-deep .p-dialog-header {
+    padding-inline-start: 3rem;
+    padding-inline-end: 1.25rem;
+  }
+}
+
+@mixin unlisted-form-layout {
+  .unlisted-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 0.85rem 0.9rem;
+    align-items: start;
+    padding: 1rem 0.95rem;
+    border-top: 1px solid var(--surface-border);
+    background: #fff;
+  }
+
+  .unlisted-form .field,
+  .unlisted-form app-unlisted-category-field {
+    min-width: 0;
+  }
+
+  .unlisted-form .field label,
+  .unlisted-form app-unlisted-category-field label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .unlisted-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .unlisted-actions-spacer {
+    display: block;
+    min-height: 1.05rem;
+  }
+
+  .add-unlisted-btn {
+    width: 100%;
+  }
+
+  @media (max-width: 900px) {
+    .unlisted-form {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .unlisted-actions-spacer {
+      display: none;
+    }
+
+    .add-unlisted-btn {
+      width: auto;
+      min-width: 8.5rem;
+      align-self: flex-start;
+    }
+  }
+}
+
+@mixin booking-package-multiselect {
+  .field-package {
+    min-width: 0;
+  }
+
+  :host ::ng-deep .booking-package-multiselect {
+    width: 100%;
+
+    &.p-multiselect {
+      width: 100%;
+      min-height: 42px;
+      align-items: center;
+      border-color: #d7d9e5;
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    &.p-multiselect:not(.p-disabled):hover {
+      border-color: #a7a3bd;
+    }
+
+    &.p-multiselect.p-focus {
+      border-color: #5525e8;
+      box-shadow: 0 0 0 3px rgba(85, 37, 232, 0.12);
+    }
+
+    .p-multiselect-label-container {
+      overflow: visible;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .p-multiselect-label {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.35rem;
+      min-height: 40px;
+      width: 100%;
+      padding-block: 0.35rem;
+      padding-inline-start: 0.75rem;
+      padding-inline-end: 2.25rem;
+      white-space: normal;
+      color: #363952;
+    }
+
+    .p-multiselect-label.p-placeholder {
+      color: #8b8fa3;
+    }
+
+    .p-multiselect-token {
+      margin: 0;
+      max-width: 100%;
+      background: #f0edff;
+      color: #5938c9;
+      border-radius: 5px;
+      padding-inline: 0.45rem;
+    }
+
+    .p-multiselect-token-icon {
+      display: none;
+    }
+
+    .p-multiselect-token-label {
+      max-width: 10rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .p-multiselect-trigger {
+      align-self: center;
+      flex-shrink: 0;
+      color: #4b24da;
+    }
+
+    .p-multiselect-clear-icon {
+      display: none;
+    }
+  }
+
+  :host-context([dir='rtl']) ::ng-deep .booking-package-multiselect {
+    .p-multiselect-label {
+      padding-inline-start: 2.25rem;
+      padding-inline-end: 0.75rem;
+    }
+  }
+}
+
+@mixin services-section-header {
+  .services-section.is-collapsed {
+    padding-bottom: 0.65rem;
+  }
+
+  .services-section-toggle {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0 0 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    cursor: pointer;
+    color: #171a43;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: inherit;
+
+    .section-toggle-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+
+      i {
+        color: #4b24da;
+      }
+    }
+
+    > .pi:last-child {
+      color: #4b24da;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+  }
+
+  .services-section.is-collapsed .services-section-toggle {
+    margin-bottom: 0;
+  }
+}
+
+@mixin bookings-dialog-close-button {
+  .dialog-close {
+    position: absolute;
+    top: 1.2rem;
+    inset-inline-end: 1.4rem;
+    z-index: 2;
+    border: 0;
+    background: transparent;
+    font-size: 1.2rem;
+    color: #4f5267;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

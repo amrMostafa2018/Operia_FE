@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 
+/** Describes branch used by booking screens. */
 export interface Branch {
   id: string;
   name: string;
@@ -13,6 +14,7 @@ export interface Branch {
   googleMapsUrl: string;
 }
 
+/** Describes branch list result exchanged with the API. */
 export interface BranchListResult {
   items: Branch[];
   pageNumber: number;
@@ -22,6 +24,7 @@ export interface BranchListResult {
   totalTenantCount: number;
 }
 
+/** Describes branch payload used by the booking UI. */
 export interface BranchPayload {
   name: string;
   address: string;
@@ -30,10 +33,16 @@ export interface BranchPayload {
   longitude: number;
 }
 
+/** Calls branch administration and booking branch lookup endpoints. */
 @Injectable({ providedIn: 'root' })
 export class BranchService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/branches`;
+
+  /** Loads only branches available to the signed-in booking user. */
+  listBookable(): Observable<Pick<Branch, 'id' | 'name'>[]> {
+    return this.http.get<Pick<Branch, 'id' | 'name'>[]>(`${this.url}/bookable`);
+  }
 
   list(query: {
     pageNumber: number;

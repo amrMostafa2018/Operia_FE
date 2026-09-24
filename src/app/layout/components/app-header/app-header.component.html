@@ -18,10 +18,12 @@
     </div>
 
     <!-- Notification bell -->
-    <button class="icon-btn notif-btn" [attr.aria-label]="'HEADER.NOTIFICATIONS' | translate">
-      <i class="pi pi-bell"></i>
-      <span class="notif-dot"></span>
-    </button>
+    @if (canNotifications()) {
+      <button class="icon-btn notif-btn" [attr.aria-label]="'HEADER.NOTIFICATIONS' | translate">
+        <i class="pi pi-bell"></i>
+        <span class="notif-dot"></span>
+      </button>
+    }
 
     <!-- User block -->
     <div class="user-block">

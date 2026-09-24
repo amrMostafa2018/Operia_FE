@@ -1,0 +1,120 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+label em {
+  color: #ef4444;
+  font-style: normal;
+}
+
+label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.76rem;
+}
+
+.dropdown-with-add {
+  display: flex;
+  align-items: stretch;
+  height: 42px;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid #d7d9e5;
+  border-radius: 7px;
+  background: #fff;
+  overflow: hidden;
+
+  &:hover {
+    border-color: #a7a3bd;
+  }
+
+  &:focus-within {
+    border-color: #5525e8;
+    box-shadow: 0 0 0 3px rgba(85, 37, 232, 0.12);
+  }
+
+  p-dropdown {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    height: 100%;
+    display: flex;
+  }
+}
+
+.add-category {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  min-width: 40px;
+  align-self: stretch;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-inline-start: 1px solid #e7e7ee;
+  border-radius: 0;
+  background: #f5f5f8;
+  color: #4b24da;
+  font: inherit;
+  cursor: pointer;
+}
+
+.add-category i {
+  font-size: 0.82rem;
+}
+
+.add-category:hover:not(:disabled) {
+  background: #eeedf8;
+}
+
+.add-category:disabled {
+  color: #9aa0b5;
+  background: #f4f5f8;
+  cursor: not-allowed;
+}
+
+:host.error .dropdown-with-add {
+  border-color: #ef4444;
+}
+
+:host ::ng-deep .dropdown-with-add .unlisted-dropdown.p-dropdown {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  align-items: stretch;
+}
+
+:host ::ng-deep .dropdown-with-add .unlisted-dropdown .p-dropdown-label {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 0;
+  padding-block: 0;
+  line-height: 1.25;
+}
+
+:host ::ng-deep .dropdown-with-add .unlisted-dropdown .p-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+}
+
+:host.error ::ng-deep .dropdown-with-add .unlisted-dropdown.p-dropdown {
+  border: 0;
+}

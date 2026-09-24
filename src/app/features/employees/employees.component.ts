@@ -152,6 +152,12 @@ export class EmployeesComponent implements OnInit {
     return branchId ? (this.scheduleErrors()[branchId] ?? null) : null;
   });
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.EmployeesManage));
+  readonly canChangeStatus = computed(() =>
+    this.permissions.hasPermission(Policies.EmployeesChangeStatus)
+  );
+  readonly canChangeRole = computed(() =>
+    this.permissions.hasPermission(Policies.EmployeesChangeRole)
+  );
   readonly rowsPerPageOptions = [5, 10, 20, 50];
   readonly rows = signal(5);
   readonly first = signal(0);
@@ -314,7 +320,7 @@ export class EmployeesComponent implements OnInit {
       jobTitle: employee.jobTitle ?? '',
       joiningDate: employee.joiningDate.slice(0, 10),
       isActive: employee.isActive,
-      role: this.normalizeRole(employee.role),
+      role: employee.role === 'SuperAdmin' ? 'Admin' : employee.role,
       branchIds: employee.branches.map(x => x.id),
       temporaryPassword: '',
     });
@@ -502,10 +508,7 @@ export class EmployeesComponent implements OnInit {
       });
   }
   roleLabel(role: EmployeeRole | 'SuperAdmin'): string {
-    return this.translate.instant(`EMPLOYEES.ROLES.${this.normalizeRole(role)}`);
-  }
-  private normalizeRole(role: EmployeeRole | 'SuperAdmin'): EmployeeRole {
-    return role === 'SuperAdmin' ? 'Admin' : role;
+    return this.translate.instant(`EMPLOYEES.ROLES.${role}`);
   }
   isPhoneInvalid(): boolean {
     const control = this.form.controls.mobileNumber;

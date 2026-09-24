@@ -1,13 +1,33 @@
 <div class="dashboard">
-  <!-- ═══ Date + Quick Actions bar ═══ -->
   <div class="top-bar">
+    <div class="quick-actions">
+      @if (canSell()) {
+        <p-button
+          [label]="'DASHBOARD.SELL_SERVICE' | translate"
+          icon="pi pi-plus"
+          [iconPos]="leadingIconPos()"
+          styleClass="action-btn primary-action sell-action"
+          (onClick)="openSellDialog()"
+        />
+      }
+      @if (canInquiry()) {
+        <p-button
+          [label]="'DASHBOARD.INQUIRY' | translate"
+          icon="pi pi-search"
+          [iconPos]="leadingIconPos()"
+          styleClass="action-btn secondary-action"
+          [outlined]="true"
+          (onClick)="openCustomerInquiry()"
+        />
+      }
+    </div>
+
     <div class="date-filters">
       <div class="date-field">
         <span class="date-label">{{ 'DASHBOARD.FROM_DATE' | translate }}</span>
         <p-calendar
-          [ngModel]="dateRange()"
-          (ngModelChange)="dateRange.set($event)"
-          selectionMode="range"
+          [ngModel]="dateFrom()"
+          (ngModelChange)="onDateFromChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
           dateFormat="dd/mm/yy"
@@ -15,25 +35,33 @@
           styleClass="date-picker"
         />
       </div>
+      <div class="date-field">
+        <span class="date-label">{{ 'DASHBOARD.TO_DATE' | translate }}</span>
+        <p-calendar
+          [ngModel]="dateTo()"
+          (ngModelChange)="onDateToChange($event)"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'DASHBOARD.TO_DATE' | translate"
+          styleClass="date-picker"
+        />
+      </div>
     </div>
-    <div class="quick-actions">
-      <p-button
-        [label]="'DASHBOARD.NEW_BOOKING' | translate"
-        icon="pi pi-plus"
-        [iconPos]="leadingIconPos()"
-        styleClass="action-btn primary-action"
-      />
-      <p-button
-        [label]="'DASHBOARD.NEW_CUSTOMER' | translate"
-        icon="pi pi-user-plus"
-        [iconPos]="leadingIconPos()"
-        styleClass="action-btn secondary-action"
-        [outlined]="true"
-      />
-    </div>
+
+    @if (canBookings()) {
+      <div class="bookings-link">
+        <p-button
+          [label]="'DASHBOARD.BOOKINGS' | translate"
+          icon="pi pi-calendar"
+          [iconPos]="leadingIconPos()"
+          styleClass="action-btn bookings-action"
+          routerLink="/bookings"
+        />
+      </div>
+    }
   </div>
 
-  <!-- ═══ Stat cards ═══ -->
   <div class="stats-grid">
     @for (stat of stats; track stat.labelKey) {
       <article class="stat-card">
@@ -43,40 +71,13 @@
           </div>
           <div class="stat-body">
             <span class="stat-label">{{ stat.labelKey | translate }}</span>
-            <div class="stat-row">
-              <span class="stat-value">{{ stat.value }}</span>
-              <span class="stat-change up">
-                <i class="pi pi-arrow-up"></i>
-                {{ stat.change }}%
-              </span>
-            </div>
-            <span class="stat-compare">
-              {{ stat.change }}%
-              {{
-                (stat.changeType === 'vs_yesterday'
-                  ? 'DASHBOARD.COMPARED_YESTERDAY'
-                  : 'DASHBOARD.COMPARED_LAST_MONTH'
-                ) | translate
-              }}
-            </span>
+            <span class="stat-value">{{ formatStatValue(stat) }}</span>
           </div>
-        </div>
-        <div class="sparkline" aria-hidden="true">
-          <svg viewBox="0 0 80 30" fill="none" preserveAspectRatio="none">
-            <polyline
-              [attr.points]="stat.sparkline"
-              stroke="var(--color-primary)"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
         </div>
       </article>
     }
   </div>
 
-  <!-- ═══ Table section ═══ -->
   <div class="table-section">
     <div class="table-header">
       <div class="table-title">
@@ -85,30 +86,22 @@
         <span class="table-date">{{ today() }}</span>
       </div>
       <div class="table-filters">
-        <p-dropdown
-          [options]="employeeOptions"
-          optionLabel="label"
-          optionValue="value"
-          [ngModel]="selectedEmployee()"
-          (ngModelChange)="selectedEmployee.set($event)"
-          [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
-          styleClass="filter-drop"
-        >
-          <ng-template pTemplate="selectedItem" let-item>
-            @if (item) {
-              {{ item.label | translate }}
-            }
-          </ng-template>
-          <ng-template pTemplate="item" let-item>
-            {{ item.label | translate }}
-          </ng-template>
-        </p-dropdown>
+        <span class="filter-search-wrap">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            class="filter-input"
+            [ngModel]="quickSearch()"
+            (ngModelChange)="quickSearch.set($event)"
+            [placeholder]="'DASHBOARD.SEARCH_PLACEHOLDER' | translate"
+          />
+        </span>
         <p-dropdown
           [options]="statusOptions"
           optionLabel="label"
           optionValue="value"
           [ngModel]="selectedStatus()"
-          (ngModelChange)="selectedStatus.set($event)"
+          (ngModelChange)="selectedStatus.set($event); applyTableFilters()"
           [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
           styleClass="filter-drop"
         >
@@ -121,7 +114,51 @@
             {{ item.label | translate }}
           </ng-template>
         </p-dropdown>
-        <p-button icon="pi pi-search" styleClass="search-btn" [outlined]="true" />
+        <p-dropdown
+          [options]="employees()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="selectedEmployee()"
+          (ngModelChange)="selectedEmployee.set($event); applyTableFilters()"
+          [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
+          styleClass="filter-drop"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.label | translate }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.label | translate }}
+          </ng-template>
+        </p-dropdown>
+        <span class="filter-search-wrap">
+          <i class="pi pi-mobile"></i>
+          <input
+            pInputText
+            class="filter-input"
+            dir="ltr"
+            [ngModel]="mobileSearch()"
+            (ngModelChange)="mobileSearch.set($event)"
+            [placeholder]="'DASHBOARD.MOBILE_PLACEHOLDER' | translate"
+          />
+        </span>
+        <span class="filter-search-wrap">
+          <i class="pi pi-user"></i>
+          <input
+            pInputText
+            class="filter-input"
+            [ngModel]="nameSearch()"
+            (ngModelChange)="nameSearch.set($event)"
+            [placeholder]="'DASHBOARD.NAME_PLACEHOLDER' | translate"
+          />
+        </span>
+        <p-button
+          icon="pi pi-search"
+          styleClass="search-btn"
+          [outlined]="true"
+          (onClick)="applyTableFilters()"
+        />
       </div>
     </div>
 
@@ -129,17 +166,23 @@
       [value]="filteredBookings()"
       [rows]="rows()"
       [first]="first()"
-      [paginator]="false"
+      [paginator]="true"
+      [rowsPerPageOptions]="rowOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="dashboard-paginator"
       styleClass="bookings-table"
       [scrollable]="true"
+      (onPage)="onPageChange($event)"
     >
       <ng-template pTemplate="header">
         <tr>
           <th>{{ 'DASHBOARD.TABLE_NUM' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_MOBILE' | translate }}</th>
           <th>{{ 'DASHBOARD.TABLE_CUSTOMER' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_BOOKING_NUM' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_EMPLOYEE' | translate }}</th>
           <th>{{ 'DASHBOARD.TABLE_SERVICE' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_EMPLOYEE' | translate }}</th>
           <th>{{ 'DASHBOARD.TABLE_FROM' | translate }}</th>
           <th>{{ 'DASHBOARD.TABLE_TO' | translate }}</th>
           <th>{{ 'DASHBOARD.TABLE_STATUS' | translate }}</th>
@@ -149,21 +192,18 @@
 
       <ng-template pTemplate="body" let-row let-i="rowIndex">
         <tr>
-          <td>{{ i + 1 }}</td>
+          <td>{{ rowNumber(i) }}</td>
+          <td dir="ltr">{{ row.customerPhone }}</td>
+          <td>{{ row.customerName }}</td>
+          <td class="service-cell">{{ row.service }}</td>
           <td>
-            <div class="customer-cell">
-              <div class="customer-avatar">{{ row.customerName[0] }}</div>
-              <div>
-                <div class="customer-name">{{ row.customerName }}</div>
-                <div class="customer-phone">{{ row.customerPhone }}</div>
-              </div>
+            <div class="employee-cell">
+              <span class="employee-avatar">{{ customerInitial(row.employeeName) }}</span>
+              <span>{{ row.employeeName }}</span>
             </div>
           </td>
-          <td class="mono">{{ row.bookingNumber }}</td>
-          <td>{{ row.employee }}</td>
-          <td class="service-cell">{{ row.service }}</td>
-          <td>{{ row.fromTime }}</td>
-          <td>{{ row.toTime }}</td>
+          <td>{{ row.startTime }}</td>
+          <td>{{ row.endTime }}</td>
           <td>
             <p-tag
               [value]="statusKey(row.status) | translate"
@@ -172,7 +212,8 @@
             />
           </td>
           <td>
-            <button class="row-action-btn">
+            <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
+            <button type="button" class="row-action-btn" (click)="rowMenu.toggle($event)">
               <i class="pi pi-ellipsis-v"></i>
             </button>
           </td>
@@ -189,51 +230,94 @@
       </ng-template>
     </p-table>
 
-    <!-- ═══ Table footer: rows selector + paginator + export ═══ -->
     <div class="table-footer">
-      <div class="rows-selector">
-        <p-dropdown
-          [options]="rowOptions"
-          [ngModel]="rows()"
-          (ngModelChange)="onRowsChange($event)"
-          styleClass="rows-drop"
+      @if (canExport()) {
+        <p-button
+          [label]="'DASHBOARD.EXPORT_REPORT' | translate"
+          icon="pi pi-download"
+          [iconPos]="leadingIconPos()"
+          styleClass="export-btn"
+          [outlined]="true"
+          (onClick)="exportReport()"
         />
-      </div>
-
-      <div class="paginator">
-        <button class="page-btn page-btn--nav" type="button">
-          @if (prevIconPos() === 'left') {
-            <i [class]="prevIcon()" aria-hidden="true"></i>
-          }
-          <span>{{ 'DASHBOARD.PREVIOUS' | translate }}</span>
-          @if (prevIconPos() === 'right') {
-            <i [class]="prevIcon()" aria-hidden="true"></i>
-          }
-        </button>
-        <button class="page-btn active" type="button">1</button>
-        <button class="page-btn" type="button">2</button>
-        <button class="page-btn" type="button">3</button>
-        <span class="page-ellipsis">...</span>
-        <button class="page-btn" type="button">7</button>
-        <button class="page-btn page-btn--nav" type="button">
-          @if (nextIconPos() === 'left') {
-            <i [class]="nextIcon()" aria-hidden="true"></i>
-          }
-          <span>{{ 'DASHBOARD.NEXT' | translate }}</span>
-          @if (nextIconPos() === 'right') {
-            <i [class]="nextIcon()" aria-hidden="true"></i>
-          }
-        </button>
-      </div>
-
-      <p-button
-        [label]="'DASHBOARD.EXPORT_REPORT' | translate"
-        icon="pi pi-download"
-        [iconPos]="leadingIconPos()"
-        styleClass="export-btn"
-        [outlined]="true"
-        (onClick)="exportReport()"
-      />
+      }
     </div>
   </div>
 </div>
+
+<app-customer-inquiry-dialog
+  [visible]="customerInquiryOpen()"
+  (closed)="closeCustomerInquiry()"
+/>
+
+<app-sell-service-dialog
+  [visible]="sellOpen()"
+  [clients]="clients()"
+  [catalogItems]="catalogItems()"
+  [catalogCategories]="catalogCategories()"
+  [catalogLoading]="catalogLoading()"
+  (closed)="closeSellDialog()"
+  (confirmLater)="onSellConfirmLater($event)"
+  (bookNow)="onSellBookNow($event)"
+  (packageCreated)="onPackageCreated()"
+/>
+
+<app-confirm-action-dialog
+  [visible]="!!bookingPendingCancel()"
+  headerKey="BOOKINGS.CANCEL_TITLE"
+  messageKey="BOOKINGS.CANCEL_CONFIRM"
+  [messageParams]="{ number: bookingPendingCancel()?.bookingNumber ?? '' }"
+  cancelLabelKey="BOOKINGS.CANCEL"
+  confirmLabelKey="BOOKINGS.ACTIONS.CANCEL"
+  styleClass="cancel-booking-dialog"
+  [useNativeFooterButtons]="true"
+  confirmIcon="pi pi-times"
+  (cancelled)="cancelCancelRequest()"
+  (confirmed)="confirmCancel()"
+/>
+
+<p-dialog
+  [visible]="!!detailBooking()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '480px' }"
+  styleClass="booking-detail-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="table-title">
+      <i class="pi pi-eye"></i>
+      <span>{{ 'BOOKINGS.DETAIL_TITLE' | translate }}</span>
+    </div>
+    <button type="button" class="row-action-btn" (click)="closeDetail()">
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+  @if (detailBooking(); as b) {
+    <div class="detail-grid">
+      <div>
+        <span>{{ 'BOOKINGS.COL_NUMBER' | translate }}</span
+        ><strong>{{ b.bookingNumber }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_CUSTOMER' | translate }}</span
+        ><strong>{{ b.customerName }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</span
+        ><strong>{{ b.employeeName }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_SERVICE' | translate }}</span
+        ><strong>{{ b.service }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_FROM' | translate }}</span
+        ><strong>{{ b.startTime }} – {{ b.endTime }}</strong>
+      </div>
+      <div>
+        <span>{{ 'BOOKINGS.COL_STATUS' | translate }}</span>
+        <p-tag [value]="statusKey(b.status) | translate" [severity]="statusSeverity(b.status)" />
+      </div>
+    </div>
+  }
+</p-dialog>

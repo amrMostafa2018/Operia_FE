@@ -5,8 +5,8 @@ Apply this file on every frontend change in `Operia_FE` without being asked. Do 
 ## Source of truth
 
 - The current user request has highest priority.
-- `_File_2_Super_Admin_Functional_Specification_V1_Final.docx` defines business behavior, validation, access, integrations, and audit expectations.
-- `OPERIA Admin Portal Functional Specification.pptx` defines the desktop visual reference. Inspect the screenshot for the relevant screen before changing UI.
+- `Business Documents/Final/Admin Portal.docx` defines business behavior, validation, access, integrations, and audit expectations for the Admin Portal screens it specifies.
+- `Business Documents/Final/1- OPERIA -     Admin Portal   -- Final -- ISA.pptx` defines the desktop visual reference. Inspect `requirements/design/slide-XX.png` for the relevant screen before changing UI.
 - Existing backend and frontend conventions constrain implementation, but do not replace a documented requirement.
 
 Read `requirements/OPERIA_REQUIREMENTS_INDEX.md`, `requirements/OPERIA_ARCHITECTURE_CONVENTIONS.md`, and `requirements/OPERIA_DEVELOPER_GUIDE.md` before planning or implementing a feature. Record a source conflict or implementation decision in the requirements index instead of silently changing the requirement.

@@ -1,4 +1,10 @@
-export type UserRole = 'admin' | 'reception' | 'staff' | 'platform_admin' | 'unknown';
+export type UserRole =
+  | 'super_admin'
+  | 'admin'
+  | 'reception'
+  | 'staff'
+  | 'platform_admin'
+  | 'unknown';
 
 export interface User {
   id: string;
@@ -19,6 +25,7 @@ export interface User {
 export interface UserCapabilities {
   roles: string[];
   permissions: string[];
+  currencyCode?: string | null;
 }
 
 export interface AuthTokens {

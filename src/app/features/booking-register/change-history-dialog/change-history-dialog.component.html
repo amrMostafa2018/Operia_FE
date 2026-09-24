@@ -1,0 +1,90 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="false"
+  appendTo="body"
+  [styleClass]="dialogStyleClass()"
+  [style]="{ width: 'min(760px, 96vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-title">
+      <span class="title-icon" aria-hidden="true">
+        <i class="pi pi-history"></i>
+      </span>
+      <h3>{{ 'BOOKING_REGISTER.HISTORY.TITLE' | translate }}</h3>
+    </div>
+    <button
+      type="button"
+      class="close-btn"
+      (click)="close()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </ng-template>
+
+  <div class="history-body">
+    @if (loading()) {
+      <div class="history-loading" role="status" [attr.aria-label]="'APP.LOADING' | translate">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <span>{{ 'APP.LOADING' | translate }}</span>
+      </div>
+    } @else {
+      <div class="history-timeline">
+        @for (event of events(); track event.id; let last = $last) {
+          <article class="history-event" [class.history-event--last]="last">
+            <span class="timeline-marker" [ngClass]="event.markerClass"></span>
+            <div class="history-action">
+              <h4 [ngClass]="titleClass(event)">{{ titleKey(event) | translate }}</h4>
+              <p class="description">
+                {{ event.descriptionKey | translate: event.descriptionParams ?? {} }}
+              </p>
+              @if (event.closeItems?.length) {
+                <ul class="close-items">
+                  @for (item of event.closeItems; track item.name + item.status + $index) {
+                    <li class="close-item">
+                      <div class="close-item-head">
+                        <strong>{{ item.name }}</strong>
+                        <span
+                          class="close-item-status"
+                          [class.close-item-status--complete]="item.status === 'complete'"
+                          [class.close-item-status--cancel]="item.status === 'cancel'"
+                        >
+                          {{ closeItemStatusKey(item) | translate }}
+                        </span>
+                      </div>
+                      @if (item.notes) {
+                        <p class="close-item-detail close-item-notes">
+                          {{
+                            'BOOKING_REGISTER.HISTORY.CLOSED_ITEM_NOTES'
+                              | translate: { notes: item.notes }
+                          }}
+                        </p>
+                      }
+                      @if (item.pulsesUsed != null && item.pulsesUsed > 0) {
+                        <p class="close-item-detail">
+                          {{
+                            'BOOKING_REGISTER.HISTORY.CLOSED_ITEM_PULSES'
+                              | translate: { count: item.pulsesUsed }
+                          }}
+                        </p>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+            <div class="history-meta">
+              <p class="actor">{{ actorLabel(event) }}</p>
+              <p class="timestamp">{{ timestampLabel(event.timestamp) }}</p>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</p-dialog>
