@@ -33,20 +33,30 @@
 
   <form class="usage-form" [formGroup]="form" (ngSubmit)="submit()">
     @if (formMatchesLines()) {
-      <p-tabView styleClass="close-booking-tabs">
+      <div class="tabs close-line-tabs" role="tablist">
         @for (line of lineItems(); track line.id; let index = $index) {
-          @if (itemGroup(index); as group) {
-            <p-tabPanel>
-              <ng-template pTemplate="header">
-                <span class="tab-header" [class.tab-header--error]="tabHasError(index)">
-                  {{ line.name }}
-                  @if (tabHasError(index)) {
-                    <span class="tab-error-dot" aria-hidden="true"></span>
-                  }
-                </span>
-              </ng-template>
+          <button
+            type="button"
+            role="tab"
+            [class.active]="activeLineIndex() === index"
+            [class.has-error]="tabHasError(index)"
+            [attr.aria-selected]="activeLineIndex() === index"
+            (click)="selectLineTab(index)"
+          >
+            <span class="tab-label">
+              {{ line.name }}
+              @if (tabHasError(index)) {
+                <span class="tab-error-dot" aria-hidden="true"></span>
+              }
+            </span>
+          </button>
+        }
+      </div>
 
-              <div class="tab-panel" [formGroup]="group">
+      @for (line of lineItems(); track line.id; let index = $index) {
+        @if (activeLineIndex() === index) {
+          @if (itemGroup(index); as group) {
+            <div class="tab-panel" role="tabpanel" [formGroup]="group">
                 @if (isPulseLine(line) || isSessionPackageLine(line)) {
                   <div class="balance-row">
                     <div class="balance-item">
@@ -155,11 +165,10 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </p-tabPanel>
+            </div>
           }
         }
-      </p-tabView>
+      }
     }
 
     <button type="submit" class="package-usage-submit" [disabled]="saving()">

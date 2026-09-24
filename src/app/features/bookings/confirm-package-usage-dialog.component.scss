@@ -299,14 +299,10 @@
   }
 }
 
-.tab-header {
+.tab-label {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-}
-
-.tab-header--error {
-  color: #c62828;
 }
 
 .tab-error-dot {
@@ -316,20 +312,71 @@
   background: #c62828;
 }
 
-:host ::ng-deep .close-booking-tabs {
-  .p-tabview-nav {
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin-bottom: 0.25rem;
+.tabs {
+  display: flex;
+  gap: 2.5rem;
+  padding: 0;
+  border-bottom: 1px solid #e7e7ee;
+  min-height: 48px;
+  align-items: stretch;
+  justify-content: flex-start;
+
+  button {
+    flex: 0 0 auto;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: #777a90;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    padding: 0.8rem 0.25rem;
+    text-align: center;
+    line-height: 1.35;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+
+    &.active {
+      color: #5424e9;
+      border-bottom-color: #5424e9;
+    }
+
+    &.has-error {
+      color: #c62828;
+    }
+
+    &.active.has-error {
+      border-bottom-color: #c62828;
+    }
+  }
+}
+
+.close-line-tabs {
+  gap: 0.75rem;
+  padding: 0;
+  margin-bottom: 1rem;
+  min-height: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
   }
 
-  .p-tabview-nav li .p-tabview-nav-link {
-    padding: 0.65rem 0.85rem;
-    font-size: 0.88rem;
-  }
-
-  .p-tabview-panels {
-    padding: 0.25rem 0 0;
+  button {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 }
 
@@ -341,6 +388,18 @@
 }
 
 @media (max-width: 520px) {
+  .close-line-tabs {
+    justify-content: flex-start;
+    gap: 1rem;
+
+    button {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      padding: 0.65rem 0.15rem;
+      font-size: 0.82rem;
+    }
+  }
+
   .field-row,
   .status-row,
   .pulse-row {
