@@ -282,6 +282,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
         this.filteredCatalogItems();
         this.isRtl();
         this.showCatalogSection();
+        this.catalogTrack();
         this.refreshCarouselState();
       },
       { allowSignalWrites: true }
@@ -1055,8 +1056,13 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     const firstRect = cards[0].getBoundingClientRect();
     const lastRect = cards[cards.length - 1].getBoundingClientRect();
     const epsilon = 4;
-    const overflowLeft = Math.min(firstRect.left, lastRect.left) < trackRect.left - epsilon;
-    const overflowRight = Math.max(firstRect.right, lastRect.right) > trackRect.right + epsilon;
+    let overflowLeft = Math.min(firstRect.left, lastRect.left) < trackRect.left - epsilon;
+    let overflowRight = Math.max(firstRect.right, lastRect.right) > trackRect.right + epsilon;
+    const hasScrollableContent = track.scrollWidth - track.clientWidth > epsilon;
+    if (hasScrollableContent && !overflowLeft && !overflowRight) {
+      overflowLeft = this.isRtl();
+      overflowRight = !this.isRtl();
+    }
 
     this.canScrollLeft.set(overflowLeft);
     this.canScrollRight.set(overflowRight);

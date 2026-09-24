@@ -83,6 +83,8 @@ export class ConfirmPackageUsageDialogComponent {
 
   private readonly lineSync = new Subject<void>();
   private renderedLinesKey = '';
+  /** Line ids already warned for a pulses-over-remaining value, until the value drops back. */
+  private readonly pulseOverflowWarned = new Set<string>();
 
   constructor() {
     effect(() => {
@@ -171,10 +173,6 @@ export class ConfirmPackageUsageDialogComponent {
     });
   }
 
-  pulseMax(line: BookingLineItem, index: number): number {
-    return this.lineRemaining(line) ?? 0;
-  }
-
   showPulseInput(line: BookingLineItem, index: number): boolean {
     const group = this.itemGroup(index);
     return this.isPulseLine(line) && group?.controls['status'].value === 'complete';
@@ -199,12 +197,18 @@ export class ConfirmPackageUsageDialogComponent {
 
   submit(): void {
     this.form.markAllAsTouched();
+    const pulsesExceed = this.hasPulsesOverRemaining();
+    if (pulsesExceed) {
+      this.toastPulsesExceedRemaining();
+    }
     if (this.form.invalid) {
-      this.toast.add({
-        severity: 'warn',
-        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-        detail: this.translate.instant('BOOKINGS.CLOSE.VALIDATION_INCOMPLETE'),
-      });
+      if (!pulsesExceed || this.hasNonPulseMaxErrors()) {
+        this.toast.add({
+          severity: 'warn',
+          summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+          detail: this.translate.instant('BOOKINGS.CLOSE.VALIDATION_INCOMPLETE'),
+        });
+      }
       return;
     }
 
@@ -225,8 +229,7 @@ export class ConfirmPackageUsageDialogComponent {
         bookingItemId: line.id,
         customerPackageId: line.customerPackageId ?? null,
         status: value.status,
-        pulsesUsed:
-          value.status === 'complete' && this.isPulseLine(line) ? value.pulsesUsed : null,
+        pulsesUsed: value.status === 'complete' && this.isPulseLine(line) ? value.pulsesUsed : null,
         notes: value.notes.trim() ? value.notes.trim() : null,
       });
     }
@@ -236,6 +239,7 @@ export class ConfirmPackageUsageDialogComponent {
 
   private rebuildForm(lines: readonly BookingLineItem[]): void {
     this.lineSync.next();
+    this.pulseOverflowWarned.clear();
     const array = this.fb.array<FormGroup>(lines.map(line => this.createItemGroup(line)));
     this.form.setControl('items', array);
   }
@@ -251,6 +255,9 @@ export class ConfirmPackageUsageDialogComponent {
     group.controls['status'].valueChanges
       .pipe(takeUntil(this.lineSync), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyPulseValidators(group, line));
+    group.controls['pulsesUsed'].valueChanges
+      .pipe(takeUntil(this.lineSync), takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => this.warnIfPulsesExceedRemaining(line, value));
 
     return group;
   }
@@ -262,15 +269,62 @@ export class ConfirmPackageUsageDialogComponent {
 
     if (this.isPulseLine(line) && status === 'complete') {
       const max = this.lineRemaining(line) ?? 0;
-      pulsesControl.setValidators([
-        Validators.required,
-        Validators.min(1),
-        Validators.max(Math.max(1, max)),
-      ]);
+      pulsesControl.setValidators([Validators.required, Validators.min(1), Validators.max(max)]);
     } else {
       pulsesControl.setValue(null);
+      this.pulseOverflowWarned.delete(line.id);
     }
 
     pulsesControl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private hasPulsesOverRemaining(): boolean {
+    return this.lineItems().some(
+      (line, index) =>
+        this.showPulseInput(line, index) &&
+        this.pulsesExceedRemaining(line, this.itemGroup(index)?.controls['pulsesUsed'].value)
+    );
+  }
+
+  private hasNonPulseMaxErrors(): boolean {
+    return this.itemsArray().controls.some(group => {
+      const pulseHasOtherError = Object.keys(group.controls['pulsesUsed'].errors ?? {}).some(
+        key => key !== 'max'
+      );
+      return (
+        group.controls['status'].invalid || group.controls['notes'].invalid || pulseHasOtherError
+      );
+    });
+  }
+
+  private warnIfPulsesExceedRemaining(line: BookingLineItem, value: unknown): void {
+    if (!this.pulsesExceedRemaining(line, value)) {
+      this.pulseOverflowWarned.delete(line.id);
+      return;
+    }
+
+    if (this.pulseOverflowWarned.has(line.id)) {
+      return;
+    }
+
+    this.pulseOverflowWarned.add(line.id);
+    this.toastPulsesExceedRemaining();
+  }
+
+  private pulsesExceedRemaining(line: BookingLineItem, value: unknown): boolean {
+    const pulses = typeof value === 'number' ? value : null;
+    if (pulses == null) {
+      return false;
+    }
+
+    return pulses > (this.lineRemaining(line) ?? 0);
+  }
+
+  private toastPulsesExceedRemaining(): void {
+    this.toast.add({
+      severity: 'warn',
+      summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+      detail: this.translate.instant('BOOKINGS.CLOSE.ERRORS.PULSES_MAX'),
+    });
   }
 }

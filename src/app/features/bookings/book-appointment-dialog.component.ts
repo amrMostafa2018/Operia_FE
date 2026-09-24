@@ -446,25 +446,20 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         if (!this.visible()) {
           return;
         }
+        if (!this.showServicesSection()) {
+          return;
+        }
         this.filteredServices();
         this.isRtl();
-        this.showServicesSection();
-        queueMicrotask(() => {
-          this.bindCarouselObserver();
-          this.resetCarouselScroll();
-          this.updateScrollState();
-        });
+        this.serviceTrack();
+        this.scheduleCarouselSync();
       },
       { allowSignalWrites: true }
     );
   }
 
   ngAfterViewInit(): void {
-    queueMicrotask(() => {
-      this.bindCarouselObserver();
-      this.resetCarouselScroll();
-      this.updateScrollState();
-    });
+    this.scheduleCarouselSync();
   }
 
   ngOnDestroy(): void {
@@ -549,11 +544,34 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     const trackRect = track.getBoundingClientRect();
     const firstRect = cards[0].getBoundingClientRect();
     const lastRect = cards[cards.length - 1].getBoundingClientRect();
-    const overflowLeft = Math.min(firstRect.left, lastRect.left) < trackRect.left - 4;
-    const overflowRight = Math.max(firstRect.right, lastRect.right) > trackRect.right + 4;
+    let overflowLeft = Math.min(firstRect.left, lastRect.left) < trackRect.left - 4;
+    let overflowRight = Math.max(firstRect.right, lastRect.right) > trackRect.right + 4;
+    const hasScrollableContent = track.scrollWidth - track.clientWidth > 4;
+    if (hasScrollableContent && !overflowLeft && !overflowRight) {
+      overflowLeft = this.isRtl();
+      overflowRight = !this.isRtl();
+    }
 
     this.canScrollLeft.set(overflowLeft);
     this.canScrollRight.set(overflowRight);
+  }
+
+  /** Measure after the section is in the DOM and has a real width. */
+  private scheduleCarouselSync(): void {
+    const run = () => {
+      if (!this.showServicesSection() || !this.serviceTrack()) {
+        return;
+      }
+      this.bindCarouselObserver();
+      this.resetCarouselScroll();
+      this.updateScrollState();
+    };
+
+    queueMicrotask(run);
+    requestAnimationFrame(() => {
+      run();
+      requestAnimationFrame(run);
+    });
   }
 
   slotDateLabel(slot: SlotSelection): string {
