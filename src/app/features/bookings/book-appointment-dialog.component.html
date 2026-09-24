@@ -74,14 +74,43 @@
     </h4>
 
     <form class="client-form" [formGroup]="clientForm">
-      <div class="field">
+      <div class="field field--phone">
         <label for="booking-client-mobile">{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
-        <span class="input-icon-wrap">
-          <i class="pi pi-phone"></i>
-          <input id="booking-client-mobile" pInputText formControlName="mobile" dir="ltr" />
+        <span class="phone-row phone-row--intl phone-row--filter" dir="ltr">
+          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+          <ngx-intl-tel-input
+            [cssClass]="phoneInputCssClass"
+            [onlyCountries]="onlyCountries"
+            [selectedCountryISO]="selectedCountryISO()"
+            [enableAutoCountrySelect]="false"
+            [enablePlaceholder]="true"
+            [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+            [searchCountryFlag]="false"
+            [selectFirstCountry]="false"
+            [separateDialCode]="true"
+            [phoneValidation]="true"
+            inputId="booking-client-mobile"
+            [formControl]="mobileControl"
+            (countryChange)="onMobileCountryChange($event)"
+          />
         </span>
         @if (mobileError(); as errorKey) {
           <small class="field-error">{{ errorKey | translate }}</small>
+        }
+        @if (matchedClient(); as client) {
+          <span class="client-badge registered">
+            <i class="pi pi-check-circle"></i>
+            {{ 'BOOKINGS.BOOK.REGISTERED' | translate }}
+          </span>
+        } @else if (customerLookupPending()) {
+          <span class="client-badge">
+            <i class="pi pi-spin pi-spinner"></i>
+            {{ 'APP.LOADING' | translate }}
+          </span>
+        } @else if (clientForm.controls.mobile.value) {
+          <span class="client-badge unregistered">
+            {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
+          </span>
         }
       </div>
       <div class="field">
@@ -115,22 +144,6 @@
         />
       </div>
     </form>
-
-    @if (matchedClient(); as client) {
-      <span class="client-badge registered">
-        <i class="pi pi-check-circle"></i>
-        {{ 'BOOKINGS.BOOK.REGISTERED' | translate }}
-      </span>
-    } @else if (customerLookupPending()) {
-      <span class="client-badge">
-        <i class="pi pi-spin pi-spinner"></i>
-        {{ 'APP.LOADING' | translate }}
-      </span>
-    } @else if (clientForm.controls.mobile.value) {
-      <span class="client-badge unregistered">
-        {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
-      </span>
-    }
 
     @for (pkg of selectedClientPackages(); track pkg.packageId) {
       <div class="package-stats">

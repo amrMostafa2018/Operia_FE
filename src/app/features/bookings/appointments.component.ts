@@ -10,8 +10,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize, forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { NgxIntlTelInputModule, ChangeData, CountryISO } from 'ngx-intl-tel-input';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
@@ -82,6 +83,18 @@ import {
 } from './booking-details-dialog.component';
 import { DurationMismatchDialogComponent } from './duration-mismatch-dialog.component';
 import { SaleHandoffService, SaleHandoffDraft } from './sale-handoff.service';
+import {
+  PHONE_INPUT_CSS_CLASS,
+  PHONE_INPUT_DEFAULT_COUNTRY,
+  PHONE_INPUT_ONLY_COUNTRIES,
+} from '@app/shared/constants/phone-input.config';
+import {
+  isValidPhoneChangeData,
+  toBookingSearchMobile,
+  toNationalPhoneNumber,
+  toPhoneChangeData,
+  toPhoneCountryIso,
+} from '@app/shared/utils/phone-number.util';
 
 /** Describes pending booking draft used by booking screens. */
 interface PendingBookingDraft {
@@ -101,10 +114,12 @@ interface PendingBookingDraft {
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     TranslatePipe,
     ButtonModule,
     DropdownModule,
     InputTextModule,
+    NgxIntlTelInputModule,
     CalendarModule,
     BusyOverlayComponent,
     ConfirmActionDialogComponent,
@@ -137,6 +152,7 @@ export class AppointmentsComponent {
   readonly calendarLoading = signal(false);
   readonly employeesLoading = signal(false);
   readonly customerSearchLoading = signal(false);
+  readonly customerLookupStatus = signal<'idle' | 'registered' | 'unregistered'>('idle');
   readonly mutating = signal(false);
   readonly calendarUnavailable = signal(false);
   readonly calendarBusy = computed(
@@ -148,6 +164,11 @@ export class AppointmentsComponent {
   readonly clients = signal<import('./models/booking.model').ClientRecord[]>([]);
 
   readonly filters = signal<AppointmentFilters>(defaultFilters());
+  readonly mobileControl = new FormControl<ChangeData | string | null>('');
+  readonly mobileInvalid = signal(false);
+  readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
+  readonly selectedCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly durations = computed<DurationOption[]>(() => {
     const selectedPackage = this.packages().find(pkg => pkg.id === this.filters().packageId);
     if (!selectedPackage || selectedPackage.durationMinutes <= 0) {
@@ -181,6 +202,8 @@ export class AppointmentsComponent {
   private employeesRequestId = 0;
   private catalogRequestId = 0;
   private holdRefreshTimer?: ReturnType<typeof setTimeout>;
+  private mobileSearchTimer?: ReturnType<typeof setTimeout>;
+  private lastAutoSearchedMobile = '';
 
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
 
@@ -325,6 +348,12 @@ export class AppointmentsComponent {
       if (this.holdRefreshTimer) {
         clearTimeout(this.holdRefreshTimer);
       }
+      if (this.mobileSearchTimer) {
+        clearTimeout(this.mobileSearchTimer);
+      }
+    });
+    this.mobileControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+      this.onMobileInput(value);
     });
     this.loadBranches();
     this.applySaleHandoff();
@@ -337,10 +366,15 @@ export class AppointmentsComponent {
       return;
     }
     this.saleHandoffDraft.set(draft);
+    const parsedMobile = toPhoneChangeData(draft.clientMobile);
+    this.selectedCountryISO.set(toPhoneCountryIso(draft.clientMobile));
+    this.mobileControl.setValue(toNationalPhoneNumber(draft.clientMobile) ?? '', {
+      emitEvent: false,
+    });
     this.filters.update(current => ({
       ...current,
       clientName: draft.clientName,
-      clientMobile: draft.clientMobile,
+      clientMobile: toBookingSearchMobile(parsedMobile) || draft.clientMobile.trim(),
     }));
     this.onMobileSearch();
     this.toast.add({
@@ -445,10 +479,51 @@ export class AppointmentsComponent {
     return list.find(branch => branch.id === branchId) ?? list[0] ?? null;
   }
 
+  /** Updates the customer filter and searches once the mobile number is valid. */
+  onMobileInput(value: ChangeData | string | null): void {
+    if (typeof value === 'string') {
+      return;
+    }
+    const mobile = toBookingSearchMobile(value);
+    this.mobileInvalid.set(!!mobile && !isValidPhoneChangeData(value));
+    if (mobile !== this.filters().clientMobile) {
+      this.updateFilter('clientMobile', mobile);
+    }
+    this.scheduleMobileSearch(value);
+  }
+
+  /** Remembers the selected dial-code country so the flag dropdown stays in sync. */
+  onMobileCountryChange(country: { iso2: string }): void {
+    const iso = country.iso2 as CountryISO;
+    if (PHONE_INPUT_ONLY_COUNTRIES.includes(iso)) {
+      this.selectedCountryISO.set(iso);
+    }
+  }
+
+  private scheduleMobileSearch(value: ChangeData | string | null): void {
+    if (this.mobileSearchTimer) {
+      clearTimeout(this.mobileSearchTimer);
+    }
+
+    this.mobileSearchTimer = setTimeout(() => {
+      this.mobileSearchTimer = undefined;
+      const mobile = toBookingSearchMobile(value);
+      if (!mobile || !isValidPhoneChangeData(value)) {
+        return;
+      }
+      if (mobile === this.lastAutoSearchedMobile) {
+        return;
+      }
+      this.onMobileSearch();
+    }, 300);
+  }
+
   updateFilter<K extends keyof AppointmentFilters>(key: K, value: AppointmentFilters[K]): void {
     if (key === 'clientMobile' && value !== this.filters().clientMobile) {
+      this.lastAutoSearchedMobile = '';
       this.customerRequestId++;
       this.customerSearchLoading.set(false);
+      this.customerLookupStatus.set('idle');
       this.clients.set([]);
       this.packages.set([]);
       this.selectedSlot.set(null);
@@ -677,6 +752,7 @@ export class AppointmentsComponent {
     if (!mobile) {
       return;
     }
+    this.lastAutoSearchedMobile = mobile;
     const requestId = ++this.customerRequestId;
     this.customerSearchLoading.set(true);
     this.appointmentsApi
@@ -694,12 +770,14 @@ export class AppointmentsComponent {
           return;
         }
         if (!customer) {
+          this.customerLookupStatus.set('unregistered');
           this.updateFilter('clientName', '');
           this.clients.set([]);
           this.packages.set([]);
           this.onPackageSelected(null);
           return;
         }
+        this.customerLookupStatus.set('registered');
         const client = {
           id: customer.id,
           name: customer.fullName,

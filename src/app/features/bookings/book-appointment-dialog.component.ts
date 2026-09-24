@@ -30,11 +30,13 @@ import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
   FormBuilder,
+  FormControl,
   FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ChangeData, CountryISO, NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -50,6 +52,18 @@ import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { PackageService } from '@app/features/packages/package.service';
 import { AppointmentsApiService } from './appointments-api.service';
 import { getRtlStartScrollLeft } from '@app/shared/utils/rtl.util';
+import {
+  PHONE_INPUT_CSS_CLASS,
+  PHONE_INPUT_DEFAULT_COUNTRY,
+  PHONE_INPUT_ONLY_COUNTRIES,
+} from '@app/shared/constants/phone-input.config';
+import {
+  isValidPhoneChangeData,
+  toBookingSearchMobile,
+  toNationalPhoneNumber,
+  toPhoneChangeData,
+  toPhoneCountryIso,
+} from '@app/shared/utils/phone-number.util';
 import {
   BookingLineItem,
   CatalogCategoryTab,
@@ -111,6 +125,7 @@ interface CustomerLookupState {
     FormsModule,
     ReactiveFormsModule,
     InputTextModule,
+    NgxIntlTelInputModule,
     InputNumberModule,
     TranslatePipe,
     UnlistedCategoryFieldComponent,
@@ -166,6 +181,11 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     mobile: ['', Validators.required],
     name: ['', Validators.required],
   });
+  readonly mobileControl = new FormControl<ChangeData | string | null>('');
+  readonly mobileInvalid = signal(false);
+  readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
+  readonly selectedCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
 
   readonly unlistedForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
@@ -364,6 +384,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
 
   constructor() {
+    this.mobileControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+      this.onMobileInput(value);
+    });
     setupServerErrorClearing(this.unlistedForm, this.destroyRef, [
       'name',
       'serviceCategoryId',
@@ -378,8 +401,14 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         }
 
         untracked(() => {
+          const parsedMobile = toPhoneChangeData(this.initialClientMobile());
+          this.selectedCountryISO.set(toPhoneCountryIso(this.initialClientMobile()));
+          this.mobileControl.setValue(toNationalPhoneNumber(this.initialClientMobile()) ?? '', {
+            emitEvent: false,
+          });
+          this.mobileInvalid.set(false);
           this.clientForm.reset({
-            mobile: this.initialClientMobile(),
+            mobile: toBookingSearchMobile(parsedMobile) || this.initialClientMobile().trim(),
             name: this.initialClientName(),
           });
           this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
@@ -435,6 +464,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
           }
           this.loadPaymentMethods();
         } else {
+          this.mobileControl.setValue('', { emitEvent: false });
+          this.mobileInvalid.set(false);
           this.clientForm.reset({ mobile: '', name: '' });
         }
       },
@@ -613,7 +644,31 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return bookAppointmentLineTotal(item);
   }
 
+  /** Stores a country-code mobile and searches only after the number is valid. */
+  onMobileInput(value: ChangeData | string | null): void {
+    if (typeof value === 'string') {
+      return;
+    }
+    const mobile = toBookingSearchMobile(value);
+    const valid = isValidPhoneChangeData(value);
+    this.mobileInvalid.set(!!mobile && !valid);
+    const nextMobile = valid ? mobile : '';
+    if (nextMobile !== this.clientForm.controls.mobile.value) {
+      this.clientForm.controls.mobile.setValue(nextMobile);
+    }
+  }
+
+  onMobileCountryChange(country: { iso2: string }): void {
+    const iso = country.iso2 as CountryISO;
+    if (PHONE_INPUT_ONLY_COUNTRIES.includes(iso)) {
+      this.selectedCountryISO.set(iso);
+    }
+  }
+
   mobileError(): string | null {
+    if (this.mobileInvalid()) {
+      return 'BOOKINGS.BOOK.ERRORS.MOBILE_INVALID';
+    }
     const control = this.clientForm.controls.mobile;
     if (!control.touched && !control.dirty) {
       return null;

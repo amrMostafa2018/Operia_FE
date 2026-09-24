@@ -829,6 +829,7 @@
     "FILTER_PACKAGE": "Package",
     "FILTER_CLIENT_NAME": "Client name",
     "FILTER_CLIENT_MOBILE": "Mobile number",
+    "FILTER_MOBILE_INVALID": "Enter a valid mobile number.",
     "FILTER_HINT": "Available appointments are shown based on the selected session duration ({{duration}} min).",
     "SLOT_FIRST_HINT": "Choose an available 30-minute slot, then add the customer and services. You will be warned if the services take longer than the selected slot.",
     "SELECT_CUSTOMER_DURATION": "Search for a customer to load packages, or click an available slot to book directly.",
@@ -1057,6 +1058,7 @@
       "SEND_MESSAGE": "Send confirmation message to client after booking",
       "ERRORS": {
         "MOBILE_REQUIRED": "Mobile number is required.",
+        "MOBILE_INVALID": "Enter a valid mobile number.",
         "NAME_REQUIRED": "Client name is required."
       }
     },

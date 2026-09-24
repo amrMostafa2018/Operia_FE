@@ -2,33 +2,44 @@
 <section class="appointments-page" [attr.aria-busy]="calendarBusy() || customerSearchLoading()">
   <div class="filter-section">
     <div class="filter-bar">
-      <label class="filter-field mobile-field">
-        <span class="field-label">{{ 'BOOKINGS.FILTER_CLIENT_MOBILE' | translate }}</span>
-        <span class="field-control">
-          <i class="pi pi-phone"></i>
-          <input
-            pInputText
-            [ngModel]="filters().clientMobile"
-            (ngModelChange)="updateFilter('clientMobile', $event)"
-            (keyup.enter)="onMobileSearch()"
-            [placeholder]="'BOOKINGS.FILTER_CLIENT_MOBILE' | translate"
-          />
-          <button
-            type="button"
-            class="search-btn"
-            (click)="onMobileSearch()"
-            [disabled]="customerSearchLoading()"
-            [attr.aria-label]="'BOOKINGS.FILTER_SEARCH' | translate"
-          >
-            <i
-              class="pi"
-              [class.pi-search]="!customerSearchLoading()"
-              [class.pi-spin]="customerSearchLoading()"
-              [class.pi-spinner]="customerSearchLoading()"
-            ></i>
-          </button>
+      <div class="filter-field mobile-field field--phone">
+        <label class="field-label" for="appointments-client-mobile">
+          {{ 'BOOKINGS.FILTER_CLIENT_MOBILE' | translate }}
+        </label>
+        <span class="field-control mobile-phone-control">
+          <span class="phone-row phone-row--intl phone-row--filter" dir="ltr">
+            <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+            <ngx-intl-tel-input
+              [cssClass]="phoneInputCssClass"
+              [onlyCountries]="onlyCountries"
+              [selectedCountryISO]="selectedCountryISO()"
+              [enableAutoCountrySelect]="false"
+              [enablePlaceholder]="true"
+              [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+              [searchCountryFlag]="false"
+              [selectFirstCountry]="false"
+              [separateDialCode]="true"
+              [phoneValidation]="true"
+              inputId="appointments-client-mobile"
+              [formControl]="mobileControl"
+              (countryChange)="onMobileCountryChange($event)"
+            />
+          </span>
         </span>
-      </label>
+        @if (mobileInvalid()) {
+          <small class="field-error">{{ 'BOOKINGS.FILTER_MOBILE_INVALID' | translate }}</small>
+        }
+        @if (customerLookupStatus() === 'registered') {
+          <span class="client-badge registered">
+            <i class="pi pi-check-circle"></i>
+            {{ 'BOOKINGS.BOOK.REGISTERED' | translate }}
+          </span>
+        } @else if (customerLookupStatus() === 'unregistered') {
+          <span class="client-badge unregistered">
+            {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
+          </span>
+        }
+      </div>
 
       <label class="filter-field">
         <span class="field-label">{{ 'BOOKINGS.FILTER_CLIENT_NAME' | translate }}</span>
@@ -63,7 +74,7 @@
         </span>
       </label>
 
-      <label class="filter-field" for="appointments-duration">
+      <label class="filter-field filter-field--duration" for="appointments-duration">
         <span class="field-label">{{ 'BOOKINGS.FILTER_DURATION' | translate }}</span>
         <span class="field-control">
           <i class="pi pi-clock"></i>

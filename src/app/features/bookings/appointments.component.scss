@@ -1,5 +1,6 @@
 /* Styles booking calendar intervals, active holds, closed hours, and dialogs. */
 @use '../../../styles/variables' as *;
+@use '../../shared/styles/phone-intl-input';
 
 :host {
   display: block;
@@ -18,17 +19,25 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  overflow: visible;
 }
 
 .filter-bar {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns:
+    minmax(13.5rem, 1.45fr)
+    minmax(8rem, 1fr)
+    minmax(8rem, 1fr)
+    minmax(6.25rem, 0.55fr)
+    minmax(8rem, 1fr)
+    minmax(8rem, 1fr);
   gap: 0.75rem;
   background: var(--surface-card);
   border: 1px solid var(--surface-border);
   border-radius: $border-radius-lg;
   padding: 1rem;
   box-shadow: $shadow-sm;
+  overflow: visible;
 }
 
 .filter-field {
@@ -36,6 +45,16 @@
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
+  overflow: visible;
+}
+
+.filter-field--duration {
+  min-width: 7rem;
+  max-width: 9.5rem;
+}
+
+.filter-field--duration .field-control {
+  padding-inline-start: 2.1rem;
 }
 
 .field-label {
@@ -83,8 +102,97 @@
   padding-inline-end: 0;
 }
 
+.mobile-field {
+  min-width: 13.5rem;
+  overflow: visible;
+  z-index: 4;
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.76rem;
+}
+
+.client-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.client-badge.registered {
+  background: #e8f8f0;
+  color: #0f7a45;
+}
+
+.client-badge.unregistered {
+  background: #fff4e5;
+  color: #b45309;
+}
+
 .mobile-field .field-control {
-  padding-inline-end: 2.5rem;
+  padding-inline: 0;
+}
+
+.mobile-phone-control {
+  overflow: visible;
+
+  .phone-row--filter {
+    --phone-flag-width: 104px;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    box-shadow: none;
+
+    .phone-row-icon {
+      left: calc(var(--phone-flag-width) + 0.55rem);
+    }
+
+    &:focus-within {
+      border-color: transparent;
+      box-shadow: none;
+    }
+  }
+}
+
+.mobile-field.field--phone:has(.dropdown-menu.show) {
+  position: relative;
+  z-index: 3000;
+}
+
+.filter-bar:has(.mobile-field .dropdown-menu.show) {
+  overflow: visible;
+}
+
+:host ::ng-deep .mobile-phone-control .phone-row--filter {
+  .iti__flag-container,
+  .iti__selected-flag {
+    z-index: 5;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .operia-tel-input,
+  .iti input.iti__tel-input.operia-tel-input,
+  .iti.separate-dial-code input {
+    padding-right: 0.85rem !important;
+  }
+
+  .dropdown-menu.iti__dropdown-content {
+    overflow: visible !important;
+  }
+
+  .dropdown-menu.iti__dropdown-content.show {
+    display: block !important;
+    z-index: 5000 !important;
+  }
 }
 
 .search-btn {
@@ -752,7 +860,7 @@
 
 @media (max-width: 1280px) {
   .filter-bar {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(16rem, 1.8fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .footer-summary {
@@ -923,11 +1031,16 @@
     grid-template-columns: repeat(2, minmax(150px, 1fr));
     padding: 0.75rem;
     gap: 0.6rem;
-    overflow-x: auto;
+    overflow: visible;
   }
 
   .mobile-field {
     grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .filter-field--duration {
+    max-width: none;
     min-width: 0;
   }
 
