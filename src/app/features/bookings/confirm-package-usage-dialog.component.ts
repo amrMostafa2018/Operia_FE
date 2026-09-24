@@ -19,7 +19,6 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { TabViewModule } from 'primeng/tabview';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 import { CloseBookingItemInput } from './appointments-api.service';
 import {
@@ -48,7 +47,6 @@ interface CloseLineFormValue {
     ReactiveFormsModule,
     InputNumberModule,
     InputTextareaModule,
-    TabViewModule,
     TranslatePipe,
   ],
   templateUrl: './confirm-package-usage-dialog.component.html',
@@ -80,6 +78,7 @@ export class ConfirmPackageUsageDialogComponent {
   readonly lineItems = computed(() => this.booking()?.lineItems ?? []);
   /** True only after the form array matches the open booking lines. */
   readonly formReady = signal(false);
+  readonly activeLineIndex = signal(0);
 
   private readonly lineSync = new Subject<void>();
   private renderedLinesKey = '';
@@ -96,6 +95,7 @@ export class ConfirmPackageUsageDialogComponent {
         if (!open) {
           this.renderedLinesKey = '';
           this.formReady.set(false);
+          this.activeLineIndex.set(0);
           return;
         }
 
@@ -106,6 +106,7 @@ export class ConfirmPackageUsageDialogComponent {
 
         this.renderedLinesKey = key;
         this.rebuildForm(lines);
+        this.activeLineIndex.set(0);
         this.formReady.set(this.itemsArray().length === lines.length);
       });
     });
@@ -185,6 +186,10 @@ export class ConfirmPackageUsageDialogComponent {
   tabHasError(index: number): boolean {
     const group = this.itemGroup(index);
     return !!group && group.invalid && (group.dirty || group.touched);
+  }
+
+  selectLineTab(index: number): void {
+    this.activeLineIndex.set(index);
   }
 
   notesLength(index: number): number {
