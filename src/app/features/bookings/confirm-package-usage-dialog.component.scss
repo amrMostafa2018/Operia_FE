@@ -190,6 +190,15 @@
   padding: 0.75rem 1rem;
   white-space: normal;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.package-usage-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 .package-usage-submit:hover {

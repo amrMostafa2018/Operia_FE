@@ -164,6 +164,9 @@
     }
 
     <button type="submit" class="package-usage-submit" [disabled]="saving()">
+      @if (saving()) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      }
       {{ 'BOOKINGS.CLOSE.SUBMIT' | translate }}
     </button>
   </form>

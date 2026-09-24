@@ -1,5 +1,5 @@
 <!-- Shows tenant-scoped register filters, summary, rows, export, and booking actions. -->
-<div class="register-page">
+<div class="register-page" [attr.aria-busy]="loading() || detailsLoading() || mutating()">
   <div class="page-header">
     <div class="page-title">
       <i class="pi pi-list"></i>
@@ -142,12 +142,14 @@
   </div>
 
   <div class="table-section">
+    <app-busy-overlay [visible]="detailsLoading()" />
     <p-table
       [value]="filteredRows()"
       [rows]="rows()"
       [first]="first()"
       [paginator]="true"
       [lazy]="true"
+      [loading]="loading()"
       [totalRecords]="totalRecords()"
       [rowsPerPageOptions]="rowsPerPageOptions"
       [showCurrentPageReport]="true"
@@ -231,6 +233,8 @@
               [iconPos]="leadingIconPos()"
               styleClass="export-btn"
               [outlined]="true"
+              [loading]="exporting()"
+              [disabled]="exporting()"
               (onClick)="exportReport()"
             />
           </div>
@@ -245,6 +249,8 @@
   [booking]="selectedBookingRecord()"
   [catalogItems]="catalogItems()"
   [catalogCategories]="catalogCategories()"
+  [catalogLoading]="catalogLoading()"
+  [saving]="mutating()"
   (closed)="closeDetails()"
   (saved)="onDetailsSaved($event)"
   (cancelBooking)="requestCancellation($event)"
@@ -268,6 +274,7 @@
   messageKey="BOOKING_REGISTER.DETAILS.CANCEL_CONFIRM"
   confirmLabelKey="BOOKING_REGISTER.DETAILS.CANCEL"
   cancelLabelKey="COMMON.CANCEL"
+  [confirming]="mutating()"
   (cancelled)="cancelConfirmOpen.set(false)"
   (confirmed)="confirmCancellation()"
 />
@@ -275,5 +282,6 @@
 <app-change-history-dialog
   [visible]="historyOpen()"
   [events]="historyEvents()"
+  [loading]="historyLoading()"
   (closed)="closeHistory()"
 />

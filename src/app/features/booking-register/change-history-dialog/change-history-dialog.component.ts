@@ -23,6 +23,7 @@ export class ChangeHistoryDialogComponent {
 
   readonly visible = input(false);
   readonly events = input<BookingRegisterHistoryEvent[]>([]);
+  readonly loading = input(false);
 
   readonly closed = output<void>();
 

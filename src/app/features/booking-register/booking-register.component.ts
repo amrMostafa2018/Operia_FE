@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -38,6 +38,7 @@ import {
 import { AppointmentsApiService, BookingListItemDto } from '../bookings/appointments-api.service';
 import { formatMinutesAsTime, toDateKey } from '../bookings/models/booking.model';
 import { ChangeHistoryDialogComponent } from './change-history-dialog/change-history-dialog.component';
+import { BusyOverlayComponent } from '@app/shared/components/busy-overlay/busy-overlay.component';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import {
   BookingDetailsDialogComponent,
@@ -72,6 +73,7 @@ import {
     MenuModule,
     TableModule,
     TagModule,
+    BusyOverlayComponent,
     BookingDetailsDialogComponent,
     DurationMismatchDialogComponent,
     ChangeHistoryDialogComponent,
@@ -127,6 +129,12 @@ export class BookingRegisterComponent {
   readonly historyEvents = signal<BookingRegisterHistoryEvent[]>([]);
   readonly catalogItems = signal<ServiceCatalogItem[]>([]);
   readonly catalogCategories = signal<CatalogCategoryTab[]>([]);
+  readonly loading = signal(false);
+  readonly exporting = signal(false);
+  readonly detailsLoading = signal(false);
+  readonly historyLoading = signal(false);
+  readonly catalogLoading = signal(false);
+  readonly mutating = signal(false);
   readonly pendingEdit = signal<BookingDetailsSavePayload | null>(null);
   readonly mismatchOpen = signal(false);
   readonly mismatchServiceDuration = signal(0);
@@ -203,11 +211,17 @@ export class BookingRegisterComponent {
   /** Exports the currently applied register filters as a CSV download. */
   exportReport(): void {
     const filters = this.appliedFilters();
-    if (!filters.dateFrom || !filters.dateTo || filters.dateTo < filters.dateFrom) {
+    if (
+      !filters.dateFrom ||
+      !filters.dateTo ||
+      filters.dateTo < filters.dateFrom ||
+      this.exporting()
+    ) {
       return;
     }
     const fromDate = toDateKey(filters.dateFrom);
     const toDate = toDateKey(filters.dateTo);
+    this.exporting.set(true);
     this.appointmentsApi
       .export({
         fromDate,
@@ -217,7 +231,10 @@ export class BookingRegisterComponent {
         employeeId: filters.employeeId,
         status: filters.status,
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.exporting.set(false))
+      )
       .subscribe(blob => {
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -241,10 +258,18 @@ export class BookingRegisterComponent {
   /** Loads the full booking record for the selected register row. */
   openDetails(booking: BookingRegisterRow): void {
     this.selectedBooking.set(booking);
+    this.detailsLoading.set(true);
     const date = toDateKey(booking.scheduledDate);
     this.appointmentsApi
       .calendar(booking.branchId, date, date, booking.employeeId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (this.selectedBooking()?.id === booking.id) {
+            this.detailsLoading.set(false);
+          }
+        })
+      )
       .subscribe(result => {
         const record = result.bookings.find(item => item.id === booking.id);
         if (!record || this.selectedBooking()?.id !== booking.id) {
@@ -257,6 +282,7 @@ export class BookingRegisterComponent {
 
   closeDetails(): void {
     this.detailsOpen.set(false);
+    this.detailsLoading.set(false);
     this.selectedBooking.set(null);
     this.selectedBookingRecord.set(null);
   }
@@ -277,13 +303,17 @@ export class BookingRegisterComponent {
   /** Cancels the selected register booking using its current version. */
   confirmCancellation(): void {
     const booking = this.selectedBookingRecord();
-    if (!booking?.version || booking.status !== 'booked') {
+    if (!booking?.version || booking.status !== 'booked' || this.mutating()) {
       this.cancelConfirmOpen.set(false);
       return;
     }
+    this.mutating.set(true);
     this.appointmentsApi
       .cancel(booking.id, booking.version)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
       .subscribe({
         next: () => {
           this.cancelConfirmOpen.set(false);
@@ -338,9 +368,19 @@ export class BookingRegisterComponent {
   /** Loads recorded booking changes for the selected register row. */
   openHistory(booking: BookingRegisterRow): void {
     this.selectedBooking.set(booking);
+    this.historyEvents.set([]);
+    this.historyOpen.set(true);
+    this.historyLoading.set(true);
     this.appointmentsApi
       .history(booking.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (this.selectedBooking()?.id === booking.id) {
+            this.historyLoading.set(false);
+          }
+        })
+      )
       .subscribe(events => {
         this.historyEvents.set(
           events.map(event => ({
@@ -364,12 +404,12 @@ export class BookingRegisterComponent {
                   : 'history-marker--status',
           }))
         );
-        this.historyOpen.set(true);
       });
   }
 
   closeHistory(): void {
     this.historyOpen.set(false);
+    this.historyLoading.set(false);
     this.historyEvents.set([]);
     this.selectedBooking.set(null);
   }
@@ -417,10 +457,12 @@ export class BookingRegisterComponent {
   private loadRows(): void {
     const requestId = ++this.rowsRequestId;
     const filters = this.appliedFilters();
+    this.loading.set(true);
     if (!filters.dateFrom || !filters.dateTo || filters.dateTo < filters.dateFrom) {
       this.filteredRows.set([]);
       this.totalRecords.set(0);
       this.summary.set({ total: 0, booked: 0, completed: 0, cancelled: 0 });
+      this.loading.set(false);
       return;
     }
     this.appointmentsApi
@@ -434,7 +476,14 @@ export class BookingRegisterComponent {
         employeeId: filters.employeeId,
         status: filters.status,
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (requestId === this.rowsRequestId) {
+            this.loading.set(false);
+          }
+        })
+      )
       .subscribe({
         next: result => {
           if (requestId !== this.rowsRequestId) {
@@ -479,12 +528,16 @@ export class BookingRegisterComponent {
         customerPackageId: item.customerPackageId ?? null,
         quantity: item.quantity,
       }));
-    if (items.length !== payload.lineItems.length) {
+    if (items.length !== payload.lineItems.length || this.mutating()) {
       return;
     }
+    this.mutating.set(true);
     this.appointmentsApi
       .update(booking.id, booking.version, items, payload.paymentMethod)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
       .subscribe({
         next: () => {
           this.closeDetails();
@@ -503,11 +556,15 @@ export class BookingRegisterComponent {
 
   /** Loads current catalog items and category choices for booking edits. */
   private loadCatalog(): void {
+    this.catalogLoading.set(true);
     forkJoin({
       packages: this.packagesApi.listAllActive(),
       categories: this.packagesApi.listServiceCategories(),
     })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.catalogLoading.set(false))
+      )
       .subscribe(({ packages, categories }) => {
         this.catalogCategories.set(
           categories.map(category => ({ id: category.id, label: category.name }))

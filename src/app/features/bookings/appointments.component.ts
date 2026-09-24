@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -23,6 +23,7 @@ import { Policies } from '@core/models/permissions.model';
 import { BranchService } from '@app/features/branches/branch.service';
 import { BookableEmployee, EmployeeService } from '@app/features/employees/employee.service';
 import { PackageService } from '@app/features/packages/package.service';
+import { BusyOverlayComponent } from '@app/shared/components/busy-overlay/busy-overlay.component';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import { getPrevArrowIcon } from '@app/shared/utils/rtl.util';
 import { resolveUploadUrl } from '@core/utils/resolve-upload-url';
@@ -105,6 +106,7 @@ interface PendingBookingDraft {
     DropdownModule,
     InputTextModule,
     CalendarModule,
+    BusyOverlayComponent,
     ConfirmActionDialogComponent,
     BookAppointmentDialogComponent,
     BookingDetailsDialogComponent,
@@ -133,7 +135,13 @@ export class AppointmentsComponent {
   readonly catalogCategories = signal<CatalogCategoryTab[]>([]);
   readonly catalogLoading = signal(false);
   readonly calendarLoading = signal(false);
+  readonly employeesLoading = signal(false);
+  readonly customerSearchLoading = signal(false);
+  readonly mutating = signal(false);
   readonly calendarUnavailable = signal(false);
+  readonly calendarBusy = computed(
+    () => this.calendarLoading() || this.employeesLoading() || this.mutating()
+  );
 
   readonly bookings = signal<BookingRecord[]>([]);
   readonly availabilityBlocks = signal<AppointmentAvailabilityBlock[]>([]);
@@ -170,6 +178,8 @@ export class AppointmentsComponent {
   readonly createRequestKey = signal<string | null>(null);
   private calendarRequestId = 0;
   private customerRequestId = 0;
+  private employeesRequestId = 0;
+  private catalogRequestId = 0;
   private holdRefreshTimer?: ReturnType<typeof setTimeout>;
 
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
@@ -342,6 +352,7 @@ export class AppointmentsComponent {
 
   /** Loads only branches available to the signed-in user for booking. */
   private loadBranches(): void {
+    this.employeesLoading.set(true);
     this.branchesApi
       .listBookable()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -351,6 +362,7 @@ export class AppointmentsComponent {
           this.branches.set(items);
           const current = this.filters().branchId;
           if (!items.length) {
+            this.employeesLoading.set(false);
             this.updateFilter('branchId', null);
             return;
           }
@@ -359,9 +371,12 @@ export class AppointmentsComponent {
             this.updateFilter('branchId', items[0].id);
           } else if (this.filters().branchId) {
             this.loadEmployees(this.filters().branchId);
+          } else {
+            this.employeesLoading.set(false);
           }
         },
         error: () => {
+          this.employeesLoading.set(false);
           this.toast.add({
             severity: 'error',
             summary: this.translate.instant('BOOKINGS.TOAST.BRANCHES_LOAD_FAILED'),
@@ -391,15 +406,22 @@ export class AppointmentsComponent {
       return;
     }
 
+    const requestId = ++this.catalogRequestId;
     this.catalogLoading.set(true);
     forkJoin({
       packages: this.packagesApi.listAllActive(),
       categories: this.packagesApi.listServiceCategories(),
     })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (requestId === this.catalogRequestId) {
+            this.catalogLoading.set(false);
+          }
+        })
+      )
       .subscribe({
         next: ({ packages, categories }) => {
-          this.catalogLoading.set(false);
           this.catalogCategories.set(
             categories.map(category => ({
               id: category.id,
@@ -409,7 +431,6 @@ export class AppointmentsComponent {
           this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
         },
         error: () => {
-          this.catalogLoading.set(false);
           this.toast.add({
             severity: 'error',
             summary: this.translate.instant('BOOKINGS.TOAST.PACKAGES_LOAD_FAILED'),
@@ -427,6 +448,7 @@ export class AppointmentsComponent {
   updateFilter<K extends keyof AppointmentFilters>(key: K, value: AppointmentFilters[K]): void {
     if (key === 'clientMobile' && value !== this.filters().clientMobile) {
       this.customerRequestId++;
+      this.customerSearchLoading.set(false);
       this.clients.set([]);
       this.packages.set([]);
       this.selectedSlot.set(null);
@@ -464,15 +486,25 @@ export class AppointmentsComponent {
 
   /** Loads bookable employees for the selected branch and refreshes calendar selection. */
   private loadEmployees(branchId: string | null): void {
+    const requestId = ++this.employeesRequestId;
     if (!branchId) {
       this.employees.set([]);
+      this.employeesLoading.set(false);
       this.ensureEmployeeSelected([]);
       return;
     }
 
+    this.employeesLoading.set(true);
     this.employeesApi
       .listBookable(branchId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (requestId === this.employeesRequestId) {
+            this.employeesLoading.set(false);
+          }
+        })
+      )
       .subscribe({
         next: staff => {
           const mapped = staff.map(employee => this.toEmployeeOption(employee, branchId));
@@ -646,9 +678,17 @@ export class AppointmentsComponent {
       return;
     }
     const requestId = ++this.customerRequestId;
+    this.customerSearchLoading.set(true);
     this.appointmentsApi
       .findCustomer(mobile)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (requestId === this.customerRequestId) {
+            this.customerSearchLoading.set(false);
+          }
+        })
+      )
       .subscribe(customer => {
         if (requestId !== this.customerRequestId || mobile !== this.filters().clientMobile.trim()) {
           return;
@@ -802,8 +842,13 @@ export class AppointmentsComponent {
       return;
     }
 
+    if (this.mutating()) {
+      return;
+    }
+
     const requestKey = this.createRequestKey() ?? crypto.randomUUID();
     this.createRequestKey.set(requestKey);
+    this.mutating.set(true);
     this.appointmentsApi
       .create({
         idempotencyKey: requestKey,
@@ -816,7 +861,10 @@ export class AppointmentsComponent {
         items,
         paymentMethod: payload.paymentMethod,
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
       .subscribe({
         next: result => {
           this.createRequestKey.set(null);
@@ -922,9 +970,16 @@ export class AppointmentsComponent {
       this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');
       return;
     }
+    if (this.mutating()) {
+      return;
+    }
+    this.mutating.set(true);
     this.appointmentsApi
       .update(booking.id, booking.version, items, payload.paymentMethod)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
       .subscribe({
         next: () => {
           this.loadBookings();
@@ -952,12 +1007,16 @@ export class AppointmentsComponent {
   onCancelConfirmed(): void {
     const bookingId = this.activeBookingId();
     const booking = this.activeBooking();
-    if (!bookingId || !booking?.version) {
+    if (!bookingId || !booking?.version || this.mutating()) {
       return;
     }
+    this.mutating.set(true);
     this.appointmentsApi
       .cancel(bookingId, booking.version)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
       .subscribe({
         next: () => {
           this.cancelConfirmVisible.set(false);

@@ -139,6 +139,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly catalogItems = input<ServiceCatalogItem[]>([]);
   readonly catalogCategories = input<CatalogCategoryTab[]>([]);
   readonly catalogLoading = input(false);
+  readonly saving = input(false);
   readonly initialClientName = input('');
   readonly initialClientMobile = input('');
   readonly initialPackageId = input<string | null>(null);
@@ -384,7 +385,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
           this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
           this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
           this.selectedQuantities.set(this.buildQuantitiesFromLineItems(this.initialLineItems()));
-          const selectedPackageIds = this.buildOwnedPackageIdsFromLineItems(this.initialLineItems());
+          const selectedPackageIds = this.buildOwnedPackageIdsFromLineItems(
+            this.initialLineItems()
+          );
           const initialPackageId = this.initialPackageId();
           if (initialPackageId && !selectedPackageIds.includes(initialPackageId)) {
             selectedPackageIds.push(initialPackageId);
@@ -738,6 +741,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   /** Validates the booking draft and emits the selected customer, items, slot, and payment method. */
   submit(): void {
+    if (this.saving() || this.customerLookupPending()) {
+      return;
+    }
     this.clientForm.markAllAsTouched();
     if (this.clientForm.invalid || !this.selection()) {
       return;
@@ -813,6 +819,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   close(): void {
+    if (this.saving()) {
+      return;
+    }
     this.closed.emit();
   }
 
@@ -859,7 +868,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       if (!item.catalogPackageId) {
         continue;
       }
-      if (item.packageSessionLinked || (item.customerPackageId && (item.newPurchaseUnits ?? 0) === 0)) {
+      if (
+        item.packageSessionLinked ||
+        (item.customerPackageId && (item.newPurchaseUnits ?? 0) === 0)
+      ) {
         packageIds.push(item.catalogPackageId);
       }
     }
@@ -872,11 +884,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       if (item.type === 'unlisted' || item.packageSessionLinked) {
         continue;
       }
-      if (
-        item.type === 'package' &&
-        item.customerPackageId &&
-        (item.newPurchaseUnits ?? 0) === 0
-      ) {
+      if (item.type === 'package' && item.customerPackageId && (item.newPurchaseUnits ?? 0) === 0) {
         continue;
       }
       const serviceId = item.catalogPackageId ?? item.id.replace(/^line-(?:owned-)?/, '');

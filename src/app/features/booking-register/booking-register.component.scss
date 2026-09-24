@@ -200,6 +200,7 @@
 .table-section {
   @include data-table.data-table-shell;
   width: 100%;
+  position: relative;
 }
 
 ::ng-deep {

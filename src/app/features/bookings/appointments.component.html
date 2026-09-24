@@ -1,5 +1,5 @@
 <!-- Renders client-first and slot-first booking controls with calendar availability. -->
-<section class="appointments-page">
+<section class="appointments-page" [attr.aria-busy]="calendarBusy() || customerSearchLoading()">
   <div class="filter-section">
     <div class="filter-bar">
       <label class="filter-field mobile-field">
@@ -17,9 +17,15 @@
             type="button"
             class="search-btn"
             (click)="onMobileSearch()"
+            [disabled]="customerSearchLoading()"
             [attr.aria-label]="'BOOKINGS.FILTER_SEARCH' | translate"
           >
-            <i class="pi pi-search"></i>
+            <i
+              class="pi"
+              [class.pi-search]="!customerSearchLoading()"
+              [class.pi-spin]="customerSearchLoading()"
+              [class.pi-spinner]="customerSearchLoading()"
+            ></i>
           </button>
         </span>
       </label>
@@ -234,125 +240,135 @@
         </div>
       }
 
-      @if (calendarUnavailable()) {
-        <div class="empty-calendar">
-          <i class="pi pi-exclamation-triangle"></i>
-          <p>{{ 'BOOKINGS.AVAILABILITY_UNAVAILABLE' | translate }}</p>
-          <button type="button" class="confirm-btn" (click)="retryAvailability()">
-            {{ 'COMMON.RETRY' | translate }}
-          </button>
-        </div>
-      } @else if (columns().length === 0) {
-        <div class="empty-calendar">
-          <i class="pi pi-users"></i>
-          <p>{{ 'BOOKINGS.NO_STAFF_IN_BRANCH' | translate }}</p>
-        </div>
-      } @else {
-        <div class="calendar-board" [class.four-day-board]="viewMode() === '4days'">
-          <div class="calendar-days">
-            <div class="calendar-grid" [style.--calendar-col-count]="columns().length">
-              @for (column of columns(); track column.id) {
-                <div
-                  class="employee-column"
-                  [class.filtered-employee]="
-                    viewMode() === 'today' && filters().employeeId === column.employeeId
-                  "
-                >
-                  <div class="column-head">
-                    <span class="avatar" [style.background]="column.employee.avatarColor">
-                      @if (column.employee.photoUrl) {
-                        <img [src]="column.employee.photoUrl" [alt]="column.employee.name" />
-                      } @else {
-                        {{ column.employee.avatarInitials }}
+      <div class="calendar-stage">
+        <app-busy-overlay [visible]="calendarBusy()" />
+        @if (calendarUnavailable() && !calendarBusy()) {
+          <div class="empty-calendar">
+            <i class="pi pi-exclamation-triangle"></i>
+            <p>{{ 'BOOKINGS.AVAILABILITY_UNAVAILABLE' | translate }}</p>
+            <button type="button" class="confirm-btn" (click)="retryAvailability()">
+              {{ 'COMMON.RETRY' | translate }}
+            </button>
+          </div>
+        } @else if (columns().length === 0) {
+          <div class="empty-calendar">
+            @if (!calendarBusy()) {
+              <i class="pi pi-users"></i>
+              <p>{{ 'BOOKINGS.NO_STAFF_IN_BRANCH' | translate }}</p>
+            }
+          </div>
+        } @else {
+          <div class="calendar-board" [class.four-day-board]="viewMode() === '4days'">
+            <div class="calendar-days">
+              <div class="calendar-grid" [style.--calendar-col-count]="columns().length">
+                @for (column of columns(); track column.id) {
+                  <div
+                    class="employee-column"
+                    [class.filtered-employee]="
+                      viewMode() === 'today' && filters().employeeId === column.employeeId
+                    "
+                  >
+                    <div class="column-head">
+                      <span class="avatar" [style.background]="column.employee.avatarColor">
+                        @if (column.employee.photoUrl) {
+                          <img [src]="column.employee.photoUrl" [alt]="column.employee.name" />
+                        } @else {
+                          {{ column.employee.avatarInitials }}
+                        }
+                      </span>
+                      <div>
+                        <strong>{{ column.title }}</strong>
+                        <small>{{ column.subtitle }}</small>
+                      </div>
+                    </div>
+                    <div class="slots-stack">
+                      @for (minute of slotRows(); track minute) {
+                        <div class="slot-row">
+                          @if (cellFor(column, minute); as cell) {
+                            @if (showSlotCell(cell)) {
+                              <div
+                                class="slot-cell"
+                                [class.closed]="cell.visual === 'closed'"
+                                [class.held]="cell.visual === 'held'"
+                              >
+                                <span class="slot-time">{{
+                                  formatTimeRangeFor(minute, cell.endMinutes - minute)
+                                }}</span>
+                                @if (cell.visual === 'closed') {
+                                  <span class="slot-status">{{
+                                    'BOOKINGS.SLOT_CLOSED' | translate
+                                  }}</span>
+                                } @else if (cell.visual === 'held') {
+                                  <span class="slot-status">{{
+                                    'BOOKINGS.SLOT_HELD' | translate
+                                  }}</span>
+                                }
+                              </div>
+                            }
+                          }
+                        </div>
                       }
-                    </span>
-                    <div>
-                      <strong>{{ column.title }}</strong>
-                      <small>{{ column.subtitle }}</small>
+                      @for (slot of availableSlotsForColumn(column); track slot.startMinutes) {
+                        <button
+                          type="button"
+                          class="slot-cell available available-overlay"
+                          [class.recommended]="$first"
+                          [class.selected]="isSlotSelected(column, slot.startMinutes)"
+                          [style.top.px]="bookingTop(slot.startMinutes)"
+                          [style.height.px]="bookingHeight(slot.endMinutes - slot.startMinutes)"
+                          (click)="selectAvailableSlot(column, slot.startMinutes)"
+                        >
+                          @if ($first) {
+                            <i class="pi pi-star-fill recommended-star"></i>
+                          }
+                          <span class="slot-time">{{
+                            formatTimeRangeFor(
+                              slot.startMinutes,
+                              slot.endMinutes - slot.startMinutes
+                            )
+                          }}</span>
+                          <span class="slot-status">{{
+                            'BOOKINGS.SLOT_AVAILABLE' | translate
+                          }}</span>
+                        </button>
+                      }
+                      @for (booking of bookingsForColumn(column); track booking.id) {
+                        <button
+                          type="button"
+                          class="slot-cell booking-overlay"
+                          [class.booked]="booking.status === 'booked'"
+                          [class.completed]="booking.status === 'completed'"
+                          [style.top.px]="bookingTop(booking.startMinutes)"
+                          [style.height.px]="bookingHeight(booking.slotDurationMinutes)"
+                          (click)="onBookingClick(booking)"
+                        >
+                          <span class="slot-time">{{ bookingTimeLabel(booking) }}</span>
+                          <span class="slot-status">
+                            {{
+                              (booking.status === 'completed'
+                                ? 'BOOKINGS.SLOT_COMPLETED'
+                                : 'BOOKINGS.SLOT_BOOKED'
+                              ) | translate
+                            }}
+                          </span>
+                          <strong>{{ booking.clientName }}</strong>
+                        </button>
+                      }
                     </div>
                   </div>
-                  <div class="slots-stack">
-                    @for (minute of slotRows(); track minute) {
-                      <div class="slot-row">
-                        @if (cellFor(column, minute); as cell) {
-                          @if (showSlotCell(cell)) {
-                            <div
-                              class="slot-cell"
-                              [class.closed]="cell.visual === 'closed'"
-                              [class.held]="cell.visual === 'held'"
-                            >
-                              <span class="slot-time">{{
-                                formatTimeRangeFor(minute, cell.endMinutes - minute)
-                              }}</span>
-                              @if (cell.visual === 'closed') {
-                                <span class="slot-status">{{
-                                  'BOOKINGS.SLOT_CLOSED' | translate
-                                }}</span>
-                              } @else if (cell.visual === 'held') {
-                                <span class="slot-status">{{
-                                  'BOOKINGS.SLOT_HELD' | translate
-                                }}</span>
-                              }
-                            </div>
-                          }
-                        }
-                      </div>
-                    }
-                    @for (slot of availableSlotsForColumn(column); track slot.startMinutes) {
-                      <button
-                        type="button"
-                        class="slot-cell available available-overlay"
-                        [class.recommended]="$first"
-                        [class.selected]="isSlotSelected(column, slot.startMinutes)"
-                        [style.top.px]="bookingTop(slot.startMinutes)"
-                        [style.height.px]="bookingHeight(slot.endMinutes - slot.startMinutes)"
-                        (click)="selectAvailableSlot(column, slot.startMinutes)"
-                      >
-                        @if ($first) {
-                          <i class="pi pi-star-fill recommended-star"></i>
-                        }
-                        <span class="slot-time">{{
-                          formatTimeRangeFor(slot.startMinutes, slot.endMinutes - slot.startMinutes)
-                        }}</span>
-                        <span class="slot-status">{{ 'BOOKINGS.SLOT_AVAILABLE' | translate }}</span>
-                      </button>
-                    }
-                    @for (booking of bookingsForColumn(column); track booking.id) {
-                      <button
-                        type="button"
-                        class="slot-cell booking-overlay"
-                        [class.booked]="booking.status === 'booked'"
-                        [class.completed]="booking.status === 'completed'"
-                        [style.top.px]="bookingTop(booking.startMinutes)"
-                        [style.height.px]="bookingHeight(booking.slotDurationMinutes)"
-                        (click)="onBookingClick(booking)"
-                      >
-                        <span class="slot-time">{{ bookingTimeLabel(booking) }}</span>
-                        <span class="slot-status">
-                          {{
-                            (booking.status === 'completed'
-                              ? 'BOOKINGS.SLOT_COMPLETED'
-                              : 'BOOKINGS.SLOT_BOOKED'
-                            ) | translate
-                          }}
-                        </span>
-                        <strong>{{ booking.clientName }}</strong>
-                      </button>
-                    }
-                  </div>
-                </div>
+                }
+              </div>
+            </div>
+
+            <div class="time-axis">
+              <div class="time-axis-head"></div>
+              @for (minute of slotRows(); track minute) {
+                <div class="time-label">{{ formatTime(minute) }}</div>
               }
             </div>
           </div>
-
-          <div class="time-axis">
-            <div class="time-axis-head"></div>
-            @for (minute of slotRows(); track minute) {
-              <div class="time-label">{{ formatTime(minute) }}</div>
-            }
-          </div>
-        </div>
-      }
+        }
+      </div>
     </div>
   </div>
 
@@ -431,6 +447,7 @@
   [catalogItems]="catalogItems()"
   [catalogCategories]="catalogCategories()"
   [catalogLoading]="catalogLoading()"
+  [saving]="mutating()"
   [initialClientName]="filters().clientName"
   [initialClientMobile]="filters().clientMobile"
   [initialPackageId]="filters().packageId"
@@ -445,6 +462,8 @@
   [booking]="activeBooking()"
   [catalogItems]="catalogItems()"
   [catalogCategories]="catalogCategories()"
+  [catalogLoading]="catalogLoading()"
+  [saving]="mutating()"
   (closed)="onDetailsDialogClosed()"
   (saved)="onDetailsSaved($event)"
   (cancelBooking)="onDetailsCancelRequest($event)"
@@ -469,6 +488,7 @@
   messageKey="BOOKINGS.DETAILS.CANCEL_CONFIRM_MESSAGE"
   confirmLabelKey="BOOKINGS.DETAILS.CANCEL"
   cancelLabelKey="COMMON.CANCEL"
+  [confirming]="mutating()"
   (cancelled)="cancelConfirmVisible.set(false)"
   (confirmed)="onCancelConfirmed()"
 />

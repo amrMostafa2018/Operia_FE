@@ -9,6 +9,7 @@
   appendTo="body"
   styleClass="bookings-details-dialog"
   [style]="{ width: 'min(1120px, 96vw)' }"
+  [closeOnEscape]="!saving()"
   (onHide)="close()"
 >
   <ng-template pTemplate="header">
@@ -20,6 +21,7 @@
       type="button"
       class="dialog-close"
       (click)="close()"
+      [disabled]="saving()"
       [attr.aria-label]="'COMMON.CLOSE' | translate"
     >
       <i class="pi pi-times"></i>
@@ -321,7 +323,11 @@
                             class="carousel-arrow carousel-arrow-prev"
                             [class.is-disabled]="!canActivateCatalogLeadingArrow()"
                             [attr.aria-disabled]="!canActivateCatalogLeadingArrow()"
-                            (click)="$event.preventDefault(); $event.stopPropagation(); scrollCatalogLeadingArrow()"
+                            (click)="
+                              $event.preventDefault();
+                              $event.stopPropagation();
+                              scrollCatalogLeadingArrow()
+                            "
                             [attr.aria-label]="
                               (isRtl() ? 'BOOKINGS.BOOK.SCROLL_NEXT' : 'BOOKINGS.BOOK.SCROLL_PREV')
                                 | translate
@@ -336,7 +342,11 @@
                             #catalogTrack
                             (scroll)="onCatalogTrackScroll()"
                           >
-                            @if (filteredCatalogItems().length === 0) {
+                            @if (catalogLoading()) {
+                              <p class="catalog-empty">
+                                {{ 'BOOKINGS.BOOK.CATALOG_LOADING' | translate }}
+                              </p>
+                            } @else if (filteredCatalogItems().length === 0) {
                               <p class="catalog-empty">
                                 {{ 'BOOKINGS.DETAILS.NO_PACKAGES' | translate }}
                               </p>
@@ -359,7 +369,10 @@
                                     }
                                   </span>
                                   <div class="qty" [class.is-rtl]="isRtl()">
-                                    <button type="button" (click)="changeCatalogQuantity(service, -1)">
+                                    <button
+                                      type="button"
+                                      (click)="changeCatalogQuantity(service, -1)"
+                                    >
                                       -
                                     </button>
                                     <span>{{ catalogQuantityFor(service.id) }}</span>
@@ -381,7 +394,11 @@
                             class="carousel-arrow carousel-arrow-next"
                             [class.is-disabled]="!canActivateCatalogTrailingArrow()"
                             [attr.aria-disabled]="!canActivateCatalogTrailingArrow()"
-                            (click)="$event.preventDefault(); $event.stopPropagation(); scrollCatalogTrailingArrow()"
+                            (click)="
+                              $event.preventDefault();
+                              $event.stopPropagation();
+                              scrollCatalogTrailingArrow()
+                            "
                             [attr.aria-label]="
                               (isRtl() ? 'BOOKINGS.BOOK.SCROLL_PREV' : 'BOOKINGS.BOOK.SCROLL_NEXT')
                                 | translate
@@ -602,19 +619,39 @@
       @if (showActions()) {
         <div class="details-footer">
           @if (canCancel()) {
-            <button type="button" class="footer-btn cancel-btn" (click)="requestCancel()">
+            <button
+              type="button"
+              class="footer-btn cancel-btn"
+              [disabled]="saving()"
+              (click)="requestCancel()"
+            >
               <i class="pi pi-trash"></i>
               {{ 'BOOKINGS.DETAILS.CANCEL' | translate }}
             </button>
           }
           @if (canManage()) {
-            <button type="button" class="footer-btn save-btn" (click)="save()">
-              <i class="pi pi-save"></i>
+            <button
+              type="button"
+              class="footer-btn save-btn"
+              [disabled]="saving()"
+              (click)="save()"
+            >
+              <i
+                class="pi"
+                [class.pi-save]="!saving()"
+                [class.pi-spin]="saving()"
+                [class.pi-spinner]="saving()"
+              ></i>
               {{ 'BOOKINGS.DETAILS.SAVE' | translate }}
             </button>
           }
           @if (canClose()) {
-            <button type="button" class="footer-btn close-btn" (click)="requestCloseBooking()">
+            <button
+              type="button"
+              class="footer-btn close-btn"
+              [disabled]="saving()"
+              (click)="requestCloseBooking()"
+            >
               <i class="pi pi-check-circle"></i>
               {{ 'BOOKINGS.DETAILS.CLOSE' | translate }}
             </button>

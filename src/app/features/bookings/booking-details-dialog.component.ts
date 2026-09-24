@@ -43,7 +43,11 @@ import {
   getCarouselPrevIcon,
   getRtlStartScrollLeft,
 } from '@app/shared/utils/rtl.util';
-import { AppointmentsApiService, BookingCustomerDto, CloseBookingItemInput } from './appointments-api.service';
+import {
+  AppointmentsApiService,
+  BookingCustomerDto,
+  CloseBookingItemInput,
+} from './appointments-api.service';
 import {
   BookingLineItem,
   BookingRecord,
@@ -125,6 +129,8 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   readonly booking = input<BookingRecord | null>(null);
   readonly catalogItems = input<ServiceCatalogItem[]>([]);
   readonly catalogCategories = input<CatalogCategoryTab[]>([]);
+  readonly catalogLoading = input(false);
+  readonly saving = input(false);
 
   readonly closed = output<void>();
   readonly saved = output<BookingDetailsSavePayload>();
@@ -520,15 +526,18 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const items = this.draftLineItems();
-    const index =
-      itemIndex ?? items.findIndex(item => item.id === itemId);
+    const index = itemIndex ?? items.findIndex(item => item.id === itemId);
     if (index < 0) {
       return;
     }
     const next = [...items.slice(0, index), ...items.slice(index + 1)];
     this.catalogQuantities.set(this.extractCatalogQuantities(next));
     this.draftLineItems.set(
-      normalizeBookingDetailsLineItems(next, this.catalogItems(), this.matchedClient()?.packages ?? [])
+      normalizeBookingDetailsLineItems(
+        next,
+        this.catalogItems(),
+        this.matchedClient()?.packages ?? []
+      )
     );
   }
 
@@ -615,9 +624,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
       });
       return;
     }
-    if (
-      this.draftLineItems().some(item => item.customerPackageId === pkg.customerPackageId)
-    ) {
+    if (this.draftLineItems().some(item => item.customerPackageId === pkg.customerPackageId)) {
       this.toast.add({
         severity: 'warn',
         summary: this.translate.instant('BOOKINGS.DETAILS.PACKAGE_ALREADY_ON_BOOKING'),
@@ -629,10 +636,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.draftLineItems.update(items =>
-      this.renormalizeDraftLineItems([
-        ...items,
-        bookAppointmentOwnedPackageLineItem(pkg, service),
-      ])
+      this.renormalizeDraftLineItems([...items, bookAppointmentOwnedPackageLineItem(pkg, service)])
     );
   }
 
@@ -807,7 +811,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   /** Emits edited booking lines and payment method for the parent to persist. */
   save(): void {
     const current = this.booking();
-    if (!current || !this.isEditable()) {
+    if (!current || !this.isEditable() || this.saving()) {
       return;
     }
     if (this.draftLineItems().length === 0) {
@@ -828,7 +832,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   /** Requests the parent confirmation flow for this booking. */
   requestCancel(): void {
     const current = this.booking();
-    if (!current || !this.canCancel()) {
+    if (!current || !this.canCancel() || this.saving()) {
       return;
     }
     this.cancelBooking.emit(current.id);
@@ -837,7 +841,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   /** Opens the close-and-confirm usage dialog for every booking line. */
   requestCloseBooking(): void {
     const current = this.booking();
-    if (!current || !this.canClose()) {
+    if (!current || !this.canClose() || this.saving()) {
       return;
     }
     this.showCloseConfirm.set(true);
@@ -880,6 +884,9 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   close(): void {
+    if (this.saving() || this.closeSaving()) {
+      return;
+    }
     this.closed.emit();
   }
 
@@ -972,11 +979,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     }
 
     this.draftLineItems.set(
-      normalizeBookingDetailsLineItems(
-        [...preserved, ...catalogLines],
-        catalogItems,
-        ownedPackages
-      )
+      normalizeBookingDetailsLineItems([...preserved, ...catalogLines], catalogItems, ownedPackages)
     );
   }
 
