@@ -757,14 +757,18 @@ export class AppointmentsComponent {
 
   private isStartAvailableForDuration(
     employeeId: string,
+    branchId: string,
     date: Date,
     startMinutes: number,
     durationMinutes: number
   ): boolean {
-    const employee = this.employees().find(item => item.id === employeeId);
+    const employee = this.employees().find(
+      item => item.id === employeeId && item.branchId === branchId
+    );
+    const branchBookings = this.bookings().filter(booking => booking.branchId === branchId);
     const hours = hoursForDate(employee?.workingDays ?? [], date);
     return isSlotAvailableForBooking(
-      this.bookings(),
+      branchBookings,
       employeeId,
       date,
       startMinutes,
@@ -791,6 +795,7 @@ export class AppointmentsComponent {
     if (
       !this.isStartAvailableForDuration(
         column.employeeId,
+        column.branchId,
         column.date,
         startMinutes,
         effectiveDuration
@@ -967,6 +972,7 @@ export class AppointmentsComponent {
     if (
       !this.isStartAvailableForDuration(
         payload.selection.employeeId,
+        payload.selection.branchId,
         payload.selection.date,
         payload.selection.startMinutes,
         payload.selection.slotDurationMinutes
