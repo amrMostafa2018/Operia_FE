@@ -24,6 +24,7 @@ export interface BookingRegisterRow {
   branchId: string;
   branchName: string;
   scheduledDate: Date;
+  confirmedAt: Date;
   startTime: string;
   endTime: string;
   durationMinutes: number;

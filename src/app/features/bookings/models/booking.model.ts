@@ -1406,7 +1406,7 @@ export function ceilToSlot(minutes: number): number {
   return Math.ceil(minutes / SLOT_INTERVAL_MINUTES) * SLOT_INTERVAL_MINUTES;
 }
 
-/** Keeps the 08:00–18:00 reference day visible and extends it for longer employee schedules. */
+/** Builds the visible calendar range from the earliest start and latest end among visible employees. */
 export function calendarDayRange(columns: { employee: EmployeeOption; date: Date }[]): {
   startMinutes: number;
   endMinutes: number;
@@ -1428,10 +1428,10 @@ export function calendarDayRange(columns: { employee: EmployeeOption; date: Date
     return { startMinutes: DAY_START_MINUTES, endMinutes: DAY_END_MINUTES };
   }
 
-  const startMinutes = Math.min(DAY_START_MINUTES, floorToSlot(earliestStart));
-  const endMinutes = Math.max(DAY_END_MINUTES, ceilToSlot(latestEnd));
-
-  return { startMinutes, endMinutes };
+  return {
+    startMinutes: floorToSlot(earliestStart),
+    endMinutes: ceilToSlot(latestEnd),
+  };
 }
 
 /** Builds the 30-minute labels used by the calendar time axis. */
@@ -1907,15 +1907,48 @@ export function bookingPerformedServiceOptions(lineItems: BookingLineItem[]): Se
   }));
 }
 
+/** Describes employees grouped under one branch for calendar and filter rendering. */
+export interface BranchEmployeeGroup {
+  branchId: string;
+  branchName: string;
+  employees: EmployeeOption[];
+}
+
 /** Limits calendar employees to the selected branch and employee filter. */
 export function filterEmployees(
   employees: EmployeeOption[],
-  employeeId: string | null
+  employeeId: string | null,
+  branchId: string | null = null
 ): EmployeeOption[] {
-  if (!employeeId) {
-    return employees;
+  let result = employees;
+  if (branchId) {
+    result = result.filter(employee => employee.branchId === branchId);
   }
-  return employees.filter(employee => employee.id === employeeId);
+  if (employeeId) {
+    result = result.filter(employee => employee.id === employeeId);
+  }
+  return result;
+}
+
+/** Groups visible employees under their branch in branch list order. */
+export function groupEmployeesByBranch(
+  employees: EmployeeOption[],
+  branches: BranchOption[]
+): BranchEmployeeGroup[] {
+  const grouped = new Map<string, EmployeeOption[]>();
+  for (const employee of employees) {
+    const current = grouped.get(employee.branchId) ?? [];
+    current.push(employee);
+    grouped.set(employee.branchId, current);
+  }
+
+  return branches
+    .filter(branch => grouped.has(branch.id))
+    .map(branch => ({
+      branchId: branch.id,
+      branchName: branch.name,
+      employees: grouped.get(branch.id) ?? [],
+    }));
 }
 
 /** Keeps the selected employee when allowed, otherwise chooses the first filtered employee. */

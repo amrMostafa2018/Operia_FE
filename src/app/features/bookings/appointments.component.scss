@@ -259,26 +259,30 @@
 
 .calendar-board {
   --calendar-head-height: 72px;
+  --calendar-branch-head-height: 0px;
   --slot-row-height: 58px;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   direction: ltr;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: auto;
+  max-height: calc(100dvh - #{$header-height} - 13.5rem);
   border: 1px solid var(--surface-border);
   border-radius: $border-radius-lg;
   background: var(--surface-card);
-  min-height: 620px;
+  min-height: 420px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+
+  &.has-branch-headers {
+    --calendar-branch-head-height: calc(2.5rem + 1px);
+  }
 }
 
 .calendar-days {
   flex: 1 1 auto;
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
+  min-width: max-content;
+  overflow: visible;
 }
 
 :host-context([dir='rtl']) .calendar-days {
@@ -287,6 +291,54 @@
 
 :host-context([dir='ltr']) .calendar-days {
   direction: ltr;
+}
+
+.branch-headers,
+.time-axis-branch {
+  box-sizing: border-box;
+  height: var(--calendar-branch-head-height);
+  border-bottom: 1px solid var(--surface-border);
+  background: #f3efff;
+  flex-shrink: 0;
+}
+
+.branch-headers {
+  --calendar-col-min: 180px;
+  --calendar-col-count: 1;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: repeat(var(--calendar-col-count), minmax(var(--calendar-col-min), 1fr));
+  width: max-content;
+  min-width: 100%;
+  gap: 0;
+}
+
+.time-axis-branch {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.branch-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border-inline-end: 1px solid var(--surface-border);
+  color: #4b24da;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: center;
+
+  i {
+    font-size: 0.85rem;
+  }
 }
 
 .calendar-grid {
@@ -318,6 +370,9 @@
 }
 
 .column-head {
+  position: sticky;
+  top: var(--calendar-branch-head-height);
+  z-index: 5;
   box-sizing: border-box;
   height: var(--calendar-head-height);
   min-height: var(--calendar-head-height);
@@ -406,17 +461,21 @@
   width: 72px;
   position: sticky;
   right: 0;
-  z-index: 2;
+  z-index: 6;
   border-left: 1px solid var(--surface-border);
   background: #fafbff;
 }
 
 .time-axis-head {
+  position: sticky;
+  top: var(--calendar-branch-head-height);
+  z-index: 1;
   box-sizing: border-box;
   height: var(--calendar-head-height);
   min-height: var(--calendar-head-height);
   max-height: var(--calendar-head-height);
   border-bottom: 1px solid var(--surface-border);
+  background: #fafbff;
   flex-shrink: 0;
 }
 
@@ -511,6 +570,8 @@
   font-size: 0.72rem;
   line-height: 1.2;
   color: var(--text-secondary);
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .slot-status {
@@ -848,13 +909,86 @@
     padding-block: 0.65rem;
   }
 
-  .side-panel .p-datepicker {
+  .side-calendar--lock-past .p-datepicker-prev {
+    pointer-events: none;
+    opacity: 0.35;
+  }
+
+  .side-panel p-calendar,
+  .side-panel .p-calendar {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .side-panel .p-datepicker {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .side-panel .p-datepicker table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .side-panel .p-datepicker table th,
+  .side-panel .p-datepicker table td {
+    padding: 0.15rem 0;
+  }
+
+  .side-panel .p-datepicker table th > span,
+  .side-panel .p-datepicker table td > span {
+    width: 100%;
+    max-width: 2.15rem;
+    height: auto;
+    aspect-ratio: 1;
   }
 
   .side-panel .p-datepicker table td > span.p-highlight {
     background: #4b24da;
     color: #fff;
+  }
+
+  .side-panel .p-datepicker table td.p-datepicker-today > span {
+    box-shadow: inset 0 0 0 2px #4b24da;
+    color: #4b24da;
+    background: #fff;
+    font-weight: 700;
+  }
+
+  .side-panel .p-datepicker table td.p-datepicker-today > span.p-highlight {
+    background: #4b24da;
+    color: #fff;
+  }
+
+  .side-panel .p-datepicker-buttonbar {
+    justify-content: center;
+    padding: 0.35rem 0 0.1rem;
+    border-top: 0;
+  }
+
+  .side-panel .p-datepicker-buttonbar .calendar-clear-btn {
+    display: none;
+  }
+
+  .side-panel .p-datepicker-buttonbar .calendar-today-btn.p-button {
+    width: 100%;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #4b24da;
+    color: #4b24da;
+    font-weight: 700;
+
+    &:enabled:hover {
+      background: #f3efff;
+      border-color: #4b24da;
+      color: #4b24da;
+    }
   }
 }
 
@@ -1012,11 +1146,7 @@
 
     .side-panel .p-datepicker {
       min-width: 0;
-    }
-
-    .side-panel .p-datepicker table td > span {
-      width: 2.25rem;
-      height: 2.25rem;
+      overflow-x: hidden;
     }
   }
 }
@@ -1084,7 +1214,7 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .four-day-board .calendar-days {
+  .four-day-board {
     container-type: inline-size;
     scroll-snap-type: x proximity;
   }

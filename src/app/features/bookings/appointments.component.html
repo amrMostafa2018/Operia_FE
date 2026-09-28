@@ -112,13 +112,30 @@
             styleClass="filter-dropdown"
             panelStyleClass="filter-dropdown-panel"
             appendTo="body"
-            [options]="branches()"
-            optionLabel="name"
-            optionValue="id"
+            [options]="branchOptions()"
+            optionLabel="label"
+            optionValue="value"
             [ngModel]="filters().branchId"
             (ngModelChange)="updateFilter('branchId', $event)"
             [placeholder]="'BOOKINGS.FILTER_BRANCH' | translate"
-          />
+          >
+            <ng-template pTemplate="selectedItem" let-item>
+              @if (item) {
+                @if (item.value === null) {
+                  {{ item.label | translate }}
+                } @else {
+                  {{ item.label }}
+                }
+              }
+            </ng-template>
+            <ng-template pTemplate="item" let-item>
+              @if (item.value === null) {
+                {{ item.label | translate }}
+              } @else {
+                {{ item.label }}
+              }
+            </ng-template>
+          </p-dropdown>
         </span>
       </label>
 
@@ -131,9 +148,11 @@
             styleClass="filter-dropdown"
             panelStyleClass="filter-dropdown-panel"
             appendTo="body"
-            [options]="employeeOptions()"
+            [group]="!filters().branchId"
+            [options]="filters().branchId ? employeeOptions() : groupedEmployeeOptions()"
             optionLabel="label"
             optionValue="value"
+            [showClear]="!filters().branchId"
             [ngModel]="filters().employeeId"
             (ngModelChange)="updateFilter('employeeId', $event)"
             [placeholder]="'BOOKINGS.FILTER_EMPLOYEE' | translate"
@@ -159,14 +178,12 @@
       </label>
     </div>
 
-    <p class="filter-hint">
-      <i class="pi pi-info-circle"></i>
-      @if (filters().durationMinutes > 0) {
+    @if (filters().durationMinutes > 0) {
+      <p class="filter-hint">
+        <i class="pi pi-info-circle"></i>
         {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
-      } @else {
-        {{ 'BOOKINGS.SLOT_FIRST_HINT' | translate }}
-      }
-    </p>
+      </p>
+    }
   </div>
 
   <div class="calendar-layout">
@@ -176,6 +193,7 @@
           [icon]="prevArrowIcon()"
           [rounded]="true"
           [text]="true"
+          [disabled]="!canShiftBackward()"
           (onClick)="shiftDate(-1)"
         />
         <strong>{{ formattedSelectedDate() }}</strong>
@@ -204,11 +222,18 @@
         </button>
       </div>
 
-      <p-calendar
-        [inline]="true"
-        [ngModel]="selectedDate()"
-        (ngModelChange)="onDateSelected($event)"
-      />
+      <div class="side-calendar" [class.side-calendar--lock-past]="!canShowPreviousMonth()">
+        <p-calendar
+          [inline]="true"
+          [minDate]="earliestBookableDate"
+          [showButtonBar]="true"
+          todayButtonStyleClass="calendar-today-btn"
+          clearButtonStyleClass="calendar-clear-btn"
+          [ngModel]="selectedDate()"
+          (ngModelChange)="onDateSelected($event)"
+          (onMonthChange)="onCalendarMonthChange($event)"
+        />
+      </div>
 
       <div class="legend">
         <h4>{{ 'BOOKINGS.LEGEND_TITLE' | translate }}</h4>
@@ -222,14 +247,12 @@
         </div>
       </div>
 
-      <p class="panel-hint">
-        <i class="pi pi-info-circle"></i>
-        @if (filters().durationMinutes > 0) {
+      @if (filters().durationMinutes > 0) {
+        <p class="panel-hint">
+          <i class="pi pi-info-circle"></i>
           {{ 'BOOKINGS.FILTER_HINT' | translate: { duration: filters().durationMinutes } }}
-        } @else {
-          {{ 'BOOKINGS.SLOT_FIRST_HINT' | translate }}
-        }
-      </p>
+        </p>
+      }
     </aside>
 
     <div class="calendar-main">
@@ -239,6 +262,7 @@
             [icon]="prevArrowIcon()"
             [rounded]="true"
             [text]="true"
+            [disabled]="!canShiftBackward()"
             (onClick)="shiftDate(-4)"
           />
           <h2>{{ 'BOOKINGS.FOUR_DAY_TITLE' | translate: { name: employee.name } }}</h2>
@@ -247,6 +271,25 @@
             [rounded]="true"
             [text]="true"
             (onClick)="shiftDate(4)"
+          />
+        </div>
+      } @else if (viewMode() === 'today') {
+        <div class="four-day-head">
+          <p-button
+            [icon]="prevArrowIcon()"
+            [rounded]="true"
+            [text]="true"
+            [disabled]="!canShiftBackward()"
+            [attr.aria-label]="'BOOKINGS.PREV' | translate"
+            (onClick)="shiftDate(-1)"
+          />
+          <h2>{{ formattedSelectedDate() }}</h2>
+          <p-button
+            [icon]="nextArrowIcon()"
+            [rounded]="true"
+            [text]="true"
+            [attr.aria-label]="'BOOKINGS.NEXT' | translate"
+            (onClick)="shiftDate(1)"
           />
         </div>
       }
@@ -269,8 +312,25 @@
             }
           </div>
         } @else {
-          <div class="calendar-board" [class.four-day-board]="viewMode() === '4days'">
+          <div
+            class="calendar-board"
+            [class.has-branch-headers]="showBranchHeaders()"
+            [class.four-day-board]="viewMode() === '4days'"
+          >
             <div class="calendar-days">
+              @if (showBranchHeaders()) {
+                <div class="branch-headers" [style.--calendar-col-count]="columns().length">
+                  @for (group of branchGroups(); track group.branchId) {
+                    <div
+                      class="branch-header"
+                      [style.grid-column]="'span ' + group.employees.length"
+                    >
+                      <i class="pi pi-map-marker" aria-hidden="true"></i>
+                      <span>{{ group.branchName }}</span>
+                    </div>
+                  }
+                </div>
+              }
               <div class="calendar-grid" [style.--calendar-col-count]="columns().length">
                 @for (column of columns(); track column.id) {
                   <div
@@ -302,7 +362,7 @@
                                 [class.closed]="cell.visual === 'closed'"
                                 [class.held]="cell.visual === 'held'"
                               >
-                                <span class="slot-time">{{
+                                <span class="slot-time" dir="ltr">{{
                                   formatTimeRangeFor(minute, cell.endMinutes - minute)
                                 }}</span>
                                 @if (cell.visual === 'closed') {
@@ -332,7 +392,7 @@
                           @if ($first) {
                             <i class="pi pi-star-fill recommended-star"></i>
                           }
-                          <span class="slot-time">{{
+                          <span class="slot-time" dir="ltr">{{
                             formatTimeRangeFor(
                               slot.startMinutes,
                               slot.endMinutes - slot.startMinutes
@@ -353,7 +413,7 @@
                           [style.height.px]="bookingHeight(booking.slotDurationMinutes)"
                           (click)="onBookingClick(booking)"
                         >
-                          <span class="slot-time">{{ bookingTimeLabel(booking) }}</span>
+                          <span class="slot-time" dir="ltr">{{ bookingTimeLabel(booking) }}</span>
                           <span class="slot-status">
                             {{
                               (booking.status === 'completed'
@@ -372,6 +432,9 @@
             </div>
 
             <div class="time-axis">
+              @if (showBranchHeaders()) {
+                <div class="time-axis-branch"></div>
+              }
               <div class="time-axis-head"></div>
               @for (minute of slotRows(); track minute) {
                 <div class="time-label">{{ formatTime(minute) }}</div>

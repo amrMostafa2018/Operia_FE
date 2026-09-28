@@ -55,6 +55,7 @@ import {
   DurationOption,
   EmployeeOption,
   filterEmployees,
+  groupEmployeesByBranch,
   formatMinutesAsTime,
   formatTimeRange,
   hoursForDate,
@@ -181,7 +182,23 @@ export class AppointmentsComponent {
   readonly calendarDurationMinutes = computed(
     () => this.filters().durationMinutes || SLOT_INTERVAL_MINUTES
   );
+  readonly earliestBookableDate = defaultSelectedDate();
   readonly selectedDate = signal<Date>(defaultSelectedDate());
+  private readonly displayedMonth = signal({
+    year: this.earliestBookableDate.getFullYear(),
+    month: this.earliestBookableDate.getMonth(),
+  });
+  readonly canShiftBackward = computed(
+    () => toDateKey(this.selectedDate()) > toDateKey(this.earliestBookableDate)
+  );
+  readonly canShowPreviousMonth = computed(() => {
+    const view = this.displayedMonth();
+    const earliest = this.earliestBookableDate;
+    return (
+      view.year > earliest.getFullYear() ||
+      (view.year === earliest.getFullYear() && view.month > earliest.getMonth())
+    );
+  });
   readonly viewMode = signal<CalendarViewMode>('today');
   readonly selectedSlot = signal<SlotSelection | null>(null);
 
@@ -207,16 +224,46 @@ export class AppointmentsComponent {
 
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
 
+  readonly branchOptions = computed(() => [
+    { label: 'BOOKINGS.ALL_BRANCHES', value: null },
+    ...this.branches().map(branch => ({
+      label: branch.name,
+      value: branch.id,
+    })),
+  ]);
+
+  readonly branchFilteredEmployees = computed(() =>
+    filterEmployees(this.employees(), null, this.filters().branchId)
+  );
+
   readonly employeeOptions = computed(() => [
     { label: 'BOOKINGS.ALL_EMPLOYEES', value: null },
-    ...this.employees().map(employee => ({
+    ...this.branchFilteredEmployees().map(employee => ({
       label: employee.name,
       value: employee.id,
     })),
   ]);
 
+  readonly groupedEmployeeOptions = computed(() =>
+    groupEmployeesByBranch(this.branchFilteredEmployees(), this.branches()).map(group => ({
+      label: group.branchName,
+      items: group.employees.map(employee => ({
+        label: employee.name,
+        value: employee.id,
+      })),
+    }))
+  );
+
   readonly visibleEmployees = computed(() =>
-    filterEmployees(this.employees(), this.filters().employeeId)
+    filterEmployees(this.employees(), this.filters().employeeId, this.filters().branchId)
+  );
+
+  readonly branchGroups = computed(() =>
+    groupEmployeesByBranch(this.visibleEmployees(), this.branches())
+  );
+
+  readonly showBranchHeaders = computed(
+    () => this.viewMode() === 'today' && !this.filters().branchId && this.branchGroups().length > 0
   );
 
   readonly fourDayEmployee = computed(() =>
@@ -230,27 +277,35 @@ export class AppointmentsComponent {
 
   readonly columns = computed(() => {
     if (this.viewMode() === 'today') {
-      return this.visibleEmployees().map(employee => ({
-        id: employee.id,
-        title: employee.name,
-        subtitle: employee.specialty,
-        employeeId: employee.id,
-        employee,
-        date: this.selectedDate(),
-      }));
+      return this.visibleEmployees().map(employee => {
+        const branch = this.branches().find(item => item.id === employee.branchId);
+        return {
+          id: `${employee.branchId}-${employee.id}`,
+          title: employee.name,
+          subtitle: employee.specialty,
+          branchId: employee.branchId,
+          branchName: branch?.name ?? '',
+          employeeId: employee.id,
+          employee,
+          date: this.selectedDate(),
+        };
+      });
     }
     const employee = this.fourDayEmployee();
     if (!employee) {
       return [];
     }
+    const branch = this.branches().find(item => item.id === employee.branchId);
     return this.fourDayDates().map(date => ({
-      id: `${employee.id}-${toDateKey(date)}`,
+      id: `${employee.branchId}-${employee.id}-${toDateKey(date)}`,
       title: date.toLocaleDateString(this.languageService.currentLang(), {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
       }),
       subtitle: employee.name,
+      branchId: employee.branchId,
+      branchName: branch?.name ?? '',
       employeeId: employee.id,
       employee,
       date,
@@ -267,11 +322,12 @@ export class AppointmentsComponent {
     const map = new Map<string, CalendarSlotCell[]>();
     const range = this.calendarRange();
     for (const column of this.columns()) {
-      const key = `${column.employeeId}|${toDateKey(column.date)}`;
+      const key = this.columnKey(column);
+      const branchBookings = this.bookings().filter(booking => booking.branchId === column.branchId);
       map.set(
         key,
         buildSlotGrid(
-          this.bookings(),
+          branchBookings,
           column.employeeId,
           column.date,
           this.calendarDurationMinutes(),
@@ -288,10 +344,11 @@ export class AppointmentsComponent {
   readonly availableSlots = computed(() => {
     const map = new Map<string, CalendarAvailableSlot[]>();
     for (const column of this.columns()) {
+      const branchBookings = this.bookings().filter(booking => booking.branchId === column.branchId);
       map.set(
-        `${column.employeeId}|${toDateKey(column.date)}`,
+        this.columnKey(column),
         buildAvailableSlots(
-          this.bookings(),
+          branchBookings,
           column.employeeId,
           column.date,
           this.calendarDurationMinutes(),
@@ -384,7 +441,7 @@ export class AppointmentsComponent {
     });
   }
 
-  /** Loads only branches available to the signed-in user for booking. */
+  /** Loads bookable branches, then bookable employees for every branch. */
   private loadBranches(): void {
     this.employeesLoading.set(true);
     this.branchesApi
@@ -395,19 +452,10 @@ export class AppointmentsComponent {
           const items = result.map(branch => ({ id: branch.id, name: branch.name }));
           this.branches.set(items);
           const current = this.filters().branchId;
-          if (!items.length) {
-            this.employeesLoading.set(false);
-            this.updateFilter('branchId', null);
-            return;
+          if (current && !items.some(branch => branch.id === current)) {
+            this.filters.update(filters => ({ ...filters, branchId: null }));
           }
-          const stillExists = items.some(branch => branch.id === current);
-          if (!stillExists && items[0]) {
-            this.updateFilter('branchId', items[0].id);
-          } else if (this.filters().branchId) {
-            this.loadEmployees(this.filters().branchId);
-          } else {
-            this.employeesLoading.set(false);
-          }
+          this.loadEmployeesForBranches(items.map(branch => branch.id));
         },
         error: () => {
           this.employeesLoading.set(false);
@@ -537,7 +585,8 @@ export class AppointmentsComponent {
     this.filters.update(current => ({ ...current, [key]: value }));
     if (key === 'branchId') {
       this.selectedSlot.set(null);
-      this.loadEmployees(typeof value === 'string' ? value : null);
+      this.ensureEmployeeSelected();
+      this.loadBookings();
       return;
     }
     if (key === 'employeeId') {
@@ -559,19 +608,19 @@ export class AppointmentsComponent {
     this.updateFilter('durationMinutes', selectedPackage?.durationMinutes ?? 0);
   }
 
-  /** Loads bookable employees for the selected branch and refreshes calendar selection. */
-  private loadEmployees(branchId: string | null): void {
+  /** Loads bookable employees for each branch and refreshes calendar selection. */
+  private loadEmployeesForBranches(branchIds: string[]): void {
     const requestId = ++this.employeesRequestId;
-    if (!branchId) {
+    if (!branchIds.length) {
       this.employees.set([]);
       this.employeesLoading.set(false);
       this.ensureEmployeeSelected([]);
+      this.loadBookings();
       return;
     }
 
     this.employeesLoading.set(true);
-    this.employeesApi
-      .listBookable(branchId)
+    forkJoin(branchIds.map(branchId => this.employeesApi.listBookable(branchId)))
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
@@ -581,8 +630,10 @@ export class AppointmentsComponent {
         })
       )
       .subscribe({
-        next: staff => {
-          const mapped = staff.map(employee => this.toEmployeeOption(employee, branchId));
+        next: results => {
+          const mapped = results.flatMap((staff, index) =>
+            staff.map(employee => this.toEmployeeOption(employee, branchIds[index]!))
+          );
           this.employees.set(mapped);
           this.ensureEmployeeSelected(mapped);
           this.loadBookings();
@@ -598,13 +649,13 @@ export class AppointmentsComponent {
       });
   }
 
-  /** Keeps the current employee if still bookable or chooses an allowed default. */
-  private ensureEmployeeSelected(staff: EmployeeOption[] = this.employees()): void {
+  /** Keeps the current employee if still visible or clears the employee filter. */
+  private ensureEmployeeSelected(staff: EmployeeOption[] = this.branchFilteredEmployees()): void {
     const current = this.filters().employeeId;
     if (current && staff.some(employee => employee.id === current)) {
       return;
     }
-    this.filters.update(filters => ({ ...filters, employeeId: staff[0]?.id ?? null }));
+    this.filters.update(filters => ({ ...filters, employeeId: null }));
   }
 
   /** Converts an API employee and branch assignment into a calendar option. */
@@ -635,25 +686,53 @@ export class AppointmentsComponent {
   }
 
   shiftDate(days: number): void {
-    this.selectedDate.update(current => addDays(current, days));
+    const next = this.dateOnOrAfterToday(addDays(this.selectedDate(), days));
+    if (toDateKey(next) === toDateKey(this.selectedDate())) {
+      return;
+    }
+    this.selectedDate.set(next);
+    this.syncDisplayedMonth(next);
     this.loadBookings();
   }
 
-  onDateSelected(date: Date): void {
-    this.selectedDate.set(date);
+  onDateSelected(date: Date | null): void {
+    if (!date) {
+      return;
+    }
+    const next = this.dateOnOrAfterToday(date);
+    this.selectedDate.set(next);
+    this.syncDisplayedMonth(next);
     this.loadBookings();
+  }
+
+  onCalendarMonthChange(event: { month?: number; year?: number }): void {
+    if (event.month == null || event.year == null) {
+      return;
+    }
+    const month = event.month - 1;
+    const earliest = this.earliestBookableDate;
+    if (
+      event.year < earliest.getFullYear() ||
+      (event.year === earliest.getFullYear() && month < earliest.getMonth())
+    ) {
+      this.displayedMonth.set({ year: earliest.getFullYear(), month: earliest.getMonth() });
+      return;
+    }
+    this.displayedMonth.set({ year: event.year, month });
   }
 
   cellFor(
-    column: { employeeId: string; date: Date },
+    column: { branchId: string; employeeId: string; date: Date },
     startMinutes: number
   ): CalendarSlotCell | undefined {
-    const cells = this.gridCells().get(`${column.employeeId}|${toDateKey(column.date)}`);
+    const cells = this.gridCells().get(this.columnKey(column));
     return cells?.find(cell => cell.startMinutes === startMinutes);
   }
 
-  availableSlotsForColumn(column: { employeeId: string; date: Date }): CalendarAvailableSlot[] {
-    return this.availableSlots().get(`${column.employeeId}|${toDateKey(column.date)}`) ?? [];
+  availableSlotsForColumn(
+    column: { branchId: string; employeeId: string; date: Date }
+  ): CalendarAvailableSlot[] {
+    return this.availableSlots().get(this.columnKey(column)) ?? [];
   }
 
   onBookingClick(booking: BookingRecord): void {
@@ -663,6 +742,17 @@ export class AppointmentsComponent {
   /** Refreshes availability after a conflict or failed calendar request. */
   retryAvailability(): void {
     this.loadBookings();
+  }
+
+  private dateOnOrAfterToday(date: Date): Date {
+    if (toDateKey(date) < toDateKey(this.earliestBookableDate)) {
+      return this.earliestBookableDate;
+    }
+    return date;
+  }
+
+  private syncDisplayedMonth(date: Date): void {
+    this.displayedMonth.set({ year: date.getFullYear(), month: date.getMonth() });
   }
 
   private isStartAvailableForDuration(
@@ -685,7 +775,13 @@ export class AppointmentsComponent {
   }
 
   selectAvailableSlot(
-    column: { employeeId: string; date: Date; title: string },
+    column: {
+      branchId: string;
+      branchName: string;
+      employeeId: string;
+      date: Date;
+      title: string;
+    },
     startMinutes: number
   ): void {
     if (this.calendarLoading() || this.calendarUnavailable()) {
@@ -704,13 +800,16 @@ export class AppointmentsComponent {
       return;
     }
 
-    const employee = this.employees().find(item => item.id === column.employeeId);
-    const branch = this.selectedBranch();
+    const employee = this.employees().find(
+      item => item.id === column.employeeId && item.branchId === column.branchId
+    );
+    const branch =
+      this.branches().find(item => item.id === column.branchId) ?? this.selectedBranch();
     const selection: SlotSelection = {
       employeeId: column.employeeId,
       employeeName: employee?.name ?? column.title,
-      branchId: branch?.id ?? '',
-      branchName: branch?.name ?? '',
+      branchId: branch?.id ?? column.branchId ?? '',
+      branchName: branch?.name ?? column.branchName ?? '',
       date: column.date,
       startMinutes,
       slotDurationMinutes: effectiveDuration,
@@ -734,12 +833,16 @@ export class AppointmentsComponent {
     );
   }
 
-  isSlotSelected(column: { employeeId: string; date: Date }, startMinutes: number): boolean {
+  isSlotSelected(
+    column: { branchId: string; employeeId: string; date: Date },
+    startMinutes: number
+  ): boolean {
     const slot = this.selectedSlot();
     if (!slot) {
       return false;
     }
     return (
+      slot.branchId === column.branchId &&
       slot.employeeId === column.employeeId &&
       toDateKey(slot.date) === toDateKey(column.date) &&
       slot.startMinutes === startMinutes
@@ -968,8 +1071,8 @@ export class AppointmentsComponent {
     this.calendarLoading.set(true);
     this.calendarUnavailable.set(false);
     this.clearHoldRefresh();
-    const branchId = this.filters().branchId;
-    if (!branchId) {
+    const branchIds = this.calendarBranchIds();
+    if (!branchIds.length) {
       this.bookings.set([]);
       this.availabilityBlocks.set([]);
       this.calendarLoading.set(false);
@@ -977,26 +1080,37 @@ export class AppointmentsComponent {
     }
     const from = this.selectedDate();
     const to = this.viewMode() === '4days' ? addDays(from, 3) : from;
-    this.appointmentsApi
-      .calendar(branchId, toDateKey(from), toDateKey(to), this.filters().employeeId)
+    const employeeId = this.filters().employeeId;
+    forkJoin(
+      branchIds.map(branchId =>
+        this.appointmentsApi.calendar(branchId, toDateKey(from), toDateKey(to), employeeId)
+      )
+    )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: result => {
+        next: results => {
           if (requestId !== this.calendarRequestId) {
             return;
           }
           this.calendarLoading.set(false);
-          this.bookings.set(result.bookings.map(mapCalendarBooking));
-          const holds = result.holds.map(hold => ({
-            id: hold.id,
-            employeeId: hold.employeeId,
-            scheduledDate: new Date(`${hold.scheduledDate}T00:00:00`),
-            startMinutes: hold.startMinutes,
-            endMinutes: hold.endMinutes,
-            expiresAtUtc: new Date(hold.expiresAtUtc),
-          }));
+          this.bookings.set(results.flatMap(result => result.bookings.map(mapCalendarBooking)));
+          const holds = results.flatMap(result =>
+            result.holds.map(hold => ({
+              id: hold.id,
+              employeeId: hold.employeeId,
+              scheduledDate: new Date(`${hold.scheduledDate}T00:00:00`),
+              startMinutes: hold.startMinutes,
+              endMinutes: hold.endMinutes,
+              expiresAtUtc: new Date(hold.expiresAtUtc),
+            }))
+          );
           this.availabilityBlocks.set(holds);
-          this.scheduleHoldRefresh(holds, new Date(result.serverNowUtc));
+          const serverNowUtc = results
+            .map(result => new Date(result.serverNowUtc))
+            .sort((left, right) => right.getTime() - left.getTime())[0];
+          if (serverNowUtc) {
+            this.scheduleHoldRefresh(holds, serverNowUtc);
+          }
         },
         error: () => {
           if (requestId !== this.calendarRequestId) {
@@ -1008,6 +1122,15 @@ export class AppointmentsComponent {
           this.availabilityBlocks.set([]);
         },
       });
+  }
+
+  /** Returns branch ids that should contribute bookings to the current calendar view. */
+  private calendarBranchIds(): string[] {
+    const branchId = this.filters().branchId;
+    if (branchId) {
+      return [branchId];
+    }
+    return [...new Set(this.visibleEmployees().map(employee => employee.branchId))];
   }
 
   /** Checks an edited item's duration against the booking interval before saving. */
@@ -1120,13 +1243,18 @@ export class AppointmentsComponent {
     return bookingBlockHeightPx(durationMinutes) - BOOKING_OVERLAY_GAP_PX * 2;
   }
 
-  bookingsForColumn(column: { employeeId: string; date: Date }): BookingRecord[] {
+  bookingsForColumn(column: { branchId: string; employeeId: string; date: Date }): BookingRecord[] {
     return this.bookings().filter(
       booking =>
         booking.status !== 'cancelled' &&
+        booking.branchId === column.branchId &&
         booking.employeeId === column.employeeId &&
         toDateKey(booking.scheduledDate) === toDateKey(column.date)
     );
+  }
+
+  private columnKey(column: { branchId: string; employeeId: string; date: Date }): string {
+    return `${column.branchId}|${column.employeeId}|${toDateKey(column.date)}`;
   }
 
   showSlotCell(cell: CalendarSlotCell): boolean {

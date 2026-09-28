@@ -138,6 +138,7 @@ export interface BookingListItemDto {
   totalAmount: number;
   paidAmount: number;
   discountAmount: number;
+  confirmedAt: string;
 }
 
 /** Describes booking list result dto exchanged with the API. */

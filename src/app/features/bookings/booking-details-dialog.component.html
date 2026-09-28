@@ -14,7 +14,9 @@
 >
   <ng-template pTemplate="header">
     <div class="dialog-header">
-      <i class="pi pi-file-edit"></i>
+      <span class="dialog-header__icon" aria-hidden="true">
+        <i class="pi pi-eye"></i>
+      </span>
       <h3>{{ 'BOOKINGS.DETAILS.TITLE' | translate }}</h3>
     </div>
     <button
@@ -32,7 +34,9 @@
     <div class="details-layout">
       <aside class="details-sidebar">
         <h4>
-          <i class="pi pi-file-edit"></i>
+          <span class="dialog-header__icon" aria-hidden="true">
+            <i class="pi pi-eye"></i>
+          </span>
           {{ 'BOOKINGS.DETAILS.SIDEBAR_TITLE' | translate }}
         </h4>
         <ul class="summary-list">
