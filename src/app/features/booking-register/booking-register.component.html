@@ -168,6 +168,7 @@
           <th>{{ 'BOOKING_REGISTER.TABLE.COL_EMPLOYEE' | translate }}</th>
           <th>{{ 'BOOKING_REGISTER.TABLE.COL_FROM' | translate }}</th>
           <th>{{ 'BOOKING_REGISTER.TABLE.COL_TO' | translate }}</th>
+          <th>{{ 'BOOKING_REGISTER.TABLE.COL_CONFIRMED_AT' | translate }}</th>
           <th>{{ 'BOOKING_REGISTER.TABLE.COL_STATUS' | translate }}</th>
           <th>{{ 'BOOKING_REGISTER.TABLE.COL_ACTIONS' | translate }}</th>
         </tr>
@@ -199,6 +200,7 @@
           </td>
           <td>{{ booking.startTime }}</td>
           <td>{{ booking.endTime }}</td>
+          <td>{{ confirmationLabel(booking.confirmedAt) }}</td>
           <td>
             <p-tag
               [value]="statusKey(booking.status) | translate"
@@ -206,18 +208,29 @@
               styleClass="status-tag"
             />
           </td>
-          <td>
-            <p-menu #menu [model]="getRowMenu(booking)" [popup]="true" appendTo="body" />
-            <button type="button" class="row-menu-btn" (click)="menu.toggle($event)">
-              <i class="pi pi-ellipsis-v"></i>
-            </button>
+          <td class="actions-cell">
+            @if (canRead()) {
+              <button
+                type="button"
+                class="row-menu-btn"
+                [class.is-open]="openMenuRow()?.id === booking.id"
+                [attr.aria-expanded]="openMenuRow()?.id === booking.id"
+                aria-haspopup="menu"
+                aria-controls="register-row-menu"
+                [attr.aria-label]="'BOOKING_REGISTER.TABLE.COL_ACTIONS' | translate"
+                (mousedown)="$event.stopPropagation()"
+                (click)="toggleRowMenu($event, booking)"
+              >
+                <i class="pi pi-ellipsis-v"></i>
+              </button>
+            }
           </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="9" class="empty-msg">
+          <td colspan="10" class="empty-msg">
             <i class="pi pi-inbox"></i>
             {{ 'COMMON.NO_DATA' | translate }}
           </td>
@@ -285,3 +298,29 @@
   [loading]="historyLoading()"
   (closed)="closeHistory()"
 />
+
+@if (openMenuRow(); as booking) {
+  <div
+    #rowActionMenu
+    id="register-row-menu"
+    class="row-action-menu"
+    role="menu"
+    [style.top.px]="menuTop()"
+    [style.left.px]="menuLeft()"
+    (mousedown)="$event.stopPropagation()"
+    (click)="$event.stopPropagation()"
+  >
+    <button type="button" role="menuitem" (click)="openRowDetails(booking)">
+      <span class="row-action-menu__icon">
+        <i class="pi pi-eye"></i>
+      </span>
+      <span>{{ 'BOOKING_REGISTER.MENU.DETAILS' | translate }}</span>
+    </button>
+    <button type="button" role="menuitem" (click)="openRowHistory(booking)">
+      <span class="row-action-menu__icon row-action-menu__icon--history">
+        <i class="pi pi-history"></i>
+      </span>
+      <span>{{ 'BOOKING_REGISTER.MENU.HISTORY' | translate }}</span>
+    </button>
+  </div>
+}

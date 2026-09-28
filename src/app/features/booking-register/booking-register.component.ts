@@ -2,6 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  HostListener,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -16,10 +19,9 @@ import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
-import { MenuModule } from 'primeng/menu';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { MenuItem, MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { LanguageService } from '@core/services/language.service';
@@ -70,7 +72,6 @@ import {
     CalendarModule,
     DropdownModule,
     InputTextModule,
-    MenuModule,
     TableModule,
     TagModule,
     BusyOverlayComponent,
@@ -94,6 +95,11 @@ export class BookingRegisterComponent {
   private readonly branchesApi = inject(BranchService);
   private readonly employeesApi = inject(EmployeeService);
   private rowsRequestId = 0;
+  private catalogRequestId = 0;
+  private menuDismissCleanup: (() => void) | null = null;
+  private menuDismissArmed = false;
+
+  @ViewChild('rowActionMenu') private menuPanel?: ElementRef<HTMLElement>;
 
   readonly canRead = computed(() => this.permissions.hasPermission(Policies.BookingsRead));
   readonly leadingIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
@@ -117,6 +123,9 @@ export class BookingRegisterComponent {
 
   readonly rows = signal(5);
   readonly first = signal(0);
+  readonly openMenuRow = signal<BookingRegisterRow | null>(null);
+  readonly menuTop = signal(0);
+  readonly menuLeft = signal(0);
   readonly pageReportTemplate = signal(
     this.translate.instant('BOOKING_REGISTER.TABLE.PAGE_REPORT')
   );
@@ -141,12 +150,10 @@ export class BookingRegisterComponent {
   readonly mismatchSlotDuration = signal(0);
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.unbindMenuDismiss());
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('BOOKING_REGISTER.TABLE.PAGE_REPORT'));
     });
-    if (this.permissions.hasPermission(Policies.PackagesRead)) {
-      this.loadCatalog();
-    }
     this.loadEmployeeOptions();
     this.loadRows();
   }
@@ -159,6 +166,7 @@ export class BookingRegisterComponent {
   }
 
   applyFilters(): void {
+    this.closeRowMenu();
     this.appliedFilters.set(this.buildFiltersFromDraft());
     this.first.set(0);
     this.loadRows();
@@ -208,6 +216,16 @@ export class BookingRegisterComponent {
     return this.first() + index + 1;
   }
 
+  confirmationLabel(value: Date): string {
+    return value.toLocaleString(this.languageService.currentLang(), {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   /** Exports the currently applied register filters as a CSV download. */
   exportReport(): void {
     const filters = this.appliedFilters();
@@ -246,6 +264,7 @@ export class BookingRegisterComponent {
   }
 
   onPageChange(event: { first?: number; rows?: number | null }): void {
+    this.closeRowMenu();
     if (event.first != null) {
       this.first.set(event.first);
     }
@@ -259,6 +278,7 @@ export class BookingRegisterComponent {
   openDetails(booking: BookingRegisterRow): void {
     this.selectedBooking.set(booking);
     this.detailsLoading.set(true);
+    this.loadCatalog();
     const date = toDateKey(booking.scheduledDate);
     this.appointmentsApi
       .calendar(booking.branchId, date, date, booking.employeeId)
@@ -362,7 +382,7 @@ export class BookingRegisterComponent {
   }
 
   onCatalogChanged(): void {
-    this.loadCatalog();
+    this.loadCatalog(true);
   }
 
   /** Loads recorded booking changes for the selected register row. */
@@ -414,23 +434,95 @@ export class BookingRegisterComponent {
     this.selectedBooking.set(null);
   }
 
-  getRowMenu(booking: BookingRegisterRow): MenuItem[] {
-    if (!this.canRead()) {
-      return [];
+  /** Opens the row actions menu on the first click and keeps it anchored to that button. */
+  toggleRowMenu(event: MouseEvent, booking: BookingRegisterRow): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.openMenuRow()?.id === booking.id) {
+      this.closeRowMenu();
+      return;
     }
 
-    return [
-      {
-        label: this.translate.instant('BOOKING_REGISTER.MENU.DETAILS'),
-        icon: 'pi pi-eye',
-        command: () => this.openDetails(booking),
-      },
-      {
-        label: this.translate.instant('BOOKING_REGISTER.MENU.HISTORY'),
-        icon: 'pi pi-history',
-        command: () => this.openHistory(booking),
-      },
-    ];
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 240;
+    const menuHeight = 108;
+    const gap = 6;
+    let left = rect.left;
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = Math.max(8, rect.right - menuWidth);
+    }
+    let top = rect.bottom + gap;
+    if (top + menuHeight > window.innerHeight - 8) {
+      top = Math.max(8, rect.top - menuHeight - gap);
+    }
+
+    this.menuLeft.set(left);
+    this.menuTop.set(top);
+    this.menuDismissArmed = false;
+    this.openMenuRow.set(booking);
+    this.bindMenuDismiss();
+    queueMicrotask(() => {
+      if (this.openMenuRow()?.id === booking.id) {
+        this.menuDismissArmed = true;
+      }
+    });
+  }
+
+  closeRowMenu(): void {
+    this.menuDismissArmed = false;
+    this.openMenuRow.set(null);
+    this.unbindMenuDismiss();
+  }
+
+  openRowDetails(booking: BookingRegisterRow): void {
+    this.closeRowMenu();
+    this.openDetails(booking);
+  }
+
+  openRowHistory(booking: BookingRegisterRow): void {
+    this.closeRowMenu();
+    this.openHistory(booking);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.openMenuRow() || !this.menuDismissArmed) {
+      return;
+    }
+    const target = event.target as Node | null;
+    if (target && this.menuPanel?.nativeElement.contains(target)) {
+      return;
+    }
+    this.closeRowMenu();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeRowMenu();
+  }
+
+  private bindMenuDismiss(): void {
+    if (this.menuDismissCleanup) {
+      return;
+    }
+    const dismiss = () => {
+      if (!this.menuDismissArmed) {
+        return;
+      }
+      this.closeRowMenu();
+    };
+    document.addEventListener('scroll', dismiss, true);
+    window.addEventListener('resize', dismiss);
+    this.menuDismissCleanup = () => {
+      document.removeEventListener('scroll', dismiss, true);
+      window.removeEventListener('resize', dismiss);
+    };
+  }
+
+  private unbindMenuDismiss(): void {
+    this.menuDismissCleanup?.();
+    this.menuDismissCleanup = null;
   }
 
   customerInitial(name: string): string {
@@ -554,8 +646,15 @@ export class BookingRegisterComponent {
       });
   }
 
-  /** Loads current catalog items and category choices for booking edits. */
-  private loadCatalog(): void {
+  /** Loads catalog choices when the details popup opens or after a new package is created. */
+  private loadCatalog(force = false): void {
+    if (!this.permissions.hasPermission(Policies.PackagesRead)) {
+      return;
+    }
+    if (this.catalogLoading() && !force) {
+      return;
+    }
+    const requestId = ++this.catalogRequestId;
     this.catalogLoading.set(true);
     forkJoin({
       packages: this.packagesApi.listAllActive(),
@@ -563,26 +662,51 @@ export class BookingRegisterComponent {
     })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.catalogLoading.set(false))
+        finalize(() => {
+          if (requestId === this.catalogRequestId) {
+            this.catalogLoading.set(false);
+          }
+        })
       )
-      .subscribe(({ packages, categories }) => {
-        this.catalogCategories.set(
-          categories.map(category => ({ id: category.id, label: category.name }))
-        );
-        this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
+      .subscribe({
+        next: ({ packages, categories }) => {
+          if (requestId !== this.catalogRequestId) {
+            return;
+          }
+          this.catalogCategories.set(
+            categories.map(category => ({ id: category.id, label: category.name }))
+          );
+          this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
+        },
       });
   }
 
+  /** Loads active staff for the register employee filter. */
   private loadEmployeeOptions(): void {
+    if (
+      !this.permissions.hasPermission(Policies.BookingsManage) ||
+      !this.permissions.hasPermission(Policies.BranchesRead)
+    ) {
+      return;
+    }
+
     this.branchesApi
-      .listBookable()
+      .list({
+        pageNumber: 1,
+        pageSize: 50,
+        search: '',
+        sortBy: 'name',
+        sortDirection: 'asc',
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(branches => {
-        if (!branches.length) {
+      .subscribe(result => {
+        const branchIds = result.items.map(branch => branch.id);
+        if (branchIds.length === 0) {
           this.employees.set([]);
           return;
         }
-        forkJoin(branches.map(branch => this.employeesApi.listBookable(branch.id)))
+
+        forkJoin(branchIds.map(branchId => this.employeesApi.listBookable(branchId)))
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(results => {
             const employees = new Map<string, { id: string; fullName: string }>();
@@ -707,6 +831,7 @@ export class BookingRegisterComponent {
       branchId: item.branchId,
       branchName: item.branchName,
       scheduledDate: new Date(`${item.scheduledDate}T00:00:00`),
+      confirmedAt: new Date(item.confirmedAt),
       startTime: formatMinutesAsTime(item.startMinutes),
       endTime: formatMinutesAsTime(item.endMinutes),
       durationMinutes: item.endMinutes - item.startMinutes,

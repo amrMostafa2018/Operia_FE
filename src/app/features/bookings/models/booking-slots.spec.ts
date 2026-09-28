@@ -67,12 +67,43 @@ describe('buildAvailableSlots', () => {
     ]);
   });
 
-  it('keeps the full calendar day visible around shorter staff hours', () => {
+  it('trims the calendar range to visible employee working hours', () => {
     const employee = { workingDays } as EmployeeOption;
 
     expect(calendarDayRange([{ employee, date }])).toEqual({
-      startMinutes: 8 * 60,
-      endMinutes: 18 * 60,
+      startMinutes: 9 * 60,
+      endMinutes: 12 * 60,
+    });
+  });
+
+  it('uses the earliest start and latest end across visible employees', () => {
+    const employeeA = {
+      workingDays: [{ day: 'sun', enabled: true, fromMinutes: 9 * 60, toMinutes: 17 * 60 }],
+    } as EmployeeOption;
+    const employeeB = {
+      workingDays: [{ day: 'sun', enabled: true, fromMinutes: 10 * 60, toMinutes: 15 * 60 }],
+    } as EmployeeOption;
+
+    expect(
+      calendarDayRange([
+        { employee: employeeA, date },
+        { employee: employeeB, date },
+      ])
+    ).toEqual({
+      startMinutes: 9 * 60,
+      endMinutes: 17 * 60,
+    });
+  });
+
+  it('extends the calendar range when staff start before the default day', () => {
+    const earlyHours: EmployeeWorkingHours[] = [
+      { day: 'sun', enabled: true, fromMinutes: 7 * 60, toMinutes: 12 * 60 },
+    ];
+    const employee = { workingDays: earlyHours } as EmployeeOption;
+
+    expect(calendarDayRange([{ employee, date }])).toEqual({
+      startMinutes: 7 * 60,
+      endMinutes: 12 * 60,
     });
   });
 
