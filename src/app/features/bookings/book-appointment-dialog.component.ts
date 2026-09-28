@@ -222,7 +222,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       map(mobile => mobile.trim()),
       distinctUntilChanged(),
       switchMap(mobile => {
-        const pending: CustomerLookupState = { mobile, client: null, pending: !!mobile };
+        const normalizedMobile = mobile.replace(/\D/g, '');
+        const pending: CustomerLookupState = { mobile: normalizedMobile, client: null, pending: !!mobile };
         if (!mobile) {
           return of({ ...pending, pending: false });
         }
@@ -234,7 +235,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
                 map(
                   customer =>
                     ({
-                      mobile,
+                      mobile: normalizedMobile,
                       pending: false,
                       client: customer
                         ? ({
@@ -260,7 +261,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
                         : null,
                     }) satisfies CustomerLookupState
                 ),
-                catchError(() => of({ mobile, client: null, pending: false }))
+                catchError(() => of({ mobile: normalizedMobile, client: null, pending: false }))
               )
             )
           )
@@ -275,9 +276,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     if (!mobile) {
       return null;
     }
-    const local = this.clients().find(client => client.mobile === mobile) ?? null;
+    const local = this.findLocalClient(mobile);
     const lookup = this.customerLookup();
-    if (lookup.mobile !== mobile || lookup.pending) {
+    if (lookup.mobile !== this.normalizeMobile(mobile) || lookup.pending) {
       return local;
     }
     return lookup.client ?? local;
@@ -285,9 +286,12 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   readonly customerLookupPending = computed(() => {
     const mobile = this.clientMobile().trim();
-    const hasLocalMatch = this.clients().some(client => client.mobile === mobile);
+    const normalizedMobile = this.normalizeMobile(mobile);
+    const hasLocalMatch = this.clients().some(
+      client => this.normalizeMobile(client.mobile) === normalizedMobile
+    );
     const lookup = this.customerLookup();
-    return !!mobile && !hasLocalMatch && lookup.mobile === mobile && lookup.pending;
+    return !!mobile && !hasLocalMatch && lookup.mobile === normalizedMobile && lookup.pending;
   });
 
   readonly packageOptions = computed(() => {
@@ -443,11 +447,37 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
     effect(
       () => {
-        const validIds = new Set(this.packageOptions().map(option => option.value));
+        const options = this.packageOptions();
+        if (options.length === 0) {
+          return;
+        }
+        const validIds = new Set(options.map(option => option.value));
         const filtered = this.selectedPackageIds().filter(id => validIds.has(id));
         if (filtered.length !== this.selectedPackageIds().length) {
           this.selectedPackageIds.set(filtered);
         }
+      },
+      { allowSignalWrites: true }
+    );
+
+    effect(
+      () => {
+        if (!this.visible()) {
+          return;
+        }
+        const initialPackageId = this.initialPackageId();
+        if (!initialPackageId) {
+          return;
+        }
+        const hasOption = this.packageOptions().some(option => option.value === initialPackageId);
+        if (!hasOption) {
+          return;
+        }
+        untracked(() => {
+          if (!this.selectedPackageIds().includes(initialPackageId)) {
+            this.selectedPackageIds.update(ids => [...ids, initialPackageId]);
+          }
+        });
       },
       { allowSignalWrites: true }
     );
@@ -896,6 +926,21 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
     this.closed.emit();
+  }
+
+  private findLocalClient(mobile: string): ClientRecord | null {
+    const normalizedMobile = this.normalizeMobile(mobile);
+    if (!normalizedMobile) {
+      return null;
+    }
+    return (
+      this.clients().find(client => this.normalizeMobile(client.mobile) === normalizedMobile) ??
+      null
+    );
+  }
+
+  private normalizeMobile(value: string): string {
+    return value.replace(/\D/g, '');
   }
 
   private unlistedControlError(
