@@ -468,7 +468,9 @@
                   class="form-field"
                   [class.error]="isFieldInvalid(form, 'pulseCount') || showSessionPulseGroupError()"
                 >
-                  <span class="field-label">{{ 'PACKAGES.CREATE.PULSE_COUNT_LABEL' | translate }}</span>
+                  <span class="field-label">{{
+                    'PACKAGES.CREATE.PULSE_COUNT_LABEL' | translate
+                  }}</span>
                   <div class="input-with-addon">
                     <input pInputText type="number" min="0" formControlName="pulseCount" />
                     <i class="pi pi-heart" aria-hidden="true"></i>
@@ -479,7 +481,9 @@
                 </div>
                 <div
                   class="form-field"
-                  [class.error]="isFieldInvalid(form, 'sessionCount') || showSessionPulseGroupError()"
+                  [class.error]="
+                    isFieldInvalid(form, 'sessionCount') || showSessionPulseGroupError()
+                  "
                 >
                   <span class="field-label">
                     {{ 'PACKAGES.CREATE.SESSION_COUNT_LABEL' | translate }}
@@ -502,7 +506,7 @@
           }
           <div class="form-field" [class.error]="isFieldInvalid(form, 'price')">
             <span class="field-label">
-              {{ 'PACKAGES.CREATE.PRICE_LABEL' | translate }} <em>*</em>
+              {{ 'PACKAGES.CREATE.CASH_PRICE_LABEL' | translate }} <em>*</em>
             </span>
             <div class="input-with-addon price-input">
               <p-inputNumber
@@ -524,6 +528,55 @@
             }
           </div>
         </div>
+
+        <section
+          class="payment-options"
+          [attr.aria-label]="'PACKAGES.CREATE.PAYMENT_OPTIONS' | translate"
+        >
+          <h3>{{ 'PACKAGES.CREATE.PAYMENT_OPTIONS' | translate }}</h3>
+          <div class="payment-option-grid">
+            <div class="payment-option">
+              <div class="payment-option-toggle">
+                <p-inputSwitch formControlName="cashEnabled" />
+                <span>{{ 'PACKAGES.CREATE.CASH_ENABLED' | translate }}</span>
+              </div>
+              @if (getFieldError('cashEnabled'); as paymentError) {
+                <small class="field-error">{{ paymentError }}</small>
+              }
+            </div>
+            <div class="payment-option">
+              <div class="payment-option-toggle">
+                <p-inputSwitch formControlName="installmentEnabled" />
+                <span>{{ 'PACKAGES.CREATE.INSTALLMENT_ENABLED' | translate }}</span>
+              </div>
+              @if (installmentEnabledValue()) {
+                <div class="form-field" [class.error]="isFieldInvalid(form, 'installmentPrice')">
+                  <span class="field-label"
+                    >{{ 'PACKAGES.CREATE.INSTALLMENT_PRICE_LABEL' | translate }} <em>*</em></span
+                  >
+                  <div class="input-with-addon price-input">
+                    <p-inputNumber
+                      formControlName="installmentPrice"
+                      [min]="0"
+                      [useGrouping]="true"
+                      locale="en-US"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      styleClass="price-input-number"
+                      inputStyleClass="price-input-field"
+                    />
+                    @if (currencyService.hasCurrency()) {
+                      <span class="addon">{{ currencyService.currencyLabel() }}</span>
+                    }
+                  </div>
+                  @if (getFieldError('installmentPrice'); as installmentError) {
+                    <small class="field-error">{{ installmentError }}</small>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </section>
 
         <section class="discount-accordion" [class.open]="discountOpen()">
           <button type="button" class="discount-toggle" (click)="toggleDiscount()">

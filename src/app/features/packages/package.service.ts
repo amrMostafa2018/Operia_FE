@@ -42,6 +42,9 @@ export interface PackagePayload {
   pulseCount: number | null;
   packageExpiryMonths: number | null;
   price: number;
+  cashEnabled: boolean;
+  installmentEnabled: boolean;
+  installmentPrice: number | null;
   discountCode: string;
   discountPercent: number | null;
 }

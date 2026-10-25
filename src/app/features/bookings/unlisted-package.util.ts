@@ -41,6 +41,9 @@ export function toUnlistedPackagePayload(value: {
     pulseCount: isPackage ? 0 : null,
     packageExpiryMonths: isPackage ? 12 : null,
     price: Number(value.price) || 0,
+    cashEnabled: true,
+    installmentEnabled: false,
+    installmentPrice: null,
     discountCode: '',
     discountPercent: null,
   };
@@ -55,7 +58,7 @@ export function toLineItemFromCreatedPackage(pkg: PackageDetail): BookingLineIte
     name: pkg.name,
     type: 'unlisted',
     quantity: 1,
-    price: pkg.price,
+    price: pkg.cashPriceAfterDiscount,
     durationMinutes: pkg.sessionDurationMinutes,
     packageSessionLinked: isPackage,
     categoryId: pkg.serviceCategoryId || null,

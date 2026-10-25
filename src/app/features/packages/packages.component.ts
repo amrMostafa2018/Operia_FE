@@ -69,6 +69,9 @@ const DEFAULT_FORM_VALUE: PackageFormValue = {
   pulseCount: null,
   packageExpiryMonths: 12,
   price: 0,
+  cashEnabled: true,
+  installmentEnabled: false,
+  installmentPrice: null,
   discountCode: '',
   discountPercent: 0,
 };
@@ -96,7 +99,14 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
   },
   price: {
     required: 'PACKAGES.CREATE.ERRORS.PRICE_REQUIRED',
-    min: 'PACKAGES.CREATE.ERRORS.PRICE_MIN',
+    min: 'PACKAGES.CREATE.ERRORS.CASH_PRICE_POSITIVE',
+  },
+  cashEnabled: {
+    paymentOptionRequired: 'PACKAGES.CREATE.ERRORS.PAYMENT_OPTION_REQUIRED',
+  },
+  installmentPrice: {
+    required: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_REQUIRED',
+    min: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_MIN',
   },
   discountCode: {
     maxlength: 'PACKAGES.CREATE.ERRORS.DISCOUNT_CODE_MAX',
@@ -193,6 +203,9 @@ export class PackagesComponent implements OnInit {
     pulseCount: [null as number | null, [Validators.min(0)]],
     packageExpiryMonths: [12 as number | null],
     price: [0, [Validators.required, Validators.min(0)]],
+    cashEnabled: [true],
+    installmentEnabled: [false],
+    installmentPrice: [null as number | null],
     discountCode: ['', [Validators.maxLength(50)]],
     discountPercent: [0 as number | null, [Validators.min(0), Validators.max(100)]],
   });
@@ -227,6 +240,7 @@ export class PackagesComponent implements OnInit {
     );
   });
   readonly statusValue = computed(() => this.formValue().status);
+  readonly installmentEnabledValue = computed(() => this.formValue().installmentEnabled);
 
   readonly offerTypeOptions: { label: string; value: PackageOfferType }[] = [
     { label: 'PACKAGES.OFFER_TYPE_PACKAGE', value: 'package' },
@@ -258,12 +272,26 @@ export class PackagesComponent implements OnInit {
       'pulseCount',
       'packageExpiryMonths',
       'price',
+      'cashEnabled',
+      'installmentPrice',
       'discountCode',
       'discountPercent',
     ]);
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.formValue.set(this.form.getRawValue());
     });
+    this.form.controls.cashEnabled.setValidators(control =>
+      control.value || this.form.controls.installmentEnabled.value
+        ? null
+        : { paymentOptionRequired: true }
+    );
+    this.form.controls.installmentEnabled.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncPaymentValidators());
+    this.form.controls.cashEnabled.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncPaymentValidators());
+    this.syncPaymentValidators();
     this.form.controls.serviceCategoryId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(categoryId => {
@@ -362,6 +390,9 @@ export class PackagesComponent implements OnInit {
               detail.pulseCount != null && detail.pulseCount > 0 ? detail.pulseCount : null,
             packageExpiryMonths: detail.packageExpiryMonths ?? 12,
             price: detail.price,
+            cashEnabled: detail.cashEnabled,
+            installmentEnabled: detail.installmentEnabled,
+            installmentPrice: detail.installmentPrice,
             discountCode: detail.discountCode ?? '',
             discountPercent: detail.discountPercent ?? 0,
           });
@@ -518,6 +549,9 @@ export class PackagesComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      if (this.form.controls.discountCode.invalid || this.form.controls.discountPercent.invalid) {
+        this.discountOpen.set(true);
+      }
       return;
     }
     const value = this.form.getRawValue();
@@ -563,6 +597,9 @@ export class PackagesComponent implements OnInit {
     }
     if (control.errors['server']) {
       return control.errors['server'];
+    }
+    if (field === 'price' && control.errors['min'] && !this.form.controls.cashEnabled.value) {
+      return this.translate.instant('PACKAGES.CREATE.ERRORS.PRICE_MIN');
     }
     const fieldMap = FIELD_ERROR_KEYS[field] ?? {};
     for (const key of Object.keys(control.errors)) {
@@ -658,8 +695,24 @@ export class PackagesComponent implements OnInit {
   private resetForm(value: PackageFormValue): void {
     this.form.reset(value);
     this.syncPackageFieldValidators(value.offerType);
+    this.syncPaymentValidators();
     this.formValue.set(this.form.getRawValue());
     this.loadSubServiceCategories(value.serviceCategoryId);
+  }
+
+  private syncPaymentValidators(): void {
+    const price = this.form.controls.price;
+    price.setValidators([
+      Validators.required,
+      Validators.min(this.form.controls.cashEnabled.value ? 0.01 : 0),
+    ]);
+    price.updateValueAndValidity({ emitEvent: false });
+    const installmentPrice = this.form.controls.installmentPrice;
+    installmentPrice.setValidators(
+      this.form.controls.installmentEnabled.value ? [Validators.required, Validators.min(0.01)] : []
+    );
+    installmentPrice.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.cashEnabled.updateValueAndValidity({ emitEvent: false });
   }
 
   private syncPackageFieldValidators(type: PackageOfferType): void {
@@ -700,6 +753,9 @@ export class PackagesComponent implements OnInit {
       pulseCount: value.offerType === 'package' ? (pulseFilled ? value.pulseCount : null) : null,
       packageExpiryMonths: value.offerType === 'package' ? value.packageExpiryMonths : null,
       price: Number(value.price) || 0,
+      cashEnabled: value.cashEnabled,
+      installmentEnabled: value.installmentEnabled,
+      installmentPrice: value.installmentEnabled ? value.installmentPrice : null,
       discountCode: value.discountCode.trim(),
       discountPercent: value.discountPercent,
     };
