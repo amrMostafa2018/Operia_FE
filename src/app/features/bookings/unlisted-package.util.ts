@@ -44,6 +44,9 @@ export function toUnlistedPackagePayload(value: {
     cashEnabled: true,
     installmentEnabled: false,
     installmentPrice: null,
+    firstPayment: null,
+    installmentCount: null,
+    installments: [],
     discountCode: '',
     discountPercent: null,
   };

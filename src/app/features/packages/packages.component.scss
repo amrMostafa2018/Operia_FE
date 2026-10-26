@@ -1101,8 +1101,65 @@
 
 .payment-option-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
+}
+
+.installment-plan-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.installment-plan-fields .p-inputnumber {
+  width: 100%;
+}
+
+.installment-plan-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #50536a;
+}
+
+.suggest-distribution {
+  border: 1px solid #d9d4fa;
+  border-radius: 6px;
+  background: #f5f2ff;
+  color: #4420c8;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.installment-plan-table-wrap {
+  overflow-x: auto;
+}
+
+.installment-plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: start;
+  font-size: 0.78rem;
+}
+
+.installment-plan-table th,
+.installment-plan-table td {
+  border-bottom: 1px solid #eceaf4;
+  padding: 0.4rem;
+  text-align: start;
+}
+
+.installment-plan-table .p-inputnumber {
+  width: 100%;
+  min-width: 5rem;
+}
+
+.plan-hint {
+  color: #686b82;
+  font-size: 0.76rem;
 }
 
 .payment-option {

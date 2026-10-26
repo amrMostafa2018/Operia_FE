@@ -2,6 +2,16 @@ export type PackageOfferType = 'package' | 'singleSession';
 export type PackageListStatus = 'active' | 'cancelled';
 export type PackageDurationUnit = 'minute';
 
+export interface PackageInstallmentRow {
+  amount: number;
+  sessionsUnlocked: number;
+}
+
+export interface PackageInstallmentDetail extends PackageInstallmentRow {
+  number: number;
+  cumulativeAvailableSessions: number;
+}
+
 export interface PackageCategoryOption {
   id: string;
   name: string;
@@ -24,6 +34,9 @@ export interface PackageFormValue {
   cashEnabled: boolean;
   installmentEnabled: boolean;
   installmentPrice: number | null;
+  firstPayment: number | null;
+  installmentCount: number | null;
+  installments: PackageInstallmentRow[];
   discountCode: string;
   discountPercent: number | null;
 }
@@ -54,4 +67,7 @@ export interface PackageDetail extends PackageListItem {
   installmentEnabled: boolean;
   installmentPrice: number | null;
   cashPriceAfterDiscount: number;
+  firstPayment: number | null;
+  installmentCount: number | null;
+  installments: PackageInstallmentDetail[];
 }

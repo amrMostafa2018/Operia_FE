@@ -50,6 +50,7 @@ import {
   PackageListItem,
   PackageListStatus,
   PackageOfferType,
+  PackageInstallmentRow,
 } from './models/package-list.model';
 import { PackagePayload, PackageService } from './package.service';
 
@@ -72,6 +73,9 @@ const DEFAULT_FORM_VALUE: PackageFormValue = {
   cashEnabled: true,
   installmentEnabled: false,
   installmentPrice: null,
+  firstPayment: null,
+  installmentCount: null,
+  installments: [],
   discountCode: '',
   discountPercent: 0,
 };
@@ -107,6 +111,22 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
   installmentPrice: {
     required: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_REQUIRED',
     min: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_MIN',
+  },
+  firstPayment: {
+    required: 'ERRORS.PACKAGE_FIRST_PAYMENT_REQUIRED',
+    min: 'ERRORS.PACKAGE_FIRST_PAYMENT_RANGE',
+    maxPayment: 'ERRORS.PACKAGE_FIRST_PAYMENT_RANGE',
+  },
+  installmentCount: {
+    required: 'ERRORS.PACKAGE_INSTALLMENT_COUNT_RANGE',
+    min: 'ERRORS.PACKAGE_INSTALLMENT_COUNT_RANGE',
+  },
+  installments: {
+    rowsCount: 'ERRORS.PACKAGE_INSTALLMENT_ROWS_COUNT',
+    amountInvalid: 'ERRORS.PACKAGE_INSTALLMENT_AMOUNT_INVALID',
+    totalMismatch: 'ERRORS.PACKAGE_INSTALLMENT_TOTAL_MISMATCH',
+    sessionsInvalid: 'ERRORS.PACKAGE_INSTALLMENT_SESSIONS_INVALID',
+    releaseCap: 'ERRORS.PACKAGE_INSTALLMENT_RELEASE_CAP',
   },
   discountCode: {
     maxlength: 'PACKAGES.CREATE.ERRORS.DISCOUNT_CODE_MAX',
@@ -182,6 +202,8 @@ export class PackagesComponent implements OnInit {
   readonly editing = signal<PackageListItem | null>(null);
   readonly discountOpen = signal(false);
   readonly saving = signal(false);
+  readonly pendingPlanReplacement = signal<'singleSession' | number | null>(null);
+  private readonly manualPlanEdited = signal(false);
   readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
   readonly rowsPerPageOptions = [5, 10, 20, 50];
   readonly rows = signal(5);
@@ -206,11 +228,14 @@ export class PackagesComponent implements OnInit {
     cashEnabled: [true],
     installmentEnabled: [false],
     installmentPrice: [null as number | null],
+    firstPayment: [null as number | null],
+    installmentCount: [null as number | null],
+    installments: [[] as PackageInstallmentRow[]],
     discountCode: ['', [Validators.maxLength(50)]],
     discountPercent: [0 as number | null, [Validators.min(0), Validators.max(100)]],
   });
 
-  private readonly formValue = signal<PackageFormValue>(this.form.getRawValue());
+  readonly formValue = signal<PackageFormValue>(this.form.getRawValue());
 
   readonly descriptionLength = computed(() => (this.formValue().description ?? '').length);
   readonly priceAfterDiscount = computed(() => {
@@ -241,6 +266,26 @@ export class PackagesComponent implements OnInit {
   });
   readonly statusValue = computed(() => this.formValue().status);
   readonly installmentEnabledValue = computed(() => this.formValue().installmentEnabled);
+  readonly installmentRows = computed(() => this.formValue().installments);
+  readonly installmentTotal = computed(() =>
+    this.installmentRows().reduce((total, row) => total + (Number(row.amount) || 0), 0)
+  );
+  readonly remainingInstallmentBalance = computed(() =>
+    Math.max(
+      0,
+      (Number(this.formValue().installmentPrice) || 0) -
+        (Number(this.formValue().firstPayment) || 0)
+    )
+  );
+  readonly distributedSessions = computed(() =>
+    this.installmentRows().reduce((total, row) => total + (Number(row.sessionsUnlocked) || 0), 0)
+  );
+  readonly prepaymentReleaseLimit = computed(() =>
+    Math.min(
+      Math.max(0, (Number(this.formValue().sessionCount) || 0) - 1),
+      Math.ceil((Number(this.formValue().sessionCount) || 0) * 0.7 - 0.5)
+    )
+  );
 
   readonly offerTypeOptions: { label: string; value: PackageOfferType }[] = [
     { label: 'PACKAGES.OFFER_TYPE_PACKAGE', value: 'package' },
@@ -274,6 +319,9 @@ export class PackagesComponent implements OnInit {
       'price',
       'cashEnabled',
       'installmentPrice',
+      'firstPayment',
+      'installmentCount',
+      'installments',
       'discountCode',
       'discountPercent',
     ]);
@@ -287,11 +335,31 @@ export class PackagesComponent implements OnInit {
     );
     this.form.controls.installmentEnabled.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.syncPaymentValidators());
+      .subscribe(() => {
+        this.syncPaymentValidators();
+        if (
+          this.form.controls.installmentEnabled.value &&
+          this.form.controls.offerType.value === 'package'
+        ) {
+          this.suggestDistribution();
+        }
+      });
     this.form.controls.cashEnabled.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.syncPaymentValidators());
     this.syncPaymentValidators();
+    this.form.controls.installmentPrice.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.recalculateAmounts());
+    this.form.controls.firstPayment.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.recalculateAmounts());
+    this.form.controls.installmentCount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.resizeInstallmentRows());
+    this.form.controls.sessionCount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.validateInstallmentRows());
     this.form.controls.serviceCategoryId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(categoryId => {
@@ -393,6 +461,12 @@ export class PackagesComponent implements OnInit {
             cashEnabled: detail.cashEnabled,
             installmentEnabled: detail.installmentEnabled,
             installmentPrice: detail.installmentPrice,
+            firstPayment: detail.firstPayment,
+            installmentCount: detail.installmentCount,
+            installments: detail.installments.map(row => ({
+              amount: row.amount,
+              sessionsUnlocked: row.sessionsUnlocked,
+            })),
             discountCode: detail.discountCode ?? '',
             discountPercent: detail.discountPercent ?? 0,
           });
@@ -413,8 +487,139 @@ export class PackagesComponent implements OnInit {
   }
 
   selectOfferType(type: PackageOfferType): void {
+    if (type === 'singleSession' && this.form.controls.installmentEnabled.value) {
+      this.pendingPlanReplacement.set('singleSession');
+      return;
+    }
+    this.applyOfferType(type);
+  }
+
+  private applyOfferType(type: PackageOfferType): void {
     this.form.controls.offerType.setValue(type);
+    if (type === 'singleSession') {
+      this.form.controls.installmentEnabled.setValue(false);
+    }
     this.syncPackageFieldValidators(type);
+    this.syncPaymentValidators();
+  }
+
+  confirmPlanReplacement(): void {
+    const pending = this.pendingPlanReplacement();
+    this.pendingPlanReplacement.set(null);
+    if (pending === 'singleSession') {
+      this.applyOfferType('singleSession');
+    } else if (pending !== null) {
+      this.form.controls.installmentCount.setValue(pending, { emitEvent: false });
+      this.resizeInstallmentRows(true);
+    }
+  }
+
+  cancelPlanReplacement(): void {
+    this.pendingPlanReplacement.set(null);
+  }
+
+  updateInstallmentRow(
+    index: number,
+    field: keyof PackageInstallmentRow,
+    value: number | null
+  ): void {
+    const rows = this.form.controls.installments.value.map(row => ({ ...row }));
+    rows[index][field] = Number(value) || 0;
+    this.form.controls.installments.setValue(rows);
+    this.form.controls.installments.markAsTouched();
+    this.manualPlanEdited.set(true);
+  }
+
+  cumulativeSessions(index: number): number {
+    return this.installmentRows()
+      .slice(0, index + 1)
+      .reduce((total, row) => total + (Number(row.sessionsUnlocked) || 0), 0);
+  }
+
+  suggestDistribution(): void {
+    if (
+      !this.form.controls.installmentEnabled.value ||
+      this.form.controls.offerType.value !== 'package'
+    ) {
+      return;
+    }
+    const count = this.form.controls.installmentCount.value;
+    if (count == null || count < 1) {
+      this.form.controls.installmentCount.setValue(3);
+      this.suggestDistribution();
+      return;
+    }
+    const rows = this.distributedAmounts(count).map(amount => ({ amount, sessionsUnlocked: 0 }));
+    const totalSessions = Math.max(0, Number(this.form.controls.sessionCount.value) || 0);
+    const fullyPaidUpfront =
+      (Number(this.form.controls.installmentPrice.value) || 0) -
+        (Number(this.form.controls.firstPayment.value) || 0) ===
+      0;
+    if (!fullyPaidUpfront) {
+      const early = Math.min(Math.max(0, totalSessions - 1), Math.ceil(totalSessions * 0.7 - 0.5));
+      for (let index = 0; index < count - 1; index++) {
+        rows[index].sessionsUnlocked =
+          Math.floor(early / (count - 1)) + (index < early % (count - 1) ? 1 : 0);
+      }
+      rows[count - 1].sessionsUnlocked = totalSessions - early;
+    }
+    this.form.controls.installments.setValue(rows);
+    this.manualPlanEdited.set(false);
+    this.validateInstallmentRows();
+  }
+
+  private distributedAmounts(count: number): number[] {
+    const totalCents = Math.round(
+      Math.max(
+        0,
+        (Number(this.form.controls.installmentPrice.value) || 0) -
+          (Number(this.form.controls.firstPayment.value) || 0)
+      ) * 100
+    );
+    const base = Math.floor(totalCents / count);
+    return Array.from(
+      { length: count },
+      (_, index) => (base + (index < totalCents % count ? 1 : 0)) / 100
+    );
+  }
+
+  private resizeInstallmentRows(confirmed = false): void {
+    const count = Math.max(0, Number(this.form.controls.installmentCount.value) || 0);
+    const previous = this.form.controls.installments.value;
+    if (!confirmed && this.manualPlanEdited() && count !== previous.length) {
+      this.form.controls.installmentCount.setValue(previous.length, { emitEvent: false });
+      this.formValue.set(this.form.getRawValue());
+      this.pendingPlanReplacement.set(count);
+      return;
+    }
+    const rows = Array.from(
+      { length: count },
+      (_, index) => previous[index] ?? { amount: 0, sessionsUnlocked: 0 }
+    );
+    this.form.controls.installments.setValue(rows);
+    this.recalculateAmounts();
+  }
+
+  private recalculateAmounts(): void {
+    this.form.controls.firstPayment.updateValueAndValidity({ emitEvent: false });
+    const rows = this.form.controls.installments.value;
+    if (rows.length === 0) {
+      this.validateInstallmentRows();
+      return;
+    }
+    const amounts = this.distributedAmounts(rows.length);
+    this.form.controls.installments.setValue(
+      rows.map((row, index) => ({
+        ...row,
+        amount: amounts[index],
+      }))
+    );
+    this.validateInstallmentRows();
+  }
+
+  private validateInstallmentRows(): void {
+    this.form.controls.installments.updateValueAndValidity({ emitEvent: false });
+    this.formValue.set(this.form.getRawValue());
   }
 
   toggleDiscount(): void {
@@ -693,7 +898,8 @@ export class PackagesComponent implements OnInit {
   }
 
   private resetForm(value: PackageFormValue): void {
-    this.form.reset(value);
+    this.manualPlanEdited.set(false);
+    this.form.reset(value, { emitEvent: false });
     this.syncPackageFieldValidators(value.offerType);
     this.syncPaymentValidators();
     this.formValue.set(this.form.getRawValue());
@@ -712,7 +918,77 @@ export class PackagesComponent implements OnInit {
       this.form.controls.installmentEnabled.value ? [Validators.required, Validators.min(0.01)] : []
     );
     installmentPrice.updateValueAndValidity({ emitEvent: false });
+    const enabled =
+      this.form.controls.installmentEnabled.value &&
+      this.form.controls.offerType.value === 'package';
+    const firstPayment = this.form.controls.firstPayment;
+    firstPayment.setValidators(
+      enabled
+        ? [
+            Validators.required,
+            Validators.min(0),
+            control =>
+              Number(control.value) > Number(this.form.controls.installmentPrice.value)
+                ? { maxPayment: true }
+                : null,
+          ]
+        : []
+    );
+    firstPayment.updateValueAndValidity({ emitEvent: false });
+    const installmentCount = this.form.controls.installmentCount;
+    installmentCount.setValidators(enabled ? [Validators.required, Validators.min(1)] : []);
+    installmentCount.updateValueAndValidity({ emitEvent: false });
+    const installments = this.form.controls.installments;
+    installments.setValidators(
+      enabled ? [control => this.installmentsValidation(control.value)] : []
+    );
+    installments.updateValueAndValidity({ emitEvent: false });
+    if (!enabled) {
+      firstPayment.setValue(null, { emitEvent: false });
+      installmentCount.setValue(null, { emitEvent: false });
+      installments.setValue([], { emitEvent: false });
+    }
     this.form.controls.cashEnabled.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private installmentsValidation(rows: PackageInstallmentRow[]): ValidationErrors | null {
+    if (rows.length !== this.form.controls.installmentCount.value) {
+      return { rowsCount: true };
+    }
+    if (rows.some(row => row.amount < 0 || Math.round(row.amount * 100) !== row.amount * 100)) {
+      return { amountInvalid: true };
+    }
+    const expected =
+      (Number(this.form.controls.installmentPrice.value) || 0) -
+      (Number(this.form.controls.firstPayment.value) || 0);
+    if (
+      Math.round(rows.reduce((total, row) => total + row.amount, 0) * 100) !==
+      Math.round(expected * 100)
+    ) {
+      return { totalMismatch: true };
+    }
+    const sessions = Number(this.form.controls.sessionCount.value) || 0;
+    let released = 0;
+    let paid = Number(this.form.controls.firstPayment.value) || 0;
+    for (const row of rows) {
+      released += row.sessionsUnlocked;
+      paid += row.amount;
+      if (
+        !Number.isInteger(row.sessionsUnlocked) ||
+        row.sessionsUnlocked < 0 ||
+        released > sessions
+      ) {
+        return { sessionsInvalid: true };
+      }
+      if (
+        Math.round(paid * 100) <
+          Math.round(Number(this.form.controls.installmentPrice.value) * 100) &&
+        released > Math.min(Math.max(0, sessions - 1), Math.ceil(sessions * 0.7 - 0.5))
+      ) {
+        return { releaseCap: true };
+      }
+    }
+    return null;
   }
 
   private syncPackageFieldValidators(type: PackageOfferType): void {
@@ -756,6 +1032,9 @@ export class PackagesComponent implements OnInit {
       cashEnabled: value.cashEnabled,
       installmentEnabled: value.installmentEnabled,
       installmentPrice: value.installmentEnabled ? value.installmentPrice : null,
+      firstPayment: value.installmentEnabled ? value.firstPayment : null,
+      installmentCount: value.installmentEnabled ? value.installmentCount : null,
+      installments: value.installmentEnabled ? value.installments : [],
       discountCode: value.discountCode.trim(),
       discountPercent: value.discountPercent,
     };
