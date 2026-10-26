@@ -1,37 +1,34 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   input,
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ButtonModule } from 'primeng/button';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { LanguageService } from '@core/services/language.service';
 import {
-  CustomerInquiryResult,
-  InquiryCustomerRecord,
-  inquiryServiceTypeKey,
-  inquiryStatusKey,
-  lookupCustomerInquiry,
-} from '../models/customer-inquiry.model';
+  applyServerFieldErrors,
+  extractApiFieldErrors,
+  translateApiFieldErrors,
+} from '@core/utils/api-error.util';
+import { CustomerInquiryResult } from '../models/customer-inquiry.model';
+import { CustomerInquiryService } from './customer-inquiry.service';
 
 @Component({
   selector: 'app-customer-inquiry-dialog',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    TranslatePipe,
-    DialogModule,
-    ButtonModule,
-    InputTextModule,
-    TagModule,
-  ],
+  imports: [ReactiveFormsModule, TranslatePipe, DialogModule, InputTextModule, TagModule],
   templateUrl: './customer-inquiry-dialog.component.html',
   styleUrl: './customer-inquiry-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,59 +36,70 @@ import {
 export class CustomerInquiryDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly languageService = inject(LanguageService);
+  private readonly inquiryService = inject(CustomerInquiryService);
+  private readonly translate = inject(TranslateService);
+  private readonly toast = inject(MessageService);
+  private readonly destroyRef = inject(DestroyRef);
+  private searchSubscription?: Subscription;
 
   readonly visible = input(false);
   readonly closed = output<void>();
-
   readonly searchForm = this.fb.nonNullable.group({
-    mobile: ['', [Validators.required, Validators.pattern(/^01[0125]\d{8}$/)]],
+    mobile: ['', [Validators.required, Validators.pattern(/^\+?[\d\s()-]{8,20}$/)]],
   });
-
   readonly result = signal<CustomerInquiryResult | null>(null);
-  readonly notFound = signal(false);
   readonly searched = signal(false);
-  readonly expandedRecordId = signal<string | null>(null);
+  readonly loading = signal(false);
+  readonly selectedPurchaseId = signal<string | null>(null);
 
   close(): void {
-    this.reset();
+    this.searchSubscription?.unsubscribe();
+    this.searchForm.reset({ mobile: '' });
+    this.result.set(null);
+    this.searched.set(false);
+    this.loading.set(false);
+    this.selectedPurchaseId.set(null);
     this.closed.emit();
   }
 
   search(): void {
+    this.searchSubscription?.unsubscribe();
     this.searchForm.markAllAsTouched();
-    if (this.searchForm.invalid) {
-      return;
-    }
+    this.result.set(null);
+    this.searched.set(false);
+    this.selectedPurchaseId.set(null);
+    if (this.searchForm.invalid) return;
 
-    const mobile = this.searchForm.controls.mobile.value.trim();
-    const inquiry = lookupCustomerInquiry(mobile);
-    this.searched.set(true);
-    this.notFound.set(!inquiry);
-    this.result.set(inquiry);
-    this.expandedRecordId.set(inquiry?.records[0]?.id ?? null);
-  }
-
-  toggleRecord(record: InquiryCustomerRecord): void {
-    this.expandedRecordId.update(current =>
-      current === record.id ? null : record.id
-    );
-  }
-
-  isExpanded(record: InquiryCustomerRecord): boolean {
-    return this.expandedRecordId() === record.id;
-  }
-
-  statusKey(status: InquiryCustomerRecord['status']): string {
-    return inquiryStatusKey(status);
-  }
-
-  serviceTypeKey(type: InquiryCustomerRecord['serviceType']): string {
-    return inquiryServiceTypeKey(type);
+    this.loading.set(true);
+    this.searchSubscription = this.inquiryService
+      .findByMobile(this.searchForm.controls.mobile.value.trim())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          this.loading.set(false);
+          this.result.set(result);
+          this.searched.set(true);
+          this.selectedPurchaseId.set(result?.purchases[0]?.id ?? null);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.loading.set(false);
+          const fieldErrors = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+            this.translate.instant(key)
+          );
+          applyServerFieldErrors(this.searchForm, fieldErrors);
+          if (!fieldErrors['mobile']) {
+            this.toast.add({
+              severity: 'error',
+              summary: 'OPERIA',
+              detail: this.translate.instant('CUSTOMER_INQUIRY.CONNECTION_ERROR'),
+            });
+          }
+        },
+      });
   }
 
   formatDate(value: string): string {
-    const date = new Date(value + 'T12:00:00');
-    return date.toLocaleDateString(
+    return new Date(value).toLocaleDateString(
       this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-GB',
       { day: 'numeric', month: 'long', year: 'numeric' }
     );
@@ -99,18 +107,10 @@ export class CustomerInquiryDialogComponent {
 
   mobileError(): string | null {
     const control = this.searchForm.controls.mobile;
-    if (!control.touched && !control.dirty) {
-      return null;
-    }
-    if (control.hasError('required')) {
-      return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_REQUIRED';
-    }
-    if (control.hasError('pattern')) {
-      return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_INVALID';
-    }
-    if (control.hasError('server')) {
-      return String(control.getError('server'));
-    }
+    if (!control.touched && !control.dirty) return null;
+    if (control.hasError('required')) return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_REQUIRED';
+    if (control.hasError('pattern')) return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_INVALID';
+    if (control.hasError('server')) return String(control.getError('server'));
     return null;
   }
 
@@ -118,11 +118,7 @@ export class CustomerInquiryDialogComponent {
     return name.trim().charAt(0) || '?';
   }
 
-  private reset(): void {
-    this.searchForm.reset({ mobile: '' });
-    this.result.set(null);
-    this.notFound.set(false);
-    this.searched.set(false);
-    this.expandedRecordId.set(null);
+  togglePurchase(id: string): void {
+    this.selectedPurchaseId.update(current => (current === id ? null : id));
   }
 }

@@ -1303,8 +1303,18 @@
   "CUSTOMER_INQUIRY": {
     "TITLE": "Customer inquiry",
     "SEARCH_PLACEHOLDER": "Enter mobile number",
+    "SEARCH": "Search",
+    "LOADING": "Searching...",
+    "REGISTERED_AT": "Registered",
+    "NO_PURCHASES": "No purchases recorded for this customer",
+    "CONNECTION_ERROR": "Could not load the customer. Check your connection and try again.",
+    "MEMBERSHIP": {
+      "ACTIVE": "Active member",
+      "INACTIVE": "Inactive member"
+    },
     "OPERATIONS": "operations",
     "PURCHASE_DATE": "Purchase date",
+    "EXPIRY_DATE": "Expiry date",
     "START_DATE": "Start date",
     "VALID_FOR": "Valid for",
     "DAYS_REMAINING": "days remaining",
@@ -1330,7 +1340,7 @@
     },
     "ERRORS": {
       "MOBILE_REQUIRED": "Mobile number is required.",
-      "MOBILE_INVALID": "Enter a valid Egyptian mobile number."
+      "MOBILE_INVALID": "Enter a valid mobile number."
     }
   },
   "OPERIA_SUBSCRIPTIONS": {

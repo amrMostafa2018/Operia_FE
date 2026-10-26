@@ -1306,8 +1306,18 @@
   "CUSTOMER_INQUIRY": {
     "TITLE": "استعلام عن عميل",
     "SEARCH_PLACEHOLDER": "ادخل رقم الموبايل",
+    "SEARCH": "بحث",
+    "LOADING": "جارٍ البحث...",
+    "REGISTERED_AT": "تاريخ التسجيل",
+    "NO_PURCHASES": "لا توجد مشتريات مسجلة لهذا العميل",
+    "CONNECTION_ERROR": "تعذر تحميل بيانات العميل. تحقق من الاتصال وحاول مرة أخرى.",
+    "MEMBERSHIP": {
+      "ACTIVE": "عضوية نشطة",
+      "INACTIVE": "عضوية غير نشطة"
+    },
     "OPERATIONS": "عمليات",
     "PURCHASE_DATE": "تاريخ الشراء",
+    "EXPIRY_DATE": "تاريخ الانتهاء",
     "START_DATE": "تاريخ البداية",
     "VALID_FOR": "صالحة لمدة",
     "DAYS_REMAINING": "يوم متبقي",
@@ -1333,7 +1343,7 @@
     },
     "ERRORS": {
       "MOBILE_REQUIRED": "رقم الموبايل مطلوب.",
-      "MOBILE_INVALID": "أدخل رقم موبايل مصري صحيح."
+      "MOBILE_INVALID": "أدخل رقم موبايل صحيح."
     }
   },
   "OPERIA_SUBSCRIPTIONS": {
