@@ -47,6 +47,8 @@ export function toUnlistedPackagePayload(value: {
     firstPayment: null,
     installmentCount: null,
     installments: [],
+    allStaff: true,
+    staffIds: [],
     discountCode: '',
     discountPercent: null,
   };

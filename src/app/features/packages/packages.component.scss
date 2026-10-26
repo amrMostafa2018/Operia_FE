@@ -598,6 +598,13 @@
   min-width: 0;
 }
 
+:host ::ng-deep .package-staff-picker.p-multiselect {
+  width: 100%;
+  min-height: 42px;
+  border-color: #d7d9e5;
+  border-radius: 7px;
+}
+
 .field-label {
   display: block;
   min-height: 19px;

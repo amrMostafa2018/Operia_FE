@@ -37,6 +37,8 @@ export interface PackageFormValue {
   firstPayment: number | null;
   installmentCount: number | null;
   installments: PackageInstallmentRow[];
+  allStaff: boolean;
+  staffIds: string[];
   discountCode: string;
   discountPercent: number | null;
 }
@@ -70,4 +72,6 @@ export interface PackageDetail extends PackageListItem {
   firstPayment: number | null;
   installmentCount: number | null;
   installments: PackageInstallmentDetail[];
+  allStaff: boolean;
+  staffIds: string[];
 }

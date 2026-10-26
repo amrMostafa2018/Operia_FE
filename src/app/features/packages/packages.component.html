@@ -431,6 +431,30 @@
           }
         </div>
 
+        <div class="form-field" [class.error]="isFieldInvalid(form, 'staffIds')">
+          <span class="field-label">{{ 'PACKAGES.CREATE.AVAILABLE_STAFF_LABEL' | translate }}</span>
+          <div class="status-toggle">
+            <p-inputSwitch formControlName="allStaff" />
+            <span>{{ 'PACKAGES.CREATE.ALL_STAFF' | translate }}</span>
+          </div>
+          @if (!allStaffValue()) {
+            <p-multiSelect
+              formControlName="staffIds"
+              [options]="availableStaff()"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [filter]="true"
+              [placeholder]="'PACKAGES.CREATE.STAFF_PLACEHOLDER' | translate"
+              [emptyMessage]="'PACKAGES.CREATE.STAFF_EMPTY' | translate"
+              styleClass="package-staff-picker"
+            />
+            @if (getFieldError('staffIds'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          }
+        </div>
+
         <div class="duration-price-row" [class.is-package]="isPackageOffer()">
           <div class="form-field" [class.error]="isFieldInvalid(form, 'sessionDurationValue')">
             <span class="field-label">

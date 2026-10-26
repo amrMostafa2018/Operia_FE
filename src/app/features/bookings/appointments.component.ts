@@ -323,7 +323,9 @@ export class AppointmentsComponent {
     const range = this.calendarRange();
     for (const column of this.columns()) {
       const key = this.columnKey(column);
-      const branchBookings = this.bookings().filter(booking => booking.branchId === column.branchId);
+      const branchBookings = this.bookings().filter(
+        booking => booking.branchId === column.branchId
+      );
       map.set(
         key,
         buildSlotGrid(
@@ -344,7 +346,9 @@ export class AppointmentsComponent {
   readonly availableSlots = computed(() => {
     const map = new Map<string, CalendarAvailableSlot[]>();
     for (const column of this.columns()) {
-      const branchBookings = this.bookings().filter(booking => booking.branchId === column.branchId);
+      const branchBookings = this.bookings().filter(
+        booking => booking.branchId === column.branchId
+      );
       map.set(
         this.columnKey(column),
         buildAvailableSlots(
@@ -567,6 +571,7 @@ export class AppointmentsComponent {
   }
 
   updateFilter<K extends keyof AppointmentFilters>(key: K, value: AppointmentFilters[K]): void {
+    const hadPackage = this.filters().packageId !== null;
     if (key === 'clientMobile' && value !== this.filters().clientMobile) {
       this.lastAutoSearchedMobile = '';
       this.customerRequestId++;
@@ -583,6 +588,12 @@ export class AppointmentsComponent {
       }));
     }
     this.filters.update(current => ({ ...current, [key]: value }));
+    if (key === 'clientMobile' && hadPackage) {
+      this.loadEmployeesForBranches(this.branches().map(branch => branch.id));
+    }
+    if (key === 'packageId') {
+      this.loadEmployeesForBranches(this.branches().map(branch => branch.id));
+    }
     if (key === 'branchId') {
       this.selectedSlot.set(null);
       this.ensureEmployeeSelected();
@@ -620,7 +631,8 @@ export class AppointmentsComponent {
     }
 
     this.employeesLoading.set(true);
-    forkJoin(branchIds.map(branchId => this.employeesApi.listBookable(branchId)))
+    const packageId = this.filters().packageId;
+    forkJoin(branchIds.map(branchId => this.employeesApi.listBookable(branchId, packageId)))
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
@@ -729,9 +741,11 @@ export class AppointmentsComponent {
     return cells?.find(cell => cell.startMinutes === startMinutes);
   }
 
-  availableSlotsForColumn(
-    column: { branchId: string; employeeId: string; date: Date }
-  ): CalendarAvailableSlot[] {
+  availableSlotsForColumn(column: {
+    branchId: string;
+    employeeId: string;
+    date: Date;
+  }): CalendarAvailableSlot[] {
     return this.availableSlots().get(this.columnKey(column)) ?? [];
   }
 
