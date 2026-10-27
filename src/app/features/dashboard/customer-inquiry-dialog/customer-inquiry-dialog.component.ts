@@ -19,10 +19,11 @@ import { TagModule } from 'primeng/tag';
 import { LanguageService } from '@core/services/language.service';
 import {
   applyServerFieldErrors,
+  extractApiErrorCodes,
   extractApiFieldErrors,
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
-import { CustomerInquiryResult } from '../models/customer-inquiry.model';
+import { CustomerInquiryResult, InquiryPurchaseDetails } from '../models/customer-inquiry.model';
 import { CustomerInquiryService } from './customer-inquiry.service';
 
 @Component({
@@ -41,6 +42,7 @@ export class CustomerInquiryDialogComponent {
   private readonly toast = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
   private searchSubscription?: Subscription;
+  private detailsSubscription?: Subscription;
 
   readonly visible = input(false);
   readonly closed = output<void>();
@@ -51,23 +53,30 @@ export class CustomerInquiryDialogComponent {
   readonly searched = signal(false);
   readonly loading = signal(false);
   readonly selectedPurchaseId = signal<string | null>(null);
+  readonly purchaseDetails = signal<InquiryPurchaseDetails | null>(null);
+  readonly detailsLoading = signal(false);
 
   close(): void {
     this.searchSubscription?.unsubscribe();
+    this.detailsSubscription?.unsubscribe();
     this.searchForm.reset({ mobile: '' });
     this.result.set(null);
     this.searched.set(false);
     this.loading.set(false);
     this.selectedPurchaseId.set(null);
+    this.purchaseDetails.set(null);
+    this.detailsLoading.set(false);
     this.closed.emit();
   }
 
   search(): void {
     this.searchSubscription?.unsubscribe();
+    this.detailsSubscription?.unsubscribe();
     this.searchForm.markAllAsTouched();
     this.result.set(null);
     this.searched.set(false);
     this.selectedPurchaseId.set(null);
+    this.purchaseDetails.set(null);
     if (this.searchForm.invalid) return;
 
     this.loading.set(true);
@@ -79,7 +88,7 @@ export class CustomerInquiryDialogComponent {
           this.loading.set(false);
           this.result.set(result);
           this.searched.set(true);
-          this.selectedPurchaseId.set(result?.purchases[0]?.id ?? null);
+          if (result?.purchases[0]) this.togglePurchase(result.purchases[0].id);
         },
         error: (error: HttpErrorResponse) => {
           this.loading.set(false);
@@ -99,7 +108,14 @@ export class CustomerInquiryDialogComponent {
   }
 
   formatDate(value: string): string {
-    return new Date(value).toLocaleDateString(
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(
+          Number(value.slice(0, 4)),
+          Number(value.slice(5, 7)) - 1,
+          Number(value.slice(8, 10))
+        )
+      : new Date(value);
+    return date.toLocaleDateString(
       this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-GB',
       { day: 'numeric', month: 'long', year: 'numeric' }
     );
@@ -119,6 +135,55 @@ export class CustomerInquiryDialogComponent {
   }
 
   togglePurchase(id: string): void {
-    this.selectedPurchaseId.update(current => (current === id ? null : id));
+    this.detailsSubscription?.unsubscribe();
+    if (this.selectedPurchaseId() === id) {
+      this.selectedPurchaseId.set(null);
+      this.purchaseDetails.set(null);
+      this.detailsLoading.set(false);
+      return;
+    }
+
+    this.selectedPurchaseId.set(id);
+    this.purchaseDetails.set(null);
+    this.detailsLoading.set(true);
+    this.detailsSubscription = this.inquiryService
+      .getPurchaseDetails(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: details => {
+          this.purchaseDetails.set(details);
+          this.detailsLoading.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.detailsLoading.set(false);
+          const code = extractApiErrorCodes(error)[0];
+          const key = code ? `ERRORS.${code}` : 'CUSTOMER_INQUIRY.DETAILS_ERROR';
+          const message = this.translate.instant(key);
+          this.toast.add({
+            severity: 'error',
+            summary: 'OPERIA',
+            detail:
+              message === key ? this.translate.instant('CUSTOMER_INQUIRY.DETAILS_ERROR') : message,
+          });
+        },
+      });
+  }
+
+  formatMoney(value: number | null): string {
+    if (value === null) return '—';
+    return new Intl.NumberFormat(this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-EG', {
+      style: 'currency',
+      currency: 'EGP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+
+  formatTime(minutes: number): string {
+    const hour = Math.floor(minutes / 60)
+      .toString()
+      .padStart(2, '0');
+    const minute = (minutes % 60).toString().padStart(2, '0');
+    return `${hour}:${minute}`;
   }
 }

@@ -228,6 +228,24 @@
   }
 }
 
+.balance-section {
+  h4 {
+    margin: 0 0 0.4rem;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.no-completions {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
 .previous-sessions {
   h4 {
     display: flex;
