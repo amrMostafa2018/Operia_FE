@@ -245,21 +245,12 @@
   </div>
 </div>
 
-<app-customer-inquiry-dialog
-  [visible]="customerInquiryOpen()"
-  (closed)="closeCustomerInquiry()"
-/>
+<app-customer-inquiry-dialog [visible]="customerInquiryOpen()" (closed)="closeCustomerInquiry()" />
 
-<app-sell-service-dialog
+<app-sale-builder-dialog
   [visible]="sellOpen()"
-  [clients]="clients()"
-  [catalogItems]="catalogItems()"
-  [catalogCategories]="catalogCategories()"
-  [catalogLoading]="catalogLoading()"
   (closed)="closeSellDialog()"
-  (confirmLater)="onSellConfirmLater($event)"
-  (bookNow)="onSellBookNow($event)"
-  (packageCreated)="onPackageCreated()"
+  (confirmed)="onSaleConfirmed($event)"
 />
 
 <app-confirm-action-dialog
