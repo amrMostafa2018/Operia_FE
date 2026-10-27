@@ -241,6 +241,12 @@
     "BookingChanged": "تم تعديل هذا الحجز بواسطة مستخدم آخر. حدّث الصفحة وحاول مرة أخرى.",
     "BookingStatusInvalid": "اختر حالة حجز صحيحة.",
     "BookingCustomerNotFound": "اختر عميلاً مسجلاً.",
+    "BookingCustomerMobileExists": "رقم الموبايل مسجل لعميل موجود. اختر هذا العميل بدلاً من إنشاء سجل جديد.",
+    "BookingDirectCustomerSelectionInvalid": "اختر عميلاً مسجلاً أو عميلاً مباشراً.",
+    "BookingDirectCustomerPackageUnavailable": "لا يمكن للعميل المباشر استخدام أو شراء باقة في هذا الحجز.",
+    "BookingDirectCustomerItemsReadOnly": "لا يمكن تغيير عناصر حجز العميل المباشر بعد التأكيد.",
+    "BookingCustomerNameTooLong": "لا يمكن أن يتجاوز اسم العميل 200 حرف.",
+    "BookingCustomerSearchTermInvalid": "ابحث عن عميل باستخدام 2 إلى 100 حرف.",
     "BookingEmployeeNotFound": "الموظف المحدد غير موجود.",
     "BookingEmployeeNotInBranch": "الموظف المحدد غير مرتبط بهذا الفرع.",
     "BookingOutsideWorkingHours": "الموعد المحدد خارج ساعات عمل الموظف.",
@@ -1084,6 +1090,13 @@
     },
     "BOOK": {
       "TITLE": "حجز خدمة",
+      "MODE_REGISTERED": "عميل مسجل",
+      "MODE_NEW": "عميل جديد",
+      "MODE_DIRECT": "عميل مباشر",
+      "DIRECT_HINT": "عميل مباشر دون بيانات شخصية. يمكن حجز الخدمات الفردية فقط.",
+      "SEARCH_NAME": "ابحث عن عميل مسجل بالاسم",
+      "REGISTER_CUSTOMER": "تسجيل العميل",
+      "CUSTOMER_REGISTERED": "تم تسجيل العميل",
       "CLIENT_SECTION": "بيانات العميل",
       "SERVICES_SECTION": "بيانات الفئات والخدمات",
       "CLIENT_MOBILE": "رقم الموبايل",
@@ -1141,7 +1154,8 @@
       "ERRORS": {
         "MOBILE_REQUIRED": "رقم الموبايل مطلوب.",
         "MOBILE_INVALID": "أدخل رقم موبايل صحيح.",
-        "NAME_REQUIRED": "اسم العميل مطلوب."
+        "NAME_REQUIRED": "اسم العميل مطلوب.",
+        "NAME_MAX": "لا يمكن أن يتجاوز اسم العميل 200 حرف."
       }
     },
     "MISMATCH": {

@@ -15,6 +15,8 @@ const API_FIELD_MAP: Record<string, string> = {
   fullName: 'name',
   FullName: 'name',
   Mobile: 'mobile',
+  mobileNumber: 'mobile',
+  MobileNumber: 'mobile',
 };
 
 /** Maps legacy/global API fields to OTP form field names. */

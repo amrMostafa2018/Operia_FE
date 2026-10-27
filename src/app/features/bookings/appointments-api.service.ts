@@ -99,7 +99,8 @@ export interface CalendarBookingsResultDto {
 /** Describes create booking request exchanged with the API. */
 export interface CreateBookingRequest {
   idempotencyKey: string;
-  customerId: string;
+  customerId: string | null;
+  directCustomer?: boolean;
   branchId: string;
   employeeId: string;
   scheduledDate: string;
@@ -174,6 +175,25 @@ export class AppointmentsApiService {
       params = params.set('bookingId', bookingId);
     }
     return this.http.get<BookingCustomerDto | null>(`${this.url}/customers/by-mobile`, { params });
+  }
+
+  searchCustomers(
+    term: string
+  ): Observable<{ id: string; fullName: string; mobileNumber: string }[]> {
+    return this.http.get<{ id: string; fullName: string; mobileNumber: string }[]>(
+      `${this.url}/customers/search`,
+      { params: new HttpParams().set('term', term) }
+    );
+  }
+
+  registerCustomer(
+    fullName: string,
+    mobileNumber: string
+  ): Observable<{ id: string; fullName: string; mobileNumber: string }> {
+    return this.http.post<{ id: string; fullName: string; mobileNumber: string }>(
+      `${environment.apiUrl}/customers/registration`,
+      { fullName, mobileNumber }
+    );
   }
 
   /** Returns enabled payment method identifiers without account details. */
