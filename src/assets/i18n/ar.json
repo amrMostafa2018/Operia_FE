@@ -226,6 +226,7 @@
     "AuthenticationRequired": "تسجيل الدخول مطلوب.",
     "TenantContextRequired": "حسابك غير مرتبط بنشاط.",
     "TenantAccessDenied": "لا يمكنك الوصول إلى سجلات خارج نشاطك.",
+    "CustomerPurchaseNotFound": "تعذر العثور على عملية الشراء هذه.",
     "BookingBranchRequired": "اختر فرعًا لعرض الموظفين المتاحين للحجز.",
     "BookingDateRangeInvalid": "يجب أن يكون تاريخ النهاية في تاريخ البداية أو بعده.",
     "BookingDateRangeTooLarge": "يمكن عرض 31 يومًا كحد أقصى في التقويم.",
@@ -1311,6 +1312,35 @@
     "REGISTERED_AT": "تاريخ التسجيل",
     "NO_PURCHASES": "لا توجد مشتريات مسجلة لهذا العميل",
     "CONNECTION_ERROR": "تعذر تحميل بيانات العميل. تحقق من الاتصال وحاول مرة أخرى.",
+    "DETAILS_LOADING": "جارٍ تحميل تفاصيل الشراء...",
+    "DETAILS_ERROR": "تعذر تحميل تفاصيل الشراء. حاول مرة أخرى.",
+    "NOT_RECORDED": "غير مسجل",
+    "MONTHS": "أشهر",
+    "SESSIONS": "الجلسات",
+    "PULSES": "النبضات",
+    "COMPLETED": "مكتمل",
+    "PACKAGE_STATUS": "حالة الباقة",
+    "PAYMENT_STATUS": "حالة الدفع",
+    "FINANCIAL_POSITION": "الموقف المالي",
+    "PURCHASE_PRICE": "سعر الشراء",
+    "AMOUNT_PAID": "المبلغ المدفوع",
+    "AMOUNT_REMAINING": "المبلغ المتبقي",
+    "INSTALLMENTS": "الأقساط",
+    "COL_NUMBER": "#",
+    "COL_AMOUNT": "المبلغ",
+    "COL_STATUS": "الحالة",
+    "COL_PULSES": "النبضات المستخدمة",
+    "NO_COMPLETED_SESSIONS": "لا توجد جلسات مكتملة مسجلة",
+    "PAYMENT": {
+      "UNKNOWN": "غير مسجل",
+      "UNPAID": "غير مدفوع",
+      "PARTIAL": "مدفوع جزئياً",
+      "PAID": "مدفوع"
+    },
+    "INSTALLMENT_STATUS": {
+      "DUE": "مستحق",
+      "PAID": "مدفوع"
+    },
     "MEMBERSHIP": {
       "ACTIVE": "عضوية نشطة",
       "INACTIVE": "عضوية غير نشطة"

@@ -226,6 +226,7 @@
     "AuthenticationRequired": "Authentication is required.",
     "TenantContextRequired": "Your account is not associated with an activity.",
     "TenantAccessDenied": "You cannot access records outside your activity.",
+    "CustomerPurchaseNotFound": "This customer purchase could not be found.",
     "BookingBranchRequired": "Select a branch to view bookable employees.",
     "BookingDateRangeInvalid": "The end date must be on or after the start date.",
     "BookingDateRangeTooLarge": "The calendar can show at most 31 days at a time.",
@@ -1308,6 +1309,35 @@
     "REGISTERED_AT": "Registered",
     "NO_PURCHASES": "No purchases recorded for this customer",
     "CONNECTION_ERROR": "Could not load the customer. Check your connection and try again.",
+    "DETAILS_LOADING": "Loading purchase details...",
+    "DETAILS_ERROR": "Could not load purchase details. Try again.",
+    "NOT_RECORDED": "Not recorded",
+    "MONTHS": "months",
+    "SESSIONS": "Sessions",
+    "PULSES": "Pulses",
+    "COMPLETED": "Completed",
+    "PACKAGE_STATUS": "Package status",
+    "PAYMENT_STATUS": "Payment status",
+    "FINANCIAL_POSITION": "Financial position",
+    "PURCHASE_PRICE": "Purchase price",
+    "AMOUNT_PAID": "Amount paid",
+    "AMOUNT_REMAINING": "Amount remaining",
+    "INSTALLMENTS": "Installments",
+    "COL_NUMBER": "#",
+    "COL_AMOUNT": "Amount",
+    "COL_STATUS": "Status",
+    "COL_PULSES": "Pulses used",
+    "NO_COMPLETED_SESSIONS": "No completed sessions recorded",
+    "PAYMENT": {
+      "UNKNOWN": "Not recorded",
+      "UNPAID": "Unpaid",
+      "PARTIAL": "Partially paid",
+      "PAID": "Paid"
+    },
+    "INSTALLMENT_STATUS": {
+      "DUE": "Due",
+      "PAID": "Paid"
+    },
     "MEMBERSHIP": {
       "ACTIVE": "Active member",
       "INACTIVE": "Inactive member"
