@@ -7,9 +7,8 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
@@ -39,17 +38,10 @@ import {
   BookingFilters,
   BookingStatus,
   BOOKING_STATUS_OPTIONS,
-  CatalogCategoryTab,
-  cloneClients,
-  ServiceCatalogItem,
 } from '@app/features/bookings/models/booking.model';
 import { BookingService } from '@app/features/bookings/booking.service';
-import { mapPackageToCatalogItem } from '@app/features/bookings/booking-catalog.util';
-import {
-  SellServiceDialogComponent,
-} from '@app/features/bookings/sell-service-dialog/sell-service-dialog.component';
-import { SaleHandoffService, SellServicePayload } from '@app/features/bookings/sale-handoff.service';
-import { PackageService } from '@app/features/packages/package.service';
+import { SaleBuilderDialogComponent } from '@app/features/sales/sale-builder-dialog.component';
+import { ConfirmSaleResult } from '@app/features/sales/sale.service';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import { CustomerInquiryDialogComponent } from './customer-inquiry-dialog/customer-inquiry-dialog.component';
 import { MOCK_STATS, StatCard } from './models/dashboard.model';
@@ -70,7 +62,7 @@ import { MOCK_STATS, StatCard } from './models/dashboard.model';
     InputTextModule,
     FormsModule,
     CustomerInquiryDialogComponent,
-    SellServiceDialogComponent,
+    SaleBuilderDialogComponent,
     ConfirmActionDialogComponent,
   ],
   templateUrl: './dashboard.component.html',
@@ -81,9 +73,6 @@ export class DashboardComponent {
   private readonly languageService = inject(LanguageService);
   private readonly permissions = inject(PermissionService);
   private readonly bookingService = inject(BookingService);
-  private readonly packagesApi = inject(PackageService);
-  private readonly saleHandoff = inject(SaleHandoffService);
-  private readonly router = inject(Router);
   private readonly toast = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
@@ -97,10 +86,6 @@ export class DashboardComponent {
 
   readonly stats: StatCard[] = MOCK_STATS;
   readonly allBookings = signal<Booking[]>([]);
-  readonly clients = signal(cloneClients());
-  readonly catalogItems = signal<ServiceCatalogItem[]>([]);
-  readonly catalogCategories = signal<CatalogCategoryTab[]>([]);
-  readonly catalogLoading = signal(false);
 
   readonly dateFrom = signal<Date | null>(new Date());
   readonly dateTo = signal<Date | null>(new Date());
@@ -133,9 +118,7 @@ export class DashboardComponent {
     { label: '100', value: 100 },
   ];
 
-  readonly pageReportTemplate = signal(
-    this.translate.instant('DASHBOARD.PAGE_REPORT')
-  );
+  readonly pageReportTemplate = signal(this.translate.instant('DASHBOARD.PAGE_REPORT'));
 
   readonly filteredBookings = computed(() => {
     let result = this.allBookings();
@@ -190,7 +173,6 @@ export class DashboardComponent {
 
   constructor() {
     this.loadBookings();
-    this.loadCatalog();
     this.bookingService
       .getEmployees()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -220,34 +202,6 @@ export class DashboardComponent {
       .getTodayBookings()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(bookings => this.allBookings.set(bookings));
-  }
-
-  onPackageCreated(): void {
-    this.loadCatalog();
-  }
-
-  private loadCatalog(): void {
-    this.catalogLoading.set(true);
-    forkJoin({
-      packages: this.packagesApi.listAllActive(),
-      categories: this.packagesApi.listServiceCategories(),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: ({ packages, categories }) => {
-          this.catalogLoading.set(false);
-          this.catalogCategories.set(
-            categories.map(category => ({
-              id: category.id,
-              label: category.name,
-            }))
-          );
-          this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
-        },
-        error: () => {
-          this.catalogLoading.set(false);
-        },
-      });
   }
 
   onDateFromChange(value: Date | null): void {
@@ -337,35 +291,13 @@ export class DashboardComponent {
     this.sellOpen.set(false);
   }
 
-  onSellConfirmLater(payload: SellServicePayload): void {
-    this.bookingService
-      .recordSale(payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.toast.add({
-            severity: 'success',
-            summary: 'OPERIA',
-            detail: this.translate.instant('BOOKINGS.SELL.SUCCESS_LATER'),
-          });
-          this.closeSellDialog();
-        },
-      });
-  }
-
-  onSellBookNow(payload: SellServicePayload): void {
-    this.saleHandoff.setDraft({
-      clientName: payload.clientName,
-      clientMobile: payload.clientMobile,
-      clientId: payload.clientId,
-      lineItems: payload.lineItems,
-      paymentMethod: payload.paymentMethod,
-      discount: payload.discount,
-      paidAmount: payload.paidAmount,
-      serviceDuration: payload.serviceDuration,
+  onSaleConfirmed(_result: ConfirmSaleResult): void {
+    this.toast.add({
+      severity: 'success',
+      summary: 'OPERIA',
+      detail: this.translate.instant('SALE_BUILDER.CONFIRMED'),
     });
     this.closeSellDialog();
-    void this.router.navigate(['/bookings']);
   }
 
   viewBooking(booking: Booking): void {
