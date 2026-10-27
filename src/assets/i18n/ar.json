@@ -275,6 +275,8 @@
     "SaleOfferUnavailable": "هذه الخدمة أو الباقة لم تعد متاحة للبيع.",
     "SaleBranchUnavailable": "هذا الفرع غير متاح لك.",
     "SaleCustomerUnavailable": "العميل المختار لم يعد متاحًا.",
+    "SaleDirectCustomerSelectionInvalid": "اختر العميل المباشر أو عميلًا مسجلًا فقط.",
+    "SaleDirectServiceOnly": "يمكن للعميل المباشر شراء الخدمات فقط. الباقات والجلسات المملوكة تتطلب عميلًا مسجلًا.",
     "SaleOwnedSessionUnavailable": "لا توجد جلسة متاحة لهذا العنصر لدى العميل.",
     "SaleUnlistedNameInvalid": "أدخل اسم خدمة غير مدرجة لا يزيد عن 200 حرف.",
     "SaleUnlistedPriceInvalid": "أدخل سعرًا بين صفر و999,999,999.99.",
@@ -1766,8 +1768,37 @@
       "Staff": ["الحجوزات المسندة", "بيانات العملاء المرتبطة", "بيانات العمل الشخصية"]
     }
   },
+  "CUSTOMER_LEDGER": {
+    "TITLE": "العملاء",
+    "SUBTITLE": "مبيعات العميل المباشر",
+    "DIRECT_CUSTOMER": "عميل مباشر",
+    "SALES": "عملية بيع",
+    "REFERENCE": "مرجع البيع",
+    "DATE": "التاريخ",
+    "ITEMS": "العناصر",
+    "AMOUNT": "المبلغ",
+    "CASHIER": "أمين الصندوق",
+    "STATUS": "الحالة",
+    "REFRESH": "تحديث",
+    "LOADING": "جار تحميل المبيعات…",
+    "LOAD_ERROR": "تعذر تحميل مبيعات العميل المباشر.",
+    "EMPTY": "لا توجد مبيعات للعميل المباشر بعد.",
+    "PAGES": "صفحات المبيعات",
+    "PREVIOUS": "السابق",
+    "NEXT": "التالي",
+    "STATUSES": {
+      "PendingCollection": "بانتظار التحصيل",
+      "ReadyToBook": "جاهز للحجز"
+    }
+  },
   "SALE_BUILDER": {
     "TITLE": "بيع خدمة أو باقة",
+    "CUSTOMER_MODE": "نوع العميل",
+    "REGISTERED_CUSTOMER": "عميل مسجل",
+    "DIRECT_CUSTOMER": "عميل مباشر",
+    "DIRECT_HINT": "لا يحتاج البيع المباشر إلى اسم أو رقم موبايل. يمكن إضافة الخدمات فقط.",
+    "CUSTOMER_SWITCH_TITLE": "تم مسح اختيار العميل",
+    "CUSTOMER_SWITCH_WARNING": "اختر العميل المسجل أو تحقق منه مرة أخرى قبل التأكيد. تمت إزالة صفوف الباقات.",
     "MOBILE": "رقم موبايل العميل",
     "SEARCH": "بحث",
     "CUSTOMER": "العميل",

@@ -56,7 +56,10 @@ export const mainRoutes: Routes = [
       },
       {
         path: 'customers',
-        loadComponent: placeholder,
+        loadComponent: () =>
+          import('@app/features/customers/direct-customer-ledger.component').then(
+            m => m.DirectCustomerLedgerComponent
+          ),
         canActivate: [permissionGuard],
         data: {
           permissions: [Policies.CustomersRead],

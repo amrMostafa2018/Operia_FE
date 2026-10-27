@@ -24,6 +24,7 @@ export interface SaleQuoteRequest {
   customerId: string | null;
   branchId: string | null;
   items: SaleDraftItem[];
+  directCustomer: boolean;
 }
 
 export interface SaleQuoteLine {
@@ -50,7 +51,6 @@ export interface SaleQuote {
 }
 
 export interface ConfirmSaleRequest extends SaleQuoteRequest {
-  customerId: string;
   branchId: string;
   paymentMethod: string | null;
   expectedGrandTotal: number;
