@@ -1,15 +1,18 @@
 export interface InstallmentRevenueRow {
   collectionId: string;
-  purchaseId: string;
+  purchaseId: string | null;
+  saleId: string | null;
   customerName: string;
   offerName: string;
-  installmentNumber: number;
+  installmentNumber: number | null;
   amount: number;
   paymentMethod: string;
   confirmedAtUtc: string;
+  kind: 'Sale' | 'Installment';
 }
 
 export interface InstallmentRevenuePage {
   total: number;
+  confirmedTotal: number;
   items: InstallmentRevenueRow[];
 }

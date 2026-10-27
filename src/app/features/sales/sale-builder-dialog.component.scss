@@ -89,7 +89,8 @@ h3 {
   gap: 0.35rem;
   min-width: 0;
 }
-.field label {
+.field label,
+.field .field-label {
   color: #5f647a;
   font-size: 0.78rem;
 }
@@ -356,10 +357,64 @@ td select {
   cursor: not-allowed;
 }
 
+.sale-recovery {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 1.25rem 0;
+  color: #292747;
+}
+.resume-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid #ebeaf2;
+}
+.resume-row label {
+  font-size: 0.82rem;
+  color: #5f647a;
+}
+.resume-row input {
+  min-width: 240px;
+  flex: 1;
+}
+.resume-row .field-error {
+  flex-basis: 100%;
+}
+.sale-reference {
+  overflow-wrap: anywhere;
+  color: #4b24da;
+  font-weight: 600;
+}
+.sale-recovery .actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.booking-form {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.booking-form input {
+  width: 100%;
+  border: 1px solid #d9d8e5;
+  border-radius: 6px;
+  padding: 0.55rem;
+}
+.booking-form p,
+.booking-form button {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 800px) {
   .customer-row,
   .bottom-grid,
   .unlisted-form {
+    grid-template-columns: 1fr;
+  }
+  .booking-form {
     grid-template-columns: 1fr;
   }
   .section-title {

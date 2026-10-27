@@ -2,6 +2,10 @@
   <header>
     <h1>{{ 'ACTIVITY_REVENUE.TITLE' | translate }}</h1>
     <p>{{ 'ACTIVITY_REVENUE.INSTALLMENTS_ONLY' | translate }}</p>
+    <strong
+      >{{ 'ACTIVITY_REVENUE.CONFIRMED_TOTAL' | translate }}:
+      {{ formatMoney(confirmedTotal()) }}</strong
+    >
   </header>
   @if (loading()) {
     <p>{{ 'ACTIVITY_REVENUE.LOADING' | translate }}</p>
@@ -24,7 +28,13 @@
             <tr>
               <td>{{ row.customerName }}</td>
               <td>{{ row.offerName }}</td>
-              <td>{{ row.installmentNumber }}</td>
+              <td>
+                {{
+                  row.kind === 'Sale'
+                    ? ('ACTIVITY_REVENUE.SALE_FIRST_PAYMENT' | translate)
+                    : row.installmentNumber
+                }}
+              </td>
               <td>{{ formatMoney(row.amount) }}</td>
               <td>
                 {{ 'CUSTOMER_INQUIRY.METHOD.' + row.paymentMethod.toUpperCase() | translate }}

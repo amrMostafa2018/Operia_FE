@@ -28,6 +28,9 @@ import {
 } from '@core/utils/api-error.util';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { BookingCustomerDto } from '@app/features/bookings/appointments-api.service';
+import { BookableEmployee, EmployeeService } from '@app/features/employees/employee.service';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 import {
   PackageCategoryOption,
   PackageListItem,
@@ -38,6 +41,7 @@ import {
   SalePaymentOption,
   SaleQuote,
   SaleService,
+  SaleState,
 } from './sale.service';
 
 interface DraftRow extends SaleDraftItem {
@@ -63,6 +67,8 @@ interface DraftRow extends SaleDraftItem {
 export class SaleBuilderDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly sales = inject(SaleService);
+  private readonly employeesApi = inject(EmployeeService);
+  private readonly permissions = inject(PermissionService);
   private readonly toast = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
@@ -82,6 +88,11 @@ export class SaleBuilderDialogComponent {
     price: [0, [Validators.required, Validators.min(0)]],
     durationMinutes: [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
   });
+  readonly bookingForm = this.fb.nonNullable.group({
+    employeeId: ['', Validators.required],
+    scheduledDate: ['', Validators.required],
+    startTime: ['', [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)]],
+  });
 
   readonly catalog = signal<PackageListItem[]>([]);
   readonly categories = signal<PackageCategoryOption[]>([]);
@@ -100,10 +111,20 @@ export class SaleBuilderDialogComponent {
   readonly searchText = signal('');
   readonly selectedMethod = signal<string | null>(null);
   readonly itemError = signal<string | null>(null);
+  readonly activeSale = signal<SaleState | null>(null);
+  readonly bookableEmployees = signal<BookableEmployee[]>([]);
+  readonly recoveryError = signal<string | null>(null);
+  readonly resumeSaleId = signal('');
+  readonly resumeError = signal<string | null>(null);
+  readonly bookingRequested = signal(false);
+  readonly canBookNow = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
   private quoteVersion = 0;
   private customerVersion = 0;
   private optionsVersion = 0;
   private confirmationKey = crypto.randomUUID();
+  private collectionKey = crypto.randomUUID();
+  private chosenDisposition: 'Close' | 'Later' | 'BookNow' | null = null;
+  private readonly recoveryStorageKey = 'operia.sale.pending';
 
   readonly filteredCatalog = computed(() => {
     const category = this.categoryId();
@@ -127,10 +148,16 @@ export class SaleBuilderDialogComponent {
       'price',
       'durationMinutes',
     ]);
+    setupServerErrorClearing(this.bookingForm, this.destroyRef, [
+      'employeeId',
+      'scheduledDate',
+      'startTime',
+    ]);
     effect(() => {
       if (this.visible()) {
         this.reset();
         this.loadOptions();
+        this.restorePendingSale();
       }
     });
   }
@@ -139,6 +166,15 @@ export class SaleBuilderDialogComponent {
     this.quoteVersion++;
     this.customerVersion++;
     this.confirmationKey = crypto.randomUUID();
+    this.collectionKey = crypto.randomUUID();
+    this.chosenDisposition = null;
+    this.activeSale.set(null);
+    this.recoveryError.set(null);
+    this.resumeSaleId.set('');
+    this.resumeError.set(null);
+    this.bookingRequested.set(false);
+    this.bookableEmployees.set([]);
+    this.bookingForm.reset({ employeeId: '', scheduledDate: '', startTime: '' });
     this.customerForm.reset({ mobile: '', customerId: '', branchId: '' });
     this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
     this.customer.set(null);
@@ -424,6 +460,7 @@ export class SaleBuilderDialogComponent {
 
   private changed(): void {
     this.confirmationKey = crypto.randomUUID();
+    this.chosenDisposition = null;
     this.itemError.set(null);
     const version = ++this.quoteVersion;
     const items = this.requestItems();
@@ -456,7 +493,7 @@ export class SaleBuilderDialogComponent {
       });
   }
 
-  confirm(): void {
+  confirm(disposition: 'Close' | 'Later' | 'BookNow'): void {
     this.customerForm.markAllAsTouched();
     const quote = this.quote();
     if (this.customerForm.invalid || !quote || this.quoteLoading() || this.saving()) return;
@@ -465,6 +502,7 @@ export class SaleBuilderDialogComponent {
       return;
     }
     this.saving.set(true);
+    this.chosenDisposition ??= disposition;
     this.sales
       .confirm({
         customerId: this.directCustomer() ? null : this.customerForm.controls.customerId.value,
@@ -475,12 +513,30 @@ export class SaleBuilderDialogComponent {
         expectedGrandTotal: quote.grandTotal,
         expectedDueNow: quote.dueNow,
         idempotencyKey: this.confirmationKey,
+        disposition: this.chosenDisposition,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
           this.saving.set(false);
-          this.confirmed.emit(result);
+          const state: SaleState = {
+            saleId: result.saleId,
+            status: result.status,
+            disposition: this.chosenDisposition ?? disposition,
+            branchId: this.customerForm.controls.branchId.value,
+            durationMinutes: quote.items.reduce(
+              (sum, line) => sum + line.durationMinutes * line.quantity,
+              0
+            ),
+            grandTotal: result.grandTotal,
+            dueNow: result.dueNow,
+            collectionId: null,
+            paymentConfirmed: false,
+            bookingId: null,
+          };
+          this.activeSale.set(state);
+          sessionStorage.setItem(this.recoveryStorageKey, result.saleId);
+          if (result.dueNow === 0) this.collect(true);
         },
         error: (error: HttpErrorResponse) => {
           this.saving.set(false);
@@ -492,6 +548,203 @@ export class SaleBuilderDialogComponent {
           this.itemError.set(fields['items'] ?? fields['paymentMethod'] ?? this.errorText(error));
           this.showError(error);
           if (codes.includes('SaleQuoteChanged')) this.changed();
+        },
+      });
+  }
+
+  collect(paymentConfirmed: boolean): void {
+    const sale = this.activeSale();
+    if (!sale || this.saving()) return;
+    this.saving.set(true);
+    this.recoveryError.set(null);
+    this.sales
+      .collect(sale.saleId, this.collectionKey, paymentConfirmed)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          this.saving.set(false);
+          this.activeSale.set({
+            ...sale,
+            status: result.saleStatus,
+            collectionId: result.collectionId,
+            paymentConfirmed: result.paymentConfirmed,
+          });
+          if (!result.paymentConfirmed) {
+            this.collectionKey = crypto.randomUUID();
+            this.recoveryError.set(this.translate.instant('SALE_BUILDER.COLLECTION_FAILED'));
+            return;
+          }
+          if (sale.disposition === 'BookNow') {
+            this.bookingRequested.set(true);
+            this.loadBookableEmployees();
+          } else {
+            this.complete(result.saleStatus);
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          this.saving.set(false);
+          this.recoveryError.set(this.errorText(error));
+          this.refreshSaleState();
+        },
+      });
+  }
+
+  book(): void {
+    const sale = this.activeSale();
+    this.bookingForm.markAllAsTouched();
+    if (!sale?.paymentConfirmed || this.bookingForm.invalid || this.saving()) return;
+    const value = this.bookingForm.getRawValue();
+    const [hours, minutes] = value.startTime.split(':').map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const duration = sale.durationMinutes;
+    if (duration <= 0 || startMinutes + duration > 1440) {
+      this.recoveryError.set(this.translate.instant('ERRORS.SaleDurationMismatch'));
+      return;
+    }
+    this.saving.set(true);
+    this.sales
+      .book({
+        saleId: sale.saleId,
+        employeeId: value.employeeId,
+        scheduledDate: value.scheduledDate,
+        startMinutes,
+        endMinutes: startMinutes + duration,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          this.saving.set(false);
+          if (result.status === 'Booked') {
+            this.complete('Booked');
+            return;
+          }
+          this.recoveryError.set(
+            this.translate.instant(`ERRORS.${result.recoveryCode ?? 'SaleBookingUnavailable'}`)
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.saving.set(false);
+          const fields = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+            this.translate.instant(key)
+          );
+          applyServerFieldErrors(this.bookingForm, {
+            employeeId: fields['employeeId'],
+            scheduledDate: fields['scheduledDate'],
+            startTime: fields['startMinutes'] ?? fields['endMinutes'],
+          });
+          this.recoveryError.set(this.errorText(error));
+          this.refreshSaleState();
+        },
+      });
+  }
+
+  bookingError(field: 'employeeId' | 'scheduledDate' | 'startTime'): string | null {
+    const control = this.bookingForm.controls[field];
+    if (!control.touched) return null;
+    if (control.hasError('server')) return String(control.getError('server'));
+    if (control.hasError('required')) return this.translate.instant('SALE_BUILDER.REQUIRED');
+    if (control.hasError('pattern')) return this.translate.instant('SALE_BUILDER.TIME_INVALID');
+    return null;
+  }
+
+  private loadBookableEmployees(): void {
+    const branchId = this.activeSale()?.branchId;
+    this.employeesApi
+      .listBookable(branchId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: employees => this.bookableEmployees.set(employees),
+        error: (error: HttpErrorResponse) => this.recoveryError.set(this.errorText(error)),
+      });
+  }
+
+  private restorePendingSale(): void {
+    const saleId = sessionStorage.getItem(this.recoveryStorageKey);
+    if (!saleId) return;
+    this.sales
+      .state(saleId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: state => {
+          if (state.status === 'Booked' || state.status === 'Closed') {
+            sessionStorage.removeItem(this.recoveryStorageKey);
+            return;
+          }
+          this.activeSale.set(state);
+          if (state.paymentConfirmed && state.disposition === 'BookNow') {
+            this.bookingRequested.set(true);
+            this.loadBookableEmployees();
+          }
+        },
+        error: () => sessionStorage.removeItem(this.recoveryStorageKey),
+      });
+  }
+
+  private refreshSaleState(): void {
+    const saleId = this.activeSale()?.saleId;
+    if (!saleId) return;
+    this.sales
+      .state(saleId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: state => {
+          this.activeSale.set(state);
+          if (state.paymentConfirmed && state.disposition === 'BookNow') {
+            this.bookingRequested.set(true);
+            this.loadBookableEmployees();
+          }
+        },
+      });
+  }
+
+  complete(status: string): void {
+    const sale = this.activeSale();
+    if (!sale) return;
+    if (status !== 'ReadyToBook') {
+      sessionStorage.removeItem(this.recoveryStorageKey);
+    }
+    this.confirmed.emit({
+      saleId: sale.saleId,
+      status,
+      grandTotal: sale.grandTotal,
+      dueNow: sale.dueNow,
+    });
+  }
+
+  startNewSale(): void {
+    sessionStorage.removeItem(this.recoveryStorageKey);
+    this.reset();
+    this.loadOptions();
+  }
+
+  startBooking(): void {
+    this.bookingRequested.set(true);
+    this.loadBookableEmployees();
+  }
+
+  resumeSale(): void {
+    const saleId = this.resumeSaleId().trim();
+    if (!saleId) {
+      this.resumeError.set(this.translate.instant('SALE_BUILDER.REQUIRED'));
+      return;
+    }
+    this.resumeError.set(null);
+    this.saving.set(true);
+    this.sales
+      .state(saleId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: state => {
+          this.saving.set(false);
+          this.activeSale.set(state);
+          sessionStorage.setItem(this.recoveryStorageKey, state.saleId);
+          if (state.paymentConfirmed && state.disposition === 'BookNow') {
+            this.startBooking();
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          this.saving.set(false);
+          this.resumeError.set(this.errorText(error));
         },
       });
   }
