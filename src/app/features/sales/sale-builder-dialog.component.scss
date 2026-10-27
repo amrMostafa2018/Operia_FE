@@ -56,6 +56,32 @@ h3 {
   padding-bottom: 1rem;
   border-bottom: 1px solid #ebeaf2;
 }
+.customer-row.direct {
+  grid-template-columns: minmax(200px, 320px);
+}
+.customer-choice {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.customer-choice button {
+  border: 1px solid #dad8e6;
+  border-radius: 7px;
+  background: white;
+  color: #292747;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+}
+.customer-choice button.active {
+  border-color: #4b24da;
+  background: #f3efff;
+  color: #4b24da;
+}
+.direct-hint {
+  margin: 0 0 0.85rem;
+  color: #5f647a;
+  font-size: 0.82rem;
+}
 
 .field {
   display: flex;

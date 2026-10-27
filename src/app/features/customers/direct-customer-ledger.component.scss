@@ -1,0 +1,83 @@
+.customer-ledger {
+  padding: 1.5rem;
+  color: #171a43;
+}
+header,
+.record-heading,
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+header {
+  margin-bottom: 1.5rem;
+}
+h1,
+h2,
+p {
+  margin: 0;
+}
+h1 {
+  font-size: 1.4rem;
+}
+header p,
+small,
+.empty {
+  color: #6e7288;
+}
+button {
+  border: 1px solid #d9d2fc;
+  border-radius: 7px;
+  padding: 0.55rem 0.85rem;
+  background: white;
+  color: #4b24da;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ledger-record {
+  border: 1px solid #e6e4ef;
+  border-radius: 10px;
+  background: white;
+  padding: 1.2rem;
+}
+.record-heading {
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+.record-icon {
+  color: #4b24da;
+  font-size: 1.4rem;
+}
+h2 {
+  font-size: 1.05rem;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+th,
+td {
+  padding: 0.8rem 0.55rem;
+  border-bottom: 1px solid #eeedf3;
+  text-align: start;
+}
+th {
+  color: #6e7288;
+  font-weight: 500;
+}
+.pagination {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+.empty {
+  padding: 2rem;
+  text-align: center;
+}

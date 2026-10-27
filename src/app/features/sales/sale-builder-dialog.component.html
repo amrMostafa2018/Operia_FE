@@ -23,28 +23,63 @@
     </div>
   </ng-template>
 
-  <form class="customer-row" [formGroup]="customerForm" (ngSubmit)="searchCustomer()">
-    <div class="field mobile-field">
-      <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
-      <div class="mobile-search">
-        <input pInputText id="sale-mobile" formControlName="mobile" (input)="mobileChanged()" />
-        <button type="submit" [disabled]="customerLoading()">
-          <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
-        </button>
+  <div
+    class="customer-choice"
+    role="group"
+    [attr.aria-label]="'SALE_BUILDER.CUSTOMER_MODE' | translate"
+  >
+    <button
+      type="button"
+      [class.active]="!directCustomer()"
+      [disabled]="saving()"
+      (click)="setDirectCustomer(false)"
+    >
+      {{ 'SALE_BUILDER.REGISTERED_CUSTOMER' | translate }}
+    </button>
+    <button
+      type="button"
+      [class.active]="directCustomer()"
+      [disabled]="saving()"
+      (click)="setDirectCustomer(true)"
+    >
+      {{ 'SALE_BUILDER.DIRECT_CUSTOMER' | translate }}
+    </button>
+  </div>
+  @if (directCustomer()) {
+    <p class="direct-hint">{{ 'SALE_BUILDER.DIRECT_HINT' | translate }}</p>
+  }
+
+  <form
+    class="customer-row"
+    [class.direct]="directCustomer()"
+    [formGroup]="customerForm"
+    (ngSubmit)="searchCustomer()"
+  >
+    @if (!directCustomer()) {
+      <div class="field mobile-field">
+        <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
+        <div class="mobile-search">
+          <input pInputText id="sale-mobile" formControlName="mobile" (input)="mobileChanged()" />
+          <button type="submit" [disabled]="customerLoading()">
+            <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
+          </button>
+        </div>
+        @if (fieldError('mobile'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+        @if (fieldError('customerId'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
       </div>
-      @if (fieldError('mobile'); as error) {
-        <small class="field-error">{{ error }}</small>
-      }
-      @if (fieldError('customerId'); as error) {
-        <small class="field-error">{{ error }}</small>
-      }
-    </div>
-    <div class="field">
-      <label>{{ 'SALE_BUILDER.CUSTOMER' | translate }}</label>
-      <strong class="customer-name">{{
-        customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
-      }}</strong>
-    </div>
+    }
+    @if (!directCustomer()) {
+      <div class="field">
+        <label>{{ 'SALE_BUILDER.CUSTOMER' | translate }}</label>
+        <strong class="customer-name">{{
+          customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
+        }}</strong>
+      </div>
+    }
     <div class="field">
       <label for="sale-branch">{{ 'SALE_BUILDER.BRANCH' | translate }}</label>
       <p-dropdown
@@ -118,7 +153,7 @@
     }
   </section>
 
-  @if (customer()?.packages?.length) {
+  @if (!directCustomer() && customer()?.packages?.length) {
     <section class="owned-section">
       <h3>{{ 'SALE_BUILDER.OWNED' | translate }}</h3>
       <div class="owned-list">

@@ -275,6 +275,8 @@
     "SaleOfferUnavailable": "This service or offer is no longer available for sale.",
     "SaleBranchUnavailable": "This branch is not available to you.",
     "SaleCustomerUnavailable": "The selected customer is no longer available.",
+    "SaleDirectCustomerSelectionInvalid": "Choose either Direct Customer or a registered customer.",
+    "SaleDirectServiceOnly": "Direct Customer can buy services only. Packages and owned sessions need a registered customer.",
     "SaleOwnedSessionUnavailable": "This customer has no available session for this item.",
     "SaleUnlistedNameInvalid": "Enter an unlisted service name of at most 200 characters.",
     "SaleUnlistedPriceInvalid": "Enter a price between zero and 999,999,999.99.",
@@ -1763,8 +1765,37 @@
       "Staff": ["Assigned bookings", "Related customers", "Own work information"]
     }
   },
+  "CUSTOMER_LEDGER": {
+    "TITLE": "Customers",
+    "SUBTITLE": "Direct Customer sales",
+    "DIRECT_CUSTOMER": "Direct Customer",
+    "SALES": "sales",
+    "REFERENCE": "Sale reference",
+    "DATE": "Date",
+    "ITEMS": "Items",
+    "AMOUNT": "Amount",
+    "CASHIER": "Cashier",
+    "STATUS": "Status",
+    "REFRESH": "Refresh",
+    "LOADING": "Loading sales…",
+    "LOAD_ERROR": "Could not load direct customer sales.",
+    "EMPTY": "No direct customer sales yet.",
+    "PAGES": "Sale pages",
+    "PREVIOUS": "Previous",
+    "NEXT": "Next",
+    "STATUSES": {
+      "PendingCollection": "Pending collection",
+      "ReadyToBook": "Ready to book"
+    }
+  },
   "SALE_BUILDER": {
     "TITLE": "Sell service or offer",
+    "CUSTOMER_MODE": "Customer type",
+    "REGISTERED_CUSTOMER": "Registered customer",
+    "DIRECT_CUSTOMER": "Direct Customer",
+    "DIRECT_HINT": "A direct sale needs no name or mobile. Only services can be added.",
+    "CUSTOMER_SWITCH_TITLE": "Customer selection cleared",
+    "CUSTOMER_SWITCH_WARNING": "Select or verify the registered customer again before confirming. Any package rows were removed.",
     "MOBILE": "Customer mobile",
     "SEARCH": "Search",
     "CUSTOMER": "Customer",

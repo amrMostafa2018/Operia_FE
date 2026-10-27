@@ -88,6 +88,7 @@ export class SaleBuilderDialogComponent {
   readonly branches = signal<{ id: string; name: string }[]>([]);
   readonly paymentMethods = signal<string[]>([]);
   readonly customer = signal<BookingCustomerDto | null>(null);
+  readonly directCustomer = signal(false);
   readonly rows = signal<DraftRow[]>([]);
   readonly quote = signal<SaleQuote | null>(null);
   readonly quoteLoading = signal(false);
@@ -109,6 +110,7 @@ export class SaleBuilderDialogComponent {
     const search = this.searchText().trim().toLocaleLowerCase();
     return this.catalog().filter(
       offer =>
+        (!this.directCustomer() || offer.offerType === 'singleSession') &&
         (category === 'all' || offer.serviceCategoryId === category) &&
         (!search || offer.name.toLocaleLowerCase().includes(search))
     );
@@ -140,6 +142,9 @@ export class SaleBuilderDialogComponent {
     this.customerForm.reset({ mobile: '', customerId: '', branchId: '' });
     this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
     this.customer.set(null);
+    this.directCustomer.set(false);
+    this.customerForm.controls.mobile.enable({ emitEvent: false });
+    this.customerForm.controls.customerId.enable({ emitEvent: false });
     this.catalog.set([]);
     this.categories.set([]);
     this.branches.set([]);
@@ -190,6 +195,7 @@ export class SaleBuilderDialogComponent {
   }
 
   searchCustomer(): void {
+    if (this.directCustomer()) return;
     this.customerForm.controls.mobile.markAsTouched();
     if (this.customerForm.controls.mobile.invalid) return;
     const version = ++this.customerVersion;
@@ -229,11 +235,56 @@ export class SaleBuilderDialogComponent {
     this.changed();
   }
 
+  setDirectCustomer(direct: boolean): void {
+    if (this.directCustomer() === direct || this.saving()) return;
+    const hadCustomer = this.customer() !== null;
+    const removedRows = this.rows().some(
+      row =>
+        row.ownedCustomerPackageId ||
+        this.catalog().some(offer => offer.id === row.offerId && offer.offerType === 'package')
+    );
+    this.customerVersion++;
+    this.customerLoading.set(false);
+    this.customer.set(null);
+    this.customerForm.controls.mobile.setValue('');
+    this.customerForm.controls.customerId.setValue('');
+    this.rows.update(rows =>
+      rows.filter(
+        row =>
+          !row.ownedCustomerPackageId &&
+          (!direct ||
+            !this.catalog().some(
+              offer => offer.id === row.offerId && offer.offerType === 'package'
+            ))
+      )
+    );
+    this.directCustomer.set(direct);
+    if (direct) {
+      this.customerForm.controls.mobile.disable({ emitEvent: false });
+      this.customerForm.controls.customerId.disable({ emitEvent: false });
+    } else {
+      this.customerForm.controls.mobile.enable({ emitEvent: false });
+      this.customerForm.controls.customerId.enable({ emitEvent: false });
+    }
+    if (hadCustomer || removedRows || !direct) {
+      this.toast.add({
+        severity: 'warn',
+        summary: this.translate.instant('SALE_BUILDER.CUSTOMER_SWITCH_TITLE'),
+        detail: this.translate.instant('SALE_BUILDER.CUSTOMER_SWITCH_WARNING'),
+      });
+    }
+    this.changed();
+  }
+
   branchChanged(): void {
     this.changed();
   }
 
   addOffer(offer: PackageListItem): void {
+    if (this.directCustomer() && offer.offerType !== 'singleSession') {
+      this.itemError.set(this.translate.instant('ERRORS.SaleDirectServiceOnly'));
+      return;
+    }
     const option: SalePaymentOption = offer.cashEnabled !== false ? 'cash' : 'installment';
     if (option === 'installment' && !offer.installmentEnabled) return;
     const current = this.rows().find(
@@ -264,6 +315,7 @@ export class SaleBuilderDialogComponent {
   }
 
   addOwned(purchase: BookingCustomerDto['packages'][number]): void {
+    if (this.directCustomer()) return;
     if (this.rows().some(row => row.ownedCustomerPackageId === purchase.customerPackageId)) return;
     this.rows.update(rows => [
       ...rows,
@@ -358,11 +410,23 @@ export class SaleBuilderDialogComponent {
     return this.quote()?.items[index] ?? null;
   }
 
+  private requestItems(): SaleDraftItem[] {
+    return this.rows().map(row => ({
+      offerId: row.offerId,
+      ownedCustomerPackageId: row.ownedCustomerPackageId,
+      unlistedName: row.unlistedName,
+      unlistedPrice: row.unlistedPrice,
+      unlistedDurationMinutes: row.unlistedDurationMinutes,
+      paymentOption: row.paymentOption,
+      quantity: row.quantity,
+    }));
+  }
+
   private changed(): void {
     this.confirmationKey = crypto.randomUUID();
     this.itemError.set(null);
     const version = ++this.quoteVersion;
-    const items = this.rows().map(({ key: _key, ...row }) => row);
+    const items = this.requestItems();
     if (items.length === 0) {
       this.quote.set(null);
       this.quoteLoading.set(false);
@@ -372,9 +436,10 @@ export class SaleBuilderDialogComponent {
     this.quoteLoading.set(true);
     this.sales
       .quote({
-        customerId: this.customer()?.id ?? null,
+        customerId: this.directCustomer() ? null : (this.customer()?.id ?? null),
         branchId: this.customerForm.controls.branchId.value || null,
         items,
+        directCustomer: this.directCustomer(),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -402,9 +467,10 @@ export class SaleBuilderDialogComponent {
     this.saving.set(true);
     this.sales
       .confirm({
-        customerId: this.customerForm.controls.customerId.value,
+        customerId: this.directCustomer() ? null : this.customerForm.controls.customerId.value,
+        directCustomer: this.directCustomer(),
         branchId: this.customerForm.controls.branchId.value,
-        items: this.rows().map(({ key: _key, ...row }) => row),
+        items: this.requestItems(),
         paymentMethod: quote.dueNow > 0 ? this.selectedMethod() : null,
         expectedGrandTotal: quote.grandTotal,
         expectedDueNow: quote.dueNow,
