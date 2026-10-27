@@ -241,6 +241,12 @@
     "BookingChanged": "This booking was changed by another user. Refresh and try again.",
     "BookingStatusInvalid": "Select a valid booking status.",
     "BookingCustomerNotFound": "Select a registered customer.",
+    "BookingCustomerMobileExists": "This mobile number belongs to an existing customer. Select that customer instead.",
+    "BookingDirectCustomerSelectionInvalid": "Choose either a registered customer or Direct Customer.",
+    "BookingDirectCustomerPackageUnavailable": "Direct customers cannot use or buy packages in this booking.",
+    "BookingDirectCustomerItemsReadOnly": "Direct customer booking items cannot be changed after confirmation.",
+    "BookingCustomerNameTooLong": "Customer name cannot exceed 200 characters.",
+    "BookingCustomerSearchTermInvalid": "Search for a customer with 2 to 100 characters.",
     "BookingEmployeeNotFound": "The selected employee was not found.",
     "BookingEmployeeNotInBranch": "The selected employee is not assigned to this branch.",
     "BookingOutsideWorkingHours": "The selected time is outside the employee's working hours.",
@@ -1081,6 +1087,13 @@
     },
     "BOOK": {
       "TITLE": "Book service",
+      "MODE_REGISTERED": "Registered customer",
+      "MODE_NEW": "New customer",
+      "MODE_DIRECT": "Direct customer",
+      "DIRECT_HINT": "Direct customer — no personal details. Only standalone services can be booked.",
+      "SEARCH_NAME": "Search registered customers by name",
+      "REGISTER_CUSTOMER": "Register customer",
+      "CUSTOMER_REGISTERED": "Customer registered",
       "CLIENT_SECTION": "Client details",
       "SERVICES_SECTION": "Categories and services",
       "CLIENT_MOBILE": "Mobile number",
@@ -1138,7 +1151,8 @@
       "ERRORS": {
         "MOBILE_REQUIRED": "Mobile number is required.",
         "MOBILE_INVALID": "Enter a valid mobile number.",
-        "NAME_REQUIRED": "Client name is required."
+        "NAME_REQUIRED": "Client name is required.",
+        "NAME_MAX": "Client name cannot exceed 200 characters."
       }
     },
     "MISMATCH": {

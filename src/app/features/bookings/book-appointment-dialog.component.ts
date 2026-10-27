@@ -49,6 +49,11 @@ import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
+import {
+  applyServerFieldErrors,
+  extractApiFieldErrors,
+  translateApiFieldErrors,
+} from '@core/utils/api-error.util';
 import { PackageService } from '@app/features/packages/package.service';
 import { AppointmentsApiService } from './appointments-api.service';
 import { getRtlStartScrollLeft } from '@app/shared/utils/rtl.util';
@@ -100,6 +105,7 @@ export interface BookAppointmentPayload {
   clientName: string;
   clientMobile: string;
   clientId: string | null;
+  directCustomer: boolean;
   lineItems: BookingLineItem[];
   serviceDuration: number;
   paymentMethod: PaymentMethodId | null;
@@ -173,13 +179,21 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly selectedQuantities = signal<Record<string, number>>({});
   readonly unlistedItems = signal<BookingLineItem[]>([]);
   readonly selectedPackageIds = signal<string[]>([]);
+  readonly customerMode = signal<'registered' | 'new' | 'direct'>('registered');
+  readonly registering = signal(false);
+  readonly customerSelectionLoading = signal(false);
+  readonly selectedCustomer = signal<ClientRecord | null>(null);
+  readonly customerNameSearch = signal('');
+  readonly customerNameResults = signal<{ id: string; fullName: string; mobileNumber: string }[]>(
+    []
+  );
   readonly showServicesSection = signal(false);
   readonly showUnlisted = signal(false);
   readonly unlistedSaving = signal(false);
 
   readonly clientForm = this.fb.nonNullable.group({
     mobile: ['', Validators.required],
-    name: ['', Validators.required],
+    name: ['', [Validators.required, Validators.maxLength(200)]],
   });
   readonly mobileControl = new FormControl<ChangeData | string | null>('');
   readonly mobileInvalid = signal(false);
@@ -190,7 +204,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly unlistedForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     serviceCategoryId: this.fb.control<string | null>(null, Validators.required),
-    offerType: [EMPTY_UNLISTED_FORM.offerType, Validators.required],
+    offerType: this.fb.nonNullable.control<'singleSession' | 'package'>(
+      EMPTY_UNLISTED_FORM.offerType,
+      Validators.required
+    ),
     durationMinutes: [
       EMPTY_UNLISTED_FORM.durationMinutes,
       [Validators.required, Validators.min(1)],
@@ -200,7 +217,11 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   });
 
   readonly durationUnitOptions = UNLISTED_DURATION_UNIT_OPTIONS;
-  readonly offerTypeOptions = UNLISTED_OFFER_TYPE_OPTIONS;
+  readonly offerTypeOptions = computed(() =>
+    this.customerMode() === 'direct'
+      ? UNLISTED_OFFER_TYPE_OPTIONS.filter(option => option.value === 'singleSession')
+      : UNLISTED_OFFER_TYPE_OPTIONS
+  );
 
   readonly canScrollLeft = signal(false);
   readonly canScrollRight = signal(false);
@@ -223,7 +244,11 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       distinctUntilChanged(),
       switchMap(mobile => {
         const normalizedMobile = mobile.replace(/\D/g, '');
-        const pending: CustomerLookupState = { mobile: normalizedMobile, client: null, pending: !!mobile };
+        const pending: CustomerLookupState = {
+          mobile: normalizedMobile,
+          client: null,
+          pending: !!mobile,
+        };
         if (!mobile) {
           return of({ ...pending, pending: false });
         }
@@ -272,9 +297,16 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   );
 
   readonly matchedClient = computed(() => {
+    if (this.customerMode() !== 'registered') {
+      return null;
+    }
     const mobile = this.clientMobile().trim();
     if (!mobile) {
       return null;
+    }
+    const selected = this.selectedCustomer();
+    if (selected && this.normalizeMobile(selected.mobile) === this.normalizeMobile(mobile)) {
+      return selected;
     }
     const local = this.findLocalClient(mobile);
     const lookup = this.customerLookup();
@@ -328,6 +360,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
     if (query) {
       services = services.filter(service => service.name.toLowerCase().includes(query));
+    }
+    if (this.customerMode() === 'direct') {
+      services = services.filter(service => service.type !== 'package');
     }
     return services;
   });
@@ -387,10 +422,15 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
 
+  canRegisterCustomer(): boolean {
+    return this.permissions.hasPermission(Policies.CustomersManage);
+  }
+
   constructor() {
     this.mobileControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
       this.onMobileInput(value);
     });
+    setupServerErrorClearing(this.clientForm, this.destroyRef, ['mobile', 'name']);
     setupServerErrorClearing(this.unlistedForm, this.destroyRef, [
       'name',
       'serviceCategoryId',
@@ -411,6 +451,15 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             emitEvent: false,
           });
           this.mobileInvalid.set(false);
+          this.customerMode.set('registered');
+          this.clientForm.controls.mobile.setValidators(Validators.required);
+          this.clientForm.controls.name.setValidators([
+            Validators.required,
+            Validators.maxLength(200),
+          ]);
+          this.selectedCustomer.set(null);
+          this.customerNameSearch.set('');
+          this.customerNameResults.set([]);
           this.clientForm.reset({
             mobile: toBookingSearchMobile(parsedMobile) || this.initialClientMobile().trim(),
             name: this.initialClientName(),
@@ -486,11 +535,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       () => {
         if (this.visible()) {
           const client = this.matchedClient();
-          if (client) {
-            const mobile = client.mobile;
-            if (this.clients().every(c => c.mobile !== mobile)) {
-              this.clientForm.controls.name.setValue(client.name);
-            }
+          if (client && this.clientForm.controls.name.value !== client.name) {
+            this.clientForm.controls.name.setValue(client.name);
           }
           this.loadPaymentMethods();
         } else {
@@ -684,8 +730,161 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     this.mobileInvalid.set(!!mobile && !valid);
     const nextMobile = valid ? mobile : '';
     if (nextMobile !== this.clientForm.controls.mobile.value) {
+      this.selectedCustomer.set(null);
       this.clientForm.controls.mobile.setValue(nextMobile);
     }
+  }
+
+  setCustomerMode(mode: 'registered' | 'new' | 'direct'): void {
+    if (mode === this.customerMode() || this.registering() || this.saving()) {
+      return;
+    }
+    this.customerMode.set(mode);
+    this.selectedCustomer.set(null);
+    this.selectedPackageIds.set([]);
+    this.selectedQuantities.set({});
+    this.unlistedItems.set([]);
+    this.customerNameResults.set([]);
+    this.customerNameSearch.set('');
+    this.mobileControl.setValue('', { emitEvent: false });
+    this.clientForm.reset({ mobile: '', name: '' });
+    this.mobileInvalid.set(false);
+    for (const control of [this.clientForm.controls.mobile, this.clientForm.controls.name]) {
+      if (mode === 'direct') {
+        control.clearValidators();
+      } else {
+        control.setValidators(
+          control === this.clientForm.controls.name
+            ? [Validators.required, Validators.maxLength(200)]
+            : Validators.required
+        );
+      }
+      control.updateValueAndValidity();
+    }
+  }
+
+  searchCustomerName(): void {
+    const term = this.customerNameSearch().trim();
+    if (term.length < 2 || term.length > 100) {
+      this.customerNameResults.set([]);
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.BookingCustomerSearchTermInvalid'),
+      });
+      return;
+    }
+    this.appointmentsApi
+      .searchCustomers(term)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: results => {
+          if (this.customerMode() === 'registered' && this.customerNameSearch().trim() === term) {
+            this.customerNameResults.set(results);
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          this.customerNameResults.set([]);
+          this.toast.add({
+            severity: 'error',
+            summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+            detail:
+              (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
+              this.translate.instant('HTTP_ERRORS.SERVER'),
+          });
+        },
+      });
+  }
+
+  selectCustomer(result: { id: string; fullName: string; mobileNumber: string }): void {
+    this.customerSelectionLoading.set(true);
+    this.appointmentsApi
+      .findCustomer(result.mobileNumber)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: customer => {
+          this.customerSelectionLoading.set(false);
+          if (this.customerMode() !== 'registered' || !customer || customer.id !== result.id) {
+            return;
+          }
+          this.selectedCustomer.set({
+            id: customer.id,
+            name: customer.fullName,
+            mobile: customer.mobileNumber,
+            registered: true,
+            packages: customer.packages.map(pkg => ({
+              customerPackageId: pkg.customerPackageId,
+              packageId: pkg.packageId,
+              packageName: pkg.packageName,
+              usedSessions: displayedPackageUsedUnits({ ...pkg, offerType: pkg.offerType }),
+              totalSessions: pkg.totalSessions,
+              expiryDate: pkg.expiresOn ?? '',
+              offerType: pkg.offerType,
+              sessionCount: pkg.sessionCount,
+              pulseCount: pkg.pulseCount,
+            })),
+          });
+          this.clientForm.patchValue({ mobile: customer.mobileNumber, name: customer.fullName });
+          this.mobileControl.setValue(toNationalPhoneNumber(customer.mobileNumber) ?? '', {
+            emitEvent: false,
+          });
+          this.selectedCountryISO.set(toPhoneCountryIso(customer.mobileNumber));
+          this.customerNameResults.set([]);
+        },
+        error: () => this.customerSelectionLoading.set(false),
+      });
+  }
+
+  registerCustomer(): void {
+    if (
+      this.registering() ||
+      this.customerMode() !== 'new' ||
+      !this.permissions.hasPermission(Policies.CustomersManage)
+    ) {
+      return;
+    }
+    this.clientForm.markAllAsTouched();
+    if (this.clientForm.invalid || this.mobileInvalid()) {
+      return;
+    }
+    this.registering.set(true);
+    const { name, mobile } = this.clientForm.getRawValue();
+    this.appointmentsApi
+      .registerCustomer(name.trim(), mobile.trim())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: customer => {
+          this.registering.set(false);
+          this.customerMode.set('registered');
+          this.selectedCustomer.set({
+            id: customer.id,
+            name: customer.fullName,
+            mobile: customer.mobileNumber,
+            registered: true,
+            packages: [],
+          });
+          this.clientForm.patchValue({ mobile: customer.mobileNumber, name: customer.fullName });
+          this.toast.add({
+            severity: 'success',
+            summary: this.translate.instant('BOOKINGS.BOOK.CUSTOMER_REGISTERED'),
+          });
+        },
+        error: (error: HttpErrorResponse) => {
+          this.registering.set(false);
+          const fields = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+            this.translate.instant(key)
+          );
+          applyServerFieldErrors(this.clientForm, fields);
+          this.toast.add({
+            severity: 'error',
+            summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+            detail:
+              fields['mobile'] ??
+              (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
+              this.translate.instant('HTTP_ERRORS.SERVER'),
+          });
+        },
+      });
   }
 
   onMobileCountryChange(country: { iso2: string }): void {
@@ -706,6 +905,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     if (control.hasError('required')) {
       return 'BOOKINGS.BOOK.ERRORS.MOBILE_REQUIRED';
     }
+    if (control.hasError('server')) {
+      return control.getError('server') as string;
+    }
     return null;
   }
 
@@ -716,6 +918,12 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     }
     if (control.hasError('required')) {
       return 'BOOKINGS.BOOK.ERRORS.NAME_REQUIRED';
+    }
+    if (control.hasError('maxlength')) {
+      return 'BOOKINGS.BOOK.ERRORS.NAME_MAX';
+    }
+    if (control.hasError('server')) {
+      return control.getError('server') as string;
     }
     return null;
   }
@@ -797,6 +1005,17 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     if (this.unlistedForm.invalid) {
       return;
     }
+    if (
+      this.customerMode() === 'direct' &&
+      this.unlistedForm.controls.offerType.value === 'package'
+    ) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.BookingDirectCustomerPackageUnavailable'),
+      });
+      return;
+    }
     if (!this.permissions.hasPermission(Policies.PackagesManage)) {
       this.toast.add({
         severity: 'error',
@@ -847,15 +1066,17 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     if (this.saving() || this.customerLookupPending()) {
       return;
     }
-    this.clientForm.markAllAsTouched();
-    if (this.clientForm.invalid || !this.selection()) {
+    if (this.customerMode() !== 'direct') {
+      this.clientForm.markAllAsTouched();
+    }
+    if ((this.customerMode() !== 'direct' && this.clientForm.invalid) || !this.selection()) {
       return;
     }
     if (this.customerLookupPending()) {
       return;
     }
     const client = this.matchedClient();
-    if (!client) {
+    if (this.customerMode() === 'new' || (this.customerMode() === 'registered' && !client)) {
       this.toast.add({
         severity: 'error',
         summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
@@ -875,7 +1096,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       selection: this.selection()!,
       clientName: this.clientForm.controls.name.value.trim(),
       clientMobile: this.clientForm.controls.mobile.value.trim(),
-      clientId: client.id,
+      clientId: client?.id ?? null,
+      directCustomer: this.customerMode() === 'direct',
       lineItems: this.lineItems(),
       serviceDuration: this.serviceDuration(),
       paymentMethod: this.draftPaymentMethod(),
