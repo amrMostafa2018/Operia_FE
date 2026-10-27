@@ -8,10 +8,9 @@ import { InstallmentRevenuePage } from './models/installment-revenue.model';
 export class ActivityRevenueService {
   private readonly http = inject(HttpClient);
 
-  listInstallmentCollections(page: number): Observable<InstallmentRevenuePage> {
-    return this.http.get<InstallmentRevenuePage>(
-      `${environment.apiUrl}/revenue/installment-collections`,
-      { params: new HttpParams().set('page', page).set('pageSize', 20) }
-    );
+  listCollections(page: number): Observable<InstallmentRevenuePage> {
+    return this.http.get<InstallmentRevenuePage>(`${environment.apiUrl}/revenue/collections`, {
+      params: new HttpParams().set('page', page).set('pageSize', 20),
+    });
   }
 }

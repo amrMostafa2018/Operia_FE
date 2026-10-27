@@ -31,6 +31,7 @@ export class ActivityRevenueComponent implements OnInit {
 
   readonly rows = signal<InstallmentRevenueRow[]>([]);
   readonly total = signal(0);
+  readonly confirmedTotal = signal(0);
   readonly page = signal(1);
   readonly loading = signal(false);
   readonly pageCount = computed(() => Math.ceil(this.total() / 20));
@@ -43,12 +44,13 @@ export class ActivityRevenueComponent implements OnInit {
     if (this.loading()) return;
     this.loading.set(true);
     this.service
-      .listInstallmentCollections(page)
+      .listCollections(page)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
           this.rows.set(result.items);
           this.total.set(result.total);
+          this.confirmedTotal.set(result.confirmedTotal);
           this.page.set(page);
           this.loading.set(false);
         },

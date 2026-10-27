@@ -63,7 +63,7 @@
   </div>
 
   <div class="stats-grid">
-    @for (stat of stats; track stat.labelKey) {
+    @for (stat of stats(); track stat.labelKey) {
       <article class="stat-card">
         <div class="stat-head">
           <div class="stat-icon" [style.background]="stat.iconBg">
