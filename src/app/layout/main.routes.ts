@@ -31,7 +31,9 @@ export const mainRoutes: Routes = [
       {
         path: 'bookings',
         loadComponent: () =>
-          import('@app/features/bookings/appointments.component').then(m => m.AppointmentsComponent),
+          import('@app/features/bookings/appointments.component').then(
+            m => m.AppointmentsComponent
+          ),
         canActivate: [permissionGuard],
         data: {
           permissions: [Policies.BookingsRead],
@@ -110,7 +112,10 @@ export const mainRoutes: Routes = [
       },
       {
         path: 'finance/activity-revenue',
-        loadComponent: placeholder,
+        loadComponent: () =>
+          import('@app/features/activity-revenue/activity-revenue.component').then(
+            m => m.ActivityRevenueComponent
+          ),
         canActivate: [permissionGuard],
         data: {
           permissions: [Policies.RevenueRead],
