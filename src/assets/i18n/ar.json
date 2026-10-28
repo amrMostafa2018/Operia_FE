@@ -247,6 +247,8 @@
     "BookingDirectCustomerItemsReadOnly": "لا يمكن تغيير عناصر حجز العميل المباشر بعد التأكيد.",
     "BookingCustomerNameTooLong": "لا يمكن أن يتجاوز اسم العميل 200 حرف.",
     "BookingCustomerSearchTermInvalid": "ابحث عن عميل باستخدام 2 إلى 100 حرف.",
+    "BookingRequestInvalid": "راجع تفاصيل الحجز وحاول مرة أخرى.",
+    "BookingCustomerSelectionRequired": "اختر عميلاً مسجلاً أو حدّد العميل المباشر.",
     "BookingEmployeeNotFound": "الموظف المحدد غير موجود.",
     "BookingEmployeeNotInBranch": "الموظف المحدد غير مرتبط بهذا الفرع.",
     "BookingOutsideWorkingHours": "الموعد المحدد خارج ساعات عمل الموظف.",

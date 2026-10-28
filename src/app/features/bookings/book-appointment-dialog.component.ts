@@ -783,15 +783,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             this.customerNameResults.set(results);
           }
         },
-        error: (error: HttpErrorResponse) => {
+        error: () => {
           this.customerNameResults.set([]);
-          this.toast.add({
-            severity: 'error',
-            summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-            detail:
-              (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
-              this.translate.instant('HTTP_ERRORS.SERVER'),
-          });
         },
       });
   }
@@ -799,7 +792,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   selectCustomer(result: { id: string; fullName: string; mobileNumber: string }): void {
     this.customerSelectionLoading.set(true);
     this.appointmentsApi
-      .findCustomer(result.mobileNumber)
+      .findCustomerById(result.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: customer => {
@@ -875,14 +868,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             this.translate.instant(key)
           );
           applyServerFieldErrors(this.clientForm, fields);
-          this.toast.add({
-            severity: 'error',
-            summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-            detail:
-              fields['mobile'] ??
-              (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
-              this.translate.instant('HTTP_ERRORS.SERVER'),
-          });
+          if ([400, 422].includes(error.status) && Object.keys(fields).length > 0) {
+            this.toast.add({
+              severity: 'error',
+              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+              detail: Object.values(fields).join(' '),
+            });
+          }
         },
       });
   }
