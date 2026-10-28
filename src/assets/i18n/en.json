@@ -235,6 +235,15 @@
     "CustomerInstallmentPaymentMethodUnavailable": "Select an enabled payment method.",
     "CustomerInstallmentIdempotencyConflict": "This payment request is invalid. Refresh the purchase and try again.",
     "CustomerInstallmentPurchaseInactive": "Installments cannot be collected on an inactive or expired purchase.",
+    "CustomerRefundAmountInvalid": "Enter a refund amount greater than zero with at most two decimal places.",
+    "CustomerRefundExceedsPaid": "The refund exceeds the remaining amount paid for this purchase. Refresh to see the current maximum.",
+    "CustomerRefundIdempotencyConflict": "This refund request was already used with different details.",
+    "CustomerRefundUnavailable": "This purchase cannot be refunded or was changed by another user. Refresh and try again.",
+    "CustomerRefundNoteInvalid": "The refund note must be 1,000 characters or fewer.",
+    "CustomerBlockReasonInvalid": "The block reason must be 500 characters or fewer.",
+    "CustomerChanged": "This customer was changed by another user. Refresh and try again.",
+    "CustomerNotFound": "This customer could not be found.",
+    "CustomerBlocked": "This customer cannot make a new booking at this center. Contact the center for help.",
     "BookingBranchRequired": "Select a branch to view bookable employees.",
     "BookingDateRangeInvalid": "The end date must be on or after the start date.",
     "BookingDateRangeTooLarge": "The calendar can show at most 31 days at a time.",
@@ -1379,8 +1388,11 @@
   "ACTIVITY_REVENUE": {
     "TITLE": "Activity revenue",
     "INSTALLMENTS_ONLY": "Confirmed sale and installment collections",
+    "FINANCIAL_MOVEMENTS": "Confirmed collections and posted refunds",
     "CONFIRMED_TOTAL": "Confirmed total",
+    "NET_TOTAL": "Net collected",
     "SALE_FIRST_PAYMENT": "Sale collection",
+    "REFUND": "Refund",
     "LOADING": "Loading collections...",
     "LOAD_ERROR": "Could not load collections.",
     "EMPTY": "No confirmed collections yet.",
@@ -1454,7 +1466,8 @@
     },
     "INSTALLMENT_STATUS": {
       "DUE": "Due",
-      "PAID": "Paid"
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
     },
     "MEMBERSHIP": {
       "ACTIVE": "Active member",
@@ -1836,15 +1849,20 @@
     "DATE_RANGE_ERROR": "The end date must be on or after the start date.",
     "TOTAL_SALES": "Total sales",
     "TOTAL_COLLECTED": "Total collected",
+    "TOTAL_REFUNDED": "Total refunds",
+    "TOTAL_NET": "Net collected",
     "TOTAL_REMAINING": "Total remaining",
     "GRID_TITLE": "Customer operations",
     "TOTAL": "Total price",
     "COLLECTED": "Collected",
+    "REFUNDED": "Refunded",
+    "NET": "Net collected",
     "REMAINING": "Remaining",
     "UNITS": "Sessions / pulses",
     "CUSTOMER_RESTRICTION": "Customer restriction",
     "PURCHASE_STATUS": "Purchase status",
     "PAYMENT_STATUS": "Payment status",
+    "REFUND_STATUS": "Refund status",
     "INSTALLMENT_STATUS": "Installment due",
     "DATE": "Operation date",
     "ACTIONS": "Actions",
@@ -1864,7 +1882,7 @@
     "IMPORT_TEMPLATE": "Download import template",
     "TYPES": { "package": "Package", "session": "Single session" },
     "PAYMENT_TYPES": { "cash": "Cash", "installment": "Installment", "owned": "Owned session" },
-    "RESTRICTIONS": { "active": "Active", "blocked": "Blocked" },
+    "RESTRICTIONS": { "active": "Active", "blocked": "Blocked", "inactive": "Inactive" },
     "PURCHASE_STATUSES": {
       "active": "Active",
       "completed": "Completed",
@@ -1873,11 +1891,59 @@
       "pending": "Pending collection"
     },
     "PAYMENT_STATUSES": { "fullyPaid": "Fully paid", "partial": "Partly paid", "unpaid": "Unpaid" },
+    "REFUND_STATUSES": { "none": "None", "partial": "Partly refunded", "full": "Fully refunded" },
     "INSTALLMENT_STATUSES": {
       "none": "—",
       "paid": "Paid",
       "due": "Due",
-      "scheduled": "After sessions"
+      "scheduled": "After sessions",
+      "cancelled": "Cancelled"
+    }
+  },
+  "CUSTOMER_ACTION": {
+    "TITLE": "Edit customer status",
+    "LOADING": "Loading the latest customer and purchase details…",
+    "LOAD_ERROR": "Could not load this customer action.",
+    "REFUND_TITLE": "Cancel & refund purchase",
+    "PAID": "Paid on this purchase",
+    "REFUNDED": "Already refunded",
+    "MAXIMUM": "Maximum available refund",
+    "NET": "Net collected",
+    "CANCEL_WARNING": "This cancels the purchase, makes unused sessions unavailable, and cancels its future bookings. Recorded payments remain in history.",
+    "AMOUNT": "Refund amount",
+    "AMOUNT_REQUIRED": "Enter a refund amount.",
+    "AMOUNT_POSITIVE": "The refund amount must be greater than zero.",
+    "AMOUNT_CAP": "The refund cannot exceed the available paid amount.",
+    "AMOUNT_DECIMALS": "Use at most two decimal places.",
+    "NOTE": "Note (optional)",
+    "NOTE_LENGTH": "The note must be 1,000 characters or fewer.",
+    "CANCEL_REFUND": "Cancel & refund",
+    "BLOCK_TITLE": "Customer booking restriction",
+    "BLOCK_HINT": "Blocking prevents new bookings at this center and leaves existing records unchanged.",
+    "BLOCK": "Block this customer",
+    "REASON": "Block reason (optional)",
+    "REASON_LENGTH": "The reason must be 500 characters or fewer.",
+    "SAVE_BLOCK": "Save restriction",
+    "CLOSE": "Close",
+    "REFUND_SUCCESS": "Refund recorded and purchase cancelled.",
+    "BLOCK_SUCCESS": "Customer blocked at this center.",
+    "UNBLOCK_SUCCESS": "Customer unblocked at this center.",
+    "SAVE_ERROR": "Could not save the change. Please try again."
+  },
+  "CUSTOMER_HISTORY": {
+    "TITLE": "Customer change history",
+    "LOADING": "Loading change history…",
+    "LOAD_ERROR": "Could not load change history.",
+    "EMPTY": "No changes recorded for this purchase.",
+    "DATE": "Date and time",
+    "ACTOR": "Changed by",
+    "ACTION": "Action",
+    "DETAILS": "Amount / reason",
+    "ACTIONS": {
+      "PurchaseCancelled": "Purchase cancelled",
+      "RefundPosted": "Refund recorded",
+      "CustomerBlocked": "Customer blocked",
+      "CustomerUnblocked": "Customer unblocked"
     }
   },
   "CUSTOMER_STATEMENT": {
@@ -1914,7 +1980,7 @@
     "USER": "Recorded by",
     "STATUS": "Status",
     "NO_INSTALLMENTS": "No installment plan for this purchase.",
-    "PAYMENT_STATUSES": { "paid": "Paid", "due": "Due" }
+    "PAYMENT_STATUSES": { "paid": "Paid", "due": "Due", "cancelled": "Cancelled" }
   },
   "CUSTOMER_LEDGER": {
     "TITLE": "Customers",

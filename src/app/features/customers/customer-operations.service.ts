@@ -27,6 +27,9 @@ export interface CustomerOperation {
   paymentType: string;
   total: number;
   collected: number;
+  refunded: number;
+  netCollected: number;
+  refundStatus: string;
   remaining: number;
   unitsTotal: number | null;
   unitsRemaining: number | null;
@@ -42,6 +45,8 @@ export interface CustomerOperationsPage {
   pageSize: number;
   totalSales: number;
   totalCollected: number;
+  totalRefunded: number;
+  totalNetCollected: number;
   totalRemaining: number;
   rows: CustomerOperation[];
 }

@@ -1,0 +1,64 @@
+<p-dialog
+  [visible]="true"
+  (visibleChange)="!$event && closed.emit()"
+  [modal]="true"
+  [style]="{ width: 'min(42rem, 96vw)' }"
+  [header]="'CUSTOMER_HISTORY.TITLE' | translate"
+  [draggable]="false"
+  [resizable]="false"
+>
+  @if (loading()) {
+    <p>{{ 'CUSTOMER_HISTORY.LOADING' | translate }}</p>
+  } @else if (failed()) {
+    <p role="alert">{{ 'CUSTOMER_HISTORY.LOAD_ERROR' | translate }}</p>
+  } @else {
+    @if (data(); as history) {
+      <div class="history">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'CUSTOMER_HISTORY.DATE' | translate }}</th>
+              <th>{{ 'CUSTOMER_HISTORY.ACTOR' | translate }}</th>
+              <th>{{ 'CUSTOMER_HISTORY.ACTION' | translate }}</th>
+              <th>{{ 'CUSTOMER_HISTORY.DETAILS' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of history.items; track event.id) {
+              <tr>
+                <td>{{ event.atUtc | date: 'medium' }}</td>
+                <td>{{ event.actor || '—' }}</td>
+                <td>{{ 'CUSTOMER_HISTORY.ACTIONS.' + event.action | translate }}</td>
+                <td>
+                  @if (event.amount !== null) {
+                    {{ event.amount | number: '1.2-2' }} {{ currency.currencyLabel() }}
+                  }
+                  @if (event.reason) {
+                    <span>{{ event.reason }}</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4">{{ 'CUSTOMER_HISTORY.EMPTY' | translate }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <footer>
+          <button type="button" (click)="load(history.page - 1)" [disabled]="history.page <= 1">
+            {{ 'CUSTOMER_OPERATIONS.PREVIOUS' | translate }}
+          </button>
+          <span>{{ history.page }}</span>
+          <button
+            type="button"
+            (click)="load(history.page + 1)"
+            [disabled]="history.page * 10 >= history.total"
+          >
+            {{ 'CUSTOMER_OPERATIONS.NEXT' | translate }}
+          </button>
+        </footer>
+      </div>
+    }
+  }
+</p-dialog>

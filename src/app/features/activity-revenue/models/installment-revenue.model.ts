@@ -8,7 +8,7 @@ export interface InstallmentRevenueRow {
   amount: number;
   paymentMethod: string;
   confirmedAtUtc: string;
-  kind: 'Sale' | 'Installment';
+  kind: 'Sale' | 'Installment' | 'Refund';
 }
 
 export interface InstallmentRevenuePage {

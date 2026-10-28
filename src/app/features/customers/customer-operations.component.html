@@ -115,6 +115,20 @@
       >
     </article>
     <article class="remaining">
+      <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_REFUNDED' | translate }}</span>
+      <strong
+        >{{ result()?.totalRefunded ?? 0 | number: '1.2-2' }}
+        <small>{{ currency.currencyLabel() }}</small></strong
+      >
+    </article>
+    <article class="collected">
+      <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_NET' | translate }}</span>
+      <strong
+        >{{ result()?.totalNetCollected ?? 0 | number: '1.2-2' }}
+        <small>{{ currency.currencyLabel() }}</small></strong
+      >
+    </article>
+    <article class="remaining">
       <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_REMAINING' | translate }}</span>
       <strong
         >{{ result()?.totalRemaining ?? 0 | number: '1.2-2' }}
@@ -138,11 +152,14 @@
             <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.TOTAL' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.COLLECTED' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.REFUNDED' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.NET' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.REMAINING' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.UNITS' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.CUSTOMER_RESTRICTION' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUS' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_STATUS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.REFUND_STATUS' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUS' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.DATE' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
@@ -160,6 +177,8 @@
               <td>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.' + row.paymentType | translate }}</td>
               <td>{{ row.total | number: '1.2-2' }}</td>
               <td class="money-collected">{{ row.collected | number: '1.2-2' }}</td>
+              <td>{{ row.refunded | number: '1.2-2' }}</td>
+              <td class="money-collected">{{ row.netCollected | number: '1.2-2' }}</td>
               <td class="money-remaining">{{ row.remaining | number: '1.2-2' }}</td>
               <td>
                 {{
@@ -177,6 +196,7 @@
                 }}</span>
               </td>
               <td>{{ 'CUSTOMER_OPERATIONS.PAYMENT_STATUSES.' + row.paymentStatus | translate }}</td>
+              <td>{{ 'CUSTOMER_OPERATIONS.REFUND_STATUSES.' + row.refundStatus | translate }}</td>
               <td>
                 {{
                   'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.' + row.installmentDueStatus | translate
@@ -197,7 +217,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="17" class="empty">
+              <td colspan="20" class="empty">
                 {{
                   (loading() ? 'CUSTOMER_OPERATIONS.LOADING' : 'CUSTOMER_OPERATIONS.EMPTY')
                     | translate
@@ -259,4 +279,15 @@
 </section>
 @if (selectedStatement(); as row) {
   <app-customer-statement-dialog [row]="row" (closed)="selectedStatement.set(null)" />
+}
+@if (selectedAction(); as row) {
+  <app-customer-action-dialog
+    [row]="row"
+    [canRefund]="canRefund()"
+    [canBlock]="canBlock()"
+    (closed)="selectedAction.set(null); $event && load()"
+  />
+}
+@if (selectedHistory(); as row) {
+  <app-customer-action-history-dialog [row]="row" (closed)="selectedHistory.set(null)" />
 }

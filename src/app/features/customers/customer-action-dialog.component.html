@@ -1,0 +1,97 @@
+<p-dialog
+  [visible]="true"
+  (visibleChange)="!$event && close()"
+  [modal]="true"
+  [style]="{ width: 'min(38rem, 96vw)' }"
+  [header]="'CUSTOMER_ACTION.TITLE' | translate"
+  [draggable]="false"
+  [resizable]="false"
+>
+  @if (loading()) {
+    <p>{{ 'CUSTOMER_ACTION.LOADING' | translate }}</p>
+  } @else if (failed()) {
+    <p role="alert">{{ 'CUSTOMER_ACTION.LOAD_ERROR' | translate }}</p>
+  } @else {
+    @if (data(); as action) {
+      <div class="action-content">
+        <header>
+          <strong>{{ action.customerName }}</strong>
+          <span class="mobile">{{ action.mobile }}</span>
+        </header>
+        @if (canRefund()) {
+          <section>
+            <h3>{{ 'CUSTOMER_ACTION.REFUND_TITLE' | translate }}</h3>
+            <div class="figures">
+              <div>
+                <span>{{ 'CUSTOMER_ACTION.PAID' | translate }}</span
+                ><strong>{{ action.paid | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong>
+              </div>
+              <div>
+                <span>{{ 'CUSTOMER_ACTION.REFUNDED' | translate }}</span
+                ><strong
+                  >{{ action.refunded | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong
+                >
+              </div>
+              <div>
+                <span>{{ 'CUSTOMER_ACTION.MAXIMUM' | translate }}</span
+                ><strong
+                  >{{ action.remainingRefundable | number: '1.2-2' }}
+                  {{ currency.currencyLabel() }}</strong
+                >
+              </div>
+            </div>
+            <p class="hint">{{ 'CUSTOMER_ACTION.CANCEL_WARNING' | translate }}</p>
+            <form [formGroup]="refundForm" (ngSubmit)="saveRefund()">
+              <label>
+                <span>{{ 'CUSTOMER_ACTION.AMOUNT' | translate }}</span>
+                <input type="number" min="0.01" step="0.01" formControlName="amount" />
+                @if (refundError(); as error) {
+                  <small class="field-error">{{ error }}</small>
+                }
+              </label>
+              <label>
+                <span>{{ 'CUSTOMER_ACTION.NOTE' | translate }}</span>
+                <textarea rows="2" formControlName="note"></textarea>
+                @if (noteError(); as error) {
+                  <small class="field-error">{{ error }}</small>
+                }
+              </label>
+              <button
+                type="submit"
+                class="danger"
+                [disabled]="savingRefund() || action.remainingRefundable <= 0"
+              >
+                {{ 'CUSTOMER_ACTION.CANCEL_REFUND' | translate }}
+              </button>
+            </form>
+          </section>
+        }
+        @if (canBlock()) {
+          <section>
+            <h3>{{ 'CUSTOMER_ACTION.BLOCK_TITLE' | translate }}</h3>
+            <p class="hint">{{ 'CUSTOMER_ACTION.BLOCK_HINT' | translate }}</p>
+            <form [formGroup]="blockForm" (ngSubmit)="saveBlock()">
+              <label class="check">
+                <input type="checkbox" formControlName="isBlocked" />
+                <span>{{ 'CUSTOMER_ACTION.BLOCK' | translate }}</span>
+              </label>
+              <label>
+                <span>{{ 'CUSTOMER_ACTION.REASON' | translate }}</span>
+                <textarea rows="2" formControlName="reason"></textarea>
+                @if (reasonError(); as error) {
+                  <small class="field-error">{{ error }}</small>
+                }
+              </label>
+              <button type="submit" [disabled]="savingBlock()">
+                {{ 'CUSTOMER_ACTION.SAVE_BLOCK' | translate }}
+              </button>
+            </form>
+          </section>
+        }
+        <footer>
+          <button type="button" (click)="close()">{{ 'CUSTOMER_ACTION.CLOSE' | translate }}</button>
+        </footer>
+      </div>
+    }
+  }
+</p-dialog>

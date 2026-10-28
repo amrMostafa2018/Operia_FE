@@ -21,12 +21,7 @@
           </div>
           <div>{{ 'CUSTOMER_STATEMENT.OPERATIONS' | translate }}: {{ data.operationCount }}</div>
           <div>
-            {{
-              (data.customerActive
-                ? 'CUSTOMER_OPERATIONS.RESTRICTIONS.active'
-                : 'CUSTOMER_OPERATIONS.RESTRICTIONS.blocked'
-              ) | translate
-            }}
+            {{ 'CUSTOMER_OPERATIONS.RESTRICTIONS.' + data.customerRestriction | translate }}
           </div>
         </header>
 
@@ -128,6 +123,26 @@
                 >{{ data.purchase.amountRemaining ?? 0 | number: '1.2-2' }}
                 {{ currency.currencyLabel() }}</strong
               >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_ACTION.REFUNDED' | translate }}</span>
+              <strong
+                >{{ data.purchase.refunded | number: '1.2-2' }}
+                {{ currency.currencyLabel() }}</strong
+              >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_ACTION.NET' | translate }}</span>
+              <strong
+                >{{ data.purchase.netCollected | number: '1.2-2' }}
+                {{ currency.currencyLabel() }}</strong
+              >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_OPERATIONS.REFUND_STATUS' | translate }}</span>
+              <strong>{{
+                'CUSTOMER_OPERATIONS.REFUND_STATUSES.' + data.purchase.refundStatus | translate
+              }}</strong>
             </div>
           </div>
           @if (data.firstPayment; as first) {
