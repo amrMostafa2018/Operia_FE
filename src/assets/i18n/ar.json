@@ -244,6 +244,7 @@
     "CustomerChanged": "تم تعديل هذا العميل بواسطة مستخدم آخر. حدّث البيانات وأعد المحاولة.",
     "CustomerNotFound": "تعذر العثور على هذا العميل.",
     "CustomerBlocked": "لا يمكن لهذا العميل إجراء حجز جديد لدى هذا المركز حاليًا. يرجى التواصل مع المركز.",
+    "CustomerHistoryCursorInvalid": "صفحة سجل التعديلات لم تعد متاحة. أعد فتح السجل وحاول مجددًا.",
     "BookingBranchRequired": "اختر فرعًا لعرض الموظفين المتاحين للحجز.",
     "BookingDateRangeInvalid": "يجب أن يكون تاريخ النهاية في تاريخ البداية أو بعده.",
     "BookingDateRangeTooLarge": "يمكن عرض 31 يومًا كحد أقصى في التقويم.",
@@ -1945,12 +1946,42 @@
     "DATE": "التاريخ والوقت",
     "ACTOR": "بواسطة",
     "ACTION": "الإجراء",
-    "DETAILS": "المبلغ / السبب",
+    "CHANGE": "القيمة السابقة والجديدة",
+    "FROM": "السابقة",
+    "TO": "الجديدة",
+    "DETAILS": "التفاصيل والمرجع",
+    "AMOUNT": "المبلغ",
+    "REASON": "السبب / ملاحظات",
+    "REFUND_TOTAL": "إجمالي المسترد",
+    "REMAINING_BALANCE": "الرصيد المتبقي",
+    "VALUES": {
+      "active": "نشطة",
+      "cancelled": "ملغاة",
+      "blocked": "محظور",
+      "unblocked": "غير محظور",
+      "created": "تم الإنشاء",
+      "PendingCollection": "بانتظار التحصيل",
+      "ReadyToBook": "جاهزة للحجز",
+      "Closed": "مغلقة"
+    },
+    "REFERENCES": {
+      "customer": "العميل",
+      "purchase": "الشراء",
+      "sale": "البيع",
+      "payment": "الدفعة",
+      "refund": "الاسترداد"
+    },
     "ACTIONS": {
+      "CustomerCreated": "إنشاء العميل",
+      "SaleConfirmed": "حفظ البيع",
+      "SalePaymentConfirmed": "تأكيد الدفع",
+      "SaleCollectionAttempted": "فشل محاولة الدفع",
+      "InstallmentCollected": "تحصيل قسط",
       "PurchaseCancelled": "إلغاء العملية",
       "RefundPosted": "تسجيل استرداد",
       "CustomerBlocked": "حظر العميل",
-      "CustomerUnblocked": "إلغاء حظر العميل"
+      "CustomerUnblocked": "إلغاء حظر العميل",
+      "CustomerBlockReasonChanged": "تعديل سبب الحظر"
     }
   },
   "CUSTOMER_STATEMENT": {

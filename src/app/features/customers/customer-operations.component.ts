@@ -128,7 +128,6 @@ export class CustomerOperationsComponent {
         label: this.translate.instant('CUSTOMER_OPERATIONS.AUDIT_HISTORY'),
         icon: 'pi pi-history',
         visible: this.canHistory(),
-        disabled: row.id.includes(':'),
         command: () => this.selectedHistory.set(row),
       },
     ];

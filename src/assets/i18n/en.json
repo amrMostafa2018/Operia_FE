@@ -244,6 +244,7 @@
     "CustomerChanged": "This customer was changed by another user. Refresh and try again.",
     "CustomerNotFound": "This customer could not be found.",
     "CustomerBlocked": "This customer cannot make a new booking at this center. Contact the center for help.",
+    "CustomerHistoryCursorInvalid": "This history page is no longer available. Reopen the history and try again.",
     "BookingBranchRequired": "Select a branch to view bookable employees.",
     "BookingDateRangeInvalid": "The end date must be on or after the start date.",
     "BookingDateRangeTooLarge": "The calendar can show at most 31 days at a time.",
@@ -1938,12 +1939,42 @@
     "DATE": "Date and time",
     "ACTOR": "Changed by",
     "ACTION": "Action",
-    "DETAILS": "Amount / reason",
+    "CHANGE": "Previous and new values",
+    "FROM": "Previous",
+    "TO": "New",
+    "DETAILS": "Details and reference",
+    "AMOUNT": "Amount",
+    "REASON": "Reason / notes",
+    "REFUND_TOTAL": "Total refunded",
+    "REMAINING_BALANCE": "Remaining balance",
+    "VALUES": {
+      "active": "Active",
+      "cancelled": "Cancelled",
+      "blocked": "Blocked",
+      "unblocked": "Not blocked",
+      "created": "Created",
+      "PendingCollection": "Awaiting collection",
+      "ReadyToBook": "Ready to book",
+      "Closed": "Closed"
+    },
+    "REFERENCES": {
+      "customer": "Customer",
+      "purchase": "Purchase",
+      "sale": "Sale",
+      "payment": "Payment",
+      "refund": "Refund"
+    },
     "ACTIONS": {
+      "CustomerCreated": "Customer created",
+      "SaleConfirmed": "Sale saved",
+      "SalePaymentConfirmed": "Payment confirmed",
+      "SaleCollectionAttempted": "Payment attempt failed",
+      "InstallmentCollected": "Installment collected",
       "PurchaseCancelled": "Purchase cancelled",
       "RefundPosted": "Refund recorded",
       "CustomerBlocked": "Customer blocked",
-      "CustomerUnblocked": "Customer unblocked"
+      "CustomerUnblocked": "Customer unblocked",
+      "CustomerBlockReasonChanged": "Block reason changed"
     }
   },
   "CUSTOMER_STATEMENT": {

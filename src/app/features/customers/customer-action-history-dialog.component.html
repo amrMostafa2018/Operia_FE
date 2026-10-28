@@ -2,7 +2,7 @@
   [visible]="true"
   (visibleChange)="!$event && closed.emit()"
   [modal]="true"
-  [style]="{ width: 'min(42rem, 96vw)' }"
+  [style]="{ width: 'min(58rem, 96vw)' }"
   [header]="'CUSTOMER_HISTORY.TITLE' | translate"
   [draggable]="false"
   [resizable]="false"
@@ -20,6 +20,7 @@
               <th>{{ 'CUSTOMER_HISTORY.DATE' | translate }}</th>
               <th>{{ 'CUSTOMER_HISTORY.ACTOR' | translate }}</th>
               <th>{{ 'CUSTOMER_HISTORY.ACTION' | translate }}</th>
+              <th>{{ 'CUSTOMER_HISTORY.CHANGE' | translate }}</th>
               <th>{{ 'CUSTOMER_HISTORY.DETAILS' | translate }}</th>
             </tr>
           </thead>
@@ -30,30 +31,68 @@
                 <td>{{ event.actor || '—' }}</td>
                 <td>{{ 'CUSTOMER_HISTORY.ACTIONS.' + event.action | translate }}</td>
                 <td>
+                  @if (event.oldValue || event.newValue) {
+                    @if (event.action === 'RefundPosted') {
+                      <span>{{ 'CUSTOMER_HISTORY.REFUND_TOTAL' | translate }}</span>
+                    } @else if (event.action === 'InstallmentCollected') {
+                      <span>{{ 'CUSTOMER_HISTORY.REMAINING_BALANCE' | translate }}</span>
+                    }
+                    <span
+                      >{{ 'CUSTOMER_HISTORY.FROM' | translate }}:
+                      {{ valueLabel(event.oldValue) }}</span
+                    >
+                    <span
+                      >{{ 'CUSTOMER_HISTORY.TO' | translate }}:
+                      {{ valueLabel(event.newValue) }}</span
+                    >
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>
                   @if (event.amount !== null) {
-                    {{ event.amount | number: '1.2-2' }} {{ currency.currencyLabel() }}
+                    <span
+                      >{{ 'CUSTOMER_HISTORY.AMOUNT' | translate }}:
+                      {{ event.amount | number: '1.2-2' }} {{ currency.currencyLabel() }}</span
+                    >
                   }
                   @if (event.reason) {
-                    <span>{{ event.reason }}</span>
+                    <span>{{ 'CUSTOMER_HISTORY.REASON' | translate }}: {{ event.reason }}</span>
                   }
+                  @if (event.oldReason || event.newReason) {
+                    <span
+                      >{{ 'CUSTOMER_HISTORY.REASON' | translate }} ({{
+                        'CUSTOMER_HISTORY.FROM' | translate
+                      }}): {{ event.oldReason || '—' }}</span
+                    >
+                    <span
+                      >{{ 'CUSTOMER_HISTORY.REASON' | translate }} ({{
+                        'CUSTOMER_HISTORY.TO' | translate
+                      }}): {{ event.newReason || '—' }}</span
+                    >
+                  }
+                  <span class="reference"
+                    >{{ 'CUSTOMER_HISTORY.REFERENCES.' + event.referenceType | translate }}:
+                    {{ event.referenceId }}</span
+                  >
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="4">{{ 'CUSTOMER_HISTORY.EMPTY' | translate }}</td>
+                <td colspan="5">{{ 'CUSTOMER_HISTORY.EMPTY' | translate }}</td>
               </tr>
             }
           </tbody>
         </table>
         <footer>
-          <button type="button" (click)="load(history.page - 1)" [disabled]="history.page <= 1">
+          <button type="button" (click)="load(page() - 1)" [disabled]="page() <= 1 || loading()">
             {{ 'CUSTOMER_OPERATIONS.PREVIOUS' | translate }}
           </button>
-          <span>{{ history.page }}</span>
+          <span>{{ page() }}</span>
           <button
             type="button"
-            (click)="load(history.page + 1)"
-            [disabled]="history.page * 10 >= history.total"
+            (click)="load(page() + 1)"
+            [disabled]="!history.nextCursor || loading()"
           >
             {{ 'CUSTOMER_OPERATIONS.NEXT' | translate }}
           </button>
