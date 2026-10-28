@@ -1,0 +1,247 @@
+<section class="customer-operations">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'CUSTOMER_OPERATIONS.TITLE' | translate }}</h1>
+      <p>{{ 'CUSTOMER_OPERATIONS.SUBTITLE' | translate }}</p>
+    </div>
+  </header>
+
+  <section class="filters" [attr.aria-label]="'CUSTOMER_OPERATIONS.FILTERS' | translate">
+    <div class="date-row">
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.FROM_DATE' | translate }}</span>
+        <input type="date" [(ngModel)]="draft.fromDate" (ngModelChange)="rangeError.set(false)" />
+      </label>
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.TO_DATE' | translate }}</span>
+        <input type="date" [(ngModel)]="draft.toDate" (ngModelChange)="rangeError.set(false)" />
+        @if (rangeError()) {
+          <small class="field-error">{{
+            'CUSTOMER_OPERATIONS.DATE_RANGE_ERROR' | translate
+          }}</small>
+        }
+      </label>
+    </div>
+    <div class="filter-grid">
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.CUSTOMER' | translate }}</span>
+        <input
+          type="text"
+          [(ngModel)]="draft.customer"
+          [placeholder]="'CUSTOMER_OPERATIONS.CUSTOMER' | translate"
+        />
+      </label>
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.MOBILE' | translate }}</span>
+        <input
+          type="text"
+          [(ngModel)]="draft.mobile"
+          inputmode="tel"
+          [placeholder]="'CUSTOMER_OPERATIONS.MOBILE' | translate"
+        />
+      </label>
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.SERVICE' | translate }}</span>
+        <input
+          type="text"
+          [(ngModel)]="draft.service"
+          [placeholder]="'CUSTOMER_OPERATIONS.SERVICE' | translate"
+        />
+      </label>
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.SERVICE_TYPE' | translate }}</span>
+        <select [(ngModel)]="draft.serviceType">
+          <option value="">{{ 'CUSTOMER_OPERATIONS.ALL' | translate }}</option>
+          <option value="package">{{ 'CUSTOMER_OPERATIONS.TYPES.package' | translate }}</option>
+          <option value="session">{{ 'CUSTOMER_OPERATIONS.TYPES.session' | translate }}</option>
+        </select>
+      </label>
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.STATUS' | translate }}</span>
+        <select [(ngModel)]="draft.status">
+          <option value="">{{ 'CUSTOMER_OPERATIONS.ALL' | translate }}</option>
+          <option value="active">
+            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.active' | translate }}
+          </option>
+          <option value="completed">
+            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.completed' | translate }}
+          </option>
+          <option value="expired">
+            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.expired' | translate }}
+          </option>
+          <option value="cancelled">
+            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.cancelled' | translate }}
+          </option>
+          <option value="pending">
+            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.pending' | translate }}
+          </option>
+        </select>
+      </label>
+      <label>
+        <span>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</span>
+        <select [(ngModel)]="draft.paymentType">
+          <option value="">{{ 'CUSTOMER_OPERATIONS.ALL' | translate }}</option>
+          <option value="cash">{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.cash' | translate }}</option>
+          <option value="installment">
+            {{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.installment' | translate }}
+          </option>
+          <option value="owned">{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.owned' | translate }}</option>
+        </select>
+      </label>
+      <div class="filter-actions">
+        <button type="button" class="primary" (click)="search()" [disabled]="loading()">
+          <i class="pi pi-search"></i> {{ 'CUSTOMER_OPERATIONS.SEARCH' | translate }}
+        </button>
+        <button type="button" (click)="clear()" [disabled]="loading()">
+          <i class="pi pi-refresh"></i> {{ 'CUSTOMER_OPERATIONS.CLEAR' | translate }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary">
+    <article class="sales">
+      <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_SALES' | translate }}</span>
+      <strong
+        >{{ result()?.totalSales ?? 0 | number: '1.2-2' }}
+        <small>{{ currency.currencyLabel() }}</small></strong
+      >
+    </article>
+    <article class="collected">
+      <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_COLLECTED' | translate }}</span>
+      <strong
+        >{{ result()?.totalCollected ?? 0 | number: '1.2-2' }}
+        <small>{{ currency.currencyLabel() }}</small></strong
+      >
+    </article>
+    <article class="remaining">
+      <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_REMAINING' | translate }}</span>
+      <strong
+        >{{ result()?.totalRemaining ?? 0 | number: '1.2-2' }}
+        <small>{{ currency.currencyLabel() }}</small></strong
+      >
+    </article>
+  </div>
+
+  <section class="grid-card">
+    <h2>{{ 'CUSTOMER_OPERATIONS.GRID_TITLE' | translate }} ({{ result()?.totalCount ?? 0 }})</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.CUSTOMER' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.MOBILE' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.BRANCH' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.SERVICE' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.SERVICE_TYPE' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.TOTAL' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.COLLECTED' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.REMAINING' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.UNITS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.CUSTOMER_RESTRICTION' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_STATUS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.DATE' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of result()?.rows ?? []; track row.id; let index = $index) {
+            <tr>
+              <td>{{ (page() - 1) * pageSize() + index + 1 }}</td>
+              <td class="name">{{ row.customerName }}</td>
+              <td class="mobile">{{ row.mobile || '—' }}</td>
+              <td>{{ row.branchName }}</td>
+              <td>{{ row.service }}</td>
+              <td>{{ 'CUSTOMER_OPERATIONS.TYPES.' + row.serviceType | translate }}</td>
+              <td>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.' + row.paymentType | translate }}</td>
+              <td>{{ row.total | number: '1.2-2' }}</td>
+              <td class="money-collected">{{ row.collected | number: '1.2-2' }}</td>
+              <td class="money-remaining">{{ row.remaining | number: '1.2-2' }}</td>
+              <td>
+                {{
+                  row.unitsRemaining === null ? '—' : row.unitsRemaining + ' / ' + row.unitsTotal
+                }}
+              </td>
+              <td>
+                <span class="status" [class.danger]="row.customerRestriction === 'blocked'">{{
+                  'CUSTOMER_OPERATIONS.RESTRICTIONS.' + row.customerRestriction | translate
+                }}</span>
+              </td>
+              <td>
+                <span class="status" [class.danger]="row.purchaseStatus === 'cancelled'">{{
+                  'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.' + row.purchaseStatus | translate
+                }}</span>
+              </td>
+              <td>{{ 'CUSTOMER_OPERATIONS.PAYMENT_STATUSES.' + row.paymentStatus | translate }}</td>
+              <td>
+                {{
+                  'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.' + row.installmentDueStatus | translate
+                }}
+              </td>
+              <td>{{ row.operationDate | date: 'shortDate' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="16" class="empty">
+                {{
+                  (loading() ? 'CUSTOMER_OPERATIONS.LOADING' : 'CUSTOMER_OPERATIONS.EMPTY')
+                    | translate
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer>
+      <div class="page-controls">
+        <button
+          type="button"
+          (click)="changePage(page() - 1)"
+          [disabled]="loading() || page() <= 1"
+        >
+          {{ 'CUSTOMER_OPERATIONS.PREVIOUS' | translate }}
+        </button>
+        <span>{{ page() }}</span>
+        <button
+          type="button"
+          (click)="changePage(page() + 1)"
+          [disabled]="loading() || page() * pageSize() >= (result()?.totalCount ?? 0)"
+        >
+          {{ 'CUSTOMER_OPERATIONS.NEXT' | translate }}
+        </button>
+        <select
+          [ngModel]="pageSize()"
+          (ngModelChange)="changePageSize($event)"
+          [attr.aria-label]="'CUSTOMER_OPERATIONS.PAGE_SIZE' | translate"
+        >
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+        </select>
+      </div>
+      @if (canExport()) {
+        <button type="button" class="export" (click)="export()" [disabled]="exporting()">
+          <i class="pi pi-file-excel"></i> {{ 'CUSTOMER_OPERATIONS.EXPORT' | translate }}
+        </button>
+      }
+    </footer>
+  </section>
+
+  <section class="import-panel">
+    <div>
+      <h2>{{ 'CUSTOMER_OPERATIONS.IMPORT_TITLE' | translate }}</h2>
+      <p>{{ 'CUSTOMER_OPERATIONS.IMPORT_HINT' | translate }}</p>
+    </div>
+    <div class="import-actions">
+      <button type="button" disabled>{{ 'CUSTOMER_OPERATIONS.IMPORT_UPLOAD' | translate }}</button>
+      <button type="button" disabled>
+        {{ 'CUSTOMER_OPERATIONS.IMPORT_TEMPLATE' | translate }}
+      </button>
+    </div>
+  </section>
+</section>
