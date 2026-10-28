@@ -649,6 +649,9 @@ export class AppointmentsComponent {
       )
       .subscribe({
         next: results => {
+          if (requestId !== this.employeesRequestId) {
+            return;
+          }
           const mapped = results.flatMap((staff, index) =>
             staff.map(employee => this.toEmployeeOption(employee, branchIds[index]!))
           );
@@ -657,6 +660,9 @@ export class AppointmentsComponent {
           this.loadBookings();
         },
         error: () => {
+          if (requestId !== this.employeesRequestId) {
+            return;
+          }
           this.employees.set([]);
           this.ensureEmployeeSelected([]);
           this.toast.add({
