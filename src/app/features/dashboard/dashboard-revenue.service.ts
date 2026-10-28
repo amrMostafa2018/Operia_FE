@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { currentRevenuePeriodParams } from '@core/utils/revenue-period.util';
 
 export interface DashboardRevenue {
   today: number;
@@ -14,8 +13,6 @@ export class DashboardRevenueService {
   private readonly http = inject(HttpClient);
 
   current(): Observable<DashboardRevenue> {
-    return this.http.get<DashboardRevenue>(`${environment.apiUrl}/dashboard/revenue`, {
-      params: currentRevenuePeriodParams(),
-    });
+    return this.http.get<DashboardRevenue>(`${environment.apiUrl}/dashboard/revenue`);
   }
 }

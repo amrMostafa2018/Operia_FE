@@ -2,7 +2,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { currentRevenuePeriodParams } from '@core/utils/revenue-period.util';
 import {
   ActivityRevenueSummary,
   InstallmentRevenuePage,
@@ -22,8 +21,7 @@ export class ActivityRevenueService {
   }
 
   summary(branchId: string | null): Observable<ActivityRevenueSummary> {
-    let params = currentRevenuePeriodParams();
-    if (branchId) params = params.set('branchId', branchId);
+    const params = branchId ? new HttpParams().set('branchId', branchId) : new HttpParams();
     return this.http.get<ActivityRevenueSummary>(`${environment.apiUrl}/revenue/summary`, {
       params,
     });
