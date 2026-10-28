@@ -20,6 +20,10 @@ export function mapPackageToCatalogItem(
     category: pkg.serviceCategoryId,
     durationMinutes: pkg.sessionDurationMinutes,
     price: pkg.cashPriceAfterDiscount ?? pkg.price,
+    cashEnabled: pkg.cashEnabled ?? true,
+    installmentEnabled: !!pkg.installmentEnabled,
+    installmentPrice: pkg.installmentPrice ?? null,
+    firstPayment: pkg.firstPayment ?? null,
     icon:
       normalizePrimeIcon(category?.icon) ||
       (isPackage ? DEFAULT_PACKAGE_ICON : DEFAULT_SESSION_ICON),

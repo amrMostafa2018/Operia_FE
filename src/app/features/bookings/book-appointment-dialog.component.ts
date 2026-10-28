@@ -110,6 +110,7 @@ export interface BookAppointmentPayload {
   lineItems: BookingLineItem[];
   serviceDuration: number;
   paymentMethod: PaymentMethodId | null;
+  dueNow: number;
 }
 
 /** Describes customer lookup state used by the booking UI. */
@@ -236,6 +237,20 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly paymentMethodsUnavailable = signal(false);
   private paymentMethodsRequestId = 0;
   readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
+  readonly packagePaymentOptions = signal<Record<string, 'cash' | 'installment'>>({});
+
+  selectPackagePaymentOption(packageId: string, option: 'cash' | 'installment'): void {
+    this.packagePaymentOptions.update(current => ({ ...current, [packageId]: option }));
+  }
+
+  installmentAvailable(packageId: string): boolean {
+    const product = this.catalogItems().find(item => item.id === packageId);
+    return !!product?.installmentEnabled && product.installmentPrice != null;
+  }
+
+  cashAvailable(packageId: string): boolean {
+    return this.catalogItems().find(item => item.id === packageId)?.cashEnabled !== false;
+  }
 
   private readonly clientMobile = toSignal(this.clientForm.controls.mobile.valueChanges, {
     initialValue: this.clientForm.controls.mobile.value,
@@ -392,7 +407,16 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       if (quantity <= 0) {
         continue;
       }
-      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackages, items));
+      items.push(
+        bookAppointmentCatalogQuantityLineItem(
+          service,
+          quantity,
+          ownedPackages,
+          items,
+          this.packagePaymentOptions()[service.id] ??
+            (service.cashEnabled === false ? 'installment' : 'cash')
+        )
+      );
     }
 
     items.push(...this.unlistedItems());
@@ -424,7 +448,18 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     this.paymentLineItems().reduce((total, item) => total + bookAppointmentLineTotal(item), 0)
   );
   readonly netTotal = computed(() => this.subtotal());
-  readonly hasPayableItems = computed(() => this.paymentLineItems().length > 0);
+  readonly dueNow = computed(() =>
+    this.paymentLineItems().reduce(
+      (total, item) =>
+        total +
+        (item.paymentOption === 'installment'
+          ? (item.firstPayment ?? 0) * item.quantity
+          : bookAppointmentLineTotal(item)),
+      0
+    )
+  );
+  readonly hasPayableItems = computed(() => this.dueNow() > 0);
+  readonly remainingBalance = computed(() => Math.max(0, this.netTotal() - this.dueNow()));
   readonly sessionCount = computed(() =>
     this.lineItems().reduce((total, item) => total + item.quantity, 0)
   );
@@ -475,6 +510,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
           });
           this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
           this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
+          this.packagePaymentOptions.set(
+            Object.fromEntries(
+              this.initialLineItems()
+                .filter(item => item.catalogPackageId && item.paymentOption)
+                .map(item => [item.catalogPackageId!, item.paymentOption!])
+            )
+          );
           this.selectedQuantities.set(this.buildQuantitiesFromLineItems(this.initialLineItems()));
           const selectedPackageIds = this.buildOwnedPackageIdsFromLineItems(
             this.initialLineItems()
@@ -1162,6 +1204,15 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
 
+    if (this.dueNow() > 0 && !this.draftPaymentMethod()) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.SalePaymentMethodUnavailable'),
+      });
+      return;
+    }
+
     if (
       this.serviceDuration() <= this.selection()!.slotDurationMinutes &&
       (!this.selectedEmployee() || this.eligibleEmployeesLoading())
@@ -1186,6 +1237,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       lineItems: this.lineItems(),
       serviceDuration: this.serviceDuration(),
       paymentMethod: this.draftPaymentMethod(),
+      dueNow: this.dueNow(),
     });
   }
 
