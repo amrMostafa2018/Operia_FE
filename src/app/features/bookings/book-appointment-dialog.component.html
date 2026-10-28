@@ -47,14 +47,34 @@
         <i class="pi pi-stopwatch"></i>
         <div>
           <small>{{ 'BOOKINGS.BOOK.DURATION' | translate }}</small>
-          <strong>{{ slot.slotDurationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+          <strong
+            >{{ serviceDuration() || slot.slotDurationMinutes }}
+            {{ 'BOOKINGS.MINUTES' | translate }}</strong
+          >
         </div>
       </article>
       <article>
         <i class="pi pi-user"></i>
         <div>
           <small>{{ 'BOOKINGS.BOOK.STAFF' | translate }}</small>
-          <strong>{{ slot.employeeName }}</strong>
+          @if (lineItems().length) {
+            <p-dropdown
+              [style]="{ width: '100%' }"
+              [options]="eligibleEmployees()"
+              optionLabel="fullName"
+              optionValue="id"
+              [ngModel]="selectedEmployeeId()"
+              (ngModelChange)="selectedEmployeeId.set($event)"
+              [disabled]="eligibleEmployeesLoading()"
+              [placeholder]="'BOOKINGS.BOOK.SELECT_EMPLOYEE' | translate"
+              appendTo="body"
+            />
+            @if (!eligibleEmployeesLoading() && !selectedEmployee()) {
+              <small class="field-error">{{ 'BOOKINGS.BOOK.EMPLOYEE_REQUIRED' | translate }}</small>
+            }
+          } @else {
+            <strong>{{ slot.employeeName }}</strong>
+          }
         </div>
       </article>
       <article>
