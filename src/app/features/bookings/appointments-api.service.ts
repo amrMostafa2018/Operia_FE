@@ -177,6 +177,12 @@ export class AppointmentsApiService {
     return this.http.get<BookingCustomerDto | null>(`${this.url}/customers/by-mobile`, { params });
   }
 
+  findCustomerById(customerId: string): Observable<BookingCustomerDto | null> {
+    return this.http.get<BookingCustomerDto | null>(
+      `${this.url}/customers/${encodeURIComponent(customerId)}`
+    );
+  }
+
   searchCustomers(
     term: string
   ): Observable<{ id: string; fullName: string; mobileNumber: string }[]> {

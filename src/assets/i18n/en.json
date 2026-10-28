@@ -247,6 +247,8 @@
     "BookingDirectCustomerItemsReadOnly": "Direct customer booking items cannot be changed after confirmation.",
     "BookingCustomerNameTooLong": "Customer name cannot exceed 200 characters.",
     "BookingCustomerSearchTermInvalid": "Search for a customer with 2 to 100 characters.",
+    "BookingRequestInvalid": "Review the booking details and try again.",
+    "BookingCustomerSelectionRequired": "Select a registered customer or choose Direct Customer.",
     "BookingEmployeeNotFound": "The selected employee was not found.",
     "BookingEmployeeNotInBranch": "The selected employee is not assigned to this branch.",
     "BookingOutsideWorkingHours": "The selected time is outside the employee's working hours.",
