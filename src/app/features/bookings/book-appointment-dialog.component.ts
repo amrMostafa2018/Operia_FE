@@ -586,15 +586,23 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
               }
               this.eligibleEmployeesLoading.set(false);
             },
-            error: () => {
+            error: error => {
               if (requestId !== this.eligibleEmployeesRequestId) return;
               this.eligibleEmployees.set([]);
               this.selectedEmployeeId.set(null);
               this.eligibleEmployeesLoading.set(false);
-              this.toast.add({
-                severity: 'error',
-                summary: this.translate.instant('BOOKINGS.BOOK.EMPLOYEES_UNAVAILABLE'),
-              });
+              if (error instanceof HttpErrorResponse && [400, 422].includes(error.status)) {
+                const translated = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+                  this.translate.instant(key)
+                );
+                this.toast.add({
+                  severity: 'error',
+                  summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+                  detail:
+                    Object.values(translated).filter(Boolean).join(' ') ||
+                    this.translate.instant('BOOKINGS.BOOK.EMPLOYEES_UNAVAILABLE'),
+                });
+              }
             },
           });
       },
