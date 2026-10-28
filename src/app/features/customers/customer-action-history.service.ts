@@ -8,13 +8,19 @@ export interface CustomerActionHistoryRow {
   atUtc: string;
   action: string;
   actor: string | null;
+  oldValue: string | null;
+  newValue: string | null;
   amount: number | null;
   reason: string | null;
+  oldReason: string | null;
+  newReason: string | null;
+  referenceType: string;
+  referenceId: string;
 }
 
 export interface CustomerActionHistoryPage {
   total: number;
-  page: number;
+  nextCursor: string | null;
   items: CustomerActionHistoryRow[];
 }
 
@@ -22,10 +28,18 @@ export interface CustomerActionHistoryPage {
 export class CustomerActionHistoryService {
   private readonly http = inject(HttpClient);
 
-  get(customerId: string, purchaseId: string, page: number): Observable<CustomerActionHistoryPage> {
+  get(
+    customerId: string,
+    operationId: string,
+    saleOnly: boolean,
+    cursor: string | null
+  ): Observable<CustomerActionHistoryPage> {
+    const resource = saleOnly
+      ? `sales/${encodeURIComponent(operationId)}`
+      : `purchases/${encodeURIComponent(operationId)}`;
     return this.http.get<CustomerActionHistoryPage>(
-      `${environment.apiUrl}/customers/${encodeURIComponent(customerId)}/purchases/${encodeURIComponent(purchaseId)}/history`,
-      { params: { page } }
+      `${environment.apiUrl}/customers/${encodeURIComponent(customerId)}/${resource}/history`,
+      { params: cursor ? { cursor } : {} }
     );
   }
 }

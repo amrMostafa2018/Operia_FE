@@ -21,6 +21,11 @@ th {
 td span {
   display: block;
 }
+.reference {
+  overflow-wrap: anywhere;
+  color: #69718b;
+  font-size: 0.75rem;
+}
 footer {
   display: flex;
   justify-content: center;
