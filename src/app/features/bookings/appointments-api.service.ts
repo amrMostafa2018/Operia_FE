@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import { PaymentMethodId } from './models/booking.model';
 
+export interface EligibleBookingEmployee {
+  id: string;
+  fullName: string;
+}
+
 /** Describes booking customer package dto exchanged with the API. */
 export interface BookingCustomerPackageDto {
   customerPackageId: string;
@@ -167,6 +172,21 @@ export interface BookingHistoryDto {
 export class AppointmentsApiService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/bookings`;
+
+  eligibleEmployees(request: {
+    branchId: string;
+    scheduledDate: string;
+    startMinutes: number;
+    endMinutes: number;
+    items: {
+      packageId: string;
+      customerPackageId: string | null;
+      quantity: number;
+      type: string;
+    }[];
+  }): Observable<EligibleBookingEmployee[]> {
+    return this.http.post<EligibleBookingEmployee[]>(`${this.url}/eligible-employees`, request);
+  }
 
   /** Finds a registered customer and owned balances by mobile number. */
   findCustomer(mobile: string, bookingId?: string): Observable<BookingCustomerDto | null> {

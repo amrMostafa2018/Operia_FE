@@ -549,10 +549,8 @@
   [visible]="mismatchVisible()"
   [serviceDuration]="mismatchServiceDuration()"
   [slotDuration]="mismatchSlotDuration()"
-  [confirmLabelKey]="pendingEdit() ? 'BOOKINGS.MISMATCH.CONFIRM_EDIT' : 'BOOKINGS.MISMATCH.CONFIRM'"
   (closed)="onMismatchBack()"
   (back)="onMismatchBack()"
-  (confirmAnyway)="onMismatchConfirm()"
 />
 
 <app-confirm-action-dialog

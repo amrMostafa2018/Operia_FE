@@ -238,6 +238,7 @@
     "BookingDateRangeTooLarge": "The calendar can show at most 31 days at a time.",
     "BookingNotFound": "The selected booking was not found.",
     "BookingSlotUnavailable": "This appointment is no longer available. Please choose another time.",
+    "BookingDurationMismatch": "The selected items need more time than this appointment. Choose a longer slot.",
     "BookingChanged": "This booking was changed by another user. Refresh and try again.",
     "BookingStatusInvalid": "Select a valid booking status.",
     "BookingCustomerNotFound": "Select a registered customer.",
@@ -1144,6 +1145,9 @@
       "TIME": "Time",
       "DURATION": "Duration",
       "STAFF": "Staff",
+      "SELECT_EMPLOYEE": "Select an employee",
+      "EMPLOYEE_REQUIRED": "Choose an employee available for every selected item and the full appointment.",
+      "EMPLOYEES_UNAVAILABLE": "Could not load available employees. Try again.",
       "BRANCH": "Branch",
       "SCROLL_PREV": "Scroll services backward",
       "SCROLL_NEXT": "Scroll services forward",
@@ -1159,7 +1163,7 @@
     },
     "MISMATCH": {
       "TITLE": "Booking duration warning",
-      "MESSAGE": "Selected services duration ({{serviceDuration}} min) is longer than the selected slot ({{slotDuration}} min). The booking will use the reserved slot duration only ({{slotDuration}} min). You can go back to edit services or continue.",
+      "MESSAGE": "Selected items need {{serviceDuration}} min, but this appointment is {{slotDuration}} min. Choose a longer slot or remove items before confirming.",
       "CONFIRM": "Confirm booking",
       "CONFIRM_EDIT": "Save changes",
       "BACK": "Back and edit services"

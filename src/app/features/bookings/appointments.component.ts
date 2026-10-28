@@ -209,8 +209,6 @@ export class AppointmentsComponent {
   readonly cancelConfirmVisible = signal(false);
 
   readonly activeBookingId = signal<string | null>(null);
-  readonly pendingDraft = signal<PendingBookingDraft | null>(null);
-  readonly pendingEdit = signal<BookingDetailsSavePayload | null>(null);
   readonly mismatchServiceDuration = signal(0);
   readonly mismatchSlotDuration = signal(0);
   readonly saleHandoffDraft = signal<SaleHandoffDraft | null>(null);
@@ -234,7 +232,11 @@ export class AppointmentsComponent {
   ]);
 
   readonly branchFilteredEmployees = computed(() =>
-    filterEmployees(this.employees(), null, this.filters().branchId)
+    filterEmployees(this.employees(), null, this.filters().branchId).filter(
+      employee =>
+        this.viewMode() === '4days' ||
+        hoursForDate(employee.workingDays, this.selectedDate()) !== null
+    )
   );
 
   readonly employeeOptions = computed(() => [
@@ -256,7 +258,11 @@ export class AppointmentsComponent {
   );
 
   readonly visibleEmployees = computed(() =>
-    filterEmployees(this.employees(), this.filters().employeeId, this.filters().branchId)
+    filterEmployees(this.employees(), this.filters().employeeId, this.filters().branchId).filter(
+      employee =>
+        this.viewMode() === '4days' ||
+        hoursForDate(employee.workingDays, this.selectedDate()) !== null
+    )
   );
 
   readonly branchGroups = computed(() =>
@@ -580,7 +586,6 @@ export class AppointmentsComponent {
       this.customerLookupStatus.set('idle');
       this.clients.set([]);
       this.packages.set([]);
-      this.selectedSlot.set(null);
       this.filters.update(current => ({
         ...current,
         clientName: '',
@@ -704,6 +709,8 @@ export class AppointmentsComponent {
       return;
     }
     this.selectedDate.set(next);
+    this.selectedSlot.set(null);
+    this.ensureEmployeeSelected();
     this.syncDisplayedMonth(next);
     this.loadBookings();
   }
@@ -714,6 +721,8 @@ export class AppointmentsComponent {
     }
     const next = this.dateOnOrAfterToday(date);
     this.selectedDate.set(next);
+    this.selectedSlot.set(null);
+    this.ensureEmployeeSelected();
     this.syncDisplayedMonth(next);
     this.loadBookings();
   }
@@ -997,7 +1006,6 @@ export class AppointmentsComponent {
       return;
     }
     if (payload.serviceDuration > payload.selection.slotDurationMinutes) {
-      this.pendingDraft.set(payload);
       this.mismatchServiceDuration.set(payload.serviceDuration);
       this.mismatchSlotDuration.set(payload.selection.slotDurationMinutes);
       this.mismatchVisible.set(true);
@@ -1006,27 +1014,8 @@ export class AppointmentsComponent {
     this.commitBooking(payload);
   }
 
-  onMismatchConfirm(): void {
-    const edit = this.pendingEdit();
-    if (edit) {
-      this.commitBookingEdit(edit);
-      this.pendingEdit.set(null);
-      this.mismatchVisible.set(false);
-      return;
-    }
-    const draft = this.pendingDraft();
-    if (!draft) {
-      return;
-    }
-    this.commitBooking(draft);
-    this.pendingDraft.set(null);
-    this.mismatchVisible.set(false);
-  }
-
   onMismatchBack(): void {
     this.mismatchVisible.set(false);
-    this.pendingDraft.set(null);
-    this.pendingEdit.set(null);
   }
 
   /** Sends a registered customer's booking with an idempotency key and current selections. */
@@ -1163,7 +1152,6 @@ export class AppointmentsComponent {
     }
     const serviceDuration = sumLineItemDuration(payload.lineItems);
     if (serviceDuration > booking.slotDurationMinutes) {
-      this.pendingEdit.set(payload);
       this.mismatchServiceDuration.set(serviceDuration);
       this.mismatchSlotDuration.set(booking.slotDurationMinutes);
       this.mismatchVisible.set(true);

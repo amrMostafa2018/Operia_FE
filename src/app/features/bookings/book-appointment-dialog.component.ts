@@ -55,7 +55,7 @@ import {
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
 import { PackageService } from '@app/features/packages/package.service';
-import { AppointmentsApiService } from './appointments-api.service';
+import { AppointmentsApiService, EligibleBookingEmployee } from './appointments-api.service';
 import { getRtlStartScrollLeft } from '@app/shared/utils/rtl.util';
 import {
   PHONE_INPUT_CSS_CLASS,
@@ -81,6 +81,7 @@ import {
   bookAppointmentLineDuration,
   bookAppointmentLineTotal,
   bookAppointmentMaxQuantity,
+  mapBookingLineToApiItem,
   bookAppointmentOwnedPackageLineItem,
   bookAppointmentPaymentLineItems,
   ServiceCatalogItem,
@@ -179,6 +180,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly selectedQuantities = signal<Record<string, number>>({});
   readonly unlistedItems = signal<BookingLineItem[]>([]);
   readonly selectedPackageIds = signal<string[]>([]);
+  readonly eligibleEmployees = signal<EligibleBookingEmployee[]>([]);
+  readonly selectedEmployeeId = signal<string | null>(null);
+  readonly eligibleEmployeesLoading = signal(false);
+  private eligibleEmployeesRequestId = 0;
   readonly customerMode = signal<'registered' | 'new' | 'direct'>('registered');
   readonly registering = signal(false);
   readonly customerSelectionLoading = signal(false);
@@ -411,6 +416,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       );
     }, 0)
   );
+  readonly selectedEmployee = computed(
+    () =>
+      this.eligibleEmployees().find(employee => employee.id === this.selectedEmployeeId()) ?? null
+  );
   readonly subtotal = computed(() =>
     this.paymentLineItems().reduce((total, item) => total + bookAppointmentLineTotal(item), 0)
   );
@@ -475,6 +484,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             selectedPackageIds.push(initialPackageId);
           }
           this.selectedPackageIds.set(selectedPackageIds);
+          this.selectedEmployeeId.set(this.selection()?.employeeId ?? null);
+          this.eligibleEmployees.set([]);
           this.showServicesSection.set(false);
           this.showUnlisted.set(false);
           this.activeCategory.set('all');
@@ -527,6 +538,65 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             this.selectedPackageIds.update(ids => [...ids, initialPackageId]);
           }
         });
+      },
+      { allowSignalWrites: true }
+    );
+
+    effect(
+      () => {
+        const slot = this.selection();
+        const items = this.lineItems();
+        if (!this.visible() || !slot || items.length === 0) {
+          this.eligibleEmployeesRequestId++;
+          this.eligibleEmployees.set([]);
+          this.eligibleEmployeesLoading.set(false);
+          return;
+        }
+        const requestItems = items
+          .filter(item => !!item.catalogPackageId)
+          .map(item => mapBookingLineToApiItem(item, items));
+        if (requestItems.length !== items.length) {
+          this.eligibleEmployeesRequestId++;
+          this.eligibleEmployees.set([]);
+          this.selectedEmployeeId.set(null);
+          this.eligibleEmployeesLoading.set(false);
+          return;
+        }
+        const requestId = ++this.eligibleEmployeesRequestId;
+        this.eligibleEmployeesLoading.set(true);
+        this.appointmentsApi
+          .eligibleEmployees({
+            branchId: slot.branchId,
+            scheduledDate: [
+              slot.date.getFullYear(),
+              String(slot.date.getMonth() + 1).padStart(2, '0'),
+              String(slot.date.getDate()).padStart(2, '0'),
+            ].join('-'),
+            startMinutes: slot.startMinutes,
+            endMinutes: slot.startMinutes + slot.slotDurationMinutes,
+            items: requestItems,
+          })
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: employees => {
+              if (requestId !== this.eligibleEmployeesRequestId) return;
+              this.eligibleEmployees.set(employees);
+              if (!employees.some(employee => employee.id === this.selectedEmployeeId())) {
+                this.selectedEmployeeId.set(null);
+              }
+              this.eligibleEmployeesLoading.set(false);
+            },
+            error: () => {
+              if (requestId !== this.eligibleEmployeesRequestId) return;
+              this.eligibleEmployees.set([]);
+              this.selectedEmployeeId.set(null);
+              this.eligibleEmployeesLoading.set(false);
+              this.toast.add({
+                severity: 'error',
+                summary: this.translate.instant('BOOKINGS.BOOK.EMPLOYEES_UNAVAILABLE'),
+              });
+            },
+          });
       },
       { allowSignalWrites: true }
     );
@@ -1084,8 +1154,23 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
 
+    if (
+      this.serviceDuration() <= this.selection()!.slotDurationMinutes &&
+      (!this.selectedEmployee() || this.eligibleEmployeesLoading())
+    ) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('BOOKINGS.BOOK.EMPLOYEE_REQUIRED'),
+      });
+      return;
+    }
+
     this.confirmBooking.emit({
-      selection: this.selection()!,
+      selection: {
+        ...this.selection()!,
+        employeeId: this.selectedEmployee()?.id ?? this.selection()!.employeeId,
+        employeeName: this.selectedEmployee()?.fullName ?? this.selection()!.employeeName,
+      },
       clientName: this.clientForm.controls.name.value.trim(),
       clientMobile: this.clientForm.controls.mobile.value.trim(),
       clientId: client?.id ?? null,

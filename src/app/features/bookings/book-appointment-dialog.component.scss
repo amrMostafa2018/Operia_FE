@@ -40,6 +40,11 @@
     align-items: flex-start;
     gap: 0.55rem;
 
+    > div {
+      min-width: 0;
+      flex: 1;
+    }
+
     i {
       color: #4b24da;
       margin-top: 0.15rem;
