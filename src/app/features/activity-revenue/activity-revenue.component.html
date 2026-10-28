@@ -1,13 +1,66 @@
 <section class="activity-revenue">
   <header>
-    <h1>{{ 'ACTIVITY_REVENUE.TITLE' | translate }}</h1>
-    <p>{{ 'ACTIVITY_REVENUE.FINANCIAL_MOVEMENTS' | translate }}</p>
-    <strong
-      >{{ 'ACTIVITY_REVENUE.NET_TOTAL' | translate }}: {{ formatMoney(confirmedTotal()) }}</strong
-    >
+    <div>
+      <h1>{{ 'ACTIVITY_REVENUE.TITLE' | translate }}</h1>
+      <p>{{ 'ACTIVITY_REVENUE.FINANCIAL_MOVEMENTS' | translate }}</p>
+    </div>
+    <label class="branch-filter">
+      <span>{{ 'ACTIVITY_REVENUE.BRANCH' | translate }}</span>
+      <select #branchSelect [value]="branchId() ?? ''" (change)="selectBranch(branchSelect.value)">
+        <option value="">{{ 'ACTIVITY_REVENUE.ALL_BRANCHES' | translate }}</option>
+        @for (branch of branches(); track branch.id) {
+          <option [value]="branch.id">{{ branch.name }}</option>
+        }
+      </select>
+    </label>
   </header>
+  @if (summary(); as figures) {
+    <div class="revenue-cards">
+      <article>
+        <span class="card-icon pi pi-wallet"></span>
+        <span>{{ 'ACTIVITY_REVENUE.TODAY_COUNT' | translate }}</span>
+        <strong>{{ figures.today.transactionCount }}</strong>
+        <small>{{ 'ACTIVITY_REVENUE.COLLECTIONS' | translate }}</small>
+      </article>
+      <article>
+        <span class="card-icon pi pi-users"></span>
+        <span>{{ 'ACTIVITY_REVENUE.MONTH_COUNT' | translate }}</span>
+        <strong>{{ figures.month.transactionCount }}</strong>
+        <small>{{ 'ACTIVITY_REVENUE.COLLECTIONS' | translate }}</small>
+      </article>
+      <article>
+        <span class="card-icon pi pi-calendar"></span>
+        <span>{{ 'ACTIVITY_REVENUE.TODAY_GROSS' | translate }}</span>
+        <strong>{{ formatMoney(figures.today.grossCollected) }}</strong>
+        <small>{{ 'ACTIVITY_REVENUE.BEFORE_REFUNDS' | translate }}</small>
+      </article>
+      <article>
+        <span class="card-icon pi pi-money-bill"></span>
+        <span>{{ 'ACTIVITY_REVENUE.MONTH_GROSS' | translate }}</span>
+        <strong>{{ formatMoney(figures.month.grossCollected) }}</strong>
+        <small>{{ 'ACTIVITY_REVENUE.BEFORE_REFUNDS' | translate }}</small>
+      </article>
+    </div>
+    <div class="net-summary">
+      <span
+        >{{ 'ACTIVITY_REVENUE.NET_TODAY' | translate }}:
+        <strong>{{ formatMoney(figures.today.netCollected) }}</strong></span
+      >
+      <span
+        >{{ 'ACTIVITY_REVENUE.NET_MONTH' | translate }}:
+        <strong>{{ formatMoney(figures.month.netCollected) }}</strong></span
+      >
+    </div>
+  }
   @if (loading()) {
     <p>{{ 'ACTIVITY_REVENUE.LOADING' | translate }}</p>
+  } @else if (error()) {
+    <div class="load-error">
+      <p>{{ 'ACTIVITY_REVENUE.LOAD_ERROR' | translate }}</p>
+      <button type="button" (click)="load(page())">
+        {{ 'ACTIVITY_REVENUE.RETRY' | translate }}
+      </button>
+    </div>
   } @else if (rows().length) {
     <div class="table-scroll">
       <table>
