@@ -57,8 +57,8 @@ export const mainRoutes: Routes = [
       {
         path: 'customers',
         loadComponent: () =>
-          import('@app/features/customers/direct-customer-ledger.component').then(
-            m => m.DirectCustomerLedgerComponent
+          import('@app/features/customers/customer-operations.component').then(
+            m => m.CustomerOperationsComponent
           ),
         canActivate: [permissionGuard],
         data: {
