@@ -876,3 +876,22 @@
     grid-template-columns: 44px minmax(0, 1fr) 44px;
   }
 }
+.package-payment-choice {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+
+  button {
+    border: 1px solid var(--surface-border);
+    border-radius: 0.4rem;
+    background: var(--surface-card);
+    color: var(--text-color);
+    padding: 0.25rem 0.65rem;
+    cursor: pointer;
+  }
+
+  button.active {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+  }
+}

@@ -523,7 +523,8 @@ export function bookAppointmentCatalogQuantityLineItem(
   service: ServiceCatalogItem,
   quantity: number,
   ownedPackages: readonly ClientPackage[],
-  lineItems: readonly BookingLineItem[] = []
+  lineItems: readonly BookingLineItem[] = [],
+  paymentOption: 'cash' | 'installment' = 'cash'
 ): BookingLineItem {
   const ownedPackage =
     service.type === 'session'
@@ -540,7 +541,13 @@ export function bookAppointmentCatalogQuantityLineItem(
     name: service.name,
     type: service.type,
     quantity,
-    price: usesOwnedSession ? 0 : bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    price: usesOwnedSession
+      ? 0
+      : paymentOption === 'installment' && service.installmentPrice != null
+        ? service.installmentPrice
+        : bookAppointmentCatalogUnitPrice(service, ownedPackage, quantity),
+    paymentOption,
+    firstPayment: paymentOption === 'installment' ? (service.firstPayment ?? 0) : null,
     newPurchaseUnits,
     durationMinutes: service.durationMinutes,
     packageSessionLinked: usesOwnedSession,
@@ -739,6 +746,10 @@ export interface ServiceCatalogItem {
   category: string;
   durationMinutes: number;
   price: number;
+  cashEnabled?: boolean;
+  installmentEnabled?: boolean;
+  installmentPrice?: number | null;
+  firstPayment?: number | null;
   icon: string;
   type: 'package' | 'session';
 }
@@ -757,6 +768,8 @@ export interface BookingLineItem {
   type: 'package' | 'session' | 'unlisted';
   quantity: number;
   price: number;
+  paymentOption?: 'cash' | 'installment';
+  firstPayment?: number | null;
   durationMinutes: number;
   packageSessionLinked?: boolean;
   categoryId?: string | null;
