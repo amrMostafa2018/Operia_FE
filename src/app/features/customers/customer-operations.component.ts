@@ -24,6 +24,8 @@ import {
   CustomerOperationsService,
 } from './customer-operations.service';
 import { CustomerStatementDialogComponent } from './customer-statement-dialog.component';
+import { CustomerActionDialogComponent } from './customer-action-dialog.component';
+import { CustomerActionHistoryDialogComponent } from './customer-action-history-dialog.component';
 
 const emptyFilters = (): CustomerOperationsFilters => ({
   fromDate: '',
@@ -46,6 +48,8 @@ const emptyFilters = (): CustomerOperationsFilters => ({
     MenuModule,
     TranslatePipe,
     CustomerStatementDialogComponent,
+    CustomerActionDialogComponent,
+    CustomerActionHistoryDialogComponent,
   ],
   templateUrl: './customer-operations.component.html',
   styleUrl: './customer-operations.component.scss',
@@ -60,6 +64,9 @@ export class CustomerOperationsComponent {
   readonly currency = inject(CurrencyService);
 
   readonly canExport = computed(() => this.permissions.hasPermission(Policies.CustomersExport));
+  readonly canRefund = computed(() => this.permissions.hasPermission(Policies.CustomersRefund));
+  readonly canBlock = computed(() => this.permissions.hasPermission(Policies.CustomersBlock));
+  readonly canHistory = computed(() => this.permissions.hasPermission(Policies.CustomersHistory));
   readonly result = signal<CustomerOperationsPage | null>(null);
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -67,6 +74,8 @@ export class CustomerOperationsComponent {
   readonly exporting = signal(false);
   readonly rangeError = signal(false);
   readonly selectedStatement = signal<CustomerOperation | null>(null);
+  readonly selectedAction = signal<CustomerOperation | null>(null);
+  readonly selectedHistory = signal<CustomerOperation | null>(null);
   draft = emptyFilters();
   private applied = emptyFilters();
   private requestId = 0;
@@ -111,12 +120,16 @@ export class CustomerOperationsComponent {
       {
         label: this.translate.instant('CUSTOMER_OPERATIONS.EDIT_STATUS'),
         icon: 'pi pi-pencil',
-        disabled: true,
+        visible: this.canRefund() || this.canBlock(),
+        disabled: row.id.includes(':'),
+        command: () => this.selectedAction.set(row),
       },
       {
         label: this.translate.instant('CUSTOMER_OPERATIONS.AUDIT_HISTORY'),
         icon: 'pi pi-history',
-        disabled: true,
+        visible: this.canHistory(),
+        disabled: row.id.includes(':'),
+        command: () => this.selectedHistory.set(row),
       },
     ];
   }

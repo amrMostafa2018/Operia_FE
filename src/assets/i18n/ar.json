@@ -235,6 +235,15 @@
     "CustomerInstallmentPaymentMethodUnavailable": "اختر طريقة دفع مفعّلة.",
     "CustomerInstallmentIdempotencyConflict": "طلب الدفع غير صالح. حدّث بيانات العملية وحاول مجددًا.",
     "CustomerInstallmentPurchaseInactive": "لا يمكن تحصيل أقساط لعملية شراء غير مفعّلة أو منتهية.",
+    "CustomerRefundAmountInvalid": "أدخل مبلغ استرداد أكبر من صفر وبحد أقصى منزلتين عشريتين.",
+    "CustomerRefundExceedsPaid": "مبلغ الاسترداد يتجاوز المبلغ المدفوع والمتاح لهذه العملية. حدّث البيانات لمعرفة الحد الحالي.",
+    "CustomerRefundIdempotencyConflict": "استُخدم طلب الاسترداد هذا من قبل ببيانات مختلفة.",
+    "CustomerRefundUnavailable": "لا يمكن استرداد هذه العملية أو تم تعديلها بواسطة مستخدم آخر. حدّث البيانات وأعد المحاولة.",
+    "CustomerRefundNoteInvalid": "يجب ألا تتجاوز ملاحظة الاسترداد 1000 حرف.",
+    "CustomerBlockReasonInvalid": "يجب ألا يتجاوز سبب الحظر 500 حرف.",
+    "CustomerChanged": "تم تعديل هذا العميل بواسطة مستخدم آخر. حدّث البيانات وأعد المحاولة.",
+    "CustomerNotFound": "تعذر العثور على هذا العميل.",
+    "CustomerBlocked": "لا يمكن لهذا العميل إجراء حجز جديد لدى هذا المركز حاليًا. يرجى التواصل مع المركز.",
     "BookingBranchRequired": "اختر فرعًا لعرض الموظفين المتاحين للحجز.",
     "BookingDateRangeInvalid": "يجب أن يكون تاريخ النهاية في تاريخ البداية أو بعده.",
     "BookingDateRangeTooLarge": "يمكن عرض 31 يومًا كحد أقصى في التقويم.",
@@ -1382,8 +1391,11 @@
   "ACTIVITY_REVENUE": {
     "TITLE": "إيرادات النشاط",
     "INSTALLMENTS_ONLY": "تحصيلات البيع والأقساط المؤكدة",
+    "FINANCIAL_MOVEMENTS": "التحصيلات المؤكدة والاستردادات المسجلة",
     "CONFIRMED_TOTAL": "إجمالي التحصيل المؤكد",
+    "NET_TOTAL": "صافي المحصل",
     "SALE_FIRST_PAYMENT": "تحصيل البيع",
+    "REFUND": "استرداد",
     "LOADING": "جارٍ تحميل التحصيلات...",
     "LOAD_ERROR": "تعذر تحميل التحصيلات.",
     "EMPTY": "لا توجد تحصيلات مؤكدة بعد.",
@@ -1457,7 +1469,8 @@
     },
     "INSTALLMENT_STATUS": {
       "DUE": "مستحق",
-      "PAID": "مدفوع"
+      "PAID": "مدفوع",
+      "CANCELLED": "ملغى"
     },
     "MEMBERSHIP": {
       "ACTIVE": "عضوية نشطة",
@@ -1839,15 +1852,20 @@
     "DATE_RANGE_ERROR": "يجب أن يكون تاريخ النهاية في أو بعد تاريخ البداية.",
     "TOTAL_SALES": "إجمالي المبيعات",
     "TOTAL_COLLECTED": "إجمالي المحصل",
+    "TOTAL_REFUNDED": "إجمالي الاستردادات",
+    "TOTAL_NET": "صافي المحصل",
     "TOTAL_REMAINING": "إجمالي المتبقي",
     "GRID_TITLE": "قائمة عمليات العملاء",
     "TOTAL": "إجمالي السعر",
     "COLLECTED": "المدفوع",
+    "REFUNDED": "المسترد",
+    "NET": "صافي المحصل",
     "REMAINING": "المتبقي",
     "UNITS": "الجلسات / النبضات",
     "CUSTOMER_RESTRICTION": "قيد العميل",
     "PURCHASE_STATUS": "حالة الشراء",
     "PAYMENT_STATUS": "حالة الدفع",
+    "REFUND_STATUS": "حالة الاسترداد",
     "INSTALLMENT_STATUS": "استحقاق القسط",
     "DATE": "تاريخ العملية",
     "ACTIONS": "العمليات",
@@ -1867,7 +1885,7 @@
     "IMPORT_TEMPLATE": "تحميل قالب الاستيراد",
     "TYPES": { "package": "باقة", "session": "جلسة واحدة" },
     "PAYMENT_TYPES": { "cash": "كاش", "installment": "قسط", "owned": "جلسة مملوكة" },
-    "RESTRICTIONS": { "active": "نشط", "blocked": "محظور" },
+    "RESTRICTIONS": { "active": "نشط", "blocked": "محظور", "inactive": "غير نشط" },
     "PURCHASE_STATUSES": {
       "active": "نشطة",
       "completed": "مكتملة",
@@ -1880,11 +1898,59 @@
       "partial": "مدفوع جزئيًا",
       "unpaid": "غير مدفوع"
     },
+    "REFUND_STATUSES": { "none": "لا يوجد", "partial": "مسترد جزئيًا", "full": "مسترد بالكامل" },
     "INSTALLMENT_STATUSES": {
       "none": "—",
       "paid": "مدفوع",
       "due": "مستحق",
-      "scheduled": "بعد الجلسات"
+      "scheduled": "بعد الجلسات",
+      "cancelled": "ملغى"
+    }
+  },
+  "CUSTOMER_ACTION": {
+    "TITLE": "تعديل بيانات – حالة العميل",
+    "LOADING": "جار تحميل أحدث بيانات العميل والعملية…",
+    "LOAD_ERROR": "تعذر تحميل بيانات هذا الإجراء.",
+    "REFUND_TITLE": "إلغاء العملية واسترداد المبلغ",
+    "PAID": "المدفوع لهذه العملية",
+    "REFUNDED": "المسترد سابقًا",
+    "MAXIMUM": "الحد الأقصى للاسترداد",
+    "NET": "صافي المحصل",
+    "CANCEL_WARNING": "سيتم إلغاء العملية ومنع استخدام الجلسات المتبقية وإلغاء حجوزاتها المستقبلية. تبقى المدفوعات السابقة في السجل.",
+    "AMOUNT": "قيمة المبلغ المسترد",
+    "AMOUNT_REQUIRED": "يرجى إدخال مبلغ الاسترداد.",
+    "AMOUNT_POSITIVE": "يجب أن يكون مبلغ الاسترداد أكبر من صفر.",
+    "AMOUNT_CAP": "لا يمكن أن يتجاوز الاسترداد المبلغ المدفوع المتاح.",
+    "AMOUNT_DECIMALS": "استخدم منزلتين عشريتين بحد أقصى.",
+    "NOTE": "ملاحظة اختيارية",
+    "NOTE_LENGTH": "يجب ألا تتجاوز الملاحظة 1000 حرف.",
+    "CANCEL_REFUND": "إلغاء واسترداد",
+    "BLOCK_TITLE": "حظر حجوزات العميل",
+    "BLOCK_HINT": "يمنع الحظر الحجوزات الجديدة لدى هذا المركز ويُبقي السجلات السابقة كما هي.",
+    "BLOCK": "حظر هذا العميل",
+    "REASON": "سبب الحظر (اختياري)",
+    "REASON_LENGTH": "يجب ألا يتجاوز السبب 500 حرف.",
+    "SAVE_BLOCK": "حفظ الحظر",
+    "CLOSE": "إغلاق",
+    "REFUND_SUCCESS": "تم تسجيل الاسترداد وإلغاء العملية.",
+    "BLOCK_SUCCESS": "تم حظر العميل لدى هذا المركز.",
+    "UNBLOCK_SUCCESS": "تم إلغاء حظر العميل لدى هذا المركز.",
+    "SAVE_ERROR": "تعذر حفظ التغيير. يرجى المحاولة مجددًا."
+  },
+  "CUSTOMER_HISTORY": {
+    "TITLE": "سجل تعديلات العميل",
+    "LOADING": "جار تحميل سجل التعديلات…",
+    "LOAD_ERROR": "تعذر تحميل سجل التعديلات.",
+    "EMPTY": "لا توجد تعديلات مسجلة لهذه العملية.",
+    "DATE": "التاريخ والوقت",
+    "ACTOR": "بواسطة",
+    "ACTION": "الإجراء",
+    "DETAILS": "المبلغ / السبب",
+    "ACTIONS": {
+      "PurchaseCancelled": "إلغاء العملية",
+      "RefundPosted": "تسجيل استرداد",
+      "CustomerBlocked": "حظر العميل",
+      "CustomerUnblocked": "إلغاء حظر العميل"
     }
   },
   "CUSTOMER_STATEMENT": {
@@ -1921,7 +1987,7 @@
     "USER": "سجل بواسطة",
     "STATUS": "الحالة",
     "NO_INSTALLMENTS": "لا توجد أقساط لهذه العملية.",
-    "PAYMENT_STATUSES": { "paid": "مدفوع", "due": "مستحق" }
+    "PAYMENT_STATUSES": { "paid": "مدفوع", "due": "مستحق", "cancelled": "ملغى" }
   },
   "CUSTOMER_LEDGER": {
     "TITLE": "العملاء",

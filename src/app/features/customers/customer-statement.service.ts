@@ -33,6 +33,7 @@ export interface CustomerStatement {
   customerName: string;
   mobile: string;
   customerActive: boolean;
+  customerRestriction: string;
   operationCount: number;
   serviceName: string;
   serviceType: string;
@@ -46,6 +47,9 @@ export interface CustomerStatement {
     purchasePrice: number | null;
     amountPaid: number | null;
     amountRemaining: number | null;
+    refunded: number;
+    netCollected: number;
+    refundStatus: string;
     pulses: StatementBalance | null;
     completedSessions: StatementSession[];
   };

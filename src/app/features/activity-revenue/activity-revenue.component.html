@@ -1,10 +1,9 @@
 <section class="activity-revenue">
   <header>
     <h1>{{ 'ACTIVITY_REVENUE.TITLE' | translate }}</h1>
-    <p>{{ 'ACTIVITY_REVENUE.INSTALLMENTS_ONLY' | translate }}</p>
+    <p>{{ 'ACTIVITY_REVENUE.FINANCIAL_MOVEMENTS' | translate }}</p>
     <strong
-      >{{ 'ACTIVITY_REVENUE.CONFIRMED_TOTAL' | translate }}:
-      {{ formatMoney(confirmedTotal()) }}</strong
+      >{{ 'ACTIVITY_REVENUE.NET_TOTAL' | translate }}: {{ formatMoney(confirmedTotal()) }}</strong
     >
   </header>
   @if (loading()) {
@@ -30,17 +29,28 @@
               <td>{{ row.offerName }}</td>
               <td>
                 {{
-                  row.kind === 'Sale'
-                    ? ('ACTIVITY_REVENUE.SALE_FIRST_PAYMENT' | translate)
-                    : row.installmentNumber
+                  row.kind === 'Refund'
+                    ? ('ACTIVITY_REVENUE.REFUND' | translate)
+                    : row.kind === 'Sale'
+                      ? ('ACTIVITY_REVENUE.SALE_FIRST_PAYMENT' | translate)
+                      : row.installmentNumber
                 }}
               </td>
               <td>{{ formatMoney(row.amount) }}</td>
               <td>
-                {{ 'CUSTOMER_INQUIRY.METHOD.' + row.paymentMethod.toUpperCase() | translate }}
+                {{
+                  row.kind === 'Refund'
+                    ? '—'
+                    : ('CUSTOMER_INQUIRY.METHOD.' + row.paymentMethod.toUpperCase() | translate)
+                }}
               </td>
               <td>{{ formatDate(row.confirmedAtUtc) }}</td>
-              <td>{{ 'ACTIVITY_REVENUE.CONFIRMED' | translate }}</td>
+              <td>
+                {{
+                  (row.kind === 'Refund' ? 'ACTIVITY_REVENUE.REFUND' : 'ACTIVITY_REVENUE.CONFIRMED')
+                    | translate
+                }}
+              </td>
             </tr>
           }
         </tbody>
