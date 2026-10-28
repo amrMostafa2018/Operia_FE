@@ -16,3 +16,20 @@ export interface InstallmentRevenuePage {
   confirmedTotal: number;
   items: InstallmentRevenueRow[];
 }
+
+export interface RevenueCard {
+  transactionCount: number;
+  grossCollected: number;
+  refunds: number;
+  netCollected: number;
+}
+
+export interface ActivityRevenueSummary {
+  today: RevenueCard;
+  month: RevenueCard;
+}
+
+export interface RevenueBranch {
+  id: string;
+  name: string;
+}
