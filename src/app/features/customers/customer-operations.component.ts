@@ -11,16 +11,19 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MessageService } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { CurrencyService } from '@core/services/currency.service';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { extractApiFieldErrors } from '@core/utils/api-error.util';
 import {
   CustomerOperationsFilters,
+  CustomerOperation,
   CustomerOperationsPage,
   CustomerOperationsService,
 } from './customer-operations.service';
+import { CustomerStatementDialogComponent } from './customer-statement-dialog.component';
 
 const emptyFilters = (): CustomerOperationsFilters => ({
   fromDate: '',
@@ -36,7 +39,14 @@ const emptyFilters = (): CustomerOperationsFilters => ({
 @Component({
   selector: 'app-customer-operations',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, TranslatePipe],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    FormsModule,
+    MenuModule,
+    TranslatePipe,
+    CustomerStatementDialogComponent,
+  ],
   templateUrl: './customer-operations.component.html',
   styleUrl: './customer-operations.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +66,7 @@ export class CustomerOperationsComponent {
   readonly loading = signal(false);
   readonly exporting = signal(false);
   readonly rangeError = signal(false);
+  readonly selectedStatement = signal<CustomerOperation | null>(null);
   draft = emptyFilters();
   private applied = emptyFilters();
   private requestId = 0;
@@ -83,6 +94,31 @@ export class CustomerOperationsComponent {
   changePage(page: number): void {
     this.page.set(page);
     this.load();
+  }
+
+  openStatement(row: CustomerOperation): void {
+    this.selectedStatement.set(row);
+  }
+
+  getRowMenu(row: CustomerOperation): MenuItem[] {
+    return [
+      {
+        label: this.translate.instant('CUSTOMER_STATEMENT.TITLE'),
+        icon: 'pi pi-list',
+        disabled: row.id.includes(':'),
+        command: () => this.openStatement(row),
+      },
+      {
+        label: this.translate.instant('CUSTOMER_OPERATIONS.EDIT_STATUS'),
+        icon: 'pi pi-pencil',
+        disabled: true,
+      },
+      {
+        label: this.translate.instant('CUSTOMER_OPERATIONS.AUDIT_HISTORY'),
+        icon: 'pi pi-history',
+        disabled: true,
+      },
+    ];
   }
 
   changePageSize(value: string): void {

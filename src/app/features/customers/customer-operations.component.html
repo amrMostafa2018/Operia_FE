@@ -145,6 +145,7 @@
             <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_STATUS' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUS' | translate }}</th>
             <th>{{ 'CUSTOMER_OPERATIONS.DATE' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -182,10 +183,21 @@
                 }}
               </td>
               <td>{{ row.operationDate | date: 'shortDate' }}</td>
+              <td class="actions-cell">
+                <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
+                <button
+                  type="button"
+                  class="menu-toggle"
+                  (click)="rowMenu.toggle($event)"
+                  [attr.aria-label]="'CUSTOMER_OPERATIONS.ACTIONS' | translate"
+                >
+                  <i class="pi pi-ellipsis-v"></i>
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="16" class="empty">
+              <td colspan="17" class="empty">
                 {{
                   (loading() ? 'CUSTOMER_OPERATIONS.LOADING' : 'CUSTOMER_OPERATIONS.EMPTY')
                     | translate
@@ -245,3 +257,6 @@
     </div>
   </section>
 </section>
+@if (selectedStatement(); as row) {
+  <app-customer-statement-dialog [row]="row" (closed)="selectedStatement.set(null)" />
+}
