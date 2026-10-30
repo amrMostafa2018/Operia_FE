@@ -9,7 +9,8 @@ export default defineConfig({
   use: {
     baseURL: process.env.OPERIA_E2E_BASE_URL ?? 'http://localhost:4200',
     browserName: 'chromium',
-    channel: process.env.OPERIA_E2E_BROWSER_CHANNEL || undefined,
+    channel: process.env.OPERIA_E2E_BROWSER_CHANNEL || 'chrome',
+    headless: false,
     launchOptions: {
       slowMo: Number(process.env.OPERIA_E2E_SLOW_MO_MS ?? 0),
     },
