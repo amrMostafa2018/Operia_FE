@@ -68,6 +68,9 @@ describe('PackageService', () => {
       pulseCount: 0,
       packageExpiryMonths: 12,
       price: 4500,
+      cashEnabled: true,
+      installmentEnabled: false,
+      installmentPrice: null,
       discountCode: '',
       discountPercent: 0,
     };
@@ -92,6 +95,9 @@ describe('PackageService', () => {
       pulseCount: null,
       packageExpiryMonths: null,
       price: 500,
+      cashEnabled: true,
+      installmentEnabled: false,
+      installmentPrice: null,
       discountCode: '',
       discountPercent: null,
     };

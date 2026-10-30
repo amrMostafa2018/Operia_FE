@@ -489,6 +489,7 @@ export class PackagesComponent implements OnInit {
             discountCode: detail.discountCode ?? '',
             discountPercent: detail.discountPercent ?? 0,
           });
+          this.manualPlanEdited.set(detail.installmentEnabled && detail.installments.length > 0);
           this.discountOpen.set(
             !!(detail.discountCode?.trim() || (detail.discountPercent ?? 0) > 0)
           );
@@ -530,6 +531,7 @@ export class PackagesComponent implements OnInit {
       this.applyOfferType('singleSession');
     } else if (pending !== null) {
       this.form.controls.installmentCount.setValue(pending, { emitEvent: false });
+      this.manualPlanEdited.set(false);
       this.resizeInstallmentRows(true);
     }
   }
@@ -623,7 +625,7 @@ export class PackagesComponent implements OnInit {
   private recalculateAmounts(): void {
     this.form.controls.firstPayment.updateValueAndValidity({ emitEvent: false });
     const rows = this.form.controls.installments.value;
-    if (rows.length === 0) {
+    if (rows.length === 0 || this.manualPlanEdited()) {
       this.validateInstallmentRows();
       return;
     }
@@ -989,7 +991,14 @@ export class PackagesComponent implements OnInit {
     if (rows.length !== this.form.controls.installmentCount.value) {
       return { rowsCount: true };
     }
-    if (rows.some(row => row.amount < 0 || Math.round(row.amount * 100) !== row.amount * 100)) {
+    if (
+      rows.some(
+        row =>
+          !Number.isFinite(row.amount) ||
+          row.amount < 0 ||
+          Number(row.amount.toFixed(2)) !== row.amount
+      )
+    ) {
       return { amountInvalid: true };
     }
     const expected =

@@ -1,5 +1,11 @@
 # Frontend deployment
 
+## API targets
+
+`npm start` uses the development Angular configuration. Its `apiUrl` is `/api`, and `src/proxy.conf.js` forwards those requests to the local ASP.NET API at `http://localhost:5150` by default. Start the backend with its `Development` launch profile and a development database before using the local frontend. Set `ASPNETCORE_URLS` or `ASPNETCORE_HTTPS_PORT` when starting Angular only if the local API uses another port.
+
+`npm run build` and the Vercel production build use Angular's production file replacement, so the deployed frontend calls `https://operia.runasp.net/api`. The production API gets its database connection from configuration retained on the server. Never point the development frontend at that hosted API for routine testing.
+
 The workflow in `.github/workflows/deploy.yml` runs on every push to `main`. It builds the production site with Vercel CLI and deploys exactly that prebuilt output. A failed build stops deployment. `vercel.json` disables Vercel's separate Git-triggered deployment for `main` if Git is connected later. It also routes Angular deep links to `index.html`.
 
 ## One-time setup

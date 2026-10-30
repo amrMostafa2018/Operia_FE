@@ -3,6 +3,7 @@ import {
   bookAppointmentLineTotal,
   bookAppointmentOwnedPackageLineItem,
   bookAppointmentPaymentLineItems,
+  bookAppointmentApiItemType,
   bookingDetailsLineItemFromCatalog,
   dedupeOwnedPackageBookingLines,
   bookingLineCustomerPackageIdForApi,
@@ -11,6 +12,7 @@ import {
   ClientPackage,
   normalizeBookingDetailsLineItem,
   ServiceCatalogItem,
+  sumLineItemDuration,
 } from './booking.model';
 
 describe('booking details owned session pricing', () => {
@@ -157,6 +159,71 @@ describe('booking details owned session pricing', () => {
 
     expect(normalizedFirst.newPurchaseUnits).toBe(1);
     expect(bookAppointmentLineTotal(normalizedFirst)).toBe(5000);
+    expect(bookAppointmentApiItemType(normalizedFirst)).toBe('packageNewPurchase');
+  });
+
+  it('keeps an owned package linked when the catalog has not loaded', () => {
+    const line: BookingLineItem = {
+      id: 'owned-line',
+      name: 'Owned package',
+      type: 'package',
+      quantity: 1,
+      price: 0,
+      durationMinutes: 60,
+      catalogPackageId: 'package-1',
+      customerPackageId: 'owned-1',
+      packageSessionLinked: true,
+      newPurchaseUnits: 0,
+    };
+
+    expect(normalizeBookingDetailsLineItem(line, [], [], [line]).packageSessionLinked).toBeTrue();
+  });
+
+  it('keeps a paid session billed when the customer has a matching balance', () => {
+    const ownedSession: ClientPackage = {
+      customerPackageId: 'owned-session',
+      packageId: peelingSession.id,
+      packageName: peelingSession.name,
+      usedSessions: 0,
+      totalSessions: 1,
+      expiryDate: '2026-12-31',
+      offerType: 'session',
+    };
+    const paidLine: BookingLineItem = {
+      id: 'paid-session',
+      name: peelingSession.name,
+      type: 'session',
+      quantity: 1,
+      price: 500,
+      durationMinutes: 60,
+      catalogPackageId: peelingSession.id,
+      packageSessionLinked: false,
+      newPurchaseUnits: 0,
+    };
+
+    const normalized = normalizeBookingDetailsLineItem(
+      paidLine,
+      [peelingSession],
+      [ownedSession],
+      [paidLine]
+    );
+    expect(normalized.price).toBe(500);
+    expect(normalized.packageSessionLinked).toBeFalse();
+  });
+
+  it('counts one booked duration for a package quantity above one', () => {
+    expect(
+      sumLineItemDuration([
+        {
+          id: 'package-quantity',
+          name: 'Package',
+          type: 'package',
+          quantity: 2,
+          price: 1000,
+          durationMinutes: 60,
+        },
+      ])
+    ).toBe(60);
   });
 
   it('keeps owned package lines free after normalize when owned packages are unavailable', () => {
@@ -192,15 +259,6 @@ describe('booking details owned session pricing', () => {
   });
 
   it('charges a new session added beside a multi-session package on the booking', () => {
-    const sessionPackage: ServiceCatalogItem = {
-      id: 'package-10',
-      name: '10 Sessions Offer',
-      category: 'packages',
-      durationMinutes: 60,
-      price: 1200,
-      icon: 'pi pi-box',
-      type: 'package',
-    };
     const beardSession: ServiceCatalogItem = {
       id: 'service-beard',
       name: 'Beard trimming session',
