@@ -20,6 +20,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
+import { applyServerFieldErrors, clearServerFieldError } from '@core/utils/api-error.util';
 import { CloseBookingItemInput } from './appointments-api.service';
 import {
   BookingLineItem,
@@ -123,6 +124,33 @@ export class ConfirmPackageUsageDialogComponent {
 
   itemGroup(index: number): FormGroup | null {
     return this.itemsArray().at(index) ?? null;
+  }
+
+  /** Places indexed API validation errors beside the affected close field. */
+  applyServerErrors(errors: Record<string, string>): Record<string, string> {
+    const remaining: Record<string, string> = {};
+    const mapped: Record<string, string> = {};
+    for (const [field, message] of Object.entries(errors)) {
+      const match = /^items\[(\d+)\]\.(status|notes|pulsesUsed|bookingItemId)$/i.exec(field);
+      if (!match) {
+        remaining[field] = message;
+        continue;
+      }
+
+      const index = Number(match[1]);
+      const name = match[2].toLowerCase();
+      const control =
+        name === 'bookingitemid' ? 'status' : name === 'pulsesused' ? 'pulsesUsed' : name;
+      if (!this.itemGroup(index)?.get(control)) {
+        remaining[field] = message;
+        continue;
+      }
+      mapped[`items.${index}.${control}`] = message;
+      this.activeLineIndex.set(index);
+    }
+
+    applyServerFieldErrors(this.form, mapped);
+    return remaining;
   }
 
   isPulseLine(line: BookingLineItem): boolean {
@@ -262,7 +290,16 @@ export class ConfirmPackageUsageDialogComponent {
       .subscribe(() => this.applyPulseValidators(group, line));
     group.controls['pulsesUsed'].valueChanges
       .pipe(takeUntil(this.lineSync), takeUntilDestroyed(this.destroyRef))
-      .subscribe(value => this.warnIfPulsesExceedRemaining(line, value));
+      .subscribe(value => {
+        clearServerFieldError(group, 'pulsesUsed');
+        this.warnIfPulsesExceedRemaining(line, value);
+      });
+    for (const field of ['status', 'notes'] as const) {
+      group
+        .get(field)
+        ?.valueChanges.pipe(takeUntil(this.lineSync), takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => clearServerFieldError(group, field));
+    }
 
     return group;
   }
