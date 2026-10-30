@@ -19,7 +19,7 @@ export function mapPackageToCatalogItem(
     name: pkg.name,
     category: pkg.serviceCategoryId,
     durationMinutes: pkg.sessionDurationMinutes,
-    price: pkg.price,
+    price: pkg.cashPriceAfterDiscount ?? pkg.price,
     icon:
       normalizePrimeIcon(category?.icon) ||
       (isPackage ? DEFAULT_PACKAGE_ICON : DEFAULT_SESSION_ICON),

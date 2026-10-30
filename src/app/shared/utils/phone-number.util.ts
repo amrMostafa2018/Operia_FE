@@ -12,6 +12,28 @@ const SUPPORTED_DIAL_CODES: { iso: CountryISO; dial: string }[] = [
   { iso: CountryISO.Kuwait, dial: '965' },
 ].sort((left, right) => right.dial.length - left.dial.length);
 
+const EGYPT_BOOKING_MOBILE_PATTERN = /^01[0125]\d{8}$/;
+
+export function isValidPhoneChangeData(value: ChangeData | string | null | undefined): boolean {
+  if (!value || typeof value === 'string') {
+    return false;
+  }
+
+  const dialCode = (value.dialCode ?? '').replace(/\D/g, '');
+  const nationalDigits = (value.number ?? '').replace(/\D/g, '');
+  if (!nationalDigits) {
+    return false;
+  }
+
+  if (dialCode === '20') {
+    const local = nationalDigits.startsWith('0') ? nationalDigits : `0${nationalDigits}`;
+    return EGYPT_BOOKING_MOBILE_PATTERN.test(local);
+  }
+
+  const e164Digits = (value.e164Number ?? '').replace(/\D/g, '');
+  return e164Digits.length >= 10 && e164Digits.length <= 15;
+}
+
 export function toPhoneChangeData(value: string | null | undefined): ChangeData | null {
   if (!value?.trim()) {
     return null;
@@ -73,6 +95,33 @@ function buildPhoneChangeData(
   };
 }
 
+/**
+ * Digits sent to booking customer search, including the country code.
+ * Egypt 1148908187 is searched as 201148908187.
+ */
+export function toBookingSearchMobile(value: ChangeData | string | null | undefined): string {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value.replace(/\D/g, '');
+  }
+
+  const e164Digits = (value.e164Number ?? '').replace(/\D/g, '');
+  if (e164Digits) {
+    return e164Digits;
+  }
+
+  const dialCode = (value.dialCode ?? '').replace(/\D/g, '');
+  const national = (value.number ?? '').replace(/\D/g, '').replace(/^0+/, '');
+  if (!national) {
+    return '';
+  }
+
+  return dialCode ? `${dialCode}${national}` : national;
+}
+
 export function getE164PhoneNumber(value: ChangeData | string | null | undefined): string {
   if (!value) {
     return '';
@@ -91,9 +140,7 @@ export function getE164PhoneNumber(value: ChangeData | string | null | undefined
 }
 
 /** National digits for password managers (e.g. 1148908188, without +20). */
-export function getCredentialPhoneUsername(
-  value: ChangeData | string | null | undefined
-): string {
+export function getCredentialPhoneUsername(value: ChangeData | string | null | undefined): string {
   if (!value) {
     return '';
   }

@@ -145,7 +145,28 @@
 .bookings-package-usage-dialog {
   &.p-dialog {
     height: auto !important;
-    max-width: min(580px, 94vw);
+    max-width: min(640px, 94vw);
+  }
+
+  &.bookings-close-dialog {
+    .p-dialog-header {
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding-bottom: 0.85rem;
+    }
+
+    .dialog-header {
+      flex: 1;
+      min-width: 0;
+
+      h3 {
+        line-height: 1.35;
+      }
+
+      p {
+        max-width: 34rem;
+      }
+    }
   }
 
   .p-dialog-content {

@@ -22,7 +22,22 @@ export class ConfirmActionDialogComponent {
   readonly width = input('420px');
   readonly useNativeFooterButtons = input(false);
   readonly confirmIcon = input<string | null>(null);
+  readonly confirming = input(false);
 
   readonly cancelled = output<void>();
   readonly confirmed = output<void>();
+
+  onCancel(): void {
+    if (this.confirming()) {
+      return;
+    }
+    this.cancelled.emit();
+  }
+
+  onConfirm(): void {
+    if (this.confirming()) {
+      return;
+    }
+    this.confirmed.emit();
+  }
 }

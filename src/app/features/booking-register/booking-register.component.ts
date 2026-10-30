@@ -2,12 +2,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  HostListener,
+  ViewChild,
   computed,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,10 +19,9 @@ import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
-import { MenuModule } from 'primeng/menu';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { MenuItem, MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { LanguageService } from '@core/services/language.service';
@@ -27,6 +29,7 @@ import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import {
   BOOKING_REGISTER_PAGE_SIZES,
   BOOKING_REGISTER_STATUS_OPTIONS,
+  BookingRegisterCloseHistoryItem,
   BookingRegisterFilters,
   BookingRegisterHistoryEvent,
   BookingRegisterRow,
@@ -37,6 +40,7 @@ import {
 import { AppointmentsApiService, BookingListItemDto } from '../bookings/appointments-api.service';
 import { formatMinutesAsTime, toDateKey } from '../bookings/models/booking.model';
 import { ChangeHistoryDialogComponent } from './change-history-dialog/change-history-dialog.component';
+import { BusyOverlayComponent } from '@app/shared/components/busy-overlay/busy-overlay.component';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import {
   BookingDetailsDialogComponent,
@@ -68,9 +72,9 @@ import {
     CalendarModule,
     DropdownModule,
     InputTextModule,
-    MenuModule,
     TableModule,
     TagModule,
+    BusyOverlayComponent,
     BookingDetailsDialogComponent,
     DurationMismatchDialogComponent,
     ChangeHistoryDialogComponent,
@@ -91,6 +95,11 @@ export class BookingRegisterComponent {
   private readonly branchesApi = inject(BranchService);
   private readonly employeesApi = inject(EmployeeService);
   private rowsRequestId = 0;
+  private catalogRequestId = 0;
+  private menuDismissCleanup: (() => void) | null = null;
+  private menuDismissArmed = false;
+
+  @ViewChild('rowActionMenu') private menuPanel?: ElementRef<HTMLElement>;
 
   readonly canRead = computed(() => this.permissions.hasPermission(Policies.BookingsRead));
   readonly leadingIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
@@ -114,6 +123,9 @@ export class BookingRegisterComponent {
 
   readonly rows = signal(5);
   readonly first = signal(0);
+  readonly openMenuRow = signal<BookingRegisterRow | null>(null);
+  readonly menuTop = signal(0);
+  readonly menuLeft = signal(0);
   readonly pageReportTemplate = signal(
     this.translate.instant('BOOKING_REGISTER.TABLE.PAGE_REPORT')
   );
@@ -126,18 +138,22 @@ export class BookingRegisterComponent {
   readonly historyEvents = signal<BookingRegisterHistoryEvent[]>([]);
   readonly catalogItems = signal<ServiceCatalogItem[]>([]);
   readonly catalogCategories = signal<CatalogCategoryTab[]>([]);
+  readonly loading = signal(false);
+  readonly exporting = signal(false);
+  readonly detailsLoading = signal(false);
+  readonly historyLoading = signal(false);
+  readonly catalogLoading = signal(false);
+  readonly mutating = signal(false);
   readonly pendingEdit = signal<BookingDetailsSavePayload | null>(null);
   readonly mismatchOpen = signal(false);
   readonly mismatchServiceDuration = signal(0);
   readonly mismatchSlotDuration = signal(0);
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.unbindMenuDismiss());
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('BOOKING_REGISTER.TABLE.PAGE_REPORT'));
     });
-    if (this.permissions.hasPermission(Policies.PackagesRead)) {
-      this.loadCatalog();
-    }
     this.loadEmployeeOptions();
     this.loadRows();
   }
@@ -150,6 +166,7 @@ export class BookingRegisterComponent {
   }
 
   applyFilters(): void {
+    this.closeRowMenu();
     this.appliedFilters.set(this.buildFiltersFromDraft());
     this.first.set(0);
     this.loadRows();
@@ -199,14 +216,30 @@ export class BookingRegisterComponent {
     return this.first() + index + 1;
   }
 
+  confirmationLabel(value: Date): string {
+    return value.toLocaleString(this.languageService.currentLang(), {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   /** Exports the currently applied register filters as a CSV download. */
   exportReport(): void {
     const filters = this.appliedFilters();
-    if (!filters.dateFrom || !filters.dateTo || filters.dateTo < filters.dateFrom) {
+    if (
+      !filters.dateFrom ||
+      !filters.dateTo ||
+      filters.dateTo < filters.dateFrom ||
+      this.exporting()
+    ) {
       return;
     }
     const fromDate = toDateKey(filters.dateFrom);
     const toDate = toDateKey(filters.dateTo);
+    this.exporting.set(true);
     this.appointmentsApi
       .export({
         fromDate,
@@ -216,7 +249,10 @@ export class BookingRegisterComponent {
         employeeId: filters.employeeId,
         status: filters.status,
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.exporting.set(false))
+      )
       .subscribe(blob => {
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -228,6 +264,7 @@ export class BookingRegisterComponent {
   }
 
   onPageChange(event: { first?: number; rows?: number | null }): void {
+    this.closeRowMenu();
     if (event.first != null) {
       this.first.set(event.first);
     }
@@ -240,10 +277,19 @@ export class BookingRegisterComponent {
   /** Loads the full booking record for the selected register row. */
   openDetails(booking: BookingRegisterRow): void {
     this.selectedBooking.set(booking);
+    this.detailsLoading.set(true);
+    this.loadCatalog();
     const date = toDateKey(booking.scheduledDate);
     this.appointmentsApi
       .calendar(booking.branchId, date, date, booking.employeeId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (this.selectedBooking()?.id === booking.id) {
+            this.detailsLoading.set(false);
+          }
+        })
+      )
       .subscribe(result => {
         const record = result.bookings.find(item => item.id === booking.id);
         if (!record || this.selectedBooking()?.id !== booking.id) {
@@ -256,8 +302,14 @@ export class BookingRegisterComponent {
 
   closeDetails(): void {
     this.detailsOpen.set(false);
+    this.detailsLoading.set(false);
     this.selectedBooking.set(null);
     this.selectedBookingRecord.set(null);
+  }
+
+  onDetailsBookingClosed(): void {
+    this.closeDetails();
+    this.loadRows();
   }
 
   /** Opens cancellation confirmation only for the selected Booked record. */
@@ -271,13 +323,17 @@ export class BookingRegisterComponent {
   /** Cancels the selected register booking using its current version. */
   confirmCancellation(): void {
     const booking = this.selectedBookingRecord();
-    if (!booking?.version || booking.status !== 'booked') {
+    if (!booking?.version || booking.status !== 'booked' || this.mutating()) {
       this.cancelConfirmOpen.set(false);
       return;
     }
+    this.mutating.set(true);
     this.appointmentsApi
       .cancel(booking.id, booking.version)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
       .subscribe({
         next: () => {
           this.cancelConfirmOpen.set(false);
@@ -326,15 +382,25 @@ export class BookingRegisterComponent {
   }
 
   onCatalogChanged(): void {
-    this.loadCatalog();
+    this.loadCatalog(true);
   }
 
   /** Loads recorded booking changes for the selected register row. */
   openHistory(booking: BookingRegisterRow): void {
     this.selectedBooking.set(booking);
+    this.historyEvents.set([]);
+    this.historyOpen.set(true);
+    this.historyLoading.set(true);
     this.appointmentsApi
       .history(booking.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (this.selectedBooking()?.id === booking.id) {
+            this.historyLoading.set(false);
+          }
+        })
+      )
       .subscribe(events => {
         this.historyEvents.set(
           events.map(event => ({
@@ -344,41 +410,119 @@ export class BookingRegisterComponent {
                 ? 'created'
                 : event.action === 'Cancelled'
                   ? 'cancelled'
-                  : 'updated',
+                  : event.action === 'Closed'
+                    ? 'closed'
+                    : 'updated',
             actorName: event.changedByDisplayName ?? '—',
             timestamp: new Date(event.occurredAt),
             ...this.historyDescription(event.action, event.changesJson),
             markerClass:
-              event.action === 'Created' ? 'history-marker--created' : 'history-marker--status',
+              event.action === 'Created'
+                ? 'history-marker--created'
+                : event.action === 'Closed'
+                  ? 'history-marker--completed'
+                  : 'history-marker--status',
           }))
         );
-        this.historyOpen.set(true);
       });
   }
 
   closeHistory(): void {
     this.historyOpen.set(false);
+    this.historyLoading.set(false);
     this.historyEvents.set([]);
     this.selectedBooking.set(null);
   }
 
-  getRowMenu(booking: BookingRegisterRow): MenuItem[] {
-    if (!this.canRead()) {
-      return [];
+  /** Opens the row actions menu on the first click and keeps it anchored to that button. */
+  toggleRowMenu(event: MouseEvent, booking: BookingRegisterRow): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.openMenuRow()?.id === booking.id) {
+      this.closeRowMenu();
+      return;
     }
 
-    return [
-      {
-        label: this.translate.instant('BOOKING_REGISTER.MENU.DETAILS'),
-        icon: 'pi pi-eye',
-        command: () => this.openDetails(booking),
-      },
-      {
-        label: this.translate.instant('BOOKING_REGISTER.MENU.HISTORY'),
-        icon: 'pi pi-history',
-        command: () => this.openHistory(booking),
-      },
-    ];
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 240;
+    const menuHeight = 108;
+    const gap = 6;
+    let left = rect.left;
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = Math.max(8, rect.right - menuWidth);
+    }
+    let top = rect.bottom + gap;
+    if (top + menuHeight > window.innerHeight - 8) {
+      top = Math.max(8, rect.top - menuHeight - gap);
+    }
+
+    this.menuLeft.set(left);
+    this.menuTop.set(top);
+    this.menuDismissArmed = false;
+    this.openMenuRow.set(booking);
+    this.bindMenuDismiss();
+    queueMicrotask(() => {
+      if (this.openMenuRow()?.id === booking.id) {
+        this.menuDismissArmed = true;
+      }
+    });
+  }
+
+  closeRowMenu(): void {
+    this.menuDismissArmed = false;
+    this.openMenuRow.set(null);
+    this.unbindMenuDismiss();
+  }
+
+  openRowDetails(booking: BookingRegisterRow): void {
+    this.closeRowMenu();
+    this.openDetails(booking);
+  }
+
+  openRowHistory(booking: BookingRegisterRow): void {
+    this.closeRowMenu();
+    this.openHistory(booking);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.openMenuRow() || !this.menuDismissArmed) {
+      return;
+    }
+    const target = event.target as Node | null;
+    if (target && this.menuPanel?.nativeElement.contains(target)) {
+      return;
+    }
+    this.closeRowMenu();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeRowMenu();
+  }
+
+  private bindMenuDismiss(): void {
+    if (this.menuDismissCleanup) {
+      return;
+    }
+    const dismiss = () => {
+      if (!this.menuDismissArmed) {
+        return;
+      }
+      this.closeRowMenu();
+    };
+    document.addEventListener('scroll', dismiss, true);
+    window.addEventListener('resize', dismiss);
+    this.menuDismissCleanup = () => {
+      document.removeEventListener('scroll', dismiss, true);
+      window.removeEventListener('resize', dismiss);
+    };
+  }
+
+  private unbindMenuDismiss(): void {
+    this.menuDismissCleanup?.();
+    this.menuDismissCleanup = null;
   }
 
   customerInitial(name: string): string {
@@ -405,10 +549,12 @@ export class BookingRegisterComponent {
   private loadRows(): void {
     const requestId = ++this.rowsRequestId;
     const filters = this.appliedFilters();
+    this.loading.set(true);
     if (!filters.dateFrom || !filters.dateTo || filters.dateTo < filters.dateFrom) {
       this.filteredRows.set([]);
       this.totalRecords.set(0);
       this.summary.set({ total: 0, booked: 0, completed: 0, cancelled: 0 });
+      this.loading.set(false);
       return;
     }
     this.appointmentsApi
@@ -422,7 +568,14 @@ export class BookingRegisterComponent {
         employeeId: filters.employeeId,
         status: filters.status,
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (requestId === this.rowsRequestId) {
+            this.loading.set(false);
+          }
+        })
+      )
       .subscribe({
         next: result => {
           if (requestId !== this.rowsRequestId) {
@@ -452,6 +605,14 @@ export class BookingRegisterComponent {
     if (!booking?.version || booking.id !== payload.bookingId) {
       return;
     }
+    if (payload.lineItems.length === 0) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.BookingItemsRequired'),
+      });
+      return;
+    }
     const items = payload.lineItems
       .filter(item => !!item.catalogPackageId)
       .map(item => ({
@@ -459,12 +620,16 @@ export class BookingRegisterComponent {
         customerPackageId: item.customerPackageId ?? null,
         quantity: item.quantity,
       }));
-    if (items.length !== payload.lineItems.length) {
+    if (items.length !== payload.lineItems.length || this.mutating()) {
       return;
     }
+    this.mutating.set(true);
     this.appointmentsApi
       .update(booking.id, booking.version, items, payload.paymentMethod)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
       .subscribe({
         next: () => {
           this.closeDetails();
@@ -481,31 +646,67 @@ export class BookingRegisterComponent {
       });
   }
 
-  /** Loads current catalog items and category choices for booking edits. */
-  private loadCatalog(): void {
+  /** Loads catalog choices when the details popup opens or after a new package is created. */
+  private loadCatalog(force = false): void {
+    if (!this.permissions.hasPermission(Policies.PackagesRead)) {
+      return;
+    }
+    if (this.catalogLoading() && !force) {
+      return;
+    }
+    const requestId = ++this.catalogRequestId;
+    this.catalogLoading.set(true);
     forkJoin({
       packages: this.packagesApi.listAllActive(),
       categories: this.packagesApi.listServiceCategories(),
     })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ packages, categories }) => {
-        this.catalogCategories.set(
-          categories.map(category => ({ id: category.id, label: category.name }))
-        );
-        this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          if (requestId === this.catalogRequestId) {
+            this.catalogLoading.set(false);
+          }
+        })
+      )
+      .subscribe({
+        next: ({ packages, categories }) => {
+          if (requestId !== this.catalogRequestId) {
+            return;
+          }
+          this.catalogCategories.set(
+            categories.map(category => ({ id: category.id, label: category.name }))
+          );
+          this.catalogItems.set(packages.map(pkg => mapPackageToCatalogItem(pkg, categories)));
+        },
       });
   }
 
+  /** Loads active staff for the register employee filter. */
   private loadEmployeeOptions(): void {
+    if (
+      !this.permissions.hasPermission(Policies.BookingsManage) ||
+      !this.permissions.hasPermission(Policies.BranchesRead)
+    ) {
+      return;
+    }
+
     this.branchesApi
-      .listBookable()
+      .list({
+        pageNumber: 1,
+        pageSize: 50,
+        search: '',
+        sortBy: 'name',
+        sortDirection: 'asc',
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(branches => {
-        if (!branches.length) {
+      .subscribe(result => {
+        const branchIds = result.items.map(branch => branch.id);
+        if (branchIds.length === 0) {
           this.employees.set([]);
           return;
         }
-        forkJoin(branches.map(branch => this.employeesApi.listBookable(branch.id)))
+
+        forkJoin(branchIds.map(branchId => this.employeesApi.listBookable(branchId)))
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(results => {
             const employees = new Map<string, { id: string; fullName: string }>();
@@ -526,12 +727,18 @@ export class BookingRegisterComponent {
   private historyDescription(
     action: string,
     changesJson: string | null
-  ): Pick<BookingRegisterHistoryEvent, 'descriptionKey' | 'descriptionParams'> {
+  ): Pick<BookingRegisterHistoryEvent, 'descriptionKey' | 'descriptionParams' | 'closeItems'> {
     if (action === 'Created') {
       return { descriptionKey: 'BOOKING_REGISTER.HISTORY.CREATED_DESC' };
     }
     if (action === 'Cancelled') {
       return { descriptionKey: 'BOOKING_REGISTER.HISTORY.CANCELLED_DESC' };
+    }
+    if (action === 'Closed') {
+      return {
+        descriptionKey: 'BOOKING_REGISTER.HISTORY.CLOSED_DESC',
+        closeItems: this.parseCloseHistoryItems(changesJson),
+      };
     }
     try {
       const changes = JSON.parse(changesJson ?? '{}') as {
@@ -550,6 +757,40 @@ export class BookingRegisterComponent {
     } catch {
       return { descriptionKey: 'BOOKING_REGISTER.HISTORY.UPDATED_DESC_FALLBACK' };
     }
+  }
+
+  private parseCloseHistoryItems(changesJson: string | null): BookingRegisterCloseHistoryItem[] {
+    try {
+      const changes = JSON.parse(changesJson ?? '{}') as {
+        Items?: Record<string, unknown>[];
+        items?: Record<string, unknown>[];
+      };
+      const items = changes.Items ?? changes.items ?? [];
+
+      return items.map(item => {
+        const status = this.readHistoryString(item, 'Status', 'status');
+        const pulses = item['PulsesUsed'] ?? item['pulsesUsed'];
+        return {
+          name: this.readHistoryString(item, 'Name', 'name') || '—',
+          status: status === 'cancel' ? 'cancel' : 'complete',
+          pulsesUsed: typeof pulses === 'number' ? pulses : null,
+          notes: this.readHistoryString(item, 'Notes', 'notes') || null,
+        } satisfies BookingRegisterCloseHistoryItem;
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  private readHistoryString(item: Record<string, unknown>, ...keys: string[]): string {
+    for (const key of keys) {
+      const value = item[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return '';
   }
 
   /** Shows localized validation messages returned by the booking API. */
@@ -590,6 +831,7 @@ export class BookingRegisterComponent {
       branchId: item.branchId,
       branchName: item.branchName,
       scheduledDate: new Date(`${item.scheduledDate}T00:00:00`),
+      confirmedAt: new Date(item.confirmedAt),
       startTime: formatMinutesAsTime(item.startMinutes),
       endTime: formatMinutesAsTime(item.endMinutes),
       durationMinutes: item.endMinutes - item.startMinutes,

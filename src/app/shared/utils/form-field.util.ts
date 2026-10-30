@@ -1,7 +1,7 @@
 import { AbstractControl } from '@angular/forms';
 
-export function isFieldInvalid(form: AbstractControl, field: string): boolean {
-  const ctrl = form.get(field);
+export function isFieldInvalid(form: AbstractControl | null | undefined, field: string): boolean {
+  const ctrl = form?.get(field);
   return !!(ctrl?.invalid && ctrl?.touched);
 }
 

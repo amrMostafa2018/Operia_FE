@@ -8,7 +8,7 @@ export type BookingRegisterServiceType = 'package' | 'session' | 'unlisted';
 
 /** Describes booking register history type used by booking screens. */
 export type BookingRegisterHistoryType =
-  'created' | 'employee_changed' | 'time_changed' | 'updated' | 'cancelled';
+  'created' | 'employee_changed' | 'time_changed' | 'updated' | 'cancelled' | 'closed';
 
 /** Describes booking register row used by booking screens. */
 export interface BookingRegisterRow {
@@ -24,6 +24,7 @@ export interface BookingRegisterRow {
   branchId: string;
   branchName: string;
   scheduledDate: Date;
+  confirmedAt: Date;
   startTime: string;
   endTime: string;
   durationMinutes: number;
@@ -44,6 +45,14 @@ export interface BookingRegisterSummary {
   booked: number;
 }
 
+/** Describes one closed line item captured in booking history. */
+export interface BookingRegisterCloseHistoryItem {
+  name: string;
+  status: 'complete' | 'cancel';
+  pulsesUsed: number | null;
+  notes: string | null;
+}
+
 /** Describes booking register history event used by booking screens. */
 export interface BookingRegisterHistoryEvent {
   id: string;
@@ -53,6 +62,7 @@ export interface BookingRegisterHistoryEvent {
   timestamp: Date;
   descriptionKey: string;
   descriptionParams?: Record<string, string>;
+  closeItems?: BookingRegisterCloseHistoryItem[];
   markerClass: string;
 }
 

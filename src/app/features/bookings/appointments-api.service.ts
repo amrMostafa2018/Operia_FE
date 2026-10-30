@@ -16,6 +16,8 @@ export interface BookingCustomerPackageDto {
   availableSessions: number;
   expiresOn: string | null;
   offerType: 'package' | 'session';
+  sessionCount: number | null;
+  pulseCount: number | null;
 }
 
 /** Describes booking customer dto exchanged with the API. */
@@ -37,6 +39,19 @@ export interface CalendarBookingItemDto {
   packageId: string | null;
   customerPackageId: string | null;
   packageRemainingSessions: number | null;
+  packagePulseCount: number | null;
+  packageTotal: number | null;
+  packageUsed: number | null;
+  packageSessionLinked: boolean;
+}
+
+/** Describes one booking line outcome submitted when closing a booking. */
+export interface CloseBookingItemInput {
+  bookingItemId: string;
+  customerPackageId: string | null;
+  status: 'complete' | 'cancel';
+  pulsesUsed?: number | null;
+  notes?: string | null;
 }
 
 /** Describes calendar booking dto exchanged with the API. */
@@ -123,6 +138,7 @@ export interface BookingListItemDto {
   totalAmount: number;
   paidAmount: number;
   discountAmount: number;
+  confirmedAt: string;
 }
 
 /** Describes booking list result dto exchanged with the API. */
@@ -152,10 +168,12 @@ export class AppointmentsApiService {
   private readonly url = `${environment.apiUrl}/bookings`;
 
   /** Finds a registered customer and owned balances by mobile number. */
-  findCustomer(mobile: string): Observable<BookingCustomerDto | null> {
-    return this.http.get<BookingCustomerDto | null>(`${this.url}/customers/by-mobile`, {
-      params: new HttpParams().set('mobile', mobile),
-    });
+  findCustomer(mobile: string, bookingId?: string): Observable<BookingCustomerDto | null> {
+    let params = new HttpParams().set('mobile', mobile);
+    if (bookingId) {
+      params = params.set('bookingId', bookingId);
+    }
+    return this.http.get<BookingCustomerDto | null>(`${this.url}/customers/by-mobile`, { params });
   }
 
   /** Returns enabled payment method identifiers without account details. */
@@ -190,6 +208,18 @@ export class AppointmentsApiService {
     return this.http.post<{ id: string; status: string; version: string }>(
       `${this.url}/${encodeURIComponent(id)}/cancel`,
       { version }
+    );
+  }
+
+  /** Closes a booked appointment and finalises per-item package usage. */
+  closeBooking(
+    id: string,
+    version: string,
+    items: CloseBookingItemInput[]
+  ): Observable<{ id: string; status: string; version: string }> {
+    return this.http.post<{ id: string; status: string; version: string }>(
+      `${this.url}/${encodeURIComponent(id)}/close`,
+      { version, items }
     );
   }
 

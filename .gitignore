@@ -2,6 +2,7 @@
 
 # Compiled output
 /dist
+/.vercel
 /tmp
 /out-tsc
 /bazel-out
@@ -33,6 +34,8 @@ yarn-error.log
 .sass-cache/
 /connect.lock
 /coverage
+/playwright-report
+/test-results
 /libpeerconnection.log
 testem.log
 /typings

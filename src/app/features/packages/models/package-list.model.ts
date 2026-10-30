@@ -17,10 +17,13 @@ export interface PackageFormValue {
   subServiceCategoryId: string | null;
   sessionDurationValue: number;
   sessionDurationUnit: PackageDurationUnit;
-  sessionCount: number;
+  sessionCount: number | null;
   pulseCount: number | null;
   packageExpiryMonths: number | null;
   price: number;
+  cashEnabled: boolean;
+  installmentEnabled: boolean;
+  installmentPrice: number | null;
   discountCode: string;
   discountPercent: number | null;
 }
@@ -33,6 +36,7 @@ export interface PackageListItem {
   serviceCategoryId: string;
   serviceCategoryName: string;
   price: number;
+  cashPriceAfterDiscount?: number;
   status: PackageListStatus;
   createdAt: string;
   endsAt: string | null;
@@ -41,9 +45,13 @@ export interface PackageListItem {
 export interface PackageDetail extends PackageListItem {
   description: string;
   subServiceCategoryId: string | null;
-  sessionCount: number;
+  sessionCount: number | null;
   pulseCount: number | null;
   packageExpiryMonths: number | null;
   discountCode: string;
   discountPercent: number | null;
+  cashEnabled: boolean;
+  installmentEnabled: boolean;
+  installmentPrice: number | null;
+  cashPriceAfterDiscount: number;
 }

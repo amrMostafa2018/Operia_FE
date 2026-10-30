@@ -29,6 +29,7 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyService } from '@core/services/currency.service';
@@ -49,6 +50,13 @@ import {
   UNLISTED_OFFER_TYPE_OPTIONS,
   PAYMENT_METHODS,
   ServiceCatalogItem,
+  displayedPackageRemainingUnits,
+  packageUsesPulses,
+  bookAppointmentCatalogQuantityLineItem,
+  bookAppointmentMaxQuantity,
+  bookAppointmentOwnedPackageLineItem,
+  bookAppointmentLineTotal,
+  bookAppointmentPaymentLineItems,
   sumLineItemDuration,
   sumLineItemPrice,
 } from '../models/booking.model';
@@ -68,6 +76,7 @@ import {
     DialogModule,
     ButtonModule,
     DropdownModule,
+    MultiSelectModule,
     FormsModule,
     ReactiveFormsModule,
     InputTextModule,
@@ -89,10 +98,11 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   private readonly packagesApi = inject(PackageService);
   private readonly permissions = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly packageUsesPulses = packageUsesPulses;
+  readonly displayedPackageRemainingUnits = displayedPackageRemainingUnits;
 
   private readonly serviceTrack = viewChild<ElementRef<HTMLElement>>('serviceTrack');
   private carouselResizeObserver?: ResizeObserver;
-
   readonly visible = input(false);
   readonly clients = input<ClientRecord[]>([]);
   readonly catalogItems = input<ServiceCatalogItem[]>([]);
@@ -113,8 +123,9 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   readonly searchQuery = signal('');
   readonly selectedQuantities = signal<Record<string, number>>({});
   readonly unlistedItems = signal<BookingLineItem[]>([]);
-  readonly selectedPackageId = signal<string | null>(null);
+  readonly selectedPackageIds = signal<string[]>([]);
   readonly sendMessage = signal(true);
+  readonly showServicesSection = signal(false);
   readonly showUnlisted = signal(false);
   readonly unlistedSaving = signal(false);
 
@@ -168,14 +179,13 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
       }));
   });
 
-  readonly selectedClientPackage = computed<ClientPackage | null>(() => {
-    const packageId = this.selectedPackageId();
-    if (!packageId) {
-      return null;
-    }
+  readonly selectedClientPackages = computed<ClientPackage[]>(() => {
     const client = this.matchedClient();
-    const clientPackage = client?.packages.find(pkg => pkg.packageId === packageId);
-    return clientPackage ?? null;
+    if (!client) {
+      return [];
+    }
+    const selectedIds = new Set(this.selectedPackageIds());
+    return client.packages.filter(pkg => selectedIds.has(pkg.packageId));
   });
 
   readonly filteredServices = computed(() => {
@@ -195,21 +205,23 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   readonly lineItems = computed<BookingLineItem[]>(() => {
     const quantities = this.selectedQuantities();
     const items: BookingLineItem[] = [];
+    const catalogItems = this.catalogItems();
 
-    for (const service of this.catalogItems()) {
-      const quantity = quantities[service.id] ?? 0;
+    for (const clientPackage of this.selectedClientPackages()) {
+      const service = catalogItems.find(item => item.id === clientPackage.packageId);
+      if (!service) {
+        continue;
+      }
+      items.push(bookAppointmentOwnedPackageLineItem(clientPackage, service));
+    }
+
+    const ownedPackages = this.matchedClient()?.packages ?? [];
+    for (const service of catalogItems) {
+      const quantity = Math.min(quantities[service.id] ?? 0, bookAppointmentMaxQuantity(service));
       if (quantity <= 0) {
         continue;
       }
-      items.push({
-        id: `line-${service.id}`,
-        name: service.name,
-        type: service.type,
-        quantity,
-        price: service.type === 'package' ? 0 : service.price,
-        durationMinutes: service.durationMinutes,
-        packageSessionLinked: service.type === 'package',
-      });
+      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackages, items));
     }
 
     items.push(...this.unlistedItems());
@@ -217,8 +229,10 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
     return items;
   });
 
+  readonly paymentLineItems = computed(() => bookAppointmentPaymentLineItems(this.lineItems()));
+
   readonly serviceDuration = computed(() => sumLineItemDuration(this.lineItems()));
-  readonly subtotal = computed(() => sumLineItemPrice(this.lineItems()));
+  readonly subtotal = computed(() => sumLineItemPrice(this.paymentLineItems()));
   readonly netTotal = computed(() => Math.max(this.subtotal() - this.discount(), 0));
   readonly collectedAmount = computed(() =>
     Math.min(Math.max(this.paidAmount(), 0), this.netTotal())
@@ -228,6 +242,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
     this.lineItems().reduce((total, item) => total + item.quantity, 0)
   );
   readonly paymentsTotal = computed(() => this.subtotal());
+  readonly hasPayableItems = computed(() => this.paymentLineItems().length > 0);
 
   readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
 
@@ -248,11 +263,12 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
         this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
         this.unlistedItems.set([]);
         this.selectedQuantities.set({});
-        this.selectedPackageId.set(null);
+        this.selectedPackageIds.set([]);
         this.discount.set(0);
         this.paidAmount.set(0);
         this.paymentMethod.set('cash');
         this.sendMessage.set(true);
+        this.showServicesSection.set(false);
         this.showUnlisted.set(false);
         this.activeCategory.set('all');
         this.searchQuery.set('');
@@ -276,7 +292,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
         if (client) {
           this.clientForm.controls.name.setValue(client.name, { emitEvent: false });
           if (client.packages.length === 1) {
-            this.selectedPackageId.set(client.packages[0].packageId);
+            this.selectedPackageIds.set([client.packages[0].packageId]);
           }
         }
       },
@@ -285,43 +301,31 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
 
     effect(
       () => {
-        const packageId = this.selectedPackageId();
-        const catalogItem = this.catalogItems().find(item => item.id === packageId);
-        if (!catalogItem) {
-          return;
+        const validIds = new Set(this.packageOptions().map(option => option.value));
+        const filtered = this.selectedPackageIds().filter(id => validIds.has(id));
+        if (filtered.length !== this.selectedPackageIds().length) {
+          this.selectedPackageIds.set(filtered);
         }
-        const current = this.selectedQuantities();
-        if ((current[catalogItem.id] ?? 0) > 0) {
-          return;
-        }
-        this.selectedQuantities.set({
-          ...current,
-          [catalogItem.id]: 1,
-        });
       },
       { allowSignalWrites: true }
     );
 
     effect(
       () => {
+        if (!this.showServicesSection()) {
+          return;
+        }
         this.filteredServices();
         this.isRtl();
-        queueMicrotask(() => {
-          this.bindCarouselObserver();
-          this.resetCarouselScroll();
-          this.updateScrollState();
-        });
+        this.serviceTrack();
+        this.scheduleCarouselSync();
       },
       { allowSignalWrites: true }
     );
   }
 
   ngAfterViewInit(): void {
-    queueMicrotask(() => {
-      this.bindCarouselObserver();
-      this.resetCarouselScroll();
-      this.updateScrollState();
-    });
+    this.scheduleCarouselSync();
   }
 
   ngOnDestroy(): void {
@@ -406,11 +410,34 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
     const trackRect = track.getBoundingClientRect();
     const firstRect = cards[0].getBoundingClientRect();
     const lastRect = cards[cards.length - 1].getBoundingClientRect();
-    const overflowLeft = Math.min(firstRect.left, lastRect.left) < trackRect.left - 4;
-    const overflowRight = Math.max(firstRect.right, lastRect.right) > trackRect.right + 4;
+    let overflowLeft = Math.min(firstRect.left, lastRect.left) < trackRect.left - 4;
+    let overflowRight = Math.max(firstRect.right, lastRect.right) > trackRect.right + 4;
+    const hasScrollableContent = track.scrollWidth - track.clientWidth > 4;
+    if (hasScrollableContent && !overflowLeft && !overflowRight) {
+      overflowLeft = this.isRtl();
+      overflowRight = !this.isRtl();
+    }
 
     this.canScrollLeft.set(overflowLeft);
     this.canScrollRight.set(overflowRight);
+  }
+
+  /** Measure after the section is in the DOM and has a real width. */
+  private scheduleCarouselSync(): void {
+    const run = () => {
+      if (!this.showServicesSection() || !this.serviceTrack()) {
+        return;
+      }
+      this.bindCarouselObserver();
+      this.resetCarouselScroll();
+      this.updateScrollState();
+    };
+
+    queueMicrotask(run);
+    requestAnimationFrame(() => {
+      run();
+      requestAnimationFrame(run);
+    });
   }
 
   lineTypeKey(type: BookingLineItem['type']): string {
@@ -440,7 +467,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   lineTotal(item: BookingLineItem): number {
-    return item.price * item.quantity;
+    return bookAppointmentLineTotal(item);
   }
 
   mobileError(): string | null {
@@ -507,6 +534,12 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   removeLineItem(itemId: string): void {
+    const ownedMatch = itemId.match(/^line-owned-(.+)$/);
+    if (ownedMatch) {
+      this.removeSelectedOwnedLine(ownedMatch[1]);
+      return;
+    }
+
     const serviceId = itemId.replace(/^line-/, '');
     const current = this.selectedQuantities();
     if (serviceId in current) {
@@ -516,6 +549,10 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.unlistedItems.update(items => items.filter(item => item.id !== itemId));
+  }
+
+  onPackageIdsChange(packageIds: string[] | null): void {
+    this.selectedPackageIds.set(packageIds ?? []);
   }
 
   selectPayment(method: PaymentMethodId): void {
@@ -632,4 +669,17 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
     return null;
   }
 
+  private removeSelectedPackageId(packageId: string): void {
+    this.selectedPackageIds.update(ids => ids.filter(id => id !== packageId));
+  }
+
+  private removeSelectedOwnedLine(ownedLineKey: string): void {
+    const client = this.matchedClient();
+    const ownedPackage =
+      client?.packages.find(pkg => pkg.customerPackageId === ownedLineKey) ??
+      client?.packages.find(pkg => pkg.packageId === ownedLineKey);
+    if (ownedPackage) {
+      this.removeSelectedPackageId(ownedPackage.packageId);
+    }
+  }
 }
