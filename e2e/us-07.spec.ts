@@ -3,9 +3,14 @@ import { expect, test, type Page, type Locator } from '@playwright/test';
 const categoryId = '00000000-0000-4000-8000-000000000006';
 const offerId = '00000000-0000-4000-8000-000000000007';
 
-const phone = process.env.OPERIA_E2E_PHONE || '+201095685986';
-const password = process.env.OPERIA_E2E_PASSWORD || 'Admin@12345';
-const otp = process.env.OPERIA_E2E_OTP || '111111';
+const phone = '+201000000071';
+const tenantBPhone = '+201000000072';
+const password = process.env.OPERIA_E2E_PASSWORD!;
+const otp = process.env.OPERIA_E2E_OTP!;
+const customerId = 'e2e70000-0000-4000-8000-000000000006';
+const branchId = 'e2e70000-0000-4000-8000-000000000004';
+const employeeId = 'e2e70000-0000-4000-8000-000000000005';
+const seededCategoryId = 'e2e70000-0000-4000-8000-000000000017';
 
 async function performLogin(page: Page) {
   await page.goto('/auth/login');
@@ -62,7 +67,8 @@ function setupControlledOfferApi(page: Page, submitted: Record<string, unknown>[
     if (request.method() === 'POST' && path.endsWith('/packages')) {
       const payload = request.postDataJSON() as Record<string, unknown>;
       submitted.push(payload);
-      const rows = (payload['installments'] as Array<{ amount: number; sessionsUnlocked: number }>) || [];
+      const rows =
+        (payload['installments'] as { amount: number; sessionsUnlocked: number }[]) || [];
       let cum = 0;
       const enrichedRows = rows.map((r, idx) => {
         cum += r.sessionsUnlocked;
@@ -88,7 +94,8 @@ function setupControlledOfferApi(page: Page, submitted: Record<string, unknown>[
     if (request.method() === 'PUT' && path.endsWith(`/packages/${offerId}`)) {
       const payload = request.postDataJSON() as Record<string, unknown>;
       submitted.push(payload);
-      const rows = (payload['installments'] as Array<{ amount: number; sessionsUnlocked: number }>) || [];
+      const rows =
+        (payload['installments'] as { amount: number; sessionsUnlocked: number }[]) || [];
       let cum = 0;
       const enrichedRows = rows.map((r, idx) => {
         cum += r.sessionsUnlocked;
@@ -127,8 +134,9 @@ function setupControlledOfferApi(page: Page, submitted: Record<string, unknown>[
 }
 
 test.describe('US-07: Installment plan and session release', () => {
-
-  test('TC-01, TC-02, TC-06: Package installment offer creation, unequal amounts, suggest distribution and manual edits', async ({ page }) => {
+  test('TC-01, TC-02, TC-06: Package installment offer creation, unequal amounts, suggest distribution and manual edits', async ({
+    page,
+  }) => {
     const submitted: Record<string, unknown>[] = [];
     await setupControlledOfferApi(page, submitted);
     await performLogin(page);
@@ -142,7 +150,10 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // Select "Package" offer type card
     await page.locator('.offer-type-cards button').nth(1).click();
-    await expect(page.locator('.offer-type-cards button').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.offer-type-cards button').nth(1)).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
 
     // Populate basic package info
     await page.locator('.editor [formcontrolname="name"]').fill('TC-01 Package Offer');
@@ -160,9 +171,15 @@ test.describe('US-07: Installment plan and session release', () => {
       await page
         .locator('.editor [formcontrolname="installmentEnabled"] .p-inputswitch-slider')
         .click();
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentPrice"] input'), '20000');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentPrice"] input'),
+        '20000'
+      );
       await fillNumberInput(page.locator('.editor [formcontrolname="firstPayment"] input'), '5000');
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '3');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentCount"] input'),
+        '3'
+      );
 
       // The grid has exactly 3 rows
       const rows = page.locator('.installment-plan-table tbody tr');
@@ -203,8 +220,12 @@ test.describe('US-07: Installment plan and session release', () => {
       await expect(page.locator('.editor [formcontrolname="installmentPrice"] input')).toHaveValue(
         '20,000'
       );
-      await expect(page.locator('.editor [formcontrolname="firstPayment"] input')).toHaveValue('5,000');
-      await expect(page.locator('.editor [formcontrolname="installmentCount"] input')).toHaveValue('3');
+      await expect(page.locator('.editor [formcontrolname="firstPayment"] input')).toHaveValue(
+        '5,000'
+      );
+      await expect(page.locator('.editor [formcontrolname="installmentCount"] input')).toHaveValue(
+        '3'
+      );
       const editRows = page.locator('.installment-plan-table tbody tr');
       await expect(editRows).toHaveCount(3);
       await expect(editRows.nth(0).locator('td').nth(3)).toHaveText('3');
@@ -242,7 +263,10 @@ test.describe('US-07: Installment plan and session release', () => {
 
     await test.step('TC-06: Change installment price to 21,000, suggest distribution, then manually edit row', async () => {
       // Change installment price to 21,000
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentPrice"] input'), '21000');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentPrice"] input'),
+        '21000'
+      );
       // Remaining balance becomes 16,000 (21,000 - 5,000)
       await expect(page.locator('.installment-plan-summary').first()).toContainText('16,000.00');
 
@@ -251,8 +275,12 @@ test.describe('US-07: Installment plan and session release', () => {
 
       // Manually edit row 0 to 6,000, row 1 to 5,000, row 2 to 5,000 (total 16,000)
       await setInstallmentRow(page, 0, 6000, 3);
-      await setInstallmentRow(page, 1, 5000, 4);
       await setInstallmentRow(page, 2, 5000, 3);
+      await setInstallmentRow(page, 1, 5000, 4);
+      const editedRows = page.locator('.installment-plan-table tbody tr');
+      await expect(editedRows.nth(0).locator('td').nth(3)).toHaveText('3');
+      await expect(editedRows.nth(1).locator('td').nth(3)).toHaveText('7');
+      await expect(editedRows.nth(2).locator('td').nth(3)).toHaveText('10');
 
       // Save and verify manually edited distribution is submitted
       await page.locator('.editor footer button[type="submit"]').click();
@@ -271,7 +299,9 @@ test.describe('US-07: Installment plan and session release', () => {
     });
   });
 
-  test('TC-03, TC-04, TC-05, TC-08: Installment validation rules and inline errors', async ({ page }) => {
+  test('TC-03, TC-04, TC-05, TC-08: Installment validation rules and inline errors', async ({
+    page,
+  }) => {
     const submitted: Record<string, unknown>[] = [];
     await setupControlledOfferApi(page, submitted);
     await performLogin(page);
@@ -295,13 +325,19 @@ test.describe('US-07: Installment plan and session release', () => {
       await page
         .locator('.editor [formcontrolname="installmentEnabled"] .p-inputswitch-slider')
         .click();
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentPrice"] input'), '20000');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentPrice"] input'),
+        '20000'
+      );
     };
 
     await test.step('TC-03: Row amounts not totaling balance (4,000 / 5,000 / 5,000) show inline error and block save', async () => {
       await openFreshPackageEditor();
       await fillNumberInput(page.locator('.editor [formcontrolname="firstPayment"] input'), '5000');
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '3');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentCount"] input'),
+        '3'
+      );
 
       // Set amounts: 4,000 / 5,000 / 5,000 = 14,000 != 15,000
       await setInstallmentRow(page, 0, 4000, 3);
@@ -324,26 +360,39 @@ test.describe('US-07: Installment plan and session release', () => {
     await test.step('TC-04: Missing first payment, count 0, or count != rows block save with inline errors', async () => {
       // 1. Missing first payment
       await openFreshPackageEditor();
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '3');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentCount"] input'),
+        '3'
+      );
       // Leave firstPayment empty
       await page.locator('.editor footer button[type="submit"]').click();
-      await expect(page.locator('.form-field:has([formcontrolname="firstPayment"]) .field-error')).toBeVisible();
+      await expect(
+        page.locator('.form-field:has([formcontrolname="firstPayment"]) .field-error')
+      ).toBeVisible();
       expect(submitted.length).toBe(0);
 
       // 2. Count 0 or empty count
       await fillNumberInput(page.locator('.editor [formcontrolname="firstPayment"] input'), '5000');
       await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '');
       await page.locator('.editor footer button[type="submit"]').click();
-      await expect(page.locator('.form-field:has([formcontrolname="installmentCount"]) .field-error')).toBeVisible();
+      await expect(
+        page.locator('.form-field:has([formcontrolname="installmentCount"]) .field-error')
+      ).toBeVisible();
       expect(submitted.length).toBe(0);
 
       // 3. Count differs from rows: restore count 3 and valid rows
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '3');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentCount"] input'),
+        '3'
+      );
       await setInstallmentRow(page, 0, 5000, 3);
       await setInstallmentRow(page, 1, 5000, 4);
       await setInstallmentRow(page, 2, 5000, 3);
       // Now manualPlanEdited is true. Changing count to 4 prompts replacement dialog
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '4');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentCount"] input'),
+        '4'
+      );
       const repDialog = page.locator('.p-dialog.confirm-action-dialog');
       await expect(repDialog).toBeVisible();
       // Dismiss replacement dialog by clicking Cancel (button 0)
@@ -356,12 +405,20 @@ test.describe('US-07: Installment plan and session release', () => {
 
     await test.step('TC-05: Negative row amount, negative first payment, or first payment > installment price blocked', async () => {
       await openFreshPackageEditor();
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '3');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentCount"] input'),
+        '3'
+      );
 
       // First payment > installment price (25,000 > 20,000)
-      await fillNumberInput(page.locator('.editor [formcontrolname="firstPayment"] input'), '25000');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="firstPayment"] input'),
+        '25000'
+      );
       await page.locator('.editor footer button[type="submit"]').click();
-      await expect(page.locator('.form-field:has([formcontrolname="firstPayment"]) .field-error')).toBeVisible();
+      await expect(
+        page.locator('.form-field:has([formcontrolname="firstPayment"]) .field-error')
+      ).toBeVisible();
       expect(submitted.length).toBe(0);
 
       // Zero row amount remains valid when total balances: first payment 5,000, rows 0 / 10,000 / 5,000 = 15,000
@@ -378,7 +435,10 @@ test.describe('US-07: Installment plan and session release', () => {
     await test.step('TC-08: Row releases exceeding session count or negative releases block save', async () => {
       await openFreshPackageEditor();
       await fillNumberInput(page.locator('.editor [formcontrolname="firstPayment"] input'), '5000');
-      await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '3');
+      await fillNumberInput(
+        page.locator('.editor [formcontrolname="installmentCount"] input'),
+        '3'
+      );
 
       // Releases exceeding total session count: row 0: 6, row 1: 5 (6 + 5 = 11 > 10)
       await setInstallmentRow(page, 0, 5000, 6);
@@ -409,7 +469,10 @@ test.describe('US-07: Installment plan and session release', () => {
     await expect(page.locator('.editor')).toBeVisible();
 
     // Default offer type is Single Session
-    await expect(page.locator('.offer-type-cards button').nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.offer-type-cards button').nth(0)).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
     // Installment switch and fields are absent for Single session
     await expect(page.locator('.editor [formcontrolname="installmentEnabled"]')).toHaveCount(0);
     await expect(page.locator('.editor [formcontrolname="firstPayment"]')).toHaveCount(0);
@@ -429,7 +492,10 @@ test.describe('US-07: Installment plan and session release', () => {
     await page
       .locator('.editor [formcontrolname="installmentEnabled"] .p-inputswitch-slider')
       .click();
-    await fillNumberInput(page.locator('.editor [formcontrolname="installmentPrice"] input'), '20000');
+    await fillNumberInput(
+      page.locator('.editor [formcontrolname="installmentPrice"] input'),
+      '20000'
+    );
     await fillNumberInput(page.locator('.editor [formcontrolname="firstPayment"] input'), '5000');
     await fillNumberInput(page.locator('.editor [formcontrolname="installmentCount"] input'), '3');
     await setInstallmentRow(page, 0, 5000, 3);
@@ -452,7 +518,11 @@ test.describe('US-07: Installment plan and session release', () => {
     await expect(confirmDialog).toBeVisible();
 
     // Confirm plan replacement (second button in actions)
-    await confirmDialog.locator('.confirm-dialog-actions p-button').nth(1).locator('button').click();
+    await confirmDialog
+      .locator('.confirm-dialog-actions p-button')
+      .nth(1)
+      .locator('button')
+      .click();
 
     // Verify installment controls and grid are now absent
     await expect(page.locator('.editor [formcontrolname="installmentEnabled"]')).toHaveCount(0);
@@ -477,15 +547,18 @@ test.describe('US-07: Installment plan and session release', () => {
     await page.locator('.editor button.close').click();
   });
 
-  test('TC-01, TC-02, TC-09, TC-10, TC-11, TC-14, TC-15: Release ceiling, persistence, and tenant isolation against real API & DB', async ({ request, page }) => {
+  test('TC-01, TC-02, TC-09, TC-10, TC-11, TC-14, TC-15: Release ceiling, persistence, and tenant isolation against real API & DB', async ({
+    request,
+    page,
+  }) => {
     // Authenticate center admin against real API
-    const loginRes = await request.post('http://localhost:5150/api/auth/login', {
+    const loginRes = await request.post('http://localhost:5151/api/auth/login', {
       data: { phoneNumber: phone, password },
     });
     expect(loginRes.ok()).toBeTruthy();
     const loginData = await loginRes.json();
 
-    const authRes = await request.post('http://localhost:5150/api/auth/verify-otp', {
+    const authRes = await request.post('http://localhost:5151/api/auth/verify-otp', {
       data: { userId: loginData.userId, code: otp },
     });
     expect(authRes.ok()).toBeTruthy();
@@ -497,23 +570,15 @@ test.describe('US-07: Installment plan and session release', () => {
     await page.goto('/packages');
     await expect(page.locator('.packages-page')).toBeVisible();
 
-    // Ensure a category exists under Tenant A
-    const catRes = await request.post('http://localhost:5150/api/packages/service-categories', {
-      headers: headersA,
-      data: { name: `Dental Cat ${Date.now()}`, icon: 'pi pi-box' },
-    });
-    expect(catRes.ok()).toBeTruthy();
-    const cat = await catRes.json();
-
     await test.step('TC-01 & TC-02 Real API persistence: save offer, readback verifies amounts and cumulative sessions 3/7/10', async () => {
-      const createRes = await request.post('http://localhost:5150/api/packages', {
+      const createRes = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `Persistence Plan ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: 'Testing real DB persistence',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 10,
           price: 18000,
@@ -534,7 +599,9 @@ test.describe('US-07: Installment plan and session release', () => {
       const pkg = await createRes.json();
 
       // Read back from real API / DB
-      const getRes = await request.get(`http://localhost:5150/api/packages/${pkg.id}`, { headers: headersA });
+      const getRes = await request.get(`http://localhost:5151/api/packages/${pkg.id}`, {
+        headers: headersA,
+      });
       expect(getRes.ok()).toBeTruthy();
       const readback = await getRes.json();
 
@@ -542,19 +609,31 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(readback.installmentPrice).toBe(20000);
       expect(readback.firstPayment).toBe(5000);
       expect(readback.installments).toHaveLength(3);
-      expect(readback.installments[0]).toMatchObject({ amount: 5000, sessionsUnlocked: 3, cumulativeAvailableSessions: 3 });
-      expect(readback.installments[1]).toMatchObject({ amount: 5000, sessionsUnlocked: 4, cumulativeAvailableSessions: 7 });
-      expect(readback.installments[2]).toMatchObject({ amount: 5000, sessionsUnlocked: 3, cumulativeAvailableSessions: 10 });
+      expect(readback.installments[0]).toMatchObject({
+        amount: 5000,
+        sessionsUnlocked: 3,
+        cumulativeAvailableSessions: 3,
+      });
+      expect(readback.installments[1]).toMatchObject({
+        amount: 5000,
+        sessionsUnlocked: 4,
+        cumulativeAvailableSessions: 7,
+      });
+      expect(readback.installments[2]).toMatchObject({
+        amount: 5000,
+        sessionsUnlocked: 3,
+        cumulativeAvailableSessions: 10,
+      });
 
       // Update with unequal amounts (TC-02)
-      const updateRes = await request.put(`http://localhost:5150/api/packages/${pkg.id}`, {
+      const updateRes = await request.put(`http://localhost:5151/api/packages/${pkg.id}`, {
         headers: headersA,
         data: {
           name: readback.name,
           isActive: true,
           offerType: 'package',
           description: readback.description,
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 10,
           price: 18000,
@@ -582,20 +661,22 @@ test.describe('US-07: Installment plan and session release', () => {
       await expect(page.locator('.packages-table tbody tr').first()).toBeVisible();
       await page.locator('.packages-table tbody .table-icon-btn.edit').first().click();
       await expect(page.locator('.editor')).toBeVisible();
-      await expect(page.locator('.editor [formcontrolname="installmentPrice"] input')).toHaveValue('20,000');
+      await expect(page.locator('.editor [formcontrolname="installmentPrice"] input')).toHaveValue(
+        '20,000'
+      );
       await page.locator('.editor button.close').click();
     });
 
     await test.step('TC-09: Prepayment ceiling (10 sessions ceiling is 7): 8/0/2 rejected, 3/4/3 accepted', async () => {
       // 8 / 0 / 2 releases 8 before full payment -> rejected by real API
-      const rejectedRes = await request.post('http://localhost:5150/api/packages', {
+      const rejectedRes = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `Ceiling Rejection ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 10,
           price: 18000,
@@ -617,14 +698,14 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(JSON.stringify(err)).toContain('PACKAGE_INSTALLMENT_RELEASE_CAP');
 
       // 3 / 4 / 3 releases at most 7 before full payment -> accepted by real API
-      const acceptedRes = await request.post('http://localhost:5150/api/packages', {
+      const acceptedRes = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `Ceiling Accepted ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 10,
           price: 18000,
@@ -646,14 +727,14 @@ test.describe('US-07: Installment plan and session release', () => {
 
     await test.step('TC-10: 15 sessions ceiling is 10 (10.5 rounds down): 11 rejected, 10 accepted', async () => {
       // 11 before full payment (6 + 5) -> rejected
-      const res11 = await request.post('http://localhost:5150/api/packages', {
+      const res11 = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `15-session 11 release ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 15,
           price: 18000,
@@ -675,14 +756,14 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(JSON.stringify(err)).toContain('PACKAGE_INSTALLMENT_RELEASE_CAP');
 
       // 10 before full payment (5 + 5) -> accepted
-      const res10 = await request.post('http://localhost:5150/api/packages', {
+      const res10 = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `15-session 10 release ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 15,
           price: 18000,
@@ -704,14 +785,14 @@ test.describe('US-07: Installment plan and session release', () => {
 
     await test.step('TC-11: 1-session package: early release rejected even though 70% rounds to one; unlocks on full payment', async () => {
       // Releasing 1 session on row 1 before full payment on row 2 -> rejected
-      const earlyRes = await request.post('http://localhost:5150/api/packages', {
+      const earlyRes = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `1-session early ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 1,
           price: 18000,
@@ -732,14 +813,14 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(JSON.stringify(err)).toContain('PACKAGE_INSTALLMENT_RELEASE_CAP');
 
       // Releasing only on final full payment row (0 / 1) -> accepted
-      const finalRes = await request.post('http://localhost:5150/api/packages', {
+      const finalRes = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `1-session valid ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 1,
           price: 18000,
@@ -759,14 +840,14 @@ test.describe('US-07: Installment plan and session release', () => {
     });
 
     await test.step('TC-14: Saving or updating a package plan alone creates no customer entitlement or collection', async () => {
-      const planRes = await request.post('http://localhost:5150/api/packages', {
+      const planRes = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `Unsold Plan ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 10,
           price: 18000,
@@ -787,21 +868,24 @@ test.describe('US-07: Installment plan and session release', () => {
       const unsoldPkg = await planRes.json();
 
       // Querying purchases for this package returns 404 (no entitlement created)
-      const checkRes = await request.get(`http://localhost:5150/api/packages/installment-purchases/${unsoldPkg.id}`, {
-        headers: headersA,
-      });
+      const checkRes = await request.get(
+        `http://localhost:5151/api/packages/installment-purchases/${unsoldPkg.id}`,
+        {
+          headers: headersA,
+        }
+      );
       expect(checkRes.status()).toBe(404);
     });
 
     await test.step('TC-15: Tenant isolation: Tenant B cannot read or update Tenant A offer', async () => {
-      // Authenticate Tenant B (+201000000000)
-      const loginB = await request.post('http://localhost:5150/api/auth/login', {
-        data: { phoneNumber: '+201000000000', password: 'Admin@12345' },
+      // Authenticate the separately seeded E2E tenant B.
+      const loginB = await request.post('http://localhost:5151/api/auth/login', {
+        data: { phoneNumber: tenantBPhone, password },
       });
       expect(loginB.ok()).toBeTruthy();
       const loginBData = await loginB.json();
 
-      const authB = await request.post('http://localhost:5150/api/auth/verify-otp', {
+      const authB = await request.post('http://localhost:5151/api/auth/verify-otp', {
         data: { userId: loginBData.userId, code: otp },
       });
       expect(authB.ok()).toBeTruthy();
@@ -809,14 +893,14 @@ test.describe('US-07: Installment plan and session release', () => {
       const headersB = { Authorization: `Bearer ${tokenB}` };
 
       // Create a plan under Tenant A
-      const planARes = await request.post('http://localhost:5150/api/packages', {
+      const planARes = await request.post('http://localhost:5151/api/packages', {
         headers: headersA,
         data: {
           name: `Tenant A Offer ${Date.now()}`,
           isActive: true,
           offerType: 'package',
           description: 'Tenant A private plan',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 10,
           price: 18000,
@@ -837,18 +921,20 @@ test.describe('US-07: Installment plan and session release', () => {
       const offerA = await planARes.json();
 
       // Tenant B attempts to read Tenant A's offer
-      const tenantBGetRes = await request.get(`http://localhost:5150/api/packages/${offerA.id}`, { headers: headersB });
+      const tenantBGetRes = await request.get(`http://localhost:5151/api/packages/${offerA.id}`, {
+        headers: headersB,
+      });
       expect(tenantBGetRes.status()).toBe(404);
 
       // Tenant B attempts to update Tenant A's offer
-      const tenantBPutRes = await request.put(`http://localhost:5150/api/packages/${offerA.id}`, {
+      const tenantBPutRes = await request.put(`http://localhost:5151/api/packages/${offerA.id}`, {
         headers: headersB,
         data: {
           name: 'Hacked by Tenant B',
           isActive: true,
           offerType: 'package',
           description: '',
-          serviceCategoryId: cat.id,
+          serviceCategoryId: seededCategoryId,
           sessionDurationMinutes: 30,
           sessionCount: 10,
           price: 1000,
@@ -864,7 +950,9 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(tenantBPutRes.status()).toBe(404);
 
       // Tenant A reads offer again; confirms it remains unchanged
-      const verifyARes = await request.get(`http://localhost:5150/api/packages/${offerA.id}`, { headers: headersA });
+      const verifyARes = await request.get(`http://localhost:5151/api/packages/${offerA.id}`, {
+        headers: headersA,
+      });
       expect(verifyARes.ok()).toBeTruthy();
       const verifiedA = await verifyARes.json();
       expect(verifiedA.name).toBe(offerA.name);
@@ -873,37 +961,32 @@ test.describe('US-07: Installment plan and session release', () => {
     });
   });
 
-  test('TC-12, TC-13: Installment sale payment progression, failure resistance, and idempotency against real API & DB', async ({ request }) => {
+  test('TC-12, TC-13: Installment sale payment progression, failure resistance, and idempotency against real API & DB', async ({
+    request,
+  }) => {
     // Authenticate center admin against real API
-    const loginRes = await request.post('http://localhost:5150/api/auth/login', {
+    const loginRes = await request.post('http://localhost:5151/api/auth/login', {
       data: { phoneNumber: phone, password },
     });
     expect(loginRes.ok()).toBeTruthy();
     const loginData = await loginRes.json();
 
-    const authRes = await request.post('http://localhost:5150/api/auth/verify-otp', {
+    const authRes = await request.post('http://localhost:5151/api/auth/verify-otp', {
       data: { userId: loginData.userId, code: otp },
     });
     expect(authRes.ok()).toBeTruthy();
     const { accessToken: tokenA } = await authRes.json();
     const headersA = { Authorization: `Bearer ${tokenA}` };
 
-    const catRes = await request.post('http://localhost:5150/api/packages/service-categories', {
-      headers: headersA,
-      data: { name: `Sale Cat ${Date.now()}`, icon: 'pi pi-box' },
-    });
-    expect(catRes.ok()).toBeTruthy();
-    const cat = await catRes.json();
-
     // 1. Create a valid package offer on real API
-    const pkgRes = await request.post('http://localhost:5150/api/packages', {
+    const pkgRes = await request.post('http://localhost:5151/api/packages', {
       headers: headersA,
       data: {
         name: `Installment Sale Pkg ${Date.now()}`,
         isActive: true,
         offerType: 'package',
         description: 'Payment progression test',
-        serviceCategoryId: cat.id,
+        serviceCategoryId: seededCategoryId,
         sessionDurationMinutes: 30,
         sessionCount: 10,
         price: 18000,
@@ -924,17 +1007,18 @@ test.describe('US-07: Installment plan and session release', () => {
     const pkg = await pkgRes.json();
 
     // 2. Sell the package through booking
-    const uniqueDay = 1 + (Math.floor(Date.now() / 1000) % 20);
-    const scheduledDate = `2026-11-${String(uniqueDay).padStart(2, '0')}`;
+    const future = new Date();
+    future.setUTCDate(future.getUTCDate() + 30 + (Math.floor(Date.now() / 1000) % 90));
+    const scheduledDate = future.toISOString().slice(0, 10);
     const startMinutes = 600 + (Math.floor(Date.now() / 1000) % 5) * 40;
     const endMinutes = startMinutes + 30;
-    const bookingRes = await request.post('http://localhost:5150/api/bookings', {
+    const bookingRes = await request.post('http://localhost:5151/api/bookings', {
       headers: headersA,
       data: {
         idempotencyKey: `idemp-sale-${Date.now()}`,
-        customerId: '00000000-0000-0000-0000-000000000002',
-        branchId: '00000000-0000-0000-0000-000000000001',
-        employeeId: '00000000-0000-0000-0000-000000000003',
+        customerId,
+        branchId,
+        employeeId,
         scheduledDate,
         startMinutes,
         endMinutes,
@@ -957,7 +1041,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // 3. Inspect purchase initial state: available sessions is 0
     const initialPurchaseRes = await request.get(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}`,
       { headers: headersA }
     );
     expect(initialPurchaseRes.ok()).toBeTruthy();
@@ -968,7 +1052,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // 4. TC-13: Against purchase with unpaid installment, record failed payment attempt
     const failRes = await request.post(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}/installments/1/collect`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/1/collect`,
       {
         headers: headersA,
         data: { amount: 99999, paymentMethod: 'cash' }, // Invalid amount
@@ -978,7 +1062,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // Verify failure leaves paid amount and released sessions unchanged
     const afterFailRes = await request.get(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}`,
       { headers: headersA }
     );
     const afterFail = await afterFailRes.json();
@@ -987,7 +1071,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // 5. TC-12: First payment (row 0) confirmed collection
     const pay0Res = await request.post(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}/installments/0/collect`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/0/collect`,
       {
         headers: headersA,
         data: { amount: 5000, paymentMethod: 'cash' },
@@ -1001,7 +1085,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // 6. TC-12 & TC-13: First numbered payment (row 1, 5000)
     const pay1Res = await request.post(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}/installments/1/collect`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/1/collect`,
       {
         headers: headersA,
         data: { amount: 5000, paymentMethod: 'cash' },
@@ -1015,7 +1099,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // TC-13 Repeat confirmed payment: idempotent, returns existing state without extra collection or sessions
     const repeatPay1Res = await request.post(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}/installments/1/collect`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/1/collect`,
       {
         headers: headersA,
         data: { amount: 5000, paymentMethod: 'cash' },
@@ -1028,7 +1112,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // 7. Make second numbered payment (row 2, 5000)
     const pay2Res = await request.post(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}/installments/2/collect`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/2/collect`,
       {
         headers: headersA,
         data: { amount: 5000, paymentMethod: 'cash' },
@@ -1042,7 +1126,7 @@ test.describe('US-07: Installment plan and session release', () => {
 
     // 8. Make final confirmed payment (row 3, 5000)
     const pay3Res = await request.post(
-      `http://localhost:5150/api/packages/installment-purchases/${purchaseId}/installments/3/collect`,
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/3/collect`,
       {
         headers: headersA,
         data: { amount: 5000, paymentMethod: 'cash' },
