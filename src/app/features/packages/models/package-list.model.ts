@@ -30,7 +30,7 @@ export interface PackageFormValue {
   sessionCount: number | null;
   pulseCount: number | null;
   packageExpiryMonths: number | null;
-  price: number;
+  price: number | null;
   cashEnabled: boolean;
   installmentEnabled: boolean;
   installmentPrice: number | null;

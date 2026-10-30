@@ -11,6 +11,7 @@ const customerId = 'e2e70000-0000-4000-8000-000000000006';
 const branchId = 'e2e70000-0000-4000-8000-000000000004';
 const employeeId = 'e2e70000-0000-4000-8000-000000000005';
 const seededCategoryId = 'e2e70000-0000-4000-8000-000000000017';
+const customerMobile = '+201000000074';
 
 async function performLogin(page: Page) {
   await page.goto('/auth/login');
@@ -867,14 +868,62 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(planRes.status()).toBe(201);
       const unsoldPkg = await planRes.json();
 
-      // Querying purchases for this package returns 404 (no entitlement created)
-      const checkRes = await request.get(
-        `http://localhost:5151/api/packages/installment-purchases/${unsoldPkg.id}`,
+      // Querying customer packages confirms saving the offer created no customer entitlement
+      const customerRes = await request.get(
+        'http://localhost:5151/api/bookings/customers/by-mobile',
         {
           headers: headersA,
+          params: { mobile: customerMobile },
         }
       );
-      expect(checkRes.status()).toBe(404);
+      expect(customerRes.ok()).toBeTruthy();
+      const customerData = await customerRes.json();
+      expect(customerData).toBeDefined();
+      expect(
+        customerData.packages.some((pkg: { packageId: string }) => pkg.packageId === unsoldPkg.id)
+      ).toBe(false);
+
+      // Updating the plan also creates no customer entitlement
+      const updateRes = await request.put(`http://localhost:5151/api/packages/${unsoldPkg.id}`, {
+        headers: headersA,
+        data: {
+          name: `Unsold Plan Updated ${Date.now()}`,
+          isActive: true,
+          offerType: 'package',
+          description: 'Updated without sale',
+          serviceCategoryId: seededCategoryId,
+          sessionDurationMinutes: 30,
+          sessionCount: 10,
+          price: 18000,
+          discountCode: '',
+          cashEnabled: true,
+          installmentEnabled: true,
+          installmentPrice: 20000,
+          firstPayment: 5000,
+          installmentCount: 3,
+          installments: [
+            { amount: 5000, sessionsUnlocked: 3 },
+            { amount: 5000, sessionsUnlocked: 4 },
+            { amount: 5000, sessionsUnlocked: 3 },
+          ],
+        },
+      });
+      expect(updateRes.ok()).toBeTruthy();
+
+      const updatedCustomerRes = await request.get(
+        'http://localhost:5151/api/bookings/customers/by-mobile',
+        {
+          headers: headersA,
+          params: { mobile: customerMobile },
+        }
+      );
+      expect(updatedCustomerRes.ok()).toBeTruthy();
+      const updatedCustomerData = await updatedCustomerRes.json();
+      expect(
+        updatedCustomerData.packages.some(
+          (pkg: { packageId: string }) => pkg.packageId === unsoldPkg.id
+        )
+      ).toBe(false);
     });
 
     await test.step('TC-15: Tenant isolation: Tenant B cannot read or update Tenant A offer', async () => {

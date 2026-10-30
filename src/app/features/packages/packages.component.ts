@@ -232,7 +232,7 @@ export class PackagesComponent implements OnInit {
     sessionCount: [null as number | null],
     pulseCount: [null as number | null, [Validators.min(0)]],
     packageExpiryMonths: [12 as number | null],
-    price: [0, [Validators.required, Validators.min(0)]],
+    price: [0 as number | null, [Validators.required, Validators.min(0)]],
     cashEnabled: [true],
     installmentEnabled: [false],
     installmentPrice: [null as number | null],
@@ -931,10 +931,11 @@ export class PackagesComponent implements OnInit {
 
   private syncPaymentValidators(): void {
     const price = this.form.controls.price;
-    price.setValidators([
-      Validators.required,
-      Validators.min(this.form.controls.cashEnabled.value ? 0.01 : 0),
-    ]);
+    price.setValidators(
+      this.form.controls.cashEnabled.value
+        ? [Validators.required, Validators.min(0.01)]
+        : [Validators.min(0)]
+    );
     price.updateValueAndValidity({ emitEvent: false });
     const installmentPrice = this.form.controls.installmentPrice;
     installmentPrice.setValidators(
