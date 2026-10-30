@@ -66,7 +66,6 @@ import {
   EMPTY_UNLISTED_FORM,
   formatTimeRange,
   isBookingDetailsCatalogPurchaseLine,
-  isOwnedPackageReservedOnBookingLine,
   normalizeBookingDetailsLineItems,
   packageUsesPulses,
   PaymentMethodId,
@@ -122,6 +121,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   private readonly appointmentsApi = inject(AppointmentsApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly catalogTrack = viewChild<ElementRef<HTMLElement>>('catalogTrack');
+  private readonly closeDialog = viewChild(ConfirmPackageUsageDialogComponent);
   private carouselResizeObserver: ResizeObserver | null = null;
   readonly currencyService = inject(CurrencyService);
 
@@ -895,7 +895,8 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     const translated = translateApiFieldErrors(extractApiFieldErrors(error), key =>
       this.translate.instant(key)
     );
-    const entries = Object.entries(translated);
+    const remaining = this.closeDialog()?.applyServerErrors(translated) ?? translated;
+    const entries = Object.entries(remaining);
     if (entries.length > 0) {
       for (const [, message] of entries) {
         this.toast.add({
@@ -904,6 +905,10 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
           detail: message,
         });
       }
+      return;
+    }
+
+    if (Object.keys(translated).length > 0) {
       return;
     }
 
