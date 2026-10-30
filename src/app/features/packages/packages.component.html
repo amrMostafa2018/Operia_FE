@@ -544,37 +544,150 @@
                 <small class="field-error">{{ paymentError }}</small>
               }
             </div>
-            <div class="payment-option">
-              <div class="payment-option-toggle">
-                <p-inputSwitch formControlName="installmentEnabled" />
-                <span>{{ 'PACKAGES.CREATE.INSTALLMENT_ENABLED' | translate }}</span>
-              </div>
-              @if (installmentEnabledValue()) {
-                <div class="form-field" [class.error]="isFieldInvalid(form, 'installmentPrice')">
-                  <span class="field-label"
-                    >{{ 'PACKAGES.CREATE.INSTALLMENT_PRICE_LABEL' | translate }} <em>*</em></span
-                  >
-                  <div class="input-with-addon price-input">
-                    <p-inputNumber
-                      formControlName="installmentPrice"
-                      [min]="0"
-                      [useGrouping]="true"
-                      locale="en-US"
-                      [minFractionDigits]="0"
-                      [maxFractionDigits]="2"
-                      styleClass="price-input-number"
-                      inputStyleClass="price-input-field"
-                    />
-                    @if (currencyService.hasCurrency()) {
-                      <span class="addon">{{ currencyService.currencyLabel() }}</span>
+            @if (isPackageOffer()) {
+              <div class="payment-option">
+                <div class="payment-option-toggle">
+                  <p-inputSwitch formControlName="installmentEnabled" />
+                  <span>{{ 'PACKAGES.CREATE.INSTALLMENT_ENABLED' | translate }}</span>
+                </div>
+                @if (installmentEnabledValue() && isPackageOffer()) {
+                  <div class="form-field" [class.error]="isFieldInvalid(form, 'installmentPrice')">
+                    <span class="field-label"
+                      >{{ 'PACKAGES.CREATE.INSTALLMENT_PRICE_LABEL' | translate }} <em>*</em></span
+                    >
+                    <div class="input-with-addon price-input">
+                      <p-inputNumber
+                        formControlName="installmentPrice"
+                        [min]="0"
+                        [useGrouping]="true"
+                        locale="en-US"
+                        [minFractionDigits]="0"
+                        [maxFractionDigits]="2"
+                        styleClass="price-input-number"
+                        inputStyleClass="price-input-field"
+                      />
+                      @if (currencyService.hasCurrency()) {
+                        <span class="addon">{{ currencyService.currencyLabel() }}</span>
+                      }
+                    </div>
+                    @if (getFieldError('installmentPrice'); as installmentError) {
+                      <small class="field-error">{{ installmentError }}</small>
                     }
                   </div>
-                  @if (getFieldError('installmentPrice'); as installmentError) {
-                    <small class="field-error">{{ installmentError }}</small>
+                  <div class="installment-plan-fields">
+                    <div class="form-field" [class.error]="isFieldInvalid(form, 'firstPayment')">
+                      <span class="field-label"
+                        >{{ 'PACKAGES.CREATE.FIRST_PAYMENT' | translate }} <em>*</em></span
+                      >
+                      <p-inputNumber
+                        formControlName="firstPayment"
+                        [min]="0"
+                        [minFractionDigits]="0"
+                        [maxFractionDigits]="2"
+                        locale="en-US"
+                      />
+                      @if (getFieldError('firstPayment'); as error) {
+                        <small class="field-error">{{ error }}</small>
+                      }
+                    </div>
+                    <div
+                      class="form-field"
+                      [class.error]="isFieldInvalid(form, 'installmentCount')"
+                    >
+                      <span class="field-label"
+                        >{{ 'PACKAGES.CREATE.INSTALLMENT_COUNT' | translate }} <em>*</em></span
+                      >
+                      <p-inputNumber
+                        formControlName="installmentCount"
+                        [min]="1"
+                        [minFractionDigits]="0"
+                        [maxFractionDigits]="0"
+                      />
+                      @if (getFieldError('installmentCount'); as error) {
+                        <small class="field-error">{{ error }}</small>
+                      }
+                    </div>
+                  </div>
+                  <div class="installment-plan-summary">
+                    <span
+                      >{{ 'PACKAGES.CREATE.REMAINING_BALANCE' | translate }}:
+                      {{ remainingInstallmentBalance() | number: '1.2-2' }}</span
+                    >
+                    <button
+                      type="button"
+                      class="suggest-distribution"
+                      (click)="suggestDistribution()"
+                    >
+                      {{ 'PACKAGES.CREATE.SUGGEST_DISTRIBUTION' | translate }}
+                    </button>
+                  </div>
+                  <div class="installment-plan-table-wrap">
+                    <table class="installment-plan-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>{{ 'PACKAGES.CREATE.INSTALLMENT_AMOUNT' | translate }}</th>
+                          <th>{{ 'PACKAGES.CREATE.SESSIONS_UNLOCKED' | translate }}</th>
+                          <th>{{ 'PACKAGES.CREATE.CUMULATIVE_SESSIONS' | translate }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of installmentRows(); track $index) {
+                          <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>
+                              <p-inputNumber
+                                [ngModel]="row.amount"
+                                [ngModelOptions]="{ standalone: true }"
+                                (ngModelChange)="updateInstallmentRow($index, 'amount', $event)"
+                                [min]="0"
+                                [minFractionDigits]="0"
+                                [maxFractionDigits]="2"
+                                locale="en-US"
+                              />
+                            </td>
+                            <td>
+                              <p-inputNumber
+                                [ngModel]="row.sessionsUnlocked"
+                                [ngModelOptions]="{ standalone: true }"
+                                (ngModelChange)="
+                                  updateInstallmentRow($index, 'sessionsUnlocked', $event)
+                                "
+                                [min]="0"
+                                [minFractionDigits]="0"
+                                [maxFractionDigits]="0"
+                              />
+                            </td>
+                            <td>{{ cumulativeSessions($index) }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="installment-plan-summary">
+                    <span
+                      >{{ 'PACKAGES.CREATE.INSTALLMENT_TOTAL' | translate }}:
+                      {{ installmentTotal() | number: '1.2-2' }}</span
+                    >
+                    <span
+                      >{{ 'PACKAGES.CREATE.DISTRIBUTED_SESSIONS' | translate }}:
+                      {{ distributedSessions() }} / {{ formValue().sessionCount || 0 }}</span
+                    >
+                  </div>
+                  <small class="plan-hint">{{
+                    'PACKAGES.CREATE.RELEASE_LIMIT' | translate: { count: prepaymentReleaseLimit() }
+                  }}</small>
+                  @if (distributedSessions() < (formValue().sessionCount || 0)) {
+                    <small class="plan-hint">{{
+                      'PACKAGES.CREATE.REMAINING_SESSIONS_ON_FULL_PAYMENT' | translate
+                    }}</small>
                   }
-                </div>
-              }
-            </div>
+                  @if (getFieldError('installments'); as error) {
+                    <small class="field-error">{{ error }}</small>
+                  }
+                }
+              </div>
+            }
           </div>
         </section>
 
@@ -664,6 +777,16 @@
     </form>
   </div>
 }
+
+<app-confirm-action-dialog
+  [visible]="pendingPlanReplacement() !== null"
+  headerKey="PACKAGES.CREATE.PLAN_REPLACE_TITLE"
+  messageKey="PACKAGES.CREATE.PLAN_REPLACE_CONFIRM"
+  cancelLabelKey="PACKAGES.CANCEL"
+  confirmLabelKey="PACKAGES.CREATE.PLAN_REPLACE_ACTION"
+  (cancelled)="cancelPlanReplacement()"
+  (confirmed)="confirmPlanReplacement()"
+/>
 
 <app-confirm-action-dialog
   [visible]="!!pendingDelete()"

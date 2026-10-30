@@ -8,6 +8,7 @@ import {
   PackageListItem,
   PackageListStatus,
   PackageOfferType,
+  PackageInstallmentRow,
 } from './models/package-list.model';
 
 export interface PackageListResult {
@@ -45,6 +46,9 @@ export interface PackagePayload {
   cashEnabled: boolean;
   installmentEnabled: boolean;
   installmentPrice: number | null;
+  firstPayment: number | null;
+  installmentCount: number | null;
+  installments: PackageInstallmentRow[];
   discountCode: string;
   discountPercent: number | null;
 }
