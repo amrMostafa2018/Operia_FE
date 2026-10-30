@@ -22,15 +22,17 @@ test('US-06 offer pricing editor with authenticated account and controlled offer
   await page.locator('#loginOtpCode-0').click();
   await page.keyboard.type(otp!);
   await page.locator('app-otp-verification button[type="submit"]').click();
-  await expect(page).toHaveURL(/\/onboarding\/(setup|plan)/);
+  await expect(page).toHaveURL(/\/(dashboard|onboarding\/(setup|plan))/);
 
-  // The development account is still in onboarding. Keep the real login and
-  // capabilities, but model an active subscription for frontend-only checks.
-  await page.route('**/api/onboarding/status', async route => {
-    const response = await route.fetch();
-    const status = await response.json();
-    await route.fulfill({ response, json: { ...status, step: 4 } });
-  });
+  // An account still in onboarding can exercise the editor with a controlled
+  // status response. Active accounts keep their real onboarding response.
+  if (page.url().includes('/onboarding/')) {
+    await page.route('**/api/onboarding/status', async route => {
+      const response = await route.fetch();
+      const status = await response.json();
+      await route.fulfill({ response, json: { ...status, step: 4 } });
+    });
+  }
 
   let savedOffer: Record<string, unknown> | null = null;
   const submitted: Record<string, unknown>[] = [];
