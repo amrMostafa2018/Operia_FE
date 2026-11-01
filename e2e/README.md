@@ -10,6 +10,8 @@ npm run test:e2e -- e2e/us-07.spec.ts
 
 Playwright starts the Development API on port 5151 and Angular on port 4201. The backend uses the existing local `(localdb)\OperiaDev` instance and `Operia_Dev` database. Set both values before each run; the backend resets the two dummy users to the supplied password and configures its local OTP from the supplied code. No test credential is committed.
 
+TC-14 uses `sqlcmd` on `PATH` with Windows authentication to read the isolated LocalDB fixture. It checks all customer purchases and collected installments for the newly saved offer, including purchases with no released sessions that the customer lookup API omits.
+
 The Development-only backend seed restores two reserved tenants on each test run:
 
 | Fixture           | Value                                  |

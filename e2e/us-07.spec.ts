@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Locator } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 
 const categoryId = '00000000-0000-4000-8000-000000000006';
 const offerId = '00000000-0000-4000-8000-000000000007';
@@ -11,7 +12,6 @@ const customerId = 'e2e70000-0000-4000-8000-000000000006';
 const branchId = 'e2e70000-0000-4000-8000-000000000004';
 const employeeId = 'e2e70000-0000-4000-8000-000000000005';
 const seededCategoryId = 'e2e70000-0000-4000-8000-000000000017';
-const customerMobile = '+201000000074';
 
 async function performLogin(page: Page) {
   await page.goto('/auth/login');
@@ -47,6 +47,30 @@ async function setInstallmentRow(page: Page, rowIndex: number, amount: number, s
   const row = page.locator('.installment-plan-table tbody tr').nth(rowIndex);
   await fillNumberInput(row.locator('td').nth(1).locator('input'), amount);
   await fillNumberInput(row.locator('td').nth(2).locator('input'), sessions);
+}
+
+function expectNoPurchaseOrCollection(packageId: string) {
+  // TC-14 uses the isolated LocalDB fixture configured in playwright.config.ts.
+  // The customer lookup API omits purchases with no released sessions, so inspect
+  // every purchase for this offer rather than one customer's eligible packages.
+  expect(packageId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  const query = `SET NOCOUNT ON;
+    SELECT CONCAT(
+      (SELECT COUNT(*) FROM dbo.CustomerPackages WHERE PackageId = '${packageId}'),
+      '|',
+      (SELECT COUNT(*) FROM dbo.CustomerPackageInstallments AS installment
+       JOIN dbo.CustomerPackages AS purchase ON purchase.Id = installment.CustomerPackageId
+       WHERE purchase.PackageId = '${packageId}' AND installment.CollectedAtUtc IS NOT NULL)
+    );`;
+  const output = execFileSync(
+    'sqlcmd',
+    ['-S', '(localdb)\\OperiaDev', '-d', 'Operia_Dev', '-E', '-b', '-h', '-1', '-W', '-Q', query],
+    { encoding: 'utf8', timeout: 10_000 }
+  );
+  const counts = output.match(/^\s*(\d+)\|(\d+)\s*$/m);
+  if (!counts) throw new Error(`Unexpected package purchase count response: ${output}`);
+  expect(Number(counts[1]), 'Saving an offer must not create a customer purchase').toBe(0);
+  expect(Number(counts[2]), 'Saving an offer must not collect a payment').toBe(0);
 }
 
 function setupControlledOfferApi(page: Page, submitted: Record<string, unknown>[]) {
@@ -868,22 +892,8 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(planRes.status()).toBe(201);
       const unsoldPkg = await planRes.json();
 
-      // Querying customer packages confirms saving the offer created no customer entitlement
-      const customerRes = await request.get(
-        'http://localhost:5151/api/bookings/customers/by-mobile',
-        {
-          headers: headersA,
-          params: { mobile: customerMobile },
-        }
-      );
-      expect(customerRes.ok()).toBeTruthy();
-      const customerData = await customerRes.json();
-      expect(customerData).toBeDefined();
-      expect(
-        customerData.packages.some((pkg: { packageId: string }) => pkg.packageId === unsoldPkg.id)
-      ).toBe(false);
+      expectNoPurchaseOrCollection(unsoldPkg.id);
 
-      // Updating the plan also creates no customer entitlement
       const updateRes = await request.put(`http://localhost:5151/api/packages/${unsoldPkg.id}`, {
         headers: headersA,
         data: {
@@ -909,21 +919,7 @@ test.describe('US-07: Installment plan and session release', () => {
         },
       });
       expect(updateRes.ok()).toBeTruthy();
-
-      const updatedCustomerRes = await request.get(
-        'http://localhost:5151/api/bookings/customers/by-mobile',
-        {
-          headers: headersA,
-          params: { mobile: customerMobile },
-        }
-      );
-      expect(updatedCustomerRes.ok()).toBeTruthy();
-      const updatedCustomerData = await updatedCustomerRes.json();
-      expect(
-        updatedCustomerData.packages.some(
-          (pkg: { packageId: string }) => pkg.packageId === unsoldPkg.id
-        )
-      ).toBe(false);
+      expectNoPurchaseOrCollection(unsoldPkg.id);
     });
 
     await test.step('TC-15: Tenant isolation: Tenant B cannot read or update Tenant A offer', async () => {
