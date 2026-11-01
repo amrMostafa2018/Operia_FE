@@ -10,7 +10,7 @@ const password = process.env.OPERIA_E2E_PASSWORD!;
 const otp = process.env.OPERIA_E2E_OTP!;
 const customerId = 'e2e70000-0000-4000-8000-000000000006';
 const branchId = 'e2e70000-0000-4000-8000-000000000004';
-const employeeId = 'e2e70000-0000-4000-8000-000000000005';
+const employeeId = 'e2e70000-0000-4000-8000-000000000019';
 const seededCategoryId = 'e2e70000-0000-4000-8000-000000000017';
 
 async function performLogin(page: Page) {
@@ -34,13 +34,21 @@ async function performLogin(page: Page) {
 }
 
 async function fillNumberInput(input: Locator, value: string | number) {
-  await input.click();
-  await input.press('Control+A');
-  await input.press('Backspace');
-  await input.fill(String(value));
-  await input.dispatchEvent('input');
-  await input.dispatchEvent('change');
-  await input.press('Tab');
+  const expected = Number(value);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await input.click();
+    await input.press('Control+A');
+    await input.press('Backspace');
+    await input.fill(String(value));
+    await input.dispatchEvent('input');
+    await input.dispatchEvent('change');
+    await input.press('Tab');
+
+    const actual = Number((await input.inputValue()).replaceAll(',', ''));
+    if (actual === expected) return;
+  }
+
+  expect(Number((await input.inputValue()).replaceAll(',', ''))).toBe(expected);
 }
 
 async function setInstallmentRow(page: Page, rowIndex: number, amount: number, sessions: number) {
