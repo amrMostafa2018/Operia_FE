@@ -264,6 +264,7 @@ export function bookAppointmentNewPurchaseUnits(
 }
 
 export function bookAppointmentMaxQuantity(_service: Pick<ServiceCatalogItem, 'type'>): number {
+  void _service;
   return BOOKING_ITEM_MAX_QUANTITY;
 }
 
@@ -668,7 +669,7 @@ export function bookAppointmentCustomerPackageId(): string | null {
 /** Maps a booking line item to the API item type. */
 export function bookAppointmentApiItemType(item: BookingLineItem): string {
   if (item.type === 'package' && !item.packageSessionLinked) {
-    return 'packagePurchase';
+    return (item.newPurchaseUnits ?? 0) >= item.quantity ? 'packageNewPurchase' : 'packagePurchase';
   }
 
   return item.type;
@@ -1653,7 +1654,17 @@ export function buildSlotGrid(
 
 /** Adds the durations of all selected service units. */
 export function sumLineItemDuration(items: BookingLineItem[]): number {
-  return items.reduce((total, item) => total + item.durationMinutes * item.quantity, 0);
+  return items.reduce(
+    (total, item) =>
+      total +
+      (item.type === 'unlisted'
+        ? item.durationMinutes * item.quantity
+        : bookAppointmentLineDuration(
+            { type: item.type, durationMinutes: item.durationMinutes },
+            item.quantity
+          )),
+    0
+  );
 }
 
 /** Adds the billable prices of all selected service units. */
@@ -1808,7 +1819,7 @@ export function normalizeBookingDetailsLineItem(
 
   const service = catalogItems.find(catalogItem => catalogItem.id === item.catalogPackageId);
   if (!service) {
-    return item.type === 'package' ? { ...item, packageSessionLinked: false } : item;
+    return item;
   }
 
   const enrichedLineItems = lineItems.map(line =>
@@ -1831,7 +1842,8 @@ export function normalizeBookingDetailsLineItem(
   const usesOwnedSession =
     service.type === 'session' &&
     quantity === 1 &&
-    (ownedPackage != null || isPersistedDirectOwnedSessionLineItem(item, service, ownedPackages));
+    (item.price === 0 || item.packageSessionLinked) &&
+    isPersistedDirectOwnedSessionLineItem(item, service, ownedPackages);
 
   const catalogOwnedPackage =
     ownedPackage ?? ownedPackages.find(pkg => pkg.packageId === service.id) ?? null;
@@ -1873,6 +1885,14 @@ export function normalizeBookingDetailsLineItem(
       packageRemainingSessions:
         balanceFields.packageRemainingSessions ?? item.packageRemainingSessions ?? null,
       packagePulseCount: balanceFields.packagePulseCount ?? item.packagePulseCount ?? null,
+    };
+  }
+
+  if (item.price > 0 && !item.packageSessionLinked) {
+    return {
+      ...item,
+      newPurchaseUnits: quantity,
+      customerPackageId: null,
     };
   }
 

@@ -223,7 +223,11 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       distinctUntilChanged(),
       switchMap(mobile => {
         const normalizedMobile = mobile.replace(/\D/g, '');
-        const pending: CustomerLookupState = { mobile: normalizedMobile, client: null, pending: !!mobile };
+        const pending: CustomerLookupState = {
+          mobile: normalizedMobile,
+          client: null,
+          pending: !!mobile,
+        };
         if (!mobile) {
           return of({ ...pending, pending: false });
         }
@@ -315,7 +319,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return [];
     }
     const selectedIds = new Set(this.selectedPackageIds());
-    return client.packages.filter(pkg => selectedIds.has(pkg.packageId));
+    return [...selectedIds]
+      .map(packageId => client.packages.find(pkg => pkg.packageId === packageId))
+      .filter((pkg): pkg is ClientPackage => pkg != null);
   });
 
   readonly filteredServices = computed(() => {
