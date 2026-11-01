@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -217,6 +217,7 @@ export class AppointmentsComponent {
   private calendarRequestId = 0;
   private customerRequestId = 0;
   private employeesRequestId = 0;
+  private employeesSub?: Subscription;
   private catalogRequestId = 0;
   private holdRefreshTimer?: ReturnType<typeof setTimeout>;
   private mobileSearchTimer?: ReturnType<typeof setTimeout>;
@@ -323,7 +324,9 @@ export class AppointmentsComponent {
     const range = this.calendarRange();
     for (const column of this.columns()) {
       const key = this.columnKey(column);
-      const branchBookings = this.bookings().filter(booking => booking.branchId === column.branchId);
+      const branchBookings = this.bookings().filter(
+        booking => booking.branchId === column.branchId
+      );
       map.set(
         key,
         buildSlotGrid(
@@ -344,7 +347,9 @@ export class AppointmentsComponent {
   readonly availableSlots = computed(() => {
     const map = new Map<string, CalendarAvailableSlot[]>();
     for (const column of this.columns()) {
-      const branchBookings = this.bookings().filter(booking => booking.branchId === column.branchId);
+      const branchBookings = this.bookings().filter(
+        booking => booking.branchId === column.branchId
+      );
       map.set(
         this.columnKey(column),
         buildAvailableSlots(
@@ -567,6 +572,7 @@ export class AppointmentsComponent {
   }
 
   updateFilter<K extends keyof AppointmentFilters>(key: K, value: AppointmentFilters[K]): void {
+    const hadPackage = this.filters().packageId !== null;
     if (key === 'clientMobile' && value !== this.filters().clientMobile) {
       this.lastAutoSearchedMobile = '';
       this.customerRequestId++;
@@ -583,6 +589,12 @@ export class AppointmentsComponent {
       }));
     }
     this.filters.update(current => ({ ...current, [key]: value }));
+    if (key === 'clientMobile' && hadPackage) {
+      this.loadEmployeesForBranches(this.branches().map(branch => branch.id));
+    }
+    if (key === 'packageId') {
+      this.loadEmployeesForBranches(this.branches().map(branch => branch.id));
+    }
     if (key === 'branchId') {
       this.selectedSlot.set(null);
       this.ensureEmployeeSelected();
@@ -610,6 +622,7 @@ export class AppointmentsComponent {
 
   /** Loads bookable employees for each branch and refreshes calendar selection. */
   private loadEmployeesForBranches(branchIds: string[]): void {
+    this.employeesSub?.unsubscribe();
     const requestId = ++this.employeesRequestId;
     if (!branchIds.length) {
       this.employees.set([]);
@@ -620,7 +633,10 @@ export class AppointmentsComponent {
     }
 
     this.employeesLoading.set(true);
-    forkJoin(branchIds.map(branchId => this.employeesApi.listBookable(branchId)))
+    const packageId = this.filters().packageId;
+    this.employeesSub = forkJoin(
+      branchIds.map(branchId => this.employeesApi.listBookable(branchId, packageId))
+    )
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
@@ -631,6 +647,9 @@ export class AppointmentsComponent {
       )
       .subscribe({
         next: results => {
+          if (requestId !== this.employeesRequestId) {
+            return;
+          }
           const mapped = results.flatMap((staff, index) =>
             staff.map(employee => this.toEmployeeOption(employee, branchIds[index]!))
           );
@@ -639,6 +658,9 @@ export class AppointmentsComponent {
           this.loadBookings();
         },
         error: () => {
+          if (requestId !== this.employeesRequestId) {
+            return;
+          }
           this.employees.set([]);
           this.ensureEmployeeSelected([]);
           this.toast.add({
@@ -729,9 +751,11 @@ export class AppointmentsComponent {
     return cells?.find(cell => cell.startMinutes === startMinutes);
   }
 
-  availableSlotsForColumn(
-    column: { branchId: string; employeeId: string; date: Date }
-  ): CalendarAvailableSlot[] {
+  availableSlotsForColumn(column: {
+    branchId: string;
+    employeeId: string;
+    date: Date;
+  }): CalendarAvailableSlot[] {
     return this.availableSlots().get(this.columnKey(column)) ?? [];
   }
 

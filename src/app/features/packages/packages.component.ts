@@ -28,6 +28,7 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { PermissionService } from '@core/services/permission.service';
@@ -50,6 +51,7 @@ import {
   PackageListItem,
   PackageListStatus,
   PackageOfferType,
+  PackageInstallmentRow,
 } from './models/package-list.model';
 import { PackagePayload, PackageService } from './package.service';
 
@@ -69,6 +71,14 @@ const DEFAULT_FORM_VALUE: PackageFormValue = {
   pulseCount: null,
   packageExpiryMonths: 12,
   price: 0,
+  cashEnabled: true,
+  installmentEnabled: false,
+  installmentPrice: null,
+  firstPayment: null,
+  installmentCount: null,
+  installments: [],
+  allStaff: true,
+  staffIds: [],
   discountCode: '',
   discountPercent: 0,
 };
@@ -96,7 +106,33 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
   },
   price: {
     required: 'PACKAGES.CREATE.ERRORS.PRICE_REQUIRED',
-    min: 'PACKAGES.CREATE.ERRORS.PRICE_MIN',
+    min: 'PACKAGES.CREATE.ERRORS.CASH_PRICE_POSITIVE',
+  },
+  cashEnabled: {
+    paymentOptionRequired: 'PACKAGES.CREATE.ERRORS.PAYMENT_OPTION_REQUIRED',
+  },
+  installmentPrice: {
+    required: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_REQUIRED',
+    min: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_MIN',
+  },
+  firstPayment: {
+    required: 'ERRORS.PACKAGE_FIRST_PAYMENT_REQUIRED',
+    min: 'ERRORS.PACKAGE_FIRST_PAYMENT_RANGE',
+    maxPayment: 'ERRORS.PACKAGE_FIRST_PAYMENT_RANGE',
+  },
+  installmentCount: {
+    required: 'ERRORS.PACKAGE_INSTALLMENT_COUNT_RANGE',
+    min: 'ERRORS.PACKAGE_INSTALLMENT_COUNT_RANGE',
+  },
+  installments: {
+    rowsCount: 'ERRORS.PACKAGE_INSTALLMENT_ROWS_COUNT',
+    amountInvalid: 'ERRORS.PACKAGE_INSTALLMENT_AMOUNT_INVALID',
+    totalMismatch: 'ERRORS.PACKAGE_INSTALLMENT_TOTAL_MISMATCH',
+    sessionsInvalid: 'ERRORS.PACKAGE_INSTALLMENT_SESSIONS_INVALID',
+    releaseCap: 'ERRORS.PACKAGE_INSTALLMENT_RELEASE_CAP',
+  },
+  staffIds: {
+    requiredStaff: 'ERRORS.PACKAGE_STAFF_INVALID',
   },
   discountCode: {
     maxlength: 'PACKAGES.CREATE.ERRORS.DISCOUNT_CODE_MAX',
@@ -140,6 +176,7 @@ function sessionOrPulseXorValidator(group: AbstractControl): ValidationErrors | 
     InputTextareaModule,
     TableModule,
     TagModule,
+    MultiSelectModule,
     ConfirmActionDialogComponent,
   ],
   templateUrl: './packages.component.html',
@@ -172,6 +209,8 @@ export class PackagesComponent implements OnInit {
   readonly editing = signal<PackageListItem | null>(null);
   readonly discountOpen = signal(false);
   readonly saving = signal(false);
+  readonly pendingPlanReplacement = signal<'singleSession' | number | null>(null);
+  private readonly manualPlanEdited = signal(false);
   readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
   readonly rowsPerPageOptions = [5, 10, 20, 50];
   readonly rows = signal(5);
@@ -179,6 +218,7 @@ export class PackagesComponent implements OnInit {
   readonly pageReportTemplate = signal(this.translate.instant('PACKAGES.PAGE_REPORT'));
   readonly serviceCategories = signal<{ label: string; value: string }[]>([]);
   readonly subServiceCategories = signal<{ label: string; value: string }[]>([]);
+  readonly availableStaff = signal<{ label: string; value: string }[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
@@ -192,12 +232,20 @@ export class PackagesComponent implements OnInit {
     sessionCount: [null as number | null],
     pulseCount: [null as number | null, [Validators.min(0)]],
     packageExpiryMonths: [12 as number | null],
-    price: [0, [Validators.required, Validators.min(0)]],
+    price: [0 as number | null, [Validators.required, Validators.min(0)]],
+    cashEnabled: [true],
+    installmentEnabled: [false],
+    installmentPrice: [null as number | null],
+    firstPayment: [null as number | null],
+    installmentCount: [null as number | null],
+    installments: [[] as PackageInstallmentRow[]],
+    allStaff: [true],
+    staffIds: [[] as string[]],
     discountCode: ['', [Validators.maxLength(50)]],
     discountPercent: [0 as number | null, [Validators.min(0), Validators.max(100)]],
   });
 
-  private readonly formValue = signal<PackageFormValue>(this.form.getRawValue());
+  readonly formValue = signal<PackageFormValue>(this.form.getRawValue());
 
   readonly descriptionLength = computed(() => (this.formValue().description ?? '').length);
   readonly priceAfterDiscount = computed(() => {
@@ -227,6 +275,28 @@ export class PackagesComponent implements OnInit {
     );
   });
   readonly statusValue = computed(() => this.formValue().status);
+  readonly installmentEnabledValue = computed(() => this.formValue().installmentEnabled);
+  readonly allStaffValue = computed(() => this.formValue().allStaff);
+  readonly installmentRows = computed(() => this.formValue().installments);
+  readonly installmentTotal = computed(() =>
+    this.installmentRows().reduce((total, row) => total + (Number(row.amount) || 0), 0)
+  );
+  readonly remainingInstallmentBalance = computed(() =>
+    Math.max(
+      0,
+      (Number(this.formValue().installmentPrice) || 0) -
+        (Number(this.formValue().firstPayment) || 0)
+    )
+  );
+  readonly distributedSessions = computed(() =>
+    this.installmentRows().reduce((total, row) => total + (Number(row.sessionsUnlocked) || 0), 0)
+  );
+  readonly prepaymentReleaseLimit = computed(() =>
+    Math.min(
+      Math.max(0, (Number(this.formValue().sessionCount) || 0) - 1),
+      Math.ceil((Number(this.formValue().sessionCount) || 0) * 0.7 - 0.5)
+    )
+  );
 
   readonly offerTypeOptions: { label: string; value: PackageOfferType }[] = [
     { label: 'PACKAGES.OFFER_TYPE_PACKAGE', value: 'package' },
@@ -258,18 +328,60 @@ export class PackagesComponent implements OnInit {
       'pulseCount',
       'packageExpiryMonths',
       'price',
+      'cashEnabled',
+      'installmentPrice',
+      'firstPayment',
+      'installmentCount',
+      'installments',
+      'staffIds',
       'discountCode',
       'discountPercent',
     ]);
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.formValue.set(this.form.getRawValue());
     });
+    this.form.controls.cashEnabled.setValidators(control =>
+      control.value || this.form.controls.installmentEnabled.value
+        ? null
+        : { paymentOptionRequired: true }
+    );
+    this.form.controls.installmentEnabled.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.syncPaymentValidators();
+        if (
+          this.form.controls.installmentEnabled.value &&
+          this.form.controls.offerType.value === 'package'
+        ) {
+          this.suggestDistribution();
+        }
+      });
+    this.form.controls.cashEnabled.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncPaymentValidators());
+    this.syncPaymentValidators();
+    this.form.controls.installmentPrice.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.recalculateAmounts());
+    this.form.controls.firstPayment.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.recalculateAmounts());
+    this.form.controls.installmentCount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.resizeInstallmentRows());
+    this.form.controls.sessionCount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.validateInstallmentRows());
     this.form.controls.serviceCategoryId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(categoryId => {
         this.form.controls.subServiceCategoryId.setValue(null, { emitEvent: false });
         this.loadSubServiceCategories(categoryId);
       });
+    this.form.controls.allStaff.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncStaffValidator());
+    this.syncStaffValidator();
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('PACKAGES.PAGE_REPORT'));
     });
@@ -277,6 +389,7 @@ export class PackagesComponent implements OnInit {
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyFilters());
     this.loadServiceCategories();
+    this.loadAvailableStaff();
   }
 
   load(): void {
@@ -362,9 +475,21 @@ export class PackagesComponent implements OnInit {
               detail.pulseCount != null && detail.pulseCount > 0 ? detail.pulseCount : null,
             packageExpiryMonths: detail.packageExpiryMonths ?? 12,
             price: detail.price,
+            cashEnabled: detail.cashEnabled,
+            installmentEnabled: detail.installmentEnabled,
+            installmentPrice: detail.installmentPrice,
+            firstPayment: detail.firstPayment,
+            installmentCount: detail.installmentCount,
+            installments: detail.installments.map(row => ({
+              amount: row.amount,
+              sessionsUnlocked: row.sessionsUnlocked,
+            })),
+            allStaff: detail.allStaff,
+            staffIds: detail.staffIds,
             discountCode: detail.discountCode ?? '',
             discountPercent: detail.discountPercent ?? 0,
           });
+          this.manualPlanEdited.set(detail.installmentEnabled && detail.installments.length > 0);
           this.discountOpen.set(
             !!(detail.discountCode?.trim() || (detail.discountPercent ?? 0) > 0)
           );
@@ -382,8 +507,141 @@ export class PackagesComponent implements OnInit {
   }
 
   selectOfferType(type: PackageOfferType): void {
+    if (type === 'singleSession' && this.form.controls.installmentEnabled.value) {
+      this.pendingPlanReplacement.set('singleSession');
+      return;
+    }
+    this.applyOfferType(type);
+  }
+
+  private applyOfferType(type: PackageOfferType): void {
     this.form.controls.offerType.setValue(type);
+    if (type === 'singleSession') {
+      this.form.controls.installmentEnabled.setValue(false);
+    }
     this.syncPackageFieldValidators(type);
+    this.syncPaymentValidators();
+    this.syncStaffValidator();
+  }
+
+  confirmPlanReplacement(): void {
+    const pending = this.pendingPlanReplacement();
+    this.pendingPlanReplacement.set(null);
+    if (pending === 'singleSession') {
+      this.applyOfferType('singleSession');
+    } else if (pending !== null) {
+      this.form.controls.installmentCount.setValue(pending, { emitEvent: false });
+      this.manualPlanEdited.set(false);
+      this.resizeInstallmentRows(true);
+    }
+  }
+
+  cancelPlanReplacement(): void {
+    this.pendingPlanReplacement.set(null);
+  }
+
+  updateInstallmentRow(
+    index: number,
+    field: keyof PackageInstallmentRow,
+    value: number | null
+  ): void {
+    const rows = this.form.controls.installments.value.map(row => ({ ...row }));
+    rows[index][field] = Number(value) || 0;
+    this.form.controls.installments.setValue(rows);
+    this.form.controls.installments.markAsTouched();
+    this.manualPlanEdited.set(true);
+  }
+
+  cumulativeSessions(index: number): number {
+    return this.installmentRows()
+      .slice(0, index + 1)
+      .reduce((total, row) => total + (Number(row.sessionsUnlocked) || 0), 0);
+  }
+
+  suggestDistribution(): void {
+    if (
+      !this.form.controls.installmentEnabled.value ||
+      this.form.controls.offerType.value !== 'package'
+    ) {
+      return;
+    }
+    const count = this.form.controls.installmentCount.value;
+    if (count == null || count < 1) {
+      this.form.controls.installmentCount.setValue(3);
+      this.suggestDistribution();
+      return;
+    }
+    const rows = this.distributedAmounts(count).map(amount => ({ amount, sessionsUnlocked: 0 }));
+    const totalSessions = Math.max(0, Number(this.form.controls.sessionCount.value) || 0);
+    const fullyPaidUpfront =
+      (Number(this.form.controls.installmentPrice.value) || 0) -
+        (Number(this.form.controls.firstPayment.value) || 0) ===
+      0;
+    if (!fullyPaidUpfront) {
+      const early = Math.min(Math.max(0, totalSessions - 1), Math.ceil(totalSessions * 0.7 - 0.5));
+      for (let index = 0; index < count - 1; index++) {
+        rows[index].sessionsUnlocked =
+          Math.floor(early / (count - 1)) + (index < early % (count - 1) ? 1 : 0);
+      }
+      rows[count - 1].sessionsUnlocked = totalSessions - early;
+    }
+    this.form.controls.installments.setValue(rows);
+    this.manualPlanEdited.set(false);
+    this.validateInstallmentRows();
+  }
+
+  private distributedAmounts(count: number): number[] {
+    const totalCents = Math.round(
+      Math.max(
+        0,
+        (Number(this.form.controls.installmentPrice.value) || 0) -
+          (Number(this.form.controls.firstPayment.value) || 0)
+      ) * 100
+    );
+    const base = Math.floor(totalCents / count);
+    return Array.from(
+      { length: count },
+      (_, index) => (base + (index < totalCents % count ? 1 : 0)) / 100
+    );
+  }
+
+  private resizeInstallmentRows(confirmed = false): void {
+    const count = Math.max(0, Number(this.form.controls.installmentCount.value) || 0);
+    const previous = this.form.controls.installments.value;
+    if (!confirmed && this.manualPlanEdited() && count !== previous.length) {
+      this.form.controls.installmentCount.setValue(previous.length, { emitEvent: false });
+      this.formValue.set(this.form.getRawValue());
+      this.pendingPlanReplacement.set(count);
+      return;
+    }
+    const rows = Array.from(
+      { length: count },
+      (_, index) => previous[index] ?? { amount: 0, sessionsUnlocked: 0 }
+    );
+    this.form.controls.installments.setValue(rows);
+    this.recalculateAmounts();
+  }
+
+  private recalculateAmounts(): void {
+    this.form.controls.firstPayment.updateValueAndValidity({ emitEvent: false });
+    const rows = this.form.controls.installments.value;
+    if (rows.length === 0 || this.manualPlanEdited()) {
+      this.validateInstallmentRows();
+      return;
+    }
+    const amounts = this.distributedAmounts(rows.length);
+    this.form.controls.installments.setValue(
+      rows.map((row, index) => ({
+        ...row,
+        amount: amounts[index],
+      }))
+    );
+    this.validateInstallmentRows();
+  }
+
+  private validateInstallmentRows(): void {
+    this.form.controls.installments.updateValueAndValidity({ emitEvent: false });
+    this.formValue.set(this.form.getRawValue());
   }
 
   toggleDiscount(): void {
@@ -518,6 +776,9 @@ export class PackagesComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      if (this.form.controls.discountCode.invalid || this.form.controls.discountPercent.invalid) {
+        this.discountOpen.set(true);
+      }
       return;
     }
     const value = this.form.getRawValue();
@@ -563,6 +824,9 @@ export class PackagesComponent implements OnInit {
     }
     if (control.errors['server']) {
       return control.errors['server'];
+    }
+    if (field === 'price' && control.errors['min'] && !this.form.controls.cashEnabled.value) {
+      return this.translate.instant('PACKAGES.CREATE.ERRORS.PRICE_MIN');
     }
     const fieldMap = FIELD_ERROR_KEYS[field] ?? {};
     for (const key of Object.keys(control.errors)) {
@@ -656,10 +920,119 @@ export class PackagesComponent implements OnInit {
   }
 
   private resetForm(value: PackageFormValue): void {
-    this.form.reset(value);
+    this.manualPlanEdited.set(false);
+    this.form.reset(value, { emitEvent: false });
     this.syncPackageFieldValidators(value.offerType);
+    this.syncPaymentValidators();
+    this.syncStaffValidator();
     this.formValue.set(this.form.getRawValue());
     this.loadSubServiceCategories(value.serviceCategoryId);
+  }
+
+  private syncPaymentValidators(): void {
+    const price = this.form.controls.price;
+    price.setValidators(
+      this.form.controls.cashEnabled.value
+        ? [Validators.required, Validators.min(0.01)]
+        : [Validators.min(0)]
+    );
+    price.updateValueAndValidity({ emitEvent: false });
+    const installmentPrice = this.form.controls.installmentPrice;
+    installmentPrice.setValidators(
+      this.form.controls.installmentEnabled.value ? [Validators.required, Validators.min(0.01)] : []
+    );
+    installmentPrice.updateValueAndValidity({ emitEvent: false });
+    const enabled =
+      this.form.controls.installmentEnabled.value &&
+      this.form.controls.offerType.value === 'package';
+    const firstPayment = this.form.controls.firstPayment;
+    firstPayment.setValidators(
+      enabled
+        ? [
+            Validators.required,
+            Validators.min(0),
+            control =>
+              Number(control.value) > Number(this.form.controls.installmentPrice.value)
+                ? { maxPayment: true }
+                : null,
+          ]
+        : []
+    );
+    firstPayment.updateValueAndValidity({ emitEvent: false });
+    const installmentCount = this.form.controls.installmentCount;
+    installmentCount.setValidators(enabled ? [Validators.required, Validators.min(1)] : []);
+    installmentCount.updateValueAndValidity({ emitEvent: false });
+    const installments = this.form.controls.installments;
+    installments.setValidators(
+      enabled ? [control => this.installmentsValidation(control.value)] : []
+    );
+    installments.updateValueAndValidity({ emitEvent: false });
+    if (!enabled) {
+      firstPayment.setValue(null, { emitEvent: false });
+      installmentCount.setValue(null, { emitEvent: false });
+      installments.setValue([], { emitEvent: false });
+    }
+    this.form.controls.cashEnabled.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private syncStaffValidator(): void {
+    const staffIds = this.form.controls.staffIds;
+    staffIds.setValidators(
+      this.form.controls.allStaff.value
+        ? []
+        : [control => (control.value.length ? null : { requiredStaff: true })]
+    );
+    staffIds.updateValueAndValidity({ emitEvent: false });
+    if (this.form.controls.allStaff.value) {
+      staffIds.setValue([], { emitEvent: false });
+    }
+  }
+
+  private installmentsValidation(rows: PackageInstallmentRow[]): ValidationErrors | null {
+    if (rows.length !== this.form.controls.installmentCount.value) {
+      return { rowsCount: true };
+    }
+    if (
+      rows.some(
+        row =>
+          !Number.isFinite(row.amount) ||
+          row.amount < 0 ||
+          Number(row.amount.toFixed(2)) !== row.amount
+      )
+    ) {
+      return { amountInvalid: true };
+    }
+    const expected =
+      (Number(this.form.controls.installmentPrice.value) || 0) -
+      (Number(this.form.controls.firstPayment.value) || 0);
+    if (
+      Math.round(rows.reduce((total, row) => total + row.amount, 0) * 100) !==
+      Math.round(expected * 100)
+    ) {
+      return { totalMismatch: true };
+    }
+    const sessions = Number(this.form.controls.sessionCount.value) || 0;
+    let released = 0;
+    let paid = Number(this.form.controls.firstPayment.value) || 0;
+    for (const row of rows) {
+      released += row.sessionsUnlocked;
+      paid += row.amount;
+      if (
+        !Number.isInteger(row.sessionsUnlocked) ||
+        row.sessionsUnlocked < 0 ||
+        released > sessions
+      ) {
+        return { sessionsInvalid: true };
+      }
+      if (
+        Math.round(paid * 100) <
+          Math.round(Number(this.form.controls.installmentPrice.value) * 100) &&
+        released > Math.min(Math.max(0, sessions - 1), Math.ceil(sessions * 0.7 - 0.5))
+      ) {
+        return { releaseCap: true };
+      }
+    }
+    return null;
   }
 
   private syncPackageFieldValidators(type: PackageOfferType): void {
@@ -700,6 +1073,14 @@ export class PackagesComponent implements OnInit {
       pulseCount: value.offerType === 'package' ? (pulseFilled ? value.pulseCount : null) : null,
       packageExpiryMonths: value.offerType === 'package' ? value.packageExpiryMonths : null,
       price: Number(value.price) || 0,
+      cashEnabled: value.cashEnabled,
+      installmentEnabled: value.installmentEnabled,
+      installmentPrice: value.installmentEnabled ? value.installmentPrice : null,
+      firstPayment: value.installmentEnabled ? value.firstPayment : null,
+      installmentCount: value.installmentEnabled ? value.installmentCount : null,
+      installments: value.installmentEnabled ? value.installments : [],
+      allStaff: value.allStaff,
+      staffIds: value.allStaff ? [] : value.staffIds,
       discountCode: value.discountCode.trim(),
       discountPercent: value.discountPercent,
     };
@@ -715,6 +1096,19 @@ export class PackagesComponent implements OnInit {
             categories.map(category => ({ label: category.name, value: category.id }))
           ),
         error: () => this.serviceCategories.set([]),
+      });
+  }
+
+  private loadAvailableStaff(): void {
+    this.service
+      .listAvailableStaff()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: employees =>
+          this.availableStaff.set(
+            employees.map(employee => ({ label: employee.fullName, value: employee.id }))
+          ),
+        error: () => this.availableStaff.set([]),
       });
   }
 

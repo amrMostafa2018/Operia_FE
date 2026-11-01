@@ -142,10 +142,16 @@ export class EmployeeService {
   changeStatus(id: string, isActive: boolean): Observable<void> {
     return this.http.patch<void>(`${this.url}/${id}/status`, { isActive });
   }
-  listBookable(branchId?: string | null): Observable<BookableEmployee[]> {
+  listBookable(
+    branchId?: string | null,
+    packageId?: string | null
+  ): Observable<BookableEmployee[]> {
     let params = new HttpParams();
     if (branchId) {
       params = params.set('branchId', branchId);
+    }
+    if (packageId) {
+      params = params.set('packageId', packageId);
     }
     return this.http.get<BookableEmployee[]>(`${this.url}/bookable`, { params });
   }
