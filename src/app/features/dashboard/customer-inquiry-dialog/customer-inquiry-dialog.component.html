@@ -170,6 +170,10 @@
                         ><strong>{{ balance.remaining }}</strong>
                       </div>
                     </div>
+                    <p class="bookable-count">
+                      {{ 'CUSTOMER_INQUIRY.BOOKABLE' | translate }}:
+                      <strong>{{ balance.bookable }}</strong>
+                    </p>
                   </div>
                 }
                 @if (details.pulses; as balance) {
@@ -218,6 +222,28 @@
                         ({{ details.nextInstallmentNumber }} / {{ details.installmentCount }})
                       }
                     </h4>
+                    @if (
+                      canCollectInstallment() &&
+                      details.nextInstallmentEligible &&
+                      details.paymentMethods.length
+                    ) {
+                      <button type="button" class="collect-button" (click)="openPayment()">
+                        <i class="pi pi-plus"></i>
+                        {{ 'CUSTOMER_INQUIRY.PAY_NEW_INSTALLMENT' | translate }}
+                      </button>
+                    } @else if (
+                      canCollectInstallment() &&
+                      details.nextInstallmentEligible &&
+                      !details.paymentMethods.length
+                    ) {
+                      <p class="payment-hint">
+                        {{ 'CUSTOMER_INQUIRY.NO_PAYMENT_METHODS' | translate }}
+                      </p>
+                    } @else if (details.nextInstallmentNumber && !details.nextInstallmentEligible) {
+                      <p class="payment-hint">
+                        {{ 'CUSTOMER_INQUIRY.WAIT_FOR_PROGRESS' | translate }}
+                      </p>
+                    }
                     <div class="table-scroll">
                       <table>
                         <thead>
@@ -238,6 +264,41 @@
                                     | translate
                                 }}
                               </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                }
+
+                @if (details.collections.length) {
+                  <div class="previous-sessions">
+                    <h4>
+                      <i class="pi pi-receipt"></i>{{ 'CUSTOMER_INQUIRY.STATEMENT' | translate }}
+                    </h4>
+                    <div class="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
+                            <th>{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}</th>
+                            <th>{{ 'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate }}</th>
+                            <th>{{ 'CUSTOMER_INQUIRY.COL_DATE' | translate }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (collection of details.collections; track collection.id) {
+                            <tr>
+                              <td>{{ collection.installmentNumber }}</td>
+                              <td>{{ formatMoney(collection.amount) }}</td>
+                              <td>
+                                {{
+                                  'CUSTOMER_INQUIRY.METHOD.' +
+                                    collection.paymentMethod.toUpperCase() | translate
+                                }}
+                              </td>
+                              <td>{{ formatDate(collection.confirmedAtUtc) }}</td>
                             </tr>
                           }
                         </tbody>
@@ -301,5 +362,65 @@
       <i class="pi pi-user-minus"></i>
       <p>{{ 'CUSTOMER_INQUIRY.NOT_FOUND' | translate }}</p>
     </div>
+  }
+</p-dialog>
+
+<p-dialog
+  [visible]="paymentVisible()"
+  [modal]="true"
+  [closable]="!paymentSaving()"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  [header]="'CUSTOMER_INQUIRY.PAY_NEW_INSTALLMENT' | translate"
+  [style]="{ width: 'min(440px, 94vw)' }"
+  (onHide)="paymentVisible.set(false)"
+>
+  @if (purchaseDetails(); as details) {
+    <form class="collection-form" [formGroup]="paymentForm" (ngSubmit)="collectInstallment()">
+      <div class="collection-summary">
+        <span
+          >{{ 'CUSTOMER_INQUIRY.SELECTED_PURCHASE' | translate }}:
+          <strong>{{ selectedPurchaseName() }}</strong></span
+        >
+        <span
+          >{{ 'CUSTOMER_INQUIRY.NEXT_INSTALLMENT' | translate }}:
+          <strong>{{ details.nextInstallmentNumber }}</strong></span
+        >
+        <span
+          >{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}:
+          <strong>{{ formatMoney(details.nextInstallmentAmount) }}</strong></span
+        >
+      </div>
+      <label for="collection-payment-method">{{
+        'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate
+      }}</label>
+      <select id="collection-payment-method" formControlName="paymentMethod">
+        <option value="">{{ 'CUSTOMER_INQUIRY.CHOOSE_METHOD' | translate }}</option>
+        @for (method of details.paymentMethods; track method) {
+          <option [value]="method">
+            {{ 'CUSTOMER_INQUIRY.METHOD.' + method.toUpperCase() | translate }}
+          </option>
+        }
+      </select>
+      @if (paymentMethodError(); as errorKey) {
+        <small class="field-error">{{ errorKey | translate }}</small>
+      }
+      <p class="payment-hint">{{ 'CUSTOMER_INQUIRY.CONFIRMED_ONLY' | translate }}</p>
+      <div class="collection-actions">
+        @if (paymentUncertain()) {
+          <button type="button" class="secondary-button" (click)="recheckPayment()">
+            {{ 'CUSTOMER_INQUIRY.RECHECK_STATUS' | translate }}
+          </button>
+        }
+        <button
+          type="submit"
+          class="collect-button"
+          [disabled]="paymentSaving() || paymentUncertain()"
+        >
+          {{ 'CUSTOMER_INQUIRY.CONFIRM_COLLECTION' | translate }}
+        </button>
+      </div>
+    </form>
   }
 </p-dialog>

@@ -13,6 +13,7 @@ export const Policies = {
   CustomersActivatePackage: 'Customers.ActivatePackage',
   CustomersCancelPackage: 'Customers.CancelPackage',
   CustomersAddPackage: 'Customers.AddPackage',
+  CustomersCollectInstallment: 'Customers.CollectInstallment',
   RevenueRead: 'Revenue.Read',
   RevenueReview: 'Revenue.Review',
   RevenueExport: 'Revenue.Export',

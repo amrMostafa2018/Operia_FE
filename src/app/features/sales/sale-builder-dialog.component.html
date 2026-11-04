@@ -1,0 +1,347 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="sale-builder-dialog"
+  [style]="{ width: 'min(1060px, 96vw)' }"
+  (onHide)="closed.emit()"
+>
+  <ng-template pTemplate="header">
+    <div class="sale-header">
+      <h2><i class="pi pi-shopping-bag"></i> {{ 'SALE_BUILDER.TITLE' | translate }}</h2>
+      <button
+        type="button"
+        class="icon-button"
+        (click)="closed.emit()"
+        [disabled]="saving()"
+        [attr.aria-label]="'COMMON.CLOSE' | translate"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  @if (pendingConfirmation()) {
+    <section class="confirmation-recovery" [class.loading]="saving()" role="status">
+      @if (saving()) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMING' | translate }}</h3>
+      } @else {
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN_TITLE' | translate }}</h3>
+        <p>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN' | translate }}</p>
+      }
+    </section>
+  } @else {
+    <form class="customer-row" [formGroup]="customerForm" (ngSubmit)="searchCustomer()">
+      <div class="field mobile-field">
+        <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
+        <div class="mobile-search">
+          <input pInputText id="sale-mobile" formControlName="mobile" (input)="mobileChanged()" />
+          <button type="submit" [disabled]="customerLoading()">
+            <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
+          </button>
+        </div>
+        @if (fieldError('mobile'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+        @if (fieldError('customerId'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </div>
+      <div class="field">
+        <span class="field-label">{{ 'SALE_BUILDER.CUSTOMER' | translate }}</span>
+        <strong class="customer-name">{{
+          customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
+        }}</strong>
+      </div>
+      <div class="field">
+        <label for="sale-branch">{{ 'SALE_BUILDER.BRANCH' | translate }}</label>
+        <p-dropdown
+          inputId="sale-branch"
+          formControlName="branchId"
+          [options]="branches()"
+          optionLabel="name"
+          optionValue="id"
+          [placeholder]="'SALE_BUILDER.BRANCH_SELECT' | translate"
+          (onChange)="branchChanged()"
+          appendTo="body"
+        />
+        @if (fieldError('branchId'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </div>
+    </form>
+
+    <section class="catalog-section">
+      <div class="section-title">
+        <h3>{{ 'SALE_BUILDER.CATALOG' | translate }}</h3>
+        <input
+          pInputText
+          [value]="searchText()"
+          (input)="searchText.set($any($event.target).value)"
+          [placeholder]="'SALE_BUILDER.FIND_ITEM' | translate"
+        />
+      </div>
+      <div class="category-tabs">
+        <button
+          type="button"
+          [class.active]="categoryId() === 'all'"
+          (click)="categoryId.set('all')"
+        >
+          {{ 'SALE_BUILDER.ALL' | translate }}
+        </button>
+        @for (category of categories(); track category.id) {
+          <button
+            type="button"
+            [class.active]="categoryId() === category.id"
+            (click)="categoryId.set(category.id)"
+          >
+            {{ category.name }}
+          </button>
+        }
+      </div>
+      @if (loading()) {
+        <p class="empty">{{ 'SALE_BUILDER.LOADING' | translate }}</p>
+      } @else if (filteredCatalog().length === 0) {
+        <p class="empty">{{ 'SALE_BUILDER.NO_CATALOG' | translate }}</p>
+      } @else {
+        <div class="catalog-grid">
+          @for (offer of filteredCatalog(); track offer.id) {
+            <article class="catalog-card">
+              <span class="card-icon"
+                ><i [class]="offer.offerType === 'package' ? 'pi pi-gift' : 'pi pi-sparkles'"></i
+              ></span>
+              <strong>{{ offer.name }}</strong>
+              <small
+                >{{ offer.sessionDurationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}</small
+              >
+              <div class="card-footer">
+                <span>{{ displayPrice(offer) }} {{ currency.currencyLabel() }}</span>
+                <button
+                  type="button"
+                  (click)="addOffer(offer)"
+                  [attr.aria-label]="'SALE_BUILDER.ADD_ITEM' | translate"
+                >
+                  <i class="pi pi-plus"></i>
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    @if (customer()?.packages?.length) {
+      <section class="owned-section">
+        <h3>{{ 'SALE_BUILDER.OWNED' | translate }}</h3>
+        <div class="owned-list">
+          @for (purchase of customer()!.packages; track purchase.customerPackageId) {
+            @if (purchase.availableSessions > 0 && !purchase.pulseCount) {
+              <button type="button" (click)="addOwned(purchase)">
+                <i class="pi pi-check-circle"></i>
+                {{ purchase.packageName }} · {{ purchase.availableSessions }}
+                {{ 'SALE_BUILDER.AVAILABLE' | translate }}
+                <i class="pi pi-plus"></i>
+              </button>
+            }
+          }
+        </div>
+      </section>
+    }
+
+    <section class="unlisted-section">
+      <button type="button" class="unlisted-toggle" (click)="showUnlisted.set(!showUnlisted())">
+        <i class="pi pi-plus-circle"></i> {{ 'SALE_BUILDER.UNLISTED' | translate }}
+        <i
+          class="pi"
+          [class.pi-chevron-up]="showUnlisted()"
+          [class.pi-chevron-down]="!showUnlisted()"
+        ></i>
+      </button>
+      @if (showUnlisted()) {
+        <form class="unlisted-form" [formGroup]="unlistedForm" (ngSubmit)="addUnlisted()">
+          <div class="field">
+            <label for="sale-unlisted-name">{{ 'SALE_BUILDER.NAME' | translate }}</label>
+            <input pInputText id="sale-unlisted-name" formControlName="name" />
+            @if (unlistedError('name'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          </div>
+          <div class="field">
+            <label for="sale-unlisted-price">{{ 'SALE_BUILDER.PRICE' | translate }}</label>
+            <p-inputNumber inputId="sale-unlisted-price" formControlName="price" [min]="0" />
+            @if (unlistedError('price'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          </div>
+          <div class="field">
+            <label for="sale-unlisted-duration">{{ 'SALE_BUILDER.DURATION' | translate }}</label>
+            <p-inputNumber
+              inputId="sale-unlisted-duration"
+              formControlName="durationMinutes"
+              [min]="1"
+              [max]="1440"
+            />
+            @if (unlistedError('durationMinutes'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          </div>
+          <button type="submit" class="outline-button">
+            {{ 'SALE_BUILDER.ADD_ITEM' | translate }}
+          </button>
+        </form>
+      }
+    </section>
+
+    <div class="bottom-grid">
+      <section class="selected-panel">
+        <h3>
+          {{ 'SALE_BUILDER.SELECTED' | translate }} <span class="count">{{ rows().length }}</span>
+        </h3>
+        @if (rows().length === 0) {
+          <p class="empty">{{ 'SALE_BUILDER.NO_ITEMS' | translate }}</p>
+        } @else {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>{{ 'SALE_BUILDER.ITEM' | translate }}</th>
+                  <th>{{ 'SALE_BUILDER.QUANTITY' | translate }}</th>
+                  <th>{{ 'SALE_BUILDER.PAYMENT' | translate }}</th>
+                  <th>{{ 'SALE_BUILDER.PRICE' | translate }}</th>
+                  <th>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows(); track row.key; let index = $index) {
+                  <tr>
+                    <td>
+                      <strong>{{ lineAt(index)?.name || rowName(row) }}</strong>
+                    </td>
+                    <td>
+                      @if (row.paymentOption === 'owned' || row.unlistedName) {
+                        {{ row.quantity }}
+                      } @else {
+                        <button
+                          type="button"
+                          class="qty-button"
+                          (click)="setQuantity(row.key, row.quantity - 1)"
+                        >
+                          −
+                        </button>
+                        {{ row.quantity }}
+                        <button
+                          type="button"
+                          class="qty-button"
+                          (click)="setQuantity(row.key, row.quantity + 1)"
+                        >
+                          +
+                        </button>
+                      }
+                    </td>
+                    <td>
+                      @if (row.paymentOption === 'owned') {
+                        {{ 'SALE_BUILDER.COVERED' | translate }}
+                      } @else if (canInstallment(row)) {
+                        <select
+                          [value]="row.paymentOption"
+                          (change)="setOption(row.key, $any($event.target).value)"
+                        >
+                          @if (canCash(row)) {
+                            <option value="cash">{{ 'SALE_BUILDER.CASH' | translate }}</option>
+                          }
+                          <option value="installment">
+                            {{ 'SALE_BUILDER.INSTALLMENT' | translate }}
+                          </option>
+                        </select>
+                      } @else {
+                        {{ 'SALE_BUILDER.CASH' | translate }}
+                      }
+                    </td>
+                    <td>{{ lineAt(index)?.finalAmount ?? '—' }}</td>
+                    <td>{{ lineAt(index)?.dueNow ?? '—' }}</td>
+                    <td>
+                      <button
+                        type="button"
+                        class="icon-button danger"
+                        (click)="removeRow(row.key)"
+                        [attr.aria-label]="'SALE_BUILDER.REMOVE' | translate"
+                      >
+                        <i class="pi pi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        @if (itemError(); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </section>
+
+      <section class="summary-panel">
+        <h3>{{ 'SALE_BUILDER.SUMMARY' | translate }}</h3>
+        <div class="summary-row">
+          <span>{{ 'SALE_BUILDER.SUBTOTAL' | translate }}</span
+          ><strong>{{ quote()?.subtotal ?? '—' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>{{ 'SALE_BUILDER.DISCOUNT' | translate }}</span
+          ><strong>{{ quote()?.discount ?? '—' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>{{ 'SALE_BUILDER.GRAND_TOTAL' | translate }}</span
+          ><strong>{{ quote()?.grandTotal ?? '—' }}</strong>
+        </div>
+        <div class="summary-row due">
+          <span>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</span
+          ><strong>{{ quote()?.dueNow ?? '—' }} {{ currency.currencyLabel() }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>{{ 'SALE_BUILDER.REMAINING' | translate }}</span
+          ><strong>{{ quote() ? quote()!.grandTotal - quote()!.dueNow : '—' }}</strong>
+        </div>
+        @if (quote() && quote()!.dueNow > 0) {
+          <h4>{{ 'SALE_BUILDER.METHOD' | translate }}</h4>
+          <div class="method-options">
+            @for (method of paymentMethods(); track method) {
+              <button
+                type="button"
+                [class.active]="selectedMethod() === method"
+                (click)="selectedMethod.set(method)"
+              >
+                {{ 'SALE_BUILDER.METHODS.' + method | translate }}
+              </button>
+            }
+          </div>
+        }
+        <p class="note">{{ 'SALE_BUILDER.NO_COLLECTION' | translate }}</p>
+      </section>
+    </div>
+  }
+
+  <div class="actions">
+    <button type="button" class="outline-button" (click)="closed.emit()" [disabled]="saving()">
+      {{ 'COMMON.CANCEL' | translate }}
+    </button>
+    <button
+      type="button"
+      class="primary-button"
+      [disabled]="saving() || (!pendingConfirmation() && (quoteLoading() || !quote()))"
+      (click)="confirm()"
+    >
+      <i class="pi pi-calendar-plus"></i>
+      {{
+        (pendingConfirmation() ? 'SALE_BUILDER.RETRY_CONFIRMATION' : 'SALE_BUILDER.CONFIRM_LATER')
+          | translate
+      }}
+    </button>
+  </div>
+</p-dialog>

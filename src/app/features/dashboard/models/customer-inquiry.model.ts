@@ -24,6 +24,16 @@ export interface InquiryBalance {
   total: number;
   used: number;
   remaining: number;
+  bookable: number;
+}
+
+export interface InquiryCollection {
+  id: string;
+  installmentNumber: number;
+  amount: number;
+  paymentMethod: string;
+  confirmedAtUtc: string;
+  idempotencyKey: string;
 }
 
 export interface InquiryInstallment {
@@ -48,7 +58,7 @@ export interface InquiryPurchaseDetails {
   expiresOn: string | null;
   validityMonths: number | null;
   packageStatus: InquiryRecordStatus;
-  paymentStatus: 'unknown' | 'unpaid' | 'partial' | 'paid';
+  paymentStatus: 'unknown' | 'unpaid' | 'partial' | 'fullyPaid';
   sessions: InquiryBalance | null;
   pulses: InquiryBalance | null;
   purchasePrice: number | null;
@@ -58,4 +68,8 @@ export interface InquiryPurchaseDetails {
   installmentCount: number;
   installments: InquiryInstallment[];
   completedSessions: InquiryCompletedSession[];
+  nextInstallmentEligible: boolean;
+  nextInstallmentAmount: number | null;
+  paymentMethods: string[];
+  collections: InquiryCollection[];
 }

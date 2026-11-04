@@ -55,6 +55,11 @@ export interface PackageListItem {
   status: PackageListStatus;
   createdAt: string;
   endsAt: string | null;
+  cashEnabled?: boolean;
+  installmentEnabled?: boolean;
+  installmentPrice?: number | null;
+  firstPayment?: number | null;
+  sessionCount?: number | null;
 }
 
 export interface PackageDetail extends PackageListItem {

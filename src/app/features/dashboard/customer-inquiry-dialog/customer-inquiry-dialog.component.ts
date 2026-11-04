@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   input,
@@ -26,6 +27,8 @@ import {
 } from '@core/utils/api-error.util';
 import { CustomerInquiryResult, InquiryPurchaseDetails } from '../models/customer-inquiry.model';
 import { CustomerInquiryService } from './customer-inquiry.service';
+import { PermissionService } from '@core/services/permission.service';
+import { Policies } from '@core/models/permissions.model';
 
 @Component({
   selector: 'app-customer-inquiry-dialog',
@@ -43,6 +46,7 @@ export class CustomerInquiryDialogComponent {
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly permissionService = inject(PermissionService);
   private searchSubscription?: Subscription;
   private detailsSubscription?: Subscription;
 
@@ -57,6 +61,17 @@ export class CustomerInquiryDialogComponent {
   readonly selectedPurchaseId = signal<string | null>(null);
   readonly purchaseDetails = signal<InquiryPurchaseDetails | null>(null);
   readonly detailsLoading = signal(false);
+  readonly paymentVisible = signal(false);
+  readonly paymentSaving = signal(false);
+  readonly paymentUncertain = signal(false);
+  readonly canCollectInstallment = computed(() =>
+    this.permissionService.hasPermission(Policies.CustomersCollectInstallment)
+  );
+  readonly paymentForm = this.fb.nonNullable.group({
+    paymentMethod: ['', Validators.required],
+  });
+  private paymentKey: string | null = null;
+  private paymentKeyStorageName: string | null = null;
 
   constructor() {
     this.searchForm.controls.mobile.valueChanges
@@ -65,6 +80,9 @@ export class CustomerInquiryDialogComponent {
   }
 
   close(): void {
+    this.paymentVisible.set(false);
+    this.searchSubscription?.unsubscribe();
+    this.detailsSubscription?.unsubscribe();
     this.clearInquiry();
     this.searchForm.reset({ mobile: '' });
     this.closed.emit();
@@ -130,6 +148,13 @@ export class CustomerInquiryDialogComponent {
     return name.trim().charAt(0) || '?';
   }
 
+  selectedPurchaseName(): string {
+    return (
+      this.result()?.purchases.find(purchase => purchase.id === this.selectedPurchaseId())
+        ?.offerName ?? ''
+    );
+  }
+
   togglePurchase(id: string): void {
     this.detailsSubscription?.unsubscribe();
     if (this.selectedPurchaseId() === id) {
@@ -140,6 +165,10 @@ export class CustomerInquiryDialogComponent {
     }
 
     this.selectedPurchaseId.set(id);
+    this.loadPurchaseDetails(id);
+  }
+
+  private loadPurchaseDetails(id: string): void {
     this.purchaseDetails.set(null);
     this.detailsLoading.set(true);
     this.detailsSubscription = this.inquiryService
@@ -163,6 +192,147 @@ export class CustomerInquiryDialogComponent {
           });
         },
       });
+  }
+
+  openPayment(): void {
+    const details = this.purchaseDetails();
+    if (
+      !details?.nextInstallmentEligible ||
+      !details.nextInstallmentNumber ||
+      details.paymentMethods.length === 0 ||
+      !this.canCollectInstallment()
+    )
+      return;
+    const purchaseId = this.selectedPurchaseId();
+    if (!purchaseId) return;
+    this.paymentKeyStorageName = `operia.installment.${purchaseId}.${details.nextInstallmentNumber}`;
+    this.paymentKey = sessionStorage.getItem(this.paymentKeyStorageName);
+    if (!this.paymentKey) {
+      this.paymentKey = crypto.randomUUID();
+      sessionStorage.setItem(this.paymentKeyStorageName, this.paymentKey);
+      this.paymentForm.reset({ paymentMethod: '' });
+    }
+    this.paymentVisible.set(true);
+    if (this.paymentUncertain()) this.recheckPayment(purchaseId, details.nextInstallmentNumber);
+  }
+
+  paymentMethodError(): string | null {
+    const control = this.paymentForm.controls.paymentMethod;
+    if (!control.touched && !control.dirty) return null;
+    if (control.hasError('required')) return 'CUSTOMER_INQUIRY.PAYMENT_METHOD_REQUIRED';
+    if (control.hasError('server')) return String(control.getError('server'));
+    return null;
+  }
+
+  collectInstallment(): void {
+    const details = this.purchaseDetails();
+    const purchaseId = this.selectedPurchaseId();
+    this.paymentForm.markAllAsTouched();
+    if (
+      !details?.nextInstallmentEligible ||
+      !details.nextInstallmentNumber ||
+      !purchaseId ||
+      !this.paymentKey ||
+      this.paymentForm.invalid ||
+      this.paymentSaving() ||
+      this.paymentUncertain()
+    )
+      return;
+
+    const previousNumber = details.nextInstallmentNumber;
+    this.paymentSaving.set(true);
+    this.inquiryService
+      .collectInstallment(
+        purchaseId,
+        this.paymentForm.controls.paymentMethod.value,
+        this.paymentKey
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.paymentSaving.set(false);
+          this.paymentVisible.set(false);
+          this.clearPaymentKey();
+          this.toast.add({
+            severity: 'success',
+            summary: 'OPERIA',
+            detail: this.translate.instant('CUSTOMER_INQUIRY.COLLECTION_SAVED'),
+          });
+          this.loadPurchaseDetails(purchaseId);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.paymentSaving.set(false);
+          const fieldErrors = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+            this.translate.instant(key)
+          );
+          applyServerFieldErrors(this.paymentForm, fieldErrors);
+          this.paymentUncertain.set(true);
+          const code = extractApiErrorCodes(error)[0];
+          const key = code ? `ERRORS.${code}` : '';
+          const translated = key ? this.translate.instant(key) : '';
+          this.recheckPayment(
+            purchaseId,
+            previousNumber,
+            translated && translated !== key ? translated : undefined
+          );
+        },
+      });
+  }
+
+  recheckPayment(purchaseId?: string, previousNumber?: number, failureMessage?: string): void {
+    const id = purchaseId ?? this.selectedPurchaseId();
+    const number = previousNumber ?? this.purchaseDetails()?.nextInstallmentNumber;
+    if (!id) return;
+    this.inquiryService
+      .getPurchaseDetails(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: details => {
+          this.purchaseDetails.set(details);
+          this.paymentUncertain.set(false);
+          if (
+            this.paymentKey &&
+            details.collections.some(collection => collection.idempotencyKey === this.paymentKey)
+          ) {
+            this.paymentVisible.set(false);
+            this.clearPaymentKey();
+            this.toast.add({
+              severity: 'success',
+              summary: 'OPERIA',
+              detail: this.translate.instant('CUSTOMER_INQUIRY.COLLECTION_SAVED'),
+            });
+          } else if (number && details.nextInstallmentNumber !== number) {
+            this.paymentVisible.set(false);
+            this.clearPaymentKey();
+            this.toast.add({
+              severity: 'warn',
+              summary: 'OPERIA',
+              detail: this.translate.instant('ERRORS.CustomerInstallmentAlreadyCollected'),
+            });
+          } else {
+            this.toast.add({
+              severity: 'warn',
+              summary: 'OPERIA',
+              detail:
+                failureMessage ?? this.translate.instant('CUSTOMER_INQUIRY.COLLECTION_RECHECKED'),
+            });
+          }
+        },
+        error: () => {
+          this.toast.add({
+            severity: 'warn',
+            summary: 'OPERIA',
+            detail: this.translate.instant('CUSTOMER_INQUIRY.COLLECTION_UNKNOWN'),
+          });
+        },
+      });
+  }
+
+  private clearPaymentKey(): void {
+    if (this.paymentKeyStorageName) sessionStorage.removeItem(this.paymentKeyStorageName);
+    this.paymentKey = null;
+    this.paymentKeyStorageName = null;
+    this.paymentUncertain.set(false);
   }
 
   formatMoney(value: number | null): string {

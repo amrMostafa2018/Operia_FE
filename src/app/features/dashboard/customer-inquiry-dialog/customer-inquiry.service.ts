@@ -19,4 +19,15 @@ export class CustomerInquiryService {
       `${environment.apiUrl}/customers/purchases/${encodeURIComponent(purchaseId)}/inquiry`
     );
   }
+
+  collectInstallment(
+    purchaseId: string,
+    paymentMethod: string,
+    idempotencyKey: string
+  ): Observable<unknown> {
+    return this.http.post(
+      `${environment.apiUrl}/customers/purchases/${encodeURIComponent(purchaseId)}/installments`,
+      { paymentMethod, idempotencyKey }
+    );
+  }
 }

@@ -246,6 +246,64 @@
   margin: 0.5rem 0 0;
 }
 
+.bookable-count,
+.payment-hint {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin: 0.45rem 0 0.75rem;
+}
+
+.collect-button,
+.secondary-button {
+  border: none;
+  border-radius: $border-radius-lg;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+.collect-button {
+  background: var(--color-primary);
+  color: #fff;
+  margin-bottom: 0.7rem;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+}
+
+.secondary-button {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.collection-form,
+.collection-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.collection-summary {
+  background: #f7f8ff;
+  padding: 0.8rem;
+  border-radius: $border-radius-lg;
+  margin-bottom: 0.6rem;
+}
+
+.collection-form select {
+  padding: 0.55rem;
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  background: #fff;
+}
+
+.collection-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .previous-sessions {
   h4 {
     display: flex;

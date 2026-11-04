@@ -1,0 +1,523 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  output,
+  input,
+  computed,
+  signal,
+  untracked,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MessageService } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { DropdownModule } from 'primeng/dropdown';
+import { CurrencyService } from '@core/services/currency.service';
+import {
+  applyServerFieldErrors,
+  extractApiFieldErrors,
+  translateApiFieldErrors,
+} from '@core/utils/api-error.util';
+import { setupServerErrorClearing } from '@core/utils/validators.util';
+import { BookingCustomerDto } from '@app/features/bookings/appointments-api.service';
+import {
+  PackageCategoryOption,
+  PackageListItem,
+} from '@app/features/packages/models/package-list.model';
+import {
+  ConfirmSaleRequest,
+  ConfirmSaleResult,
+  SaleDraftItem,
+  SalePaymentOption,
+  SaleQuote,
+  SaleService,
+} from './sale.service';
+
+interface DraftRow extends SaleDraftItem {
+  key: string;
+}
+
+function saleItem(row: DraftRow): SaleDraftItem {
+  return {
+    offerId: row.offerId,
+    ownedCustomerPackageId: row.ownedCustomerPackageId,
+    unlistedName: row.unlistedName,
+    unlistedPrice: row.unlistedPrice,
+    unlistedDurationMinutes: row.unlistedDurationMinutes,
+    paymentOption: row.paymentOption,
+    quantity: row.quantity,
+  };
+}
+
+@Component({
+  selector: 'app-sale-builder-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    TranslatePipe,
+    DialogModule,
+    InputTextModule,
+    InputNumberModule,
+    DropdownModule,
+  ],
+  templateUrl: './sale-builder-dialog.component.html',
+  styleUrl: './sale-builder-dialog.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class SaleBuilderDialogComponent {
+  private readonly fb = inject(FormBuilder);
+  private readonly sales = inject(SaleService);
+  private readonly toast = inject(MessageService);
+  private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly currency = inject(CurrencyService);
+
+  readonly visible = input(false);
+  readonly closed = output<void>();
+  readonly confirmed = output<ConfirmSaleResult>();
+
+  readonly customerForm = this.fb.nonNullable.group({
+    mobile: ['', Validators.required],
+    customerId: ['', Validators.required],
+    branchId: ['', Validators.required],
+  });
+  readonly unlistedForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(200)]],
+    price: [0, [Validators.required, Validators.min(0)]],
+    durationMinutes: [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
+  });
+
+  readonly catalog = signal<PackageListItem[]>([]);
+  readonly categories = signal<PackageCategoryOption[]>([]);
+  readonly branches = signal<{ id: string; name: string }[]>([]);
+  readonly paymentMethods = signal<string[]>([]);
+  readonly customer = signal<BookingCustomerDto | null>(null);
+  readonly rows = signal<DraftRow[]>([]);
+  readonly quote = signal<SaleQuote | null>(null);
+  readonly quoteLoading = signal(false);
+  readonly saving = signal(false);
+  readonly loading = signal(false);
+  readonly customerLoading = signal(false);
+  readonly pendingConfirmation = signal<ConfirmSaleRequest | null>(null);
+  readonly showUnlisted = signal(false);
+  readonly categoryId = signal('all');
+  readonly searchText = signal('');
+  readonly selectedMethod = signal<string | null>(null);
+  readonly itemError = signal<string | null>(null);
+  private quoteVersion = 0;
+  private customerVersion = 0;
+  private optionsVersion = 0;
+  private confirmationKey = crypto.randomUUID();
+
+  readonly filteredCatalog = computed(() => {
+    const category = this.categoryId();
+    const search = this.searchText().trim().toLocaleLowerCase();
+    return this.catalog().filter(
+      offer =>
+        (category === 'all' || offer.serviceCategoryId === category) &&
+        (!search || offer.name.toLocaleLowerCase().includes(search))
+    );
+  });
+
+  constructor() {
+    setupServerErrorClearing(this.customerForm, this.destroyRef, [
+      'mobile',
+      'customerId',
+      'branchId',
+    ]);
+    setupServerErrorClearing(this.unlistedForm, this.destroyRef, [
+      'name',
+      'price',
+      'durationMinutes',
+    ]);
+    effect(
+      () => {
+        if (this.visible()) {
+          untracked(() => {
+            if (!this.pendingConfirmation()) {
+              this.reset();
+              this.loadOptions();
+            }
+          });
+        }
+      },
+      { allowSignalWrites: true }
+    );
+  }
+
+  private reset(): void {
+    this.quoteVersion++;
+    this.customerVersion++;
+    this.confirmationKey = crypto.randomUUID();
+    this.customerLoading.set(false);
+    this.customerForm.reset({ mobile: '', customerId: '', branchId: '' });
+    this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
+    this.customer.set(null);
+    this.catalog.set([]);
+    this.categories.set([]);
+    this.branches.set([]);
+    this.paymentMethods.set([]);
+    this.rows.set([]);
+    this.quote.set(null);
+    this.itemError.set(null);
+    this.selectedMethod.set(null);
+    this.categoryId.set('all');
+    this.searchText.set('');
+    this.showUnlisted.set(false);
+  }
+
+  private loadOptions(): void {
+    const version = ++this.optionsVersion;
+    this.loading.set(true);
+    forkJoin({
+      catalog: this.sales.catalog(),
+      categories: this.sales.categories(),
+      branches: this.sales.branches(),
+      paymentMethods: this.sales.paymentMethods(),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: options => {
+          if (version !== this.optionsVersion) return;
+          const today = new Date().toISOString().slice(0, 10);
+          this.catalog.set(
+            options.catalog.items.filter(
+              offer => offer.status === 'active' && (!offer.endsAt || offer.endsAt >= today)
+            )
+          );
+          this.categories.set(options.categories);
+          this.branches.set(options.branches);
+          this.paymentMethods.set(options.paymentMethods);
+          if (options.branches.length === 1) {
+            this.customerForm.controls.branchId.setValue(options.branches[0].id);
+          }
+          this.selectedMethod.set(options.paymentMethods[0] ?? null);
+          this.loading.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          if (version !== this.optionsVersion) return;
+          this.loading.set(false);
+          this.showError(error);
+        },
+      });
+  }
+
+  searchCustomer(): void {
+    this.customerForm.controls.mobile.markAsTouched();
+    if (this.customerForm.controls.mobile.invalid) return;
+    const version = ++this.customerVersion;
+    this.customerLoading.set(true);
+    this.sales
+      .customer(this.customerForm.controls.mobile.value.trim())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: customer => {
+          if (version !== this.customerVersion) return;
+          this.customerLoading.set(false);
+          this.customer.set(customer);
+          this.customerForm.controls.customerId.setValue(customer?.id ?? '');
+          if (!customer) this.customerForm.controls.customerId.markAsTouched();
+          this.rows.update(rows => rows.filter(row => !row.ownedCustomerPackageId));
+          this.changed();
+        },
+        error: (error: HttpErrorResponse) => {
+          if (version !== this.customerVersion) return;
+          this.customerLoading.set(false);
+          applyServerFieldErrors(
+            this.customerForm,
+            translateApiFieldErrors(extractApiFieldErrors(error), key =>
+              this.translate.instant(key)
+            )
+          );
+          this.showError(error);
+        },
+      });
+  }
+
+  mobileChanged(): void {
+    this.customerVersion++;
+    this.customerLoading.set(false);
+    this.customer.set(null);
+    this.customerForm.controls.customerId.setValue('');
+    this.rows.update(rows => rows.filter(row => !row.ownedCustomerPackageId));
+    this.changed();
+  }
+
+  branchChanged(): void {
+    this.changed();
+  }
+
+  addOffer(offer: PackageListItem): void {
+    const option: SalePaymentOption = offer.cashEnabled !== false ? 'cash' : 'installment';
+    if (option === 'installment' && !offer.installmentEnabled) return;
+    const current = this.rows().find(
+      row => row.offerId === offer.id && !row.ownedCustomerPackageId && row.paymentOption === option
+    );
+    if (current) {
+      this.rows.update(rows =>
+        rows.map(row =>
+          row.key === current.key ? { ...row, quantity: Math.min(row.quantity + 1, 100) } : row
+        )
+      );
+    } else {
+      this.rows.update(rows => [
+        ...rows,
+        {
+          key: crypto.randomUUID(),
+          offerId: offer.id,
+          ownedCustomerPackageId: null,
+          unlistedName: null,
+          unlistedPrice: null,
+          unlistedDurationMinutes: null,
+          paymentOption: option,
+          quantity: 1,
+        },
+      ]);
+    }
+    this.changed();
+  }
+
+  addOwned(purchase: BookingCustomerDto['packages'][number]): void {
+    if (this.rows().some(row => row.ownedCustomerPackageId === purchase.customerPackageId)) return;
+    this.rows.update(rows => [
+      ...rows,
+      {
+        key: crypto.randomUUID(),
+        offerId: null,
+        ownedCustomerPackageId: purchase.customerPackageId,
+        unlistedName: null,
+        unlistedPrice: null,
+        unlistedDurationMinutes: null,
+        paymentOption: 'owned',
+        quantity: 1,
+      },
+    ]);
+    this.changed();
+  }
+
+  addUnlisted(): void {
+    this.unlistedForm.markAllAsTouched();
+    if (this.unlistedForm.invalid) return;
+    if (this.rows().some(row => row.unlistedName !== null)) {
+      this.itemError.set(this.translate.instant('ERRORS.SaleUnlistedLimit'));
+      return;
+    }
+    const value = this.unlistedForm.getRawValue();
+    this.rows.update(rows => [
+      ...rows,
+      {
+        key: crypto.randomUUID(),
+        offerId: null,
+        ownedCustomerPackageId: null,
+        unlistedName: value.name.trim(),
+        unlistedPrice: value.price,
+        unlistedDurationMinutes: value.durationMinutes,
+        paymentOption: 'cash',
+        quantity: 1,
+      },
+    ]);
+    this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
+    this.showUnlisted.set(false);
+    this.changed();
+  }
+
+  removeRow(key: string): void {
+    this.rows.update(rows => rows.filter(row => row.key !== key));
+    this.changed();
+  }
+
+  setOption(key: string, option: SalePaymentOption): void {
+    this.rows.update(rows =>
+      rows.map(row => (row.key === key ? { ...row, paymentOption: option } : row))
+    );
+    this.changed();
+  }
+
+  setQuantity(key: string, quantity: number): void {
+    this.rows.update(rows =>
+      rows.map(row =>
+        row.key === key ? { ...row, quantity: Math.max(1, Math.min(100, quantity)) } : row
+      )
+    );
+    this.changed();
+  }
+
+  canInstallment(row: DraftRow): boolean {
+    const offer = this.catalog().find(item => item.id === row.offerId);
+    return offer?.offerType === 'package' && offer.installmentEnabled === true;
+  }
+
+  canCash(row: DraftRow): boolean {
+    return this.catalog().find(item => item.id === row.offerId)?.cashEnabled !== false;
+  }
+
+  displayPrice(offer: PackageListItem): number {
+    return offer.cashEnabled === false
+      ? (offer.installmentPrice ?? offer.price)
+      : (offer.cashPriceAfterDiscount ?? offer.price);
+  }
+
+  rowName(row: DraftRow): string {
+    if (row.unlistedName) return row.unlistedName;
+    if (row.ownedCustomerPackageId) {
+      return (
+        this.customer()?.packages.find(p => p.customerPackageId === row.ownedCustomerPackageId)
+          ?.packageName ?? ''
+      );
+    }
+    return this.catalog().find(offer => offer.id === row.offerId)?.name ?? '';
+  }
+
+  lineAt(index: number) {
+    return this.quote()?.items[index] ?? null;
+  }
+
+  private changed(): void {
+    this.confirmationKey = crypto.randomUUID();
+    this.itemError.set(null);
+    const version = ++this.quoteVersion;
+    const items = this.rows().map(saleItem);
+    if (items.length === 0) {
+      this.quote.set(null);
+      this.quoteLoading.set(false);
+      return;
+    }
+    this.quote.set(null);
+    this.quoteLoading.set(true);
+    this.sales
+      .quote({
+        customerId: this.customer()?.id ?? null,
+        branchId: this.customerForm.controls.branchId.value || null,
+        items,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: quote => {
+          if (version !== this.quoteVersion) return;
+          this.quote.set(quote);
+          this.quoteLoading.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          if (version !== this.quoteVersion) return;
+          this.quoteLoading.set(false);
+          this.itemError.set(this.errorText(error));
+        },
+      });
+  }
+
+  confirm(): void {
+    const pending = this.pendingConfirmation();
+    if (pending) {
+      if (!this.saving()) this.submitConfirmation(pending);
+      return;
+    }
+    this.customerForm.markAllAsTouched();
+    const quote = this.quote();
+    if (this.customerForm.invalid || !quote || this.quoteLoading() || this.saving()) return;
+    if (quote.dueNow > 0 && !this.selectedMethod()) {
+      this.itemError.set(this.translate.instant('ERRORS.SalePaymentMethodUnavailable'));
+      return;
+    }
+    const request: ConfirmSaleRequest = {
+      customerId: this.customerForm.controls.customerId.value,
+      branchId: this.customerForm.controls.branchId.value,
+      items: this.rows().map(saleItem),
+      paymentMethod: quote.dueNow > 0 ? this.selectedMethod() : null,
+      expectedGrandTotal: quote.grandTotal,
+      expectedDueNow: quote.dueNow,
+      idempotencyKey: this.confirmationKey,
+    };
+    this.pendingConfirmation.set(request);
+    this.submitConfirmation(request);
+  }
+
+  private submitConfirmation(request: ConfirmSaleRequest): void {
+    this.saving.set(true);
+    this.sales
+      .confirm(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          this.saving.set(false);
+          this.pendingConfirmation.set(null);
+          this.confirmed.emit(result);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.saving.set(false);
+          if (error.status < 400 || error.status === 408 || error.status >= 500) {
+            this.toast.add({
+              severity: 'warn',
+              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+              detail: this.translate.instant('SALE_BUILDER.CONFIRMATION_UNKNOWN'),
+            });
+            return;
+          }
+          this.pendingConfirmation.set(null);
+          const codes = Object.values(error.error?.errorCodes ?? {}).flat();
+          const fields = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+            this.translate.instant(key)
+          );
+          applyServerFieldErrors(this.customerForm, fields);
+          this.itemError.set(fields['items'] ?? fields['paymentMethod'] ?? this.errorText(error));
+          this.showError(error);
+          if (codes.includes('SaleQuoteChanged')) this.changed();
+        },
+      });
+  }
+
+  fieldError(field: 'mobile' | 'customerId' | 'branchId'): string | null {
+    const control = this.customerForm.controls[field];
+    if (!control.touched) return null;
+    if (control.hasError('server')) return String(control.getError('server'));
+    if (control.hasError('required')) return this.translate.instant('SALE_BUILDER.REQUIRED');
+    return null;
+  }
+
+  unlistedError(field: 'name' | 'price' | 'durationMinutes'): string | null {
+    const control = this.unlistedForm.controls[field];
+    if (!control.touched) return null;
+    if (control.hasError('server')) return String(control.getError('server'));
+    if (control.hasError('required')) return this.translate.instant('SALE_BUILDER.REQUIRED');
+    if (control.hasError('maxlength'))
+      return this.translate.instant('ERRORS.SaleUnlistedNameInvalid');
+    if (control.hasError('min') || control.hasError('max')) {
+      return this.translate.instant(
+        field === 'durationMinutes'
+          ? 'ERRORS.SaleUnlistedDurationInvalid'
+          : 'ERRORS.SaleUnlistedPriceInvalid'
+      );
+    }
+    return null;
+  }
+
+  private errorText(error: HttpErrorResponse): string {
+    const code = Object.values(error.error?.errorCodes ?? {}).flat()[0];
+    if (typeof code === 'string') {
+      const key = `ERRORS.${code}`;
+      const text = this.translate.instant(key);
+      if (text !== key) return text;
+    }
+    return (
+      (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
+      this.translate.instant('HTTP_ERRORS.SERVER')
+    );
+  }
+
+  private showError(error: HttpErrorResponse): void {
+    this.toast.add({
+      severity: 'error',
+      summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+      detail: this.errorText(error),
+    });
+  }
+}
