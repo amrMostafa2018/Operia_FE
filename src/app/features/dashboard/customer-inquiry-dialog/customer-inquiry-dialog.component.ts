@@ -16,6 +16,7 @@ import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
+import { CurrencyService } from '@core/services/currency.service';
 import { LanguageService } from '@core/services/language.service';
 import {
   applyServerFieldErrors,
@@ -36,6 +37,7 @@ import { CustomerInquiryService } from './customer-inquiry.service';
 })
 export class CustomerInquiryDialogComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly currencyService = inject(CurrencyService);
   private readonly languageService = inject(LanguageService);
   private readonly inquiryService = inject(CustomerInquiryService);
   private readonly translate = inject(TranslateService);
@@ -56,27 +58,21 @@ export class CustomerInquiryDialogComponent {
   readonly purchaseDetails = signal<InquiryPurchaseDetails | null>(null);
   readonly detailsLoading = signal(false);
 
+  constructor() {
+    this.searchForm.controls.mobile.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.clearInquiry());
+  }
+
   close(): void {
-    this.searchSubscription?.unsubscribe();
-    this.detailsSubscription?.unsubscribe();
+    this.clearInquiry();
     this.searchForm.reset({ mobile: '' });
-    this.result.set(null);
-    this.searched.set(false);
-    this.loading.set(false);
-    this.selectedPurchaseId.set(null);
-    this.purchaseDetails.set(null);
-    this.detailsLoading.set(false);
     this.closed.emit();
   }
 
   search(): void {
-    this.searchSubscription?.unsubscribe();
-    this.detailsSubscription?.unsubscribe();
+    this.clearInquiry();
     this.searchForm.markAllAsTouched();
-    this.result.set(null);
-    this.searched.set(false);
-    this.selectedPurchaseId.set(null);
-    this.purchaseDetails.set(null);
     if (this.searchForm.invalid) return;
 
     this.loading.set(true);
@@ -171,12 +167,26 @@ export class CustomerInquiryDialogComponent {
 
   formatMoney(value: number | null): string {
     if (value === null) return '—';
-    return new Intl.NumberFormat(this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-EG', {
-      style: 'currency',
-      currency: 'EGP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(value);
+    const formatted = new Intl.NumberFormat(
+      this.languageService.currentLang() === 'ar' ? 'ar-EG' : 'en-EG',
+      {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }
+    ).format(value);
+    const currency = this.currencyService.currencyLabel();
+    return currency ? `${formatted} ${currency}` : formatted;
+  }
+
+  private clearInquiry(): void {
+    this.searchSubscription?.unsubscribe();
+    this.detailsSubscription?.unsubscribe();
+    this.result.set(null);
+    this.searched.set(false);
+    this.loading.set(false);
+    this.selectedPurchaseId.set(null);
+    this.purchaseDetails.set(null);
+    this.detailsLoading.set(false);
   }
 
   formatTime(minutes: number): string {
