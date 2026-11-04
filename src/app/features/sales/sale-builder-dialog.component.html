@@ -192,6 +192,7 @@
         <p-dropdown
           inputId="sale-branch"
           formControlName="branchId"
+          [disabled]="saving()"
           [options]="branches()"
           optionLabel="name"
           optionValue="id"
@@ -462,7 +463,7 @@
       <button
         type="button"
         class="outline-button"
-        [disabled]="saving() || quoteLoading() || !quote()"
+        [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Close')"
         (click)="confirm('Close')"
       >
         {{ 'SALE_BUILDER.CLOSE_SALE' | translate }}
@@ -470,7 +471,7 @@
       <button
         type="button"
         class="primary-button"
-        [disabled]="saving() || quoteLoading() || !quote()"
+        [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Later')"
         (click)="confirm('Later')"
       >
         <i class="pi pi-calendar-plus"></i> {{ 'SALE_BUILDER.CONFIRM_LATER' | translate }}
@@ -479,7 +480,7 @@
         <button
           type="button"
           class="primary-button"
-          [disabled]="saving() || quoteLoading() || !quote()"
+          [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('BookNow')"
           (click)="confirm('BookNow')"
         >
           {{ 'SALE_BUILDER.BOOK_NOW' | translate }}

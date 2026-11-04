@@ -500,17 +500,19 @@ export class SaleBuilderDialogComponent {
     this.customerForm.markAllAsTouched();
     const quote = this.quote();
     if (this.customerForm.invalid || !quote || this.quoteLoading() || this.saving()) return;
+    if (this.confirmationLockedTo(disposition)) return;
     if (quote.dueNow > 0 && !this.selectedMethod()) {
       this.itemError.set(this.translate.instant('ERRORS.SalePaymentMethodUnavailable'));
       return;
     }
     this.saving.set(true);
     this.chosenDisposition ??= disposition;
+    const submittedBranchId = this.customerForm.controls.branchId.value;
     this.sales
       .confirm({
         customerId: this.directCustomer() ? null : this.customerForm.controls.customerId.value,
         directCustomer: this.directCustomer(),
-        branchId: this.customerForm.controls.branchId.value,
+        branchId: submittedBranchId,
         items: this.requestItems(),
         paymentMethod: quote.dueNow > 0 ? this.selectedMethod() : null,
         expectedGrandTotal: quote.grandTotal,
@@ -526,7 +528,7 @@ export class SaleBuilderDialogComponent {
             saleId: result.saleId,
             status: result.status,
             disposition: this.chosenDisposition ?? disposition,
-            branchId: this.customerForm.controls.branchId.value,
+            branchId: submittedBranchId,
             durationMinutes: quote.items.reduce(
               (sum, line) => sum + line.durationMinutes * line.quantity,
               0
@@ -550,9 +552,18 @@ export class SaleBuilderDialogComponent {
           applyServerFieldErrors(this.customerForm, fields);
           this.itemError.set(fields['items'] ?? fields['paymentMethod'] ?? this.errorText(error));
           this.showError(error);
-          if (codes.includes('SaleQuoteChanged')) this.changed();
+          if (codes.includes('SaleQuoteChanged')) {
+            this.changed();
+          } else if (error.status === 400 || error.status === 422) {
+            this.confirmationKey = crypto.randomUUID();
+            this.chosenDisposition = null;
+          }
         },
       });
+  }
+
+  confirmationLockedTo(disposition: 'Close' | 'Later' | 'BookNow'): boolean {
+    return this.chosenDisposition !== null && this.chosenDisposition !== disposition;
   }
 
   collect(paymentConfirmed: boolean): void {
