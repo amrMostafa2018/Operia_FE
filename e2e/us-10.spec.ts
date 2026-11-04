@@ -89,7 +89,7 @@ test.describe('US-10: Saved balances, installments, and execution history', () =
       purchasePrice: 800,
       amountPaid: 800,
       amountRemaining: 0,
-      paymentStatus: 'paid',
+      paymentStatus: 'fullyPaid',
       installments: [],
       completedSessions: [],
     });

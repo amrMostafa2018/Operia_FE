@@ -125,12 +125,15 @@ export class SaleBuilderDialogComponent {
       'price',
       'durationMinutes',
     ]);
-    effect(() => {
-      if (this.visible()) {
-        this.reset();
-        this.loadOptions();
-      }
-    });
+    effect(
+      () => {
+        if (this.visible()) {
+          this.reset();
+          this.loadOptions();
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   private reset(): void {
