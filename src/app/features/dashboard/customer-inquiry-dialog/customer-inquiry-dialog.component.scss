@@ -17,7 +17,13 @@
   margin-bottom: 1rem;
 }
 
+.search-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
 .search-wrap {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -39,7 +45,17 @@
 }
 
 .search-btn {
-  display: none;
+  border: none;
+  border-radius: $border-radius-lg;
+  padding: 0.55rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
 }
 
 .field-error {
@@ -83,6 +99,17 @@
     color: var(--text-secondary);
     font-size: 0.82rem;
   }
+
+  small {
+    color: var(--text-secondary);
+  }
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .count-chip {
@@ -116,12 +143,17 @@
   border: none;
   background: #fafbff;
   display: grid;
-  grid-template-columns: auto auto 1fr auto auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.65rem;
   padding: 0.75rem 1rem;
   cursor: pointer;
   text-align: start;
+}
+
+.purchase-date {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
 }
 
 .record-index {
@@ -196,6 +228,24 @@
   }
 }
 
+.balance-section {
+  h4 {
+    margin: 0 0 0.4rem;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.no-completions {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
 .previous-sessions {
   h4 {
     display: flex;
@@ -242,6 +292,15 @@
 }
 
 @media (max-width: $bp-md) {
+  .search-row,
+  .customer-header {
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    min-width: 100%;
+  }
+
   .meta-row,
   .sessions-summary {
     grid-template-columns: 1fr;
@@ -249,20 +308,10 @@
 
   .record-toggle {
     grid-template-columns: auto 1fr auto;
-    grid-template-areas:
-      'index name chevron'
-      'badge status chevron';
+    gap: 0.5rem;
   }
 
-  .record-index {
-    grid-area: index;
-  }
-
-  .type-badge {
-    grid-area: badge;
-  }
-
-  .record-name {
-    grid-area: name;
+  .purchase-date {
+    grid-column: 2;
   }
 }

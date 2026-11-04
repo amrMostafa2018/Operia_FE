@@ -71,6 +71,11 @@ describe('PackageService', () => {
       cashEnabled: true,
       installmentEnabled: false,
       installmentPrice: null,
+      firstPayment: null,
+      installmentCount: null,
+      installments: [],
+      allStaff: true,
+      staffIds: [],
       discountCode: '',
       discountPercent: 0,
     };
@@ -98,6 +103,11 @@ describe('PackageService', () => {
       cashEnabled: true,
       installmentEnabled: false,
       installmentPrice: null,
+      firstPayment: null,
+      installmentCount: null,
+      installments: [],
+      allStaff: true,
+      staffIds: [],
       discountCode: '',
       discountPercent: null,
     };

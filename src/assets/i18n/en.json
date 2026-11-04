@@ -114,6 +114,10 @@
       "SUB_CATEGORY_EMPTY": "No sub-categories yet. Type a name, then click +.",
       "SUB_CATEGORY_EMPTY_FILTER": "No matching sub-category. Click + to create it.",
       "ADD_CATEGORY": "Add",
+      "AVAILABLE_STAFF_LABEL": "Available Staff",
+      "ALL_STAFF": "All Staff",
+      "STAFF_PLACEHOLDER": "Select staff who can provide this service",
+      "STAFF_EMPTY": "No active staff are assigned to your branches.",
       "DURATION_LABEL": "Session Duration",
       "DURATION_UNIT_MINUTE": "Minute",
       "SESSION_COUNT_LABEL": "Number of Sessions",
@@ -222,6 +226,7 @@
     "AuthenticationRequired": "Authentication is required.",
     "TenantContextRequired": "Your account is not associated with an activity.",
     "TenantAccessDenied": "You cannot access records outside your activity.",
+    "CustomerPurchaseNotFound": "This customer purchase could not be found.",
     "BookingBranchRequired": "Select a branch to view bookable employees.",
     "BookingDateRangeInvalid": "The end date must be on or after the start date.",
     "BookingDateRangeTooLarge": "The calendar can show at most 31 days at a time.",
@@ -295,6 +300,8 @@
     "PACKAGE_INSTALLMENT_SESSIONS_INVALID": "Released sessions cannot be negative or exceed the package session count.",
     "PACKAGE_INSTALLMENT_RELEASE_CAP": "Before full payment, released sessions cannot exceed 70% of package sessions, rounded to the nearest whole session with halves down.",
     "PACKAGE_CASH_UNAVAILABLE": "Cash purchase is not available for this offer.",
+    "PACKAGE_STAFF_INVALID": "Choose active staff assigned to an accessible branch, or select All Staff.",
+    "PACKAGE_STAFF_UNAVAILABLE": "The selected employee is not available for this service or offer.",
     "PACKAGE_NOT_FOUND": "Service or offer was not found.",
     "PACKAGE_ALREADY_CANCELLED": "This service or offer is already cancelled."
   },
@@ -1297,8 +1304,47 @@
   "CUSTOMER_INQUIRY": {
     "TITLE": "Customer inquiry",
     "SEARCH_PLACEHOLDER": "Enter mobile number",
+    "SEARCH": "Search",
+    "LOADING": "Searching...",
+    "REGISTERED_AT": "Registered",
+    "NO_PURCHASES": "No purchases recorded for this customer",
+    "CONNECTION_ERROR": "Could not load the customer. Check your connection and try again.",
+    "DETAILS_LOADING": "Loading purchase details...",
+    "DETAILS_ERROR": "Could not load purchase details. Try again.",
+    "NOT_RECORDED": "Not recorded",
+    "MONTHS": "months",
+    "SESSIONS": "Sessions",
+    "PULSES": "Pulses",
+    "COMPLETED": "Completed",
+    "PACKAGE_STATUS": "Package status",
+    "PAYMENT_STATUS": "Payment status",
+    "FINANCIAL_POSITION": "Financial position",
+    "PURCHASE_PRICE": "Purchase price",
+    "AMOUNT_PAID": "Amount paid",
+    "AMOUNT_REMAINING": "Amount remaining",
+    "INSTALLMENTS": "Installments",
+    "COL_NUMBER": "#",
+    "COL_AMOUNT": "Amount",
+    "COL_STATUS": "Status",
+    "COL_PULSES": "Pulses used",
+    "NO_COMPLETED_SESSIONS": "No completed sessions recorded",
+    "PAYMENT": {
+      "UNKNOWN": "Not recorded",
+      "UNPAID": "Unpaid",
+      "PARTIAL": "Partially paid",
+      "PAID": "Paid"
+    },
+    "INSTALLMENT_STATUS": {
+      "DUE": "Due",
+      "PAID": "Paid"
+    },
+    "MEMBERSHIP": {
+      "ACTIVE": "Active member",
+      "INACTIVE": "Inactive member"
+    },
     "OPERATIONS": "operations",
     "PURCHASE_DATE": "Purchase date",
+    "EXPIRY_DATE": "Expiry date",
     "START_DATE": "Start date",
     "VALID_FOR": "Valid for",
     "DAYS_REMAINING": "days remaining",
@@ -1324,7 +1370,7 @@
     },
     "ERRORS": {
       "MOBILE_REQUIRED": "Mobile number is required.",
-      "MOBILE_INVALID": "Enter a valid Egyptian mobile number."
+      "MOBILE_INVALID": "Enter a valid mobile number."
     }
   },
   "OPERIA_SUBSCRIPTIONS": {

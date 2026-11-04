@@ -28,6 +28,7 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { PermissionService } from '@core/services/permission.service';
@@ -76,6 +77,8 @@ const DEFAULT_FORM_VALUE: PackageFormValue = {
   firstPayment: null,
   installmentCount: null,
   installments: [],
+  allStaff: true,
+  staffIds: [],
   discountCode: '',
   discountPercent: 0,
 };
@@ -128,6 +131,9 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
     sessionsInvalid: 'ERRORS.PACKAGE_INSTALLMENT_SESSIONS_INVALID',
     releaseCap: 'ERRORS.PACKAGE_INSTALLMENT_RELEASE_CAP',
   },
+  staffIds: {
+    requiredStaff: 'ERRORS.PACKAGE_STAFF_INVALID',
+  },
   discountCode: {
     maxlength: 'PACKAGES.CREATE.ERRORS.DISCOUNT_CODE_MAX',
   },
@@ -170,6 +176,7 @@ function sessionOrPulseXorValidator(group: AbstractControl): ValidationErrors | 
     InputTextareaModule,
     TableModule,
     TagModule,
+    MultiSelectModule,
     ConfirmActionDialogComponent,
   ],
   templateUrl: './packages.component.html',
@@ -211,6 +218,7 @@ export class PackagesComponent implements OnInit {
   readonly pageReportTemplate = signal(this.translate.instant('PACKAGES.PAGE_REPORT'));
   readonly serviceCategories = signal<{ label: string; value: string }[]>([]);
   readonly subServiceCategories = signal<{ label: string; value: string }[]>([]);
+  readonly availableStaff = signal<{ label: string; value: string }[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
@@ -224,13 +232,15 @@ export class PackagesComponent implements OnInit {
     sessionCount: [null as number | null],
     pulseCount: [null as number | null, [Validators.min(0)]],
     packageExpiryMonths: [12 as number | null],
-    price: [0, [Validators.required, Validators.min(0)]],
+    price: [0 as number | null, [Validators.required, Validators.min(0)]],
     cashEnabled: [true],
     installmentEnabled: [false],
     installmentPrice: [null as number | null],
     firstPayment: [null as number | null],
     installmentCount: [null as number | null],
     installments: [[] as PackageInstallmentRow[]],
+    allStaff: [true],
+    staffIds: [[] as string[]],
     discountCode: ['', [Validators.maxLength(50)]],
     discountPercent: [0 as number | null, [Validators.min(0), Validators.max(100)]],
   });
@@ -266,6 +276,7 @@ export class PackagesComponent implements OnInit {
   });
   readonly statusValue = computed(() => this.formValue().status);
   readonly installmentEnabledValue = computed(() => this.formValue().installmentEnabled);
+  readonly allStaffValue = computed(() => this.formValue().allStaff);
   readonly installmentRows = computed(() => this.formValue().installments);
   readonly installmentTotal = computed(() =>
     this.installmentRows().reduce((total, row) => total + (Number(row.amount) || 0), 0)
@@ -322,6 +333,7 @@ export class PackagesComponent implements OnInit {
       'firstPayment',
       'installmentCount',
       'installments',
+      'staffIds',
       'discountCode',
       'discountPercent',
     ]);
@@ -366,6 +378,10 @@ export class PackagesComponent implements OnInit {
         this.form.controls.subServiceCategoryId.setValue(null, { emitEvent: false });
         this.loadSubServiceCategories(categoryId);
       });
+    this.form.controls.allStaff.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncStaffValidator());
+    this.syncStaffValidator();
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('PACKAGES.PAGE_REPORT'));
     });
@@ -373,6 +389,7 @@ export class PackagesComponent implements OnInit {
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyFilters());
     this.loadServiceCategories();
+    this.loadAvailableStaff();
   }
 
   load(): void {
@@ -467,6 +484,8 @@ export class PackagesComponent implements OnInit {
               amount: row.amount,
               sessionsUnlocked: row.sessionsUnlocked,
             })),
+            allStaff: detail.allStaff,
+            staffIds: detail.staffIds,
             discountCode: detail.discountCode ?? '',
             discountPercent: detail.discountPercent ?? 0,
           });
@@ -502,6 +521,7 @@ export class PackagesComponent implements OnInit {
     }
     this.syncPackageFieldValidators(type);
     this.syncPaymentValidators();
+    this.syncStaffValidator();
   }
 
   confirmPlanReplacement(): void {
@@ -904,16 +924,18 @@ export class PackagesComponent implements OnInit {
     this.form.reset(value, { emitEvent: false });
     this.syncPackageFieldValidators(value.offerType);
     this.syncPaymentValidators();
+    this.syncStaffValidator();
     this.formValue.set(this.form.getRawValue());
     this.loadSubServiceCategories(value.serviceCategoryId);
   }
 
   private syncPaymentValidators(): void {
     const price = this.form.controls.price;
-    price.setValidators([
-      Validators.required,
-      Validators.min(this.form.controls.cashEnabled.value ? 0.01 : 0),
-    ]);
+    price.setValidators(
+      this.form.controls.cashEnabled.value
+        ? [Validators.required, Validators.min(0.01)]
+        : [Validators.min(0)]
+    );
     price.updateValueAndValidity({ emitEvent: false });
     const installmentPrice = this.form.controls.installmentPrice;
     installmentPrice.setValidators(
@@ -951,6 +973,19 @@ export class PackagesComponent implements OnInit {
       installments.setValue([], { emitEvent: false });
     }
     this.form.controls.cashEnabled.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private syncStaffValidator(): void {
+    const staffIds = this.form.controls.staffIds;
+    staffIds.setValidators(
+      this.form.controls.allStaff.value
+        ? []
+        : [control => (control.value.length ? null : { requiredStaff: true })]
+    );
+    staffIds.updateValueAndValidity({ emitEvent: false });
+    if (this.form.controls.allStaff.value) {
+      staffIds.setValue([], { emitEvent: false });
+    }
   }
 
   private installmentsValidation(rows: PackageInstallmentRow[]): ValidationErrors | null {
@@ -1044,6 +1079,8 @@ export class PackagesComponent implements OnInit {
       firstPayment: value.installmentEnabled ? value.firstPayment : null,
       installmentCount: value.installmentEnabled ? value.installmentCount : null,
       installments: value.installmentEnabled ? value.installments : [],
+      allStaff: value.allStaff,
+      staffIds: value.allStaff ? [] : value.staffIds,
       discountCode: value.discountCode.trim(),
       discountPercent: value.discountPercent,
     };
@@ -1059,6 +1096,19 @@ export class PackagesComponent implements OnInit {
             categories.map(category => ({ label: category.name, value: category.id }))
           ),
         error: () => this.serviceCategories.set([]),
+      });
+  }
+
+  private loadAvailableStaff(): void {
+    this.service
+      .listAvailableStaff()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: employees =>
+          this.availableStaff.set(
+            employees.map(employee => ({ label: employee.fullName, value: employee.id }))
+          ),
+        error: () => this.availableStaff.set([]),
       });
   }
 

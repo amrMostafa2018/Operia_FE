@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Locator } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 
 const categoryId = '00000000-0000-4000-8000-000000000006';
 const offerId = '00000000-0000-4000-8000-000000000007';
@@ -9,7 +10,7 @@ const password = process.env.OPERIA_E2E_PASSWORD!;
 const otp = process.env.OPERIA_E2E_OTP!;
 const customerId = 'e2e70000-0000-4000-8000-000000000006';
 const branchId = 'e2e70000-0000-4000-8000-000000000004';
-const employeeId = 'e2e70000-0000-4000-8000-000000000005';
+const employeeId = 'e2e70000-0000-4000-8000-000000000019';
 const seededCategoryId = 'e2e70000-0000-4000-8000-000000000017';
 
 async function performLogin(page: Page) {
@@ -33,19 +34,51 @@ async function performLogin(page: Page) {
 }
 
 async function fillNumberInput(input: Locator, value: string | number) {
-  await input.click();
-  await input.press('Control+A');
-  await input.press('Backspace');
-  await input.fill(String(value));
-  await input.dispatchEvent('input');
-  await input.dispatchEvent('change');
-  await input.press('Tab');
+  const expected = Number(value);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await input.click();
+    await input.press('Control+A');
+    await input.press('Backspace');
+    await input.fill(String(value));
+    await input.dispatchEvent('input');
+    await input.dispatchEvent('change');
+    await input.press('Tab');
+
+    const actual = Number((await input.inputValue()).replaceAll(',', ''));
+    if (actual === expected) return;
+  }
+
+  expect(Number((await input.inputValue()).replaceAll(',', ''))).toBe(expected);
 }
 
 async function setInstallmentRow(page: Page, rowIndex: number, amount: number, sessions: number) {
   const row = page.locator('.installment-plan-table tbody tr').nth(rowIndex);
   await fillNumberInput(row.locator('td').nth(1).locator('input'), amount);
   await fillNumberInput(row.locator('td').nth(2).locator('input'), sessions);
+}
+
+function expectNoPurchaseOrCollection(packageId: string) {
+  // TC-14 uses the isolated LocalDB fixture configured in playwright.config.ts.
+  // The customer lookup API omits purchases with no released sessions, so inspect
+  // every purchase for this offer rather than one customer's eligible packages.
+  expect(packageId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  const query = `SET NOCOUNT ON;
+    SELECT CONCAT(
+      (SELECT COUNT(*) FROM dbo.CustomerPackages WHERE PackageId = '${packageId}'),
+      '|',
+      (SELECT COUNT(*) FROM dbo.CustomerPackageInstallments AS installment
+       JOIN dbo.CustomerPackages AS purchase ON purchase.Id = installment.CustomerPackageId
+       WHERE purchase.PackageId = '${packageId}' AND installment.CollectedAtUtc IS NOT NULL)
+    );`;
+  const output = execFileSync(
+    'sqlcmd',
+    ['-S', '(localdb)\\OperiaDev', '-d', 'Operia_Dev', '-E', '-b', '-h', '-1', '-W', '-Q', query],
+    { encoding: 'utf8', timeout: 10_000 }
+  );
+  const counts = output.match(/^\s*(\d+)\|(\d+)\s*$/m);
+  if (!counts) throw new Error(`Unexpected package purchase count response: ${output}`);
+  expect(Number(counts[1]), 'Saving an offer must not create a customer purchase').toBe(0);
+  expect(Number(counts[2]), 'Saving an offer must not collect a payment').toBe(0);
 }
 
 function setupControlledOfferApi(page: Page, submitted: Record<string, unknown>[]) {
@@ -867,14 +900,34 @@ test.describe('US-07: Installment plan and session release', () => {
       expect(planRes.status()).toBe(201);
       const unsoldPkg = await planRes.json();
 
-      // Querying purchases for this package returns 404 (no entitlement created)
-      const checkRes = await request.get(
-        `http://localhost:5151/api/packages/installment-purchases/${unsoldPkg.id}`,
-        {
-          headers: headersA,
-        }
-      );
-      expect(checkRes.status()).toBe(404);
+      expectNoPurchaseOrCollection(unsoldPkg.id);
+
+      const updateRes = await request.put(`http://localhost:5151/api/packages/${unsoldPkg.id}`, {
+        headers: headersA,
+        data: {
+          name: `Unsold Plan Updated ${Date.now()}`,
+          isActive: true,
+          offerType: 'package',
+          description: 'Updated without sale',
+          serviceCategoryId: seededCategoryId,
+          sessionDurationMinutes: 30,
+          sessionCount: 10,
+          price: 18000,
+          discountCode: '',
+          cashEnabled: true,
+          installmentEnabled: true,
+          installmentPrice: 20000,
+          firstPayment: 5000,
+          installmentCount: 3,
+          installments: [
+            { amount: 5000, sessionsUnlocked: 3 },
+            { amount: 5000, sessionsUnlocked: 4 },
+            { amount: 5000, sessionsUnlocked: 3 },
+          ],
+        },
+      });
+      expect(updateRes.ok()).toBeTruthy();
+      expectNoPurchaseOrCollection(unsoldPkg.id);
     });
 
     await test.step('TC-15: Tenant isolation: Tenant B cannot read or update Tenant A offer', async () => {

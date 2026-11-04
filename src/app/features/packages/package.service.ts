@@ -49,6 +49,8 @@ export interface PackagePayload {
   firstPayment: number | null;
   installmentCount: number | null;
   installments: PackageInstallmentRow[];
+  allStaff: boolean;
+  staffIds: string[];
   discountCode: string;
   discountPercent: number | null;
 }
@@ -103,6 +105,10 @@ export class PackageService {
       params = params.set('serviceCategoryId', serviceCategoryId);
     }
     return this.http.get<PackageCategoryOption[]>(`${this.url}/sub-service-categories`, { params });
+  }
+
+  listAvailableStaff(): Observable<{ id: string; fullName: string }[]> {
+    return this.http.get<{ id: string; fullName: string }[]>(`${this.url}/available-staff`);
   }
 
   createServiceCategory(payload: {

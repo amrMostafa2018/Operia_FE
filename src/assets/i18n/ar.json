@@ -114,6 +114,10 @@
       "SUB_CATEGORY_EMPTY": "لا توجد تصنيفات فرعية بعد. اكتب اسماً ثم اضغط +.",
       "SUB_CATEGORY_EMPTY_FILTER": "لا يوجد تصنيف فرعي مطابق. اضغط + لإنشائه.",
       "ADD_CATEGORY": "إضافة",
+      "AVAILABLE_STAFF_LABEL": "الموظفون المتاحون للخدمة",
+      "ALL_STAFF": "جميع الموظفين",
+      "STAFF_PLACEHOLDER": "اختر الموظفين الذين يقدمون هذه الخدمة",
+      "STAFF_EMPTY": "لا يوجد موظفون نشطون تابعون لفروعك.",
       "DURATION_LABEL": "مدة الجلسة",
       "DURATION_UNIT_MINUTE": "دقيقة",
       "SESSION_COUNT_LABEL": "عدد الجلسات",
@@ -222,6 +226,7 @@
     "AuthenticationRequired": "تسجيل الدخول مطلوب.",
     "TenantContextRequired": "حسابك غير مرتبط بنشاط.",
     "TenantAccessDenied": "لا يمكنك الوصول إلى سجلات خارج نشاطك.",
+    "CustomerPurchaseNotFound": "تعذر العثور على عملية الشراء هذه.",
     "BookingBranchRequired": "اختر فرعًا لعرض الموظفين المتاحين للحجز.",
     "BookingDateRangeInvalid": "يجب أن يكون تاريخ النهاية في تاريخ البداية أو بعده.",
     "BookingDateRangeTooLarge": "يمكن عرض 31 يومًا كحد أقصى في التقويم.",
@@ -295,6 +300,8 @@
     "PACKAGE_INSTALLMENT_SESSIONS_INVALID": "لا يمكن أن تكون الجلسات المحررة سالبة أو تتجاوز عدد جلسات الباقة.",
     "PACKAGE_INSTALLMENT_RELEASE_CAP": "قبل السداد الكامل، لا يجوز تحرير أكثر من 70٪ من جلسات الباقة بعد التقريب لأقرب جلسة مع تقريب النصف للأسفل.",
     "PACKAGE_CASH_UNAVAILABLE": "الشراء النقدي غير متاح لهذا العرض.",
+    "PACKAGE_STAFF_INVALID": "اختر موظفين نشطين تابعين لفرع مسموح، أو اختر جميع الموظفين.",
+    "PACKAGE_STAFF_UNAVAILABLE": "الموظف المختار غير متاح لهذه الخدمة أو العرض.",
     "PACKAGE_NOT_FOUND": "الخدمة أو العرض غير موجود.",
     "PACKAGE_ALREADY_CANCELLED": "هذه الخدمة أو العرض ملغاة بالفعل."
   },
@@ -1300,8 +1307,47 @@
   "CUSTOMER_INQUIRY": {
     "TITLE": "استعلام عن عميل",
     "SEARCH_PLACEHOLDER": "ادخل رقم الموبايل",
+    "SEARCH": "بحث",
+    "LOADING": "جارٍ البحث...",
+    "REGISTERED_AT": "تاريخ التسجيل",
+    "NO_PURCHASES": "لا توجد مشتريات مسجلة لهذا العميل",
+    "CONNECTION_ERROR": "تعذر تحميل بيانات العميل. تحقق من الاتصال وحاول مرة أخرى.",
+    "DETAILS_LOADING": "جارٍ تحميل تفاصيل الشراء...",
+    "DETAILS_ERROR": "تعذر تحميل تفاصيل الشراء. حاول مرة أخرى.",
+    "NOT_RECORDED": "غير مسجل",
+    "MONTHS": "أشهر",
+    "SESSIONS": "الجلسات",
+    "PULSES": "النبضات",
+    "COMPLETED": "مكتمل",
+    "PACKAGE_STATUS": "حالة الباقة",
+    "PAYMENT_STATUS": "حالة الدفع",
+    "FINANCIAL_POSITION": "الموقف المالي",
+    "PURCHASE_PRICE": "سعر الشراء",
+    "AMOUNT_PAID": "المبلغ المدفوع",
+    "AMOUNT_REMAINING": "المبلغ المتبقي",
+    "INSTALLMENTS": "الأقساط",
+    "COL_NUMBER": "#",
+    "COL_AMOUNT": "المبلغ",
+    "COL_STATUS": "الحالة",
+    "COL_PULSES": "النبضات المستخدمة",
+    "NO_COMPLETED_SESSIONS": "لا توجد جلسات مكتملة مسجلة",
+    "PAYMENT": {
+      "UNKNOWN": "غير مسجل",
+      "UNPAID": "غير مدفوع",
+      "PARTIAL": "مدفوع جزئياً",
+      "PAID": "مدفوع"
+    },
+    "INSTALLMENT_STATUS": {
+      "DUE": "مستحق",
+      "PAID": "مدفوع"
+    },
+    "MEMBERSHIP": {
+      "ACTIVE": "عضوية نشطة",
+      "INACTIVE": "عضوية غير نشطة"
+    },
     "OPERATIONS": "عمليات",
     "PURCHASE_DATE": "تاريخ الشراء",
+    "EXPIRY_DATE": "تاريخ الانتهاء",
     "START_DATE": "تاريخ البداية",
     "VALID_FOR": "صالحة لمدة",
     "DAYS_REMAINING": "يوم متبقي",
@@ -1327,7 +1373,7 @@
     },
     "ERRORS": {
       "MOBILE_REQUIRED": "رقم الموبايل مطلوب.",
-      "MOBILE_INVALID": "أدخل رقم موبايل مصري صحيح."
+      "MOBILE_INVALID": "أدخل رقم موبايل صحيح."
     }
   },
   "OPERIA_SUBSCRIPTIONS": {
