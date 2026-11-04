@@ -153,13 +153,16 @@ export class SaleBuilderDialogComponent {
       'scheduledDate',
       'startTime',
     ]);
-    effect(() => {
-      if (this.visible()) {
-        this.reset();
-        this.loadOptions();
-        this.restorePendingSale();
-      }
-    });
+    effect(
+      () => {
+        if (this.visible()) {
+          this.reset();
+          this.loadOptions();
+          this.restorePendingSale();
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   private reset(): void {

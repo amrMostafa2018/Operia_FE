@@ -347,7 +347,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return [];
     }
     const selectedIds = new Set(this.selectedPackageIds());
-    return client.packages.filter(pkg => selectedIds.has(pkg.packageId));
+    return [...selectedIds]
+      .map(packageId => client.packages.find(pkg => pkg.packageId === packageId))
+      .filter((pkg): pkg is ClientPackage => pkg != null);
   });
 
   readonly filteredServices = computed(() => {

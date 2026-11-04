@@ -162,9 +162,9 @@ test.describe('US-12: Build and confirm a sale', () => {
     expect(response.ok()).toBeTruthy();
     const result = await response.json();
     expect(result).toMatchObject({ status: 'PendingCollection', grandTotal: 2125, dueNow: 625 });
-    await expect(
-      page.getByText('Sale saved. Collection and booking remain pending.')
-    ).toBeVisible();
+    await expect(dialog.getByText('Sale saved', { exact: true })).toBeVisible();
+    await expect(dialog.getByText(`Sale reference: ${result.saleId}`)).toBeVisible();
+    await expect(dialog.getByText('Record the staff-verified collection result.')).toBeVisible();
 
     expect(
       queryE2eDatabase(`SELECT CONCAT(

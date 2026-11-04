@@ -530,7 +530,10 @@
           }
           <div class="form-field" [class.error]="isFieldInvalid(form, 'price')">
             <span class="field-label">
-              {{ 'PACKAGES.CREATE.CASH_PRICE_LABEL' | translate }} <em>*</em>
+              {{ 'PACKAGES.CREATE.CASH_PRICE_LABEL' | translate }}
+              @if (formValue().cashEnabled) {
+                <em>*</em>
+              }
             </span>
             <div class="input-with-addon price-input">
               <p-inputNumber
