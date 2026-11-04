@@ -16,6 +16,7 @@
         type="button"
         class="icon-button"
         (click)="closed.emit()"
+        [disabled]="saving()"
         [attr.aria-label]="'COMMON.CLOSE' | translate"
       >
         <i class="pi pi-times"></i>
@@ -112,6 +113,30 @@
       @if (recoveryError(); as error) {
         <small class="field-error">{{ error }}</small>
       }
+    </section>
+  } @else if (pendingConfirmation()) {
+    <section class="confirmation-recovery" [class.loading]="saving()" role="status">
+      @if (saving()) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMING' | translate }}</h3>
+      } @else {
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN_TITLE' | translate }}</h3>
+        <p>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN' | translate }}</p>
+      }
+      <div class="actions">
+        <button type="button" class="outline-button" [disabled]="saving()" (click)="closed.emit()">
+          {{ 'COMMON.CANCEL' | translate }}
+        </button>
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="saving()"
+          (click)="retryConfirmation()"
+        >
+          {{ 'SALE_BUILDER.RETRY_CONFIRMATION' | translate }}
+        </button>
+      </div>
     </section>
   } @else {
     <div class="resume-row">

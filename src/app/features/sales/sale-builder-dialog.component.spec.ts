@@ -13,7 +13,19 @@ describe('SaleBuilderDialogComponent confirmation', () => {
   let sales: jasmine.SpyObj<SaleService>;
 
   beforeEach(async () => {
-    sales = jasmine.createSpyObj<SaleService>('SaleService', ['confirm']);
+    sales = jasmine.createSpyObj<SaleService>('SaleService', [
+      'catalog',
+      'categories',
+      'branches',
+      'paymentMethods',
+      'customer',
+      'confirm',
+    ]);
+    sales.catalog.and.returnValue(of({ items: [] }));
+    sales.categories.and.returnValue(of([]));
+    sales.branches.and.returnValue(of([]));
+    sales.paymentMethods.and.returnValue(of(['cash']));
+    sessionStorage.removeItem('operia.sale.pending');
     await TestBed.configureTestingModule({
       imports: [SaleBuilderDialogComponent],
       providers: [
@@ -29,8 +41,9 @@ describe('SaleBuilderDialogComponent confirmation', () => {
       .compileComponents();
   });
 
-  function createReadyComponent(): SaleBuilderDialogComponent {
+  function createReadyComponent() {
     const fixture = TestBed.createComponent(SaleBuilderDialogComponent);
+    fixture.componentRef.setInput('visible', true);
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.customerForm.setValue({
@@ -40,7 +53,7 @@ describe('SaleBuilderDialogComponent confirmation', () => {
     });
     component.quote.set({ items: [], subtotal: 10, discount: 0, grandTotal: 10, dueNow: 10 });
     component.selectedMethod.set('cash');
-    return component;
+    return { fixture, component };
   }
 
   it('retains the original action and key after an uncertain failure', () => {
@@ -54,26 +67,47 @@ describe('SaleBuilderDialogComponent confirmation', () => {
         dueNow: 10,
       })
     );
-    const component = createReadyComponent();
+    const { fixture, component } = createReadyComponent();
+    component.rows.set([
+      {
+        key: 'display-key',
+        offerId: 'offer-1',
+        ownedCustomerPackageId: null,
+        unlistedName: null,
+        unlistedPrice: null,
+        unlistedDurationMinutes: null,
+        paymentOption: 'cash',
+        quantity: 1,
+      },
+    ]);
 
     component.confirm('Close');
     const firstRequest = sales.confirm.calls.mostRecent().args[0];
+    expect(firstRequest.items[0]).not.toEqual(jasmine.objectContaining({ key: 'display-key' }));
     first.error(new HttpErrorResponse({ status: 500 }));
 
     expect(component.confirmationLockedTo('BookNow')).toBe(true);
+    expect(component.pendingConfirmation()?.request).toEqual(firstRequest);
     component.confirm('BookNow');
     expect(sales.confirm).toHaveBeenCalledTimes(1);
+    component.customerForm.controls.branchId.setValue('branch-2');
+    component.branchChanged();
+
+    fixture.componentRef.setInput('visible', false);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    expect(component.pendingConfirmation()?.request).toEqual(firstRequest);
 
     component.confirm('Close');
     const retryRequest = sales.confirm.calls.mostRecent().args[0];
-    expect(retryRequest.disposition).toBe('Close');
-    expect(retryRequest.idempotencyKey).toBe(firstRequest.idempotencyKey);
+    expect(retryRequest).toEqual(firstRequest);
   });
 
   it('uses the submitted branch for the saved sale even if the form changes', () => {
     const response = new Subject<ConfirmSaleResult>();
     sales.confirm.and.returnValue(response.asObservable());
-    const component = createReadyComponent();
+    const { component } = createReadyComponent();
 
     component.confirm('BookNow');
     component.customerForm.controls.branchId.setValue('branch-2');
@@ -82,5 +116,27 @@ describe('SaleBuilderDialogComponent confirmation', () => {
 
     expect(sales.confirm.calls.mostRecent().args[0].branchId).toBe('branch-1');
     expect(component.activeSale()?.branchId).toBe('branch-1');
+  });
+
+  it('releases customer search after its response is invalidated by reopening', () => {
+    const first = new Subject<null>();
+    sales.customer.and.returnValues(first, of(null));
+    const { fixture, component } = createReadyComponent();
+
+    component.customerForm.controls.mobile.setValue('01012345678');
+    component.searchCustomer();
+    expect(component.customerLoading()).toBeTrue();
+
+    fixture.componentRef.setInput('visible', false);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    expect(component.customerLoading()).toBeFalse();
+    first.next(null);
+    expect(component.customerLoading()).toBeFalse();
+
+    component.customerForm.controls.mobile.setValue('01098765432');
+    component.searchCustomer();
+    expect(sales.customer).toHaveBeenCalledTimes(2);
   });
 });
