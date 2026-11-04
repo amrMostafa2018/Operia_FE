@@ -1802,6 +1802,10 @@
     "METHOD": "Payment method",
     "NO_COLLECTION": "Saving the sale does not confirm a collection or appointment.",
     "CONFIRM_LATER": "Confirm and book later",
+    "CONFIRMING": "Confirming the sale…",
+    "RETRY_CONFIRMATION": "Retry confirmation",
+    "CONFIRMATION_UNKNOWN_TITLE": "Sale confirmation is uncertain",
+    "CONFIRMATION_UNKNOWN": "The sale may already have been saved. Retry this same confirmation to check its result before starting another sale.",
     "REQUIRED": "This field is required.",
     "CONFIRMED": "Sale saved. Collection and booking remain pending.",
     "METHODS": {

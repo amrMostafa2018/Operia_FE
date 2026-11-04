@@ -63,7 +63,8 @@ h3 {
   gap: 0.35rem;
   min-width: 0;
 }
-.field label {
+.field label,
+.field-label {
   color: #5f647a;
   font-size: 0.78rem;
 }
@@ -325,7 +326,33 @@ td select {
   padding-top: 1rem;
   margin-top: 1rem;
 }
-.primary-button:disabled {
+.confirmation-recovery {
+  border: 1px solid #f1d49a;
+  border-radius: 10px;
+  background: #fff9ec;
+  color: #694b17;
+  padding: 1.25rem;
+  text-align: center;
+}
+.confirmation-recovery.loading {
+  border-color: #e6e4ef;
+  background: #f7f6fb;
+  color: #292747;
+}
+.confirmation-recovery i {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+.confirmation-recovery h3 {
+  color: inherit;
+}
+.confirmation-recovery p {
+  margin: 0;
+  line-height: 1.5;
+}
+.primary-button:disabled,
+.outline-button:disabled,
+.icon-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }

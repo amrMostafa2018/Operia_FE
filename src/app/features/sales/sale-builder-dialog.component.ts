@@ -9,6 +9,7 @@ import {
   input,
   computed,
   signal,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -33,6 +34,7 @@ import {
   PackageListItem,
 } from '@app/features/packages/models/package-list.model';
 import {
+  ConfirmSaleRequest,
   ConfirmSaleResult,
   SaleDraftItem,
   SalePaymentOption,
@@ -42,6 +44,18 @@ import {
 
 interface DraftRow extends SaleDraftItem {
   key: string;
+}
+
+function saleItem(row: DraftRow): SaleDraftItem {
+  return {
+    offerId: row.offerId,
+    ownedCustomerPackageId: row.ownedCustomerPackageId,
+    unlistedName: row.unlistedName,
+    unlistedPrice: row.unlistedPrice,
+    unlistedDurationMinutes: row.unlistedDurationMinutes,
+    paymentOption: row.paymentOption,
+    quantity: row.quantity,
+  };
 }
 
 @Component({
@@ -94,6 +108,7 @@ export class SaleBuilderDialogComponent {
   readonly saving = signal(false);
   readonly loading = signal(false);
   readonly customerLoading = signal(false);
+  readonly pendingConfirmation = signal<ConfirmSaleRequest | null>(null);
   readonly showUnlisted = signal(false);
   readonly categoryId = signal('all');
   readonly searchText = signal('');
@@ -128,8 +143,12 @@ export class SaleBuilderDialogComponent {
     effect(
       () => {
         if (this.visible()) {
-          this.reset();
-          this.loadOptions();
+          untracked(() => {
+            if (!this.pendingConfirmation()) {
+              this.reset();
+              this.loadOptions();
+            }
+          });
         }
       },
       { allowSignalWrites: true }
@@ -140,6 +159,7 @@ export class SaleBuilderDialogComponent {
     this.quoteVersion++;
     this.customerVersion++;
     this.confirmationKey = crypto.randomUUID();
+    this.customerLoading.set(false);
     this.customerForm.reset({ mobile: '', customerId: '', branchId: '' });
     this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
     this.customer.set(null);
@@ -226,6 +246,7 @@ export class SaleBuilderDialogComponent {
 
   mobileChanged(): void {
     this.customerVersion++;
+    this.customerLoading.set(false);
     this.customer.set(null);
     this.customerForm.controls.customerId.setValue('');
     this.rows.update(rows => rows.filter(row => !row.ownedCustomerPackageId));
@@ -365,7 +386,7 @@ export class SaleBuilderDialogComponent {
     this.confirmationKey = crypto.randomUUID();
     this.itemError.set(null);
     const version = ++this.quoteVersion;
-    const items = this.rows().map(({ key: _key, ...row }) => row);
+    const items = this.rows().map(saleItem);
     if (items.length === 0) {
       this.quote.set(null);
       this.quoteLoading.set(false);
@@ -395,6 +416,11 @@ export class SaleBuilderDialogComponent {
   }
 
   confirm(): void {
+    const pending = this.pendingConfirmation();
+    if (pending) {
+      if (!this.saving()) this.submitConfirmation(pending);
+      return;
+    }
     this.customerForm.markAllAsTouched();
     const quote = this.quote();
     if (this.customerForm.invalid || !quote || this.quoteLoading() || this.saving()) return;
@@ -402,25 +428,41 @@ export class SaleBuilderDialogComponent {
       this.itemError.set(this.translate.instant('ERRORS.SalePaymentMethodUnavailable'));
       return;
     }
+    const request: ConfirmSaleRequest = {
+      customerId: this.customerForm.controls.customerId.value,
+      branchId: this.customerForm.controls.branchId.value,
+      items: this.rows().map(saleItem),
+      paymentMethod: quote.dueNow > 0 ? this.selectedMethod() : null,
+      expectedGrandTotal: quote.grandTotal,
+      expectedDueNow: quote.dueNow,
+      idempotencyKey: this.confirmationKey,
+    };
+    this.pendingConfirmation.set(request);
+    this.submitConfirmation(request);
+  }
+
+  private submitConfirmation(request: ConfirmSaleRequest): void {
     this.saving.set(true);
     this.sales
-      .confirm({
-        customerId: this.customerForm.controls.customerId.value,
-        branchId: this.customerForm.controls.branchId.value,
-        items: this.rows().map(({ key: _key, ...row }) => row),
-        paymentMethod: quote.dueNow > 0 ? this.selectedMethod() : null,
-        expectedGrandTotal: quote.grandTotal,
-        expectedDueNow: quote.dueNow,
-        idempotencyKey: this.confirmationKey,
-      })
+      .confirm(request)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
           this.saving.set(false);
+          this.pendingConfirmation.set(null);
           this.confirmed.emit(result);
         },
         error: (error: HttpErrorResponse) => {
           this.saving.set(false);
+          if (error.status < 400 || error.status === 408 || error.status >= 500) {
+            this.toast.add({
+              severity: 'warn',
+              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+              detail: this.translate.instant('SALE_BUILDER.CONFIRMATION_UNKNOWN'),
+            });
+            return;
+          }
+          this.pendingConfirmation.set(null);
           const codes = Object.values(error.error?.errorCodes ?? {}).flat();
           const fields = translateApiFieldErrors(extractApiFieldErrors(error), key =>
             this.translate.instant(key)
