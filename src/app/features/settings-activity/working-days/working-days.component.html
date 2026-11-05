@@ -93,7 +93,7 @@
     <app-settings-footer
       [noteKey]="'SETTINGS_ACTIVITY.WORKING_DAYS.FOOTER_NOTE'"
       [saving]="saving()"
-      (reset)="onReset()"
+      (resetRequested)="onReset()"
       (save)="onSave()"
     />
   }

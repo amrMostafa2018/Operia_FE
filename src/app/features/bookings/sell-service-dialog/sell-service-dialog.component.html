@@ -32,20 +32,21 @@
 
     <form class="client-form" [formGroup]="clientForm">
       <div class="field">
-        <label>{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
+        <label for="sellServiceMobile">{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
         <span class="input-icon-wrap">
           <i class="pi pi-phone"></i>
-          <input pInputText formControlName="mobile" dir="ltr" />
+          <input id="sellServiceMobile" pInputText formControlName="mobile" dir="ltr" />
         </span>
         @if (mobileError(); as errorKey) {
           <small class="field-error">{{ errorKey | translate }}</small>
         }
       </div>
       <div class="field">
-        <label>{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
+        <label for="sellServiceName">{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
         <span class="input-icon-wrap">
           <i class="pi pi-user"></i>
           <input
+            id="sellServiceName"
             pInputText
             formControlName="name"
             [readonly]="!!matchedClient()"
@@ -56,8 +57,9 @@
         }
       </div>
       <div class="field field-package">
-        <label>{{ 'BOOKINGS.BOOK.PACKAGE_SELECT' | translate }}</label>
+        <label for="sellServicePackages">{{ 'BOOKINGS.BOOK.PACKAGE_SELECT' | translate }}</label>
         <p-multiSelect
+          inputId="sellServicePackages"
           [options]="packageOptions()"
           [ngModel]="selectedPackageIds()"
           (ngModelChange)="onPackageIdsChange($event)"

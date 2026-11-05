@@ -122,7 +122,10 @@
                 class="hour-lane__body"
                 [class.hour-lane__body--selectable]="canManage()"
                 [style.height.px]="lane.height"
+                role="button"
+                [attr.tabindex]="canManage() ? 0 : null"
                 (click)="onHourLaneClick($event, currentDate(), lane.hour)"
+                (keydown.enter)="onHourLaneKeydown(currentDate(), lane.hour)"
               >
                 @if (selectionRectForHour(currentDate(), lane); as selection) {
                   <div
@@ -187,7 +190,10 @@
                   [class.hour-lane__body--closed]="!isWorkingDay(day.date)"
                   [class.hour-lane__body--selectable]="canManage() && isWorkingDay(day.date)"
                   [style.height.px]="lane.height"
+                  role="button"
+                  [attr.tabindex]="canManage() && isWorkingDay(day.date) ? 0 : null"
                   (click)="onHourLaneClick($event, day.date, lane.hour)"
+                  (keydown.enter)="onHourLaneKeydown(day.date, lane.hour)"
                 >
                   @if (selectionRectForHour(day.date, lane); as selection) {
                     <div

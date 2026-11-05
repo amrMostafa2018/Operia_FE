@@ -7,6 +7,7 @@ import { LanguageService } from '@core/services/language.service';
 import { BranchService } from '@app/features/branches/branch.service';
 import { BookableEmployee, EmployeeService } from '@app/features/employees/employee.service';
 import { PackageService } from '@app/features/packages/package.service';
+import { SaleService } from '@app/features/sales/sale.service';
 import { AppointmentsApiService } from './appointments-api.service';
 import { SaleHandoffService } from './sale-handoff.service';
 import { AppointmentsComponent } from './appointments.component';
@@ -50,6 +51,7 @@ describe('AppointmentsComponent employee request race condition', () => {
         { provide: AppointmentsApiService, useValue: appointmentsApi },
         { provide: BranchService, useValue: branchService },
         { provide: PackageService, useValue: packageService },
+        { provide: SaleService, useValue: {} },
         { provide: SaleHandoffService, useValue: saleHandoff },
         { provide: PermissionService, useValue: { hasPermission: () => true } },
         { provide: LanguageService, useValue: { isRtl: () => false, currentLanguage: () => 'en' } },

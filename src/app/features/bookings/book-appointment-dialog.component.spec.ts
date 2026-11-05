@@ -14,7 +14,7 @@ describe('BookAppointmentDialogComponent customer selection', () => {
 
   beforeEach(async () => {
     appointmentsApi = jasmine.createSpyObj<AppointmentsApiService>('AppointmentsApiService', [
-      'findCustomer',
+      'findCustomerById',
     ]);
 
     await TestBed.configureTestingModule({
@@ -36,8 +36,8 @@ describe('BookAppointmentDialogComponent customer selection', () => {
   it('keeps the newest selection pending when an earlier lookup completes first', () => {
     const first = new Subject<BookingCustomerDto | null>();
     const second = new Subject<BookingCustomerDto | null>();
-    appointmentsApi.findCustomer.and.callFake(mobile =>
-      mobile === '111' ? first.asObservable() : second.asObservable()
+    appointmentsApi.findCustomerById.and.callFake(id =>
+      id === 'a' ? first.asObservable() : second.asObservable()
     );
 
     const fixture = TestBed.createComponent(BookAppointmentDialogComponent);
@@ -60,8 +60,8 @@ describe('BookAppointmentDialogComponent customer selection', () => {
   it('does not let an earlier lookup overwrite a completed later selection', () => {
     const first = new Subject<BookingCustomerDto | null>();
     const second = new Subject<BookingCustomerDto | null>();
-    appointmentsApi.findCustomer.and.callFake(mobile =>
-      mobile === '111' ? first.asObservable() : second.asObservable()
+    appointmentsApi.findCustomerById.and.callFake(id =>
+      id === 'a' ? first.asObservable() : second.asObservable()
     );
 
     const fixture = TestBed.createComponent(BookAppointmentDialogComponent);

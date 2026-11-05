@@ -307,8 +307,10 @@
     role="menu"
     [style.top.px]="menuTop()"
     [style.left.px]="menuLeft()"
+    tabindex="-1"
     (mousedown)="$event.stopPropagation()"
     (click)="$event.stopPropagation()"
+    (keydown.escape)="closeRowMenu()"
   >
     <button type="button" role="menuitem" (click)="openRowDetails(booking)">
       <span class="row-action-menu__icon">

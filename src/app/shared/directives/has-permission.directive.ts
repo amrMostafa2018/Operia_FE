@@ -2,6 +2,7 @@ import { Directive, inject, Input, TemplateRef, ViewContainerRef, effect } from 
 import { PermissionService } from '@core/services/permission.service';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[hasPermission]',
   standalone: true,
 })

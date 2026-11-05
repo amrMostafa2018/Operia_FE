@@ -15,7 +15,7 @@
         iconPos="right"
         [outlined]="true"
         styleClass="reset-btn"
-        (onClick)="reset.emit()"
+        (onClick)="resetRequested.emit()"
         [disabled]="saving()"
       />
     }

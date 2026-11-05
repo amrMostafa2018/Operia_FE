@@ -57,6 +57,31 @@ async function setInstallmentRow(page: Page, rowIndex: number, amount: number, s
   await fillNumberInput(row.locator('td').nth(2).locator('input'), sessions);
 }
 
+function queryDb(query: string): string {
+  const output = execFileSync(
+    'sqlcmd',
+    [
+      '-S',
+      '(localdb)\\OperiaDev',
+      '-d',
+      'Operia_Dev',
+      '-E',
+      '-b',
+      '-h',
+      '-1',
+      '-W',
+      '-Q',
+      `SET NOCOUNT ON; ${query}`,
+    ],
+    { encoding: 'utf8', timeout: 10_000 }
+  );
+  return output
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .at(-1)!;
+}
+
 function expectNoPurchaseOrCollection(packageId: string) {
   // TC-14 uses the isolated LocalDB fixture configured in playwright.config.ts.
   // The customer lookup API omits purchases with no released sessions, so inspect
@@ -1059,48 +1084,70 @@ test.describe('US-07: Installment plan and session release', () => {
     expect(pkgRes.status()).toBe(201);
     const pkg = await pkgRes.json();
 
-    // 2. Sell the package through booking
-    const future = new Date();
-    future.setUTCDate(future.getUTCDate() + 30 + (Math.floor(Date.now() / 1000) % 90));
-    const scheduledDate = future.toISOString().slice(0, 10);
-    const startMinutes = 600 + (Math.floor(Date.now() / 1000) % 5) * 40;
-    const endMinutes = startMinutes + 30;
-    const bookingRes = await request.post('http://localhost:5151/api/bookings', {
+    // 2. Sell and collect the package through the current sale API.
+    const saleItems = [
+      {
+        offerId: pkg.id,
+        ownedCustomerPackageId: null,
+        unlistedName: null,
+        unlistedPrice: null,
+        unlistedDurationMinutes: null,
+        paymentOption: 'installment',
+        quantity: 1,
+      },
+    ];
+    const quoteRes = await request.post('http://localhost:5151/api/sales/quote', {
       headers: headersA,
       data: {
-        idempotencyKey: `idemp-sale-${Date.now()}`,
         customerId,
         branchId,
-        employeeId,
-        scheduledDate,
-        startMinutes,
-        endMinutes,
-        paymentMethod: 'cash',
-        items: [
-          {
-            packageId: pkg.id,
-            type: 'packageNewPurchase',
-            paymentOption: 'installment',
-            quantity: 1,
-          },
-        ],
+        items: saleItems,
       },
     });
-    expect(bookingRes.status()).toBe(201);
-    const bookingData = await bookingRes.json();
-    expect(bookingData.installmentPurchaseIds).toBeDefined();
-    expect(bookingData.installmentPurchaseIds.length).toBeGreaterThan(0);
-    const purchaseId = bookingData.installmentPurchaseIds[0];
+    expect(quoteRes.ok(), await quoteRes.text()).toBeTruthy();
+    const quote = await quoteRes.json();
+    const saleKey = `e2e-us07-sale-${Date.now()}`;
+    const saleRes = await request.post('http://localhost:5151/api/sales/confirm', {
+      headers: headersA,
+      data: {
+        customerId,
+        branchId,
+        items: saleItems,
+        paymentMethod: 'cash',
+        expectedGrandTotal: quote.grandTotal,
+        expectedDueNow: quote.dueNow,
+        idempotencyKey: saleKey,
+        disposition: 'Later',
+      },
+    });
+    expect(saleRes.ok(), await saleRes.text()).toBeTruthy();
+    const sale = await saleRes.json();
+    const firstCollection = await request.post('http://localhost:5151/api/sales/collect', {
+      headers: headersA,
+      data: {
+        saleId: sale.saleId,
+        idempotencyKey: `${saleKey}-collection`,
+        paymentConfirmed: true,
+      },
+    });
+    expect(firstCollection.ok(), await firstCollection.text()).toBeTruthy();
+    const purchaseId = queryDb(
+      `SELECT Id FROM dbo.CustomerPackages WHERE SaleId = '${sale.saleId}';`
+    );
 
-    // 3. Inspect purchase initial state: available sessions is 0
+    // 3. The saved first collection leaves the numbered plan ready to progress.
     const initialPurchaseRes = await request.get(
       `http://localhost:5151/api/packages/installment-purchases/${purchaseId}`,
       { headers: headersA }
     );
-    expect(initialPurchaseRes.ok()).toBeTruthy();
-    const initialPurchase = await initialPurchaseRes.json();
+    const initialPurchaseBody = await initialPurchaseRes.text();
+    expect(
+      initialPurchaseRes.ok(),
+      `${initialPurchaseRes.status()} purchase=${purchaseId} ${initialPurchaseBody}`
+    ).toBeTruthy();
+    const initialPurchase = JSON.parse(initialPurchaseBody);
     expect(initialPurchase.availableSessions).toBe(0);
-    expect(initialPurchase.amountDue).toBe(20000);
+    expect(initialPurchase.amountDue).toBe(15000);
     expect(initialPurchase.installments).toHaveLength(4); // row 0 (firstPayment) + 3 rows
 
     // 4. TC-13: Against purchase with unpaid installment, record failed payment attempt
@@ -1119,24 +1166,10 @@ test.describe('US-07: Installment plan and session release', () => {
       { headers: headersA }
     );
     const afterFail = await afterFailRes.json();
-    expect(afterFail.amountDue).toBe(20000);
+    expect(afterFail.amountDue).toBe(15000);
     expect(afterFail.availableSessions).toBe(0);
 
-    // 5. TC-12: First payment (row 0) confirmed collection
-    const pay0Res = await request.post(
-      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/0/collect`,
-      {
-        headers: headersA,
-        data: { amount: 5000, paymentMethod: 'cash' },
-      }
-    );
-    expect(pay0Res.ok()).toBeTruthy();
-    const afterPay0 = await pay0Res.json();
-    expect(afterPay0.amountDue).toBe(15000);
-    // The first payment releases 0 planned sessions unless it settles entire price
-    expect(afterPay0.availableSessions).toBe(0);
-
-    // 6. TC-12 & TC-13: First numbered payment (row 1, 5000)
+    // 5. TC-12 & TC-13: First numbered payment (row 1, 5000)
     const pay1Res = await request.post(
       `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/1/collect`,
       {
