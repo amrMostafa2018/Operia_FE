@@ -55,7 +55,7 @@ import {
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
 import { PackageService } from '@app/features/packages/package.service';
-import { AppointmentsApiService } from './appointments-api.service';
+import { AppointmentsApiService, EligibleBookingEmployee } from './appointments-api.service';
 import { getRtlStartScrollLeft } from '@app/shared/utils/rtl.util';
 import {
   PHONE_INPUT_CSS_CLASS,
@@ -81,6 +81,7 @@ import {
   bookAppointmentLineDuration,
   bookAppointmentLineTotal,
   bookAppointmentMaxQuantity,
+  mapBookingLineToApiItem,
   bookAppointmentOwnedPackageLineItem,
   bookAppointmentPaymentLineItems,
   ServiceCatalogItem,
@@ -109,6 +110,7 @@ export interface BookAppointmentPayload {
   lineItems: BookingLineItem[];
   serviceDuration: number;
   paymentMethod: PaymentMethodId | null;
+  dueNow: number;
 }
 
 /** Describes customer lookup state used by the booking UI. */
@@ -179,6 +181,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly selectedQuantities = signal<Record<string, number>>({});
   readonly unlistedItems = signal<BookingLineItem[]>([]);
   readonly selectedPackageIds = signal<string[]>([]);
+  readonly eligibleEmployees = signal<EligibleBookingEmployee[]>([]);
+  readonly selectedEmployeeId = signal<string | null>(null);
+  readonly eligibleEmployeesLoading = signal(false);
+  private eligibleEmployeesRequestId = 0;
   readonly customerMode = signal<'registered' | 'new' | 'direct'>('registered');
   readonly registering = signal(false);
   readonly customerSelectionLoading = signal(false);
@@ -232,6 +238,20 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly paymentMethodsUnavailable = signal(false);
   private paymentMethodsRequestId = 0;
   readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
+  readonly packagePaymentOptions = signal<Record<string, 'cash' | 'installment'>>({});
+
+  selectPackagePaymentOption(packageId: string, option: 'cash' | 'installment'): void {
+    this.packagePaymentOptions.update(current => ({ ...current, [packageId]: option }));
+  }
+
+  installmentAvailable(packageId: string): boolean {
+    const product = this.catalogItems().find(item => item.id === packageId);
+    return !!product?.installmentEnabled && product.installmentPrice != null;
+  }
+
+  cashAvailable(packageId: string): boolean {
+    return this.catalogItems().find(item => item.id === packageId)?.cashEnabled !== false;
+  }
 
   private readonly clientMobile = toSignal(this.clientForm.controls.mobile.valueChanges, {
     initialValue: this.clientForm.controls.mobile.value,
@@ -390,7 +410,16 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       if (quantity <= 0) {
         continue;
       }
-      items.push(bookAppointmentCatalogQuantityLineItem(service, quantity, ownedPackages, items));
+      items.push(
+        bookAppointmentCatalogQuantityLineItem(
+          service,
+          quantity,
+          ownedPackages,
+          items,
+          this.packagePaymentOptions()[service.id] ??
+            (service.cashEnabled === false ? 'installment' : 'cash')
+        )
+      );
     }
 
     items.push(...this.unlistedItems());
@@ -414,11 +443,26 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       );
     }, 0)
   );
+  readonly selectedEmployee = computed(
+    () =>
+      this.eligibleEmployees().find(employee => employee.id === this.selectedEmployeeId()) ?? null
+  );
   readonly subtotal = computed(() =>
     this.paymentLineItems().reduce((total, item) => total + bookAppointmentLineTotal(item), 0)
   );
   readonly netTotal = computed(() => this.subtotal());
-  readonly hasPayableItems = computed(() => this.paymentLineItems().length > 0);
+  readonly dueNow = computed(() =>
+    this.paymentLineItems().reduce(
+      (total, item) =>
+        total +
+        (item.paymentOption === 'installment'
+          ? (item.firstPayment ?? 0) * item.quantity
+          : bookAppointmentLineTotal(item)),
+      0
+    )
+  );
+  readonly hasPayableItems = computed(() => this.dueNow() > 0);
+  readonly remainingBalance = computed(() => Math.max(0, this.netTotal() - this.dueNow()));
   readonly sessionCount = computed(() =>
     this.lineItems().reduce((total, item) => total + item.quantity, 0)
   );
@@ -471,6 +515,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
           });
           this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
           this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
+          this.packagePaymentOptions.set(
+            Object.fromEntries(
+              this.initialLineItems()
+                .filter(item => item.catalogPackageId && item.paymentOption)
+                .map(item => [item.catalogPackageId!, item.paymentOption!])
+            )
+          );
           this.selectedQuantities.set(this.buildQuantitiesFromLineItems(this.initialLineItems()));
           const selectedPackageIds = this.buildOwnedPackageIdsFromLineItems(
             this.initialLineItems()
@@ -480,6 +531,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             selectedPackageIds.push(initialPackageId);
           }
           this.selectedPackageIds.set(selectedPackageIds);
+          this.selectedEmployeeId.set(this.selection()?.employeeId ?? null);
+          this.eligibleEmployees.set([]);
           this.showServicesSection.set(false);
           this.showUnlisted.set(false);
           this.activeCategory.set('all');
@@ -532,6 +585,73 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             this.selectedPackageIds.update(ids => [...ids, initialPackageId]);
           }
         });
+      },
+      { allowSignalWrites: true }
+    );
+
+    effect(
+      () => {
+        const slot = this.selection();
+        const items = this.lineItems();
+        if (!this.visible() || !slot || items.length === 0) {
+          this.eligibleEmployeesRequestId++;
+          this.eligibleEmployees.set([]);
+          this.eligibleEmployeesLoading.set(false);
+          return;
+        }
+        const requestItems = items
+          .filter(item => !!item.catalogPackageId)
+          .map(item => mapBookingLineToApiItem(item, items));
+        if (requestItems.length !== items.length) {
+          this.eligibleEmployeesRequestId++;
+          this.eligibleEmployees.set([]);
+          this.selectedEmployeeId.set(null);
+          this.eligibleEmployeesLoading.set(false);
+          return;
+        }
+        const requestId = ++this.eligibleEmployeesRequestId;
+        this.eligibleEmployeesLoading.set(true);
+        this.appointmentsApi
+          .eligibleEmployees({
+            branchId: slot.branchId,
+            scheduledDate: [
+              slot.date.getFullYear(),
+              String(slot.date.getMonth() + 1).padStart(2, '0'),
+              String(slot.date.getDate()).padStart(2, '0'),
+            ].join('-'),
+            startMinutes: slot.startMinutes,
+            endMinutes: slot.startMinutes + slot.slotDurationMinutes,
+            items: requestItems,
+          })
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: employees => {
+              if (requestId !== this.eligibleEmployeesRequestId) return;
+              this.eligibleEmployees.set(employees);
+              if (!employees.some(employee => employee.id === this.selectedEmployeeId())) {
+                this.selectedEmployeeId.set(null);
+              }
+              this.eligibleEmployeesLoading.set(false);
+            },
+            error: error => {
+              if (requestId !== this.eligibleEmployeesRequestId) return;
+              this.eligibleEmployees.set([]);
+              this.selectedEmployeeId.set(null);
+              this.eligibleEmployeesLoading.set(false);
+              if (error instanceof HttpErrorResponse && [400, 422].includes(error.status)) {
+                const translated = translateApiFieldErrors(extractApiFieldErrors(error), key =>
+                  this.translate.instant(key)
+                );
+                this.toast.add({
+                  severity: 'error',
+                  summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+                  detail:
+                    Object.values(translated).filter(Boolean).join(' ') ||
+                    this.translate.instant('BOOKINGS.BOOK.EMPLOYEES_UNAVAILABLE'),
+                });
+              }
+            },
+          });
       },
       { allowSignalWrites: true }
     );
@@ -792,15 +912,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             this.customerNameResults.set(results);
           }
         },
-        error: (error: HttpErrorResponse) => {
+        error: () => {
           this.customerNameResults.set([]);
-          this.toast.add({
-            severity: 'error',
-            summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-            detail:
-              (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
-              this.translate.instant('HTTP_ERRORS.SERVER'),
-          });
         },
       });
   }
@@ -811,7 +924,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     this.selectedPackageIds.set([]);
     this.customerSelectionLoading.set(true);
     this.appointmentsApi
-      .findCustomer(result.mobileNumber)
+      .findCustomerById(result.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: customer => {
@@ -890,14 +1003,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             this.translate.instant(key)
           );
           applyServerFieldErrors(this.clientForm, fields);
-          this.toast.add({
-            severity: 'error',
-            summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-            detail:
-              fields['mobile'] ??
-              (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
-              this.translate.instant('HTTP_ERRORS.SERVER'),
-          });
+          if ([400, 422].includes(error.status) && Object.keys(fields).length > 0) {
+            this.toast.add({
+              severity: 'error',
+              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+              detail: Object.values(fields).join(' '),
+            });
+          }
         },
       });
   }
@@ -1107,8 +1219,32 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
 
+    if (this.dueNow() > 0 && !this.draftPaymentMethod()) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.SalePaymentMethodUnavailable'),
+      });
+      return;
+    }
+
+    if (
+      this.serviceDuration() <= this.selection()!.slotDurationMinutes &&
+      (!this.selectedEmployee() || this.eligibleEmployeesLoading())
+    ) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('BOOKINGS.BOOK.EMPLOYEE_REQUIRED'),
+      });
+      return;
+    }
+
     this.confirmBooking.emit({
-      selection: this.selection()!,
+      selection: {
+        ...this.selection()!,
+        employeeId: this.selectedEmployee()?.id ?? this.selection()!.employeeId,
+        employeeName: this.selectedEmployee()?.fullName ?? this.selection()!.employeeName,
+      },
       clientName: this.clientForm.controls.name.value.trim(),
       clientMobile: this.clientForm.controls.mobile.value.trim(),
       clientId: client?.id ?? null,
@@ -1116,6 +1252,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       lineItems: this.lineItems(),
       serviceDuration: this.serviceDuration(),
       paymentMethod: this.draftPaymentMethod(),
+      dueNow: this.dueNow(),
     });
   }
 

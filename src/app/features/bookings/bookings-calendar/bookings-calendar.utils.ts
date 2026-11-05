@@ -176,7 +176,8 @@ export function buildHourLanes(start = CALENDAR_HOUR_START, end = CALENDAR_HOUR_
   return lanes;
 }
 
-export function hourLaneHeight(_bookingCount = 0): number {
+export function hourLaneHeight(bookingCount = 0): number {
+  void bookingCount;
   return CALENDAR_SLOT_HEIGHT_PX;
 }
 

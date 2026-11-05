@@ -318,9 +318,10 @@
       <i class="pi pi-times"></i>
     </button>
   </ng-template>
-  <label>
+  <label for="reassignEmployee">
     <span class="field-label">{{ 'BOOKINGS.COL_EMPLOYEE' | translate }}</span>
     <p-dropdown
+      inputId="reassignEmployee"
       [options]="employees()"
       [ngModel]="reassignEmployeeId()"
       (ngModelChange)="reassignEmployeeId.set($event)"

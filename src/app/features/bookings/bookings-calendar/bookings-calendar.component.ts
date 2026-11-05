@@ -233,6 +233,35 @@ export class BookingsCalendarComponent {
     this.currentDate.set(date);
   }
 
+  onHourLaneKeydown(date: Date, hour: number): void {
+    if (!this.canManage()) return;
+    const bounds = this.workingHours.getDayBounds(date);
+    if (!bounds.enabled) {
+      this.slotError.set('BOOKINGS.CALENDAR.CLOSED_DAY');
+      return;
+    }
+
+    const duration = this.slotDuration();
+    const startMinutes = Math.max(hour * 60, bounds.fromMinutes);
+    const endMinutes = Math.min(startMinutes + duration, bounds.toMinutes);
+    if (endMinutes - startMinutes < duration) {
+      this.slotError.set('BOOKINGS.CALENDAR.OUTSIDE_HOURS');
+      return;
+    }
+
+    const start = formatTime(Math.floor(startMinutes / 60), startMinutes % 60);
+    const end = formatTime(Math.floor(endMinutes / 60), endMinutes % 60);
+    const iso = toIsoDate(date);
+    if (hasSlotCollision(iso, start, end, this.filteredBookings())) {
+      this.slotError.set('BOOKINGS.CALENDAR.SLOT_TAKEN');
+      return;
+    }
+
+    this.selectedSlot.set({ date, startTime: start, endTime: end, durationMinutes: duration });
+    this.slotError.set('');
+    this.currentDate.set(date);
+  }
+
   bookingsForHourOnDay(iso: string, hour: number): Booking[] {
     return bookingsInHour(
       this.filteredBookings().filter(b => b.date === iso),

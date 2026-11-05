@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize, forkJoin, Subscription } from 'rxjs';
+import { finalize, forkJoin, Subscription, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,7 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { PermissionService } from '@core/services/permission.service';
 import { LanguageService } from '@core/services/language.service';
@@ -72,6 +73,7 @@ import {
   PaymentMethodId,
 } from './models/booking.model';
 import { AppointmentsApiService } from './appointments-api.service';
+import { SaleDraftItem, SaleService } from '@app/features/sales/sale.service';
 import { mapCalendarBooking } from './booking-record.mapper';
 import { mapPackageToCatalogItem } from './booking-catalog.util';
 import {
@@ -107,6 +109,18 @@ interface PendingBookingDraft {
   lineItems: BookingLineItem[];
   serviceDuration: number;
   paymentMethod: PaymentMethodId | null;
+  dueNow: number;
+}
+
+interface PendingBookingSale {
+  saleId: string;
+  branchId: string;
+  grandTotal: number;
+  dueNow: number;
+  employeeId: string;
+  scheduledDate: string;
+  startMinutes: number;
+  endMinutes: number;
 }
 
 /** Coordinates calendar availability and booking creation, editing, and cancellation. */
@@ -120,6 +134,7 @@ interface PendingBookingDraft {
     TranslatePipe,
     ButtonModule,
     DropdownModule,
+    DialogModule,
     InputTextModule,
     NgxIntlTelInputModule,
     CalendarModule,
@@ -143,6 +158,7 @@ export class AppointmentsComponent {
   private readonly packagesApi = inject(PackageService);
   private readonly saleHandoff = inject(SaleHandoffService);
   private readonly appointmentsApi = inject(AppointmentsApiService);
+  private readonly sales = inject(SaleService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly branches = signal<BranchOption[]>([]);
@@ -209,12 +225,15 @@ export class AppointmentsComponent {
   readonly cancelConfirmVisible = signal(false);
 
   readonly activeBookingId = signal<string | null>(null);
-  readonly pendingDraft = signal<PendingBookingDraft | null>(null);
-  readonly pendingEdit = signal<BookingDetailsSavePayload | null>(null);
   readonly mismatchServiceDuration = signal(0);
   readonly mismatchSlotDuration = signal(0);
   readonly saleHandoffDraft = signal<SaleHandoffDraft | null>(null);
   readonly createRequestKey = signal<string | null>(null);
+  readonly pendingBookingSale = signal<PendingBookingSale | null>(null);
+  readonly paymentDialogVisible = signal(false);
+  readonly paymentError = signal<string | null>(null);
+  private collectionKey = crypto.randomUUID();
+  private readonly paymentRecoveryKey = 'operia.booking.pendingSale';
   private calendarRequestId = 0;
   private customerRequestId = 0;
   private employeesRequestId = 0;
@@ -235,7 +254,11 @@ export class AppointmentsComponent {
   ]);
 
   readonly branchFilteredEmployees = computed(() =>
-    filterEmployees(this.employees(), null, this.filters().branchId)
+    filterEmployees(this.employees(), null, this.filters().branchId).filter(
+      employee =>
+        this.viewMode() === '4days' ||
+        hoursForDate(employee.workingDays, this.selectedDate()) !== null
+    )
   );
 
   readonly employeeOptions = computed(() => [
@@ -257,7 +280,11 @@ export class AppointmentsComponent {
   );
 
   readonly visibleEmployees = computed(() =>
-    filterEmployees(this.employees(), this.filters().employeeId, this.filters().branchId)
+    filterEmployees(this.employees(), this.filters().employeeId, this.filters().branchId).filter(
+      employee =>
+        this.viewMode() === '4days' ||
+        hoursForDate(employee.workingDays, this.selectedDate()) !== null
+    )
   );
 
   readonly branchGroups = computed(() =>
@@ -420,6 +447,7 @@ export class AppointmentsComponent {
     });
     this.loadBranches();
     this.applySaleHandoff();
+    this.restorePendingBookingSale();
   }
 
   /** Transfers a sale draft into the appointment customer and item selection. */
@@ -581,7 +609,6 @@ export class AppointmentsComponent {
       this.customerLookupStatus.set('idle');
       this.clients.set([]);
       this.packages.set([]);
-      this.selectedSlot.set(null);
       this.filters.update(current => ({
         ...current,
         clientName: '',
@@ -714,6 +741,8 @@ export class AppointmentsComponent {
       return;
     }
     this.selectedDate.set(next);
+    this.selectedSlot.set(null);
+    this.ensureEmployeeSelected();
     this.syncDisplayedMonth(next);
     this.loadBookings();
   }
@@ -724,6 +753,8 @@ export class AppointmentsComponent {
     }
     const next = this.dateOnOrAfterToday(date);
     this.selectedDate.set(next);
+    this.selectedSlot.set(null);
+    this.ensureEmployeeSelected();
     this.syncDisplayedMonth(next);
     this.loadBookings();
   }
@@ -981,11 +1012,37 @@ export class AppointmentsComponent {
 
   onFooterConfirm(): void {
     const slot = this.selectedSlot();
-    if (!slot || !this.canManage() || !this.isClientFirstReady()) {
+    if (!slot || !this.canManage() || (!this.pendingBookingSale() && !this.isClientFirstReady())) {
       return;
     }
 
+    const pending = this.pendingBookingSale();
+    if (pending) {
+      if (slot.branchId !== pending.branchId) {
+        this.paymentError.set(this.translate.instant('BOOKINGS.PAYMENT.BRANCH_MISMATCH'));
+        this.paymentDialogVisible.set(true);
+        return;
+      }
+      const revised = {
+        ...pending,
+        employeeId: slot.employeeId,
+        scheduledDate: toDateKey(slot.date),
+        startMinutes: slot.startMinutes,
+        endMinutes: slot.startMinutes + slot.slotDurationMinutes,
+      };
+      this.pendingBookingSale.set(revised);
+      sessionStorage.setItem(this.paymentRecoveryKey, JSON.stringify(revised));
+      this.paymentDialogVisible.set(true);
+      this.refreshPendingSale();
+      return;
+    }
     this.openBookDialog();
+  }
+
+  chooseAnotherPaymentSlot(): void {
+    this.paymentDialogVisible.set(false);
+    this.selectedSlot.set(null);
+    this.paymentError.set(this.translate.instant('BOOKINGS.PAYMENT.CHOOSE_SLOT_HINT'));
   }
 
   onBookDialogConfirm(payload: BookAppointmentPayload): void {
@@ -1007,7 +1064,6 @@ export class AppointmentsComponent {
       return;
     }
     if (payload.serviceDuration > payload.selection.slotDurationMinutes) {
-      this.pendingDraft.set(payload);
       this.mismatchServiceDuration.set(payload.serviceDuration);
       this.mismatchSlotDuration.set(payload.selection.slotDurationMinutes);
       this.mismatchVisible.set(true);
@@ -1016,33 +1072,26 @@ export class AppointmentsComponent {
     this.commitBooking(payload);
   }
 
-  onMismatchConfirm(): void {
-    const edit = this.pendingEdit();
-    if (edit) {
-      this.commitBookingEdit(edit);
-      this.pendingEdit.set(null);
-      this.mismatchVisible.set(false);
-      return;
-    }
-    const draft = this.pendingDraft();
-    if (!draft) {
-      return;
-    }
-    this.commitBooking(draft);
-    this.pendingDraft.set(null);
-    this.mismatchVisible.set(false);
-  }
-
   onMismatchBack(): void {
     this.mismatchVisible.set(false);
-    this.pendingDraft.set(null);
-    this.pendingEdit.set(null);
   }
 
   /** Sends a registered customer's booking with an idempotency key and current selections. */
   private commitBooking(payload: PendingBookingDraft): void {
     if (!payload.clientId && !payload.directCustomer) {
       this.showToast('BOOKINGS.BOOK.CUSTOMER_NOT_REGISTERED', 'error');
+      return;
+    }
+
+    if (
+      payload.lineItems.some(
+        item =>
+          item.type === 'unlisted' ||
+          (item.newPurchaseUnits ?? 0) > 0 ||
+          (!item.customerPackageId && item.price > 0)
+      )
+    ) {
+      this.startSaleBooking(payload);
       return;
     }
 
@@ -1095,6 +1144,190 @@ export class AppointmentsComponent {
         },
         error: error => this.handleMutationError(error),
       });
+  }
+
+  private saleItems(lines: BookingLineItem[]): SaleDraftItem[] {
+    const items: SaleDraftItem[] = [];
+    for (const line of lines) {
+      if (line.customerPackageId) {
+        items.push({
+          offerId: null,
+          ownedCustomerPackageId: line.customerPackageId,
+          unlistedName: null,
+          unlistedPrice: null,
+          unlistedDurationMinutes: null,
+          paymentOption: 'owned',
+          quantity: 1,
+        });
+      }
+      const newUnits = line.customerPackageId ? line.quantity - 1 : line.quantity;
+      if (newUnits <= 0) continue;
+      items.push({
+        offerId: line.catalogPackageId ?? null,
+        ownedCustomerPackageId: null,
+        unlistedName: line.type === 'unlisted' ? line.name : null,
+        unlistedPrice: line.type === 'unlisted' ? line.price : null,
+        unlistedDurationMinutes: line.type === 'unlisted' ? line.durationMinutes : null,
+        paymentOption: line.paymentOption ?? 'cash',
+        quantity: newUnits,
+      });
+    }
+    return items;
+  }
+
+  private startSaleBooking(payload: PendingBookingDraft): void {
+    if (this.mutating() || this.pendingBookingSale()) return;
+    const saleItems = this.saleItems(payload.lineItems);
+    const key = this.createRequestKey() ?? crypto.randomUUID();
+    this.createRequestKey.set(key);
+    this.mutating.set(true);
+    this.sales
+      .quote({
+        customerId: payload.clientId,
+        directCustomer: payload.directCustomer,
+        branchId: payload.selection.branchId,
+        items: saleItems,
+      })
+      .pipe(
+        switchMap(quote =>
+          this.sales.confirm({
+            customerId: payload.clientId,
+            directCustomer: payload.directCustomer,
+            branchId: payload.selection.branchId,
+            items: saleItems,
+            paymentMethod: quote.dueNow > 0 ? payload.paymentMethod : null,
+            expectedGrandTotal: quote.grandTotal,
+            expectedDueNow: quote.dueNow,
+            idempotencyKey: key,
+            disposition: 'BookNow',
+          })
+        ),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
+      .subscribe({
+        next: result => {
+          const pending: PendingBookingSale = {
+            saleId: result.saleId,
+            branchId: payload.selection.branchId,
+            grandTotal: result.grandTotal,
+            dueNow: result.dueNow,
+            employeeId: payload.selection.employeeId,
+            scheduledDate: toDateKey(payload.selection.date),
+            startMinutes: payload.selection.startMinutes,
+            endMinutes: payload.selection.startMinutes + payload.selection.slotDurationMinutes,
+          };
+          this.pendingBookingSale.set(pending);
+          sessionStorage.setItem(this.paymentRecoveryKey, JSON.stringify(pending));
+          this.bookDialogVisible.set(false);
+          this.paymentError.set(null);
+          this.paymentDialogVisible.set(true);
+          if (result.dueNow === 0) queueMicrotask(() => this.recordBookingCollection(true));
+        },
+        error: error => this.handleMutationError(error),
+      });
+  }
+
+  recordBookingCollection(confirmed: boolean): void {
+    const pending = this.pendingBookingSale();
+    if (!pending || this.mutating()) return;
+    this.mutating.set(true);
+    this.paymentError.set(null);
+    this.sales
+      .collect(pending.saleId, this.collectionKey, confirmed)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
+      .subscribe({
+        next: result => {
+          if (!result.paymentConfirmed) {
+            this.collectionKey = crypto.randomUUID();
+            this.paymentError.set(this.translate.instant('BOOKINGS.PAYMENT.FAILED'));
+            return;
+          }
+          queueMicrotask(() => this.bookPendingSale());
+        },
+        error: () => queueMicrotask(() => this.refreshPendingSale()),
+      });
+  }
+
+  refreshPendingSale(): void {
+    const pending = this.pendingBookingSale();
+    if (!pending || this.mutating()) return;
+    this.mutating.set(true);
+    this.sales
+      .state(pending.saleId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
+      .subscribe({
+        next: state => {
+          if (state.bookingId || state.status === 'Booked') {
+            this.completePendingSale();
+          } else if (state.paymentConfirmed) {
+            queueMicrotask(() => this.bookPendingSale());
+          } else {
+            if (state.collectionId) this.collectionKey = crypto.randomUUID();
+            this.paymentError.set(this.translate.instant('BOOKINGS.PAYMENT.NOT_VERIFIED'));
+          }
+        },
+        error: error => this.handleMutationError(error),
+      });
+  }
+
+  private bookPendingSale(): void {
+    const pending = this.pendingBookingSale();
+    if (!pending || this.mutating()) return;
+    this.mutating.set(true);
+    this.sales
+      .book(pending)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.mutating.set(false))
+      )
+      .subscribe({
+        next: result => {
+          if (result.status === 'Booked') {
+            this.completePendingSale();
+          } else {
+            this.paymentError.set(
+              this.translate.instant(`ERRORS.${result.recoveryCode ?? 'SaleBookingUnavailable'}`)
+            );
+          }
+        },
+        error: error => {
+          this.handleMutationError(error);
+          this.paymentError.set(this.translate.instant('BOOKINGS.PAYMENT.BOOKING_PENDING'));
+        },
+      });
+  }
+
+  private completePendingSale(): void {
+    this.pendingBookingSale.set(null);
+    this.paymentDialogVisible.set(false);
+    this.paymentError.set(null);
+    this.createRequestKey.set(null);
+    sessionStorage.removeItem(this.paymentRecoveryKey);
+    this.selectedSlot.set(null);
+    this.saleHandoffDraft.set(null);
+    this.loadBookings();
+    this.showToast('BOOKINGS.TOAST.BOOKED');
+  }
+
+  private restorePendingBookingSale(): void {
+    const stored = sessionStorage.getItem(this.paymentRecoveryKey);
+    if (!stored) return;
+    try {
+      const pending = JSON.parse(stored) as PendingBookingSale;
+      if (!pending.saleId || !pending.employeeId) throw new Error('Invalid pending sale');
+      this.pendingBookingSale.set(pending);
+      this.paymentDialogVisible.set(true);
+      this.refreshPendingSale();
+    } catch {
+      sessionStorage.removeItem(this.paymentRecoveryKey);
+    }
   }
 
   /** Loads visible bookings and holds, discarding stale calendar responses. */
@@ -1173,7 +1406,6 @@ export class AppointmentsComponent {
     }
     const serviceDuration = sumLineItemDuration(payload.lineItems);
     if (serviceDuration > booking.slotDurationMinutes) {
-      this.pendingEdit.set(payload);
       this.mismatchServiceDuration.set(serviceDuration);
       this.mismatchSlotDuration.set(booking.slotDurationMinutes);
       this.mismatchVisible.set(true);

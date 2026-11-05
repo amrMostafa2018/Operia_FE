@@ -531,6 +531,16 @@
   (packageCreated)="onUnlistedPackageCreated()"
 />
 
+@if (pendingBookingSale() && !paymentDialogVisible()) {
+  <button
+    type="button"
+    class="resume-booking-payment"
+    (click)="paymentDialogVisible.set(true); refreshPendingSale()"
+  >
+    {{ 'BOOKINGS.PAYMENT.RESUME' | translate }}
+  </button>
+}
+
 <app-booking-details-dialog
   [visible]="detailsDialogVisible()"
   [booking]="activeBooking()"
@@ -549,10 +559,8 @@
   [visible]="mismatchVisible()"
   [serviceDuration]="mismatchServiceDuration()"
   [slotDuration]="mismatchSlotDuration()"
-  [confirmLabelKey]="pendingEdit() ? 'BOOKINGS.MISMATCH.CONFIRM_EDIT' : 'BOOKINGS.MISMATCH.CONFIRM'"
   (closed)="onMismatchBack()"
   (back)="onMismatchBack()"
-  (confirmAnyway)="onMismatchConfirm()"
 />
 
 <app-confirm-action-dialog
@@ -566,3 +574,53 @@
   (cancelled)="cancelConfirmVisible.set(false)"
   (confirmed)="onCancelConfirmed()"
 />
+
+<p-dialog
+  [visible]="paymentDialogVisible()"
+  (visibleChange)="paymentDialogVisible.set($event)"
+  [modal]="true"
+  [closable]="!mutating()"
+  [style]="{ width: 'min(31rem, 94vw)' }"
+  [header]="'BOOKINGS.PAYMENT.TITLE' | translate"
+>
+  @if (pendingBookingSale(); as pending) {
+    <div class="booking-payment-dialog">
+      <p>{{ 'BOOKINGS.PAYMENT.EXPLANATION' | translate }}</p>
+      <strong>{{ 'BOOKINGS.PAYMENT.SALE_VALUE' | translate }}: {{ pending.grandTotal }}</strong>
+      <strong>{{ 'BOOKINGS.PAYMENT.DUE_NOW' | translate }}: {{ pending.dueNow }}</strong>
+      <strong
+        >{{ 'BOOKINGS.PAYMENT.REMAINING_BALANCE' | translate }}:
+        {{ pending.grandTotal - pending.dueNow }}</strong
+      >
+      @if (paymentError(); as error) {
+        <p class="payment-error" role="alert">{{ error }}</p>
+      }
+      <div class="booking-payment-actions">
+        <p-button
+          [label]="'BOOKINGS.PAYMENT.CHOOSE_SLOT' | translate"
+          [text]="true"
+          [disabled]="mutating()"
+          (onClick)="chooseAnotherPaymentSlot()"
+        />
+        <p-button
+          [label]="'BOOKINGS.PAYMENT.CHECK_STATUS' | translate"
+          [outlined]="true"
+          [disabled]="mutating()"
+          (onClick)="refreshPendingSale()"
+        />
+        <p-button
+          [label]="'BOOKINGS.PAYMENT.FAILED_ACTION' | translate"
+          [outlined]="true"
+          severity="danger"
+          [disabled]="mutating()"
+          (onClick)="recordBookingCollection(false)"
+        />
+        <p-button
+          [label]="'BOOKINGS.PAYMENT.COLLECTED' | translate"
+          [disabled]="mutating()"
+          (onClick)="recordBookingCollection(true)"
+        />
+      </div>
+    </div>
+  }
+</p-dialog>

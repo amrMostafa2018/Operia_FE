@@ -96,6 +96,8 @@ test.describe('US-12: Build and confirm a sale', () => {
     await page.getByRole('button', { name: 'Sell Service / Offer' }).click();
     const dialog = page.locator('.sale-builder-dialog');
     await expect(dialog).toBeVisible();
+    await dialog.locator('p-dropdown[formcontrolname="branchId"]').click();
+    await page.getByRole('option', { name: 'US-07 E2E Branch' }).click();
     await expect(dialog.getByText('E2E Sale Cash Service', { exact: true })).toBeVisible();
     await expect(dialog.getByText('E2E Sale Installment Package', { exact: true })).toBeVisible();
     await expect(dialog.getByText('US-07 to US-12 E2E Category', { exact: true })).toBeVisible();
@@ -271,7 +273,7 @@ test.describe('US-12: Build and confirm a sale', () => {
            AND Action = 'SaleConfirmed'), '|',
         (SELECT COUNT(*) FROM dbo.CustomerPackages
          WHERE TenantId = '${e2eIds.tenantA}'
-           AND PackageId IN ('${e2eIds.saleInstallmentOffer}', '${e2eIds.cashServiceOffer}')), '|',
+           AND SaleId = '${firstResult.saleId}'), '|',
         (SELECT COUNT(*) FROM dbo.BookingPackageReservations
          WHERE TenantId = '${e2eIds.tenantA}'
            AND CustomerPackageId = '${e2eIds.ownedSessionPurchase}'), '|',

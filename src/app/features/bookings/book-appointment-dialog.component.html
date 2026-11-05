@@ -47,14 +47,34 @@
         <i class="pi pi-stopwatch"></i>
         <div>
           <small>{{ 'BOOKINGS.BOOK.DURATION' | translate }}</small>
-          <strong>{{ slot.slotDurationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</strong>
+          <strong
+            >{{ serviceDuration() || slot.slotDurationMinutes }}
+            {{ 'BOOKINGS.MINUTES' | translate }}</strong
+          >
         </div>
       </article>
       <article>
         <i class="pi pi-user"></i>
         <div>
           <small>{{ 'BOOKINGS.BOOK.STAFF' | translate }}</small>
-          <strong>{{ slot.employeeName }}</strong>
+          @if (lineItems().length) {
+            <p-dropdown
+              [style]="{ width: '100%' }"
+              [options]="eligibleEmployees()"
+              optionLabel="fullName"
+              optionValue="id"
+              [ngModel]="selectedEmployeeId()"
+              (ngModelChange)="selectedEmployeeId.set($event)"
+              [disabled]="eligibleEmployeesLoading()"
+              [placeholder]="'BOOKINGS.BOOK.SELECT_EMPLOYEE' | translate"
+              appendTo="body"
+            />
+            @if (!eligibleEmployeesLoading() && !selectedEmployee()) {
+              <small class="field-error">{{ 'BOOKINGS.BOOK.EMPLOYEE_REQUIRED' | translate }}</small>
+            }
+          } @else {
+            <strong>{{ slot.employeeName }}</strong>
+          }
         </div>
       </article>
       <article>
@@ -543,6 +563,28 @@
                     · {{ item.categoryName }}
                   }
                 </small>
+                @if (item.type === 'package' && item.catalogPackageId && item.newPurchaseUnits) {
+                  <div class="package-payment-choice">
+                    @if (cashAvailable(item.catalogPackageId)) {
+                      <button
+                        type="button"
+                        [class.active]="item.paymentOption !== 'installment'"
+                        (click)="selectPackagePaymentOption(item.catalogPackageId, 'cash')"
+                      >
+                        {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
+                      </button>
+                    }
+                    @if (installmentAvailable(item.catalogPackageId)) {
+                      <button
+                        type="button"
+                        [class.active]="item.paymentOption === 'installment'"
+                        (click)="selectPackagePaymentOption(item.catalogPackageId, 'installment')"
+                      >
+                        {{ 'BOOKINGS.PAYMENT.INSTALLMENT' | translate }}
+                      </button>
+                    }
+                  </div>
+                }
               </div>
             </div>
           </li>
@@ -558,6 +600,16 @@
           }
         </strong>
       </div>
+      <div class="payments-total">
+        <span>{{ 'BOOKINGS.PAYMENT.DUE_NOW' | translate }}</span>
+        <strong>{{ dueNow() }} {{ currencyService.currencyLabel() }}</strong>
+      </div>
+      @if (remainingBalance() > 0) {
+        <div class="payments-total">
+          <span>{{ 'BOOKINGS.PAYMENT.REMAINING_BALANCE' | translate }}</span>
+          <strong>{{ remainingBalance() }} {{ currencyService.currencyLabel() }}</strong>
+        </div>
+      }
 
       @if (hasPayableItems()) {
         <div class="payment-methods-section">
