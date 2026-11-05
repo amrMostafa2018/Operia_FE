@@ -24,22 +24,7 @@
     </div>
   </ng-template>
 
-  @if (pendingConfirmation()) {
-    <section class="confirmation-recovery" [class.loading]="saving()" role="status">
-      @if (saving()) {
-        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-        <h3>{{ 'SALE_BUILDER.CONFIRMING' | translate }}</h3>
-      } @else {
-        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-        <h3>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN_TITLE' | translate }}</h3>
-        <p>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN' | translate }}</p>
-        <button type="button" class="primary-button" (click)="confirm('Later')">
-          {{ 'SALE_BUILDER.RETRY_CONFIRMATION' | translate }}
-        </button>
-      }
-    </section>
-  } @else if (activeSale()) {
-    @let sale = activeSale()!;
+  @if (activeSale(); as sale) {
     <section class="sale-recovery">
       <h3>{{ 'SALE_BUILDER.SAVED_SALE' | translate }}</h3>
       <p class="sale-reference">
@@ -129,6 +114,30 @@
         <small class="field-error">{{ error }}</small>
       }
     </section>
+  } @else if (pendingConfirmation()) {
+    <section class="confirmation-recovery" [class.loading]="saving()" role="status">
+      @if (saving()) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMING' | translate }}</h3>
+      } @else {
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN_TITLE' | translate }}</h3>
+        <p>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN' | translate }}</p>
+      }
+      <div class="actions">
+        <button type="button" class="outline-button" [disabled]="saving()" (click)="closed.emit()">
+          {{ 'COMMON.CANCEL' | translate }}
+        </button>
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="saving()"
+          (click)="retryConfirmation()"
+        >
+          {{ 'SALE_BUILDER.RETRY_CONFIRMATION' | translate }}
+        </button>
+      </div>
+    </section>
   } @else {
     <div class="resume-row">
       <label for="resume-sale">{{ 'SALE_BUILDER.RESUME_SALE' | translate }}</label>
@@ -208,6 +217,7 @@
         <p-dropdown
           inputId="sale-branch"
           formControlName="branchId"
+          [disabled]="saving()"
           [options]="branches()"
           optionLabel="name"
           optionValue="id"
@@ -478,7 +488,7 @@
       <button
         type="button"
         class="outline-button"
-        [disabled]="saving() || quoteLoading() || !quote()"
+        [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Close')"
         (click)="confirm('Close')"
       >
         {{ 'SALE_BUILDER.CLOSE_SALE' | translate }}
@@ -486,7 +496,7 @@
       <button
         type="button"
         class="primary-button"
-        [disabled]="saving() || quoteLoading() || !quote()"
+        [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Later')"
         (click)="confirm('Later')"
       >
         <i class="pi pi-calendar-plus"></i> {{ 'SALE_BUILDER.CONFIRM_LATER' | translate }}
@@ -495,7 +505,7 @@
         <button
           type="button"
           class="primary-button"
-          [disabled]="saving() || quoteLoading() || !quote()"
+          [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('BookNow')"
           (click)="confirm('BookNow')"
         >
           {{ 'SALE_BUILDER.BOOK_NOW' | translate }}

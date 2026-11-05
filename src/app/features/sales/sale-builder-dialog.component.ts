@@ -50,6 +50,11 @@ interface DraftRow extends SaleDraftItem {
   key: string;
 }
 
+interface PendingConfirmation {
+  request: ConfirmSaleRequest;
+  durationMinutes: number;
+}
+
 @Component({
   selector: 'app-sale-builder-dialog',
   standalone: true,
@@ -108,7 +113,7 @@ export class SaleBuilderDialogComponent {
   readonly saving = signal(false);
   readonly loading = signal(false);
   readonly customerLoading = signal(false);
-  readonly pendingConfirmation = signal<ConfirmSaleRequest | null>(null);
+  readonly pendingConfirmation = signal<PendingConfirmation | null>(null);
   readonly showUnlisted = signal(false);
   readonly categoryId = signal('all');
   readonly searchText = signal('');
@@ -126,7 +131,6 @@ export class SaleBuilderDialogComponent {
   private optionsVersion = 0;
   private confirmationKey = crypto.randomUUID();
   private collectionKey = crypto.randomUUID();
-  private chosenDisposition: 'Close' | 'Later' | 'BookNow' | null = null;
   private readonly recoveryStorageKey = 'operia.sale.pending';
 
   readonly filteredCatalog = computed(() => {
@@ -176,9 +180,9 @@ export class SaleBuilderDialogComponent {
     this.quoteVersion++;
     this.customerVersion++;
     this.confirmationKey = crypto.randomUUID();
-    this.customerLoading.set(false);
     this.collectionKey = crypto.randomUUID();
-    this.chosenDisposition = null;
+    this.pendingConfirmation.set(null);
+    this.customerLoading.set(false);
     this.activeSale.set(null);
     this.recoveryError.set(null);
     this.resumeSaleId.set('');
@@ -276,6 +280,7 @@ export class SaleBuilderDialogComponent {
 
   mobileChanged(): void {
     this.customerVersion++;
+    this.customerLoading.set(false);
     this.customer.set(null);
     this.customerForm.controls.customerId.setValue('');
     this.rows.update(rows => rows.filter(row => !row.ownedCustomerPackageId));
@@ -470,8 +475,8 @@ export class SaleBuilderDialogComponent {
   }
 
   private changed(): void {
+    if (this.pendingConfirmation()) return;
     this.confirmationKey = crypto.randomUUID();
-    this.chosenDisposition = null;
     this.itemError.set(null);
     const version = ++this.quoteVersion;
     const items = this.requestItems();
@@ -507,7 +512,9 @@ export class SaleBuilderDialogComponent {
   confirm(disposition: 'Close' | 'Later' | 'BookNow'): void {
     const pending = this.pendingConfirmation();
     if (pending) {
-      if (!this.saving()) this.submitConfirmation(pending);
+      if (!this.saving() && pending.request.disposition === disposition) {
+        this.submitConfirmation(pending);
+      }
       return;
     }
     this.customerForm.markAllAsTouched();
@@ -517,7 +524,6 @@ export class SaleBuilderDialogComponent {
       this.itemError.set(this.translate.instant('ERRORS.SalePaymentMethodUnavailable'));
       return;
     }
-    this.chosenDisposition ??= disposition;
     const request: ConfirmSaleRequest = {
       customerId: this.directCustomer() ? null : this.customerForm.controls.customerId.value,
       directCustomer: this.directCustomer(),
@@ -527,31 +533,34 @@ export class SaleBuilderDialogComponent {
       expectedGrandTotal: quote.grandTotal,
       expectedDueNow: quote.dueNow,
       idempotencyKey: this.confirmationKey,
-      disposition: this.chosenDisposition,
+      disposition,
     };
-    this.pendingConfirmation.set(request);
-    this.submitConfirmation(request);
+    const confirmation: PendingConfirmation = {
+      request,
+      durationMinutes: quote.items.reduce(
+        (sum, line) => sum + line.durationMinutes * line.quantity,
+        0
+      ),
+    };
+    this.pendingConfirmation.set(confirmation);
+    this.submitConfirmation(confirmation);
   }
 
-  private submitConfirmation(request: ConfirmSaleRequest): void {
+  private submitConfirmation(confirmation: PendingConfirmation): void {
     this.saving.set(true);
     this.sales
-      .confirm(request)
+      .confirm(confirmation.request)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
           this.saving.set(false);
           this.pendingConfirmation.set(null);
-          const quote = this.quote();
           const state: SaleState = {
             saleId: result.saleId,
             status: result.status,
-            disposition: this.chosenDisposition ?? 'Later',
-            branchId: request.branchId,
-            durationMinutes: (quote?.items ?? []).reduce(
-              (sum, line) => sum + line.durationMinutes * line.quantity,
-              0
-            ),
+            disposition: confirmation.request.disposition,
+            branchId: confirmation.request.branchId,
+            durationMinutes: confirmation.durationMinutes,
             grandTotal: result.grandTotal,
             dueNow: result.dueNow,
             collectionId: null,
@@ -580,9 +589,23 @@ export class SaleBuilderDialogComponent {
           applyServerFieldErrors(this.customerForm, fields);
           this.itemError.set(fields['items'] ?? fields['paymentMethod'] ?? this.errorText(error));
           this.showError(error);
-          if (codes.includes('SaleQuoteChanged')) this.changed();
+          if (codes.includes('SaleQuoteChanged')) {
+            this.changed();
+          } else {
+            this.confirmationKey = crypto.randomUUID();
+          }
         },
       });
+  }
+
+  confirmationLockedTo(disposition: 'Close' | 'Later' | 'BookNow'): boolean {
+    const pending = this.pendingConfirmation();
+    return pending !== null && pending.request.disposition !== disposition;
+  }
+
+  retryConfirmation(): void {
+    const pending = this.pendingConfirmation();
+    if (pending && !this.saving()) this.submitConfirmation(pending);
   }
 
   collect(paymentConfirmed: boolean): void {
