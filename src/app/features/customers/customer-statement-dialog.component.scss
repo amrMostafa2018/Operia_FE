@@ -1,0 +1,85 @@
+.statement {
+  color: #171a43;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+.statement section {
+  padding: 1rem 0;
+  border-top: 1px solid #e5e7f0;
+}
+.customer-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+h2,
+h3,
+p {
+  margin: 0;
+}
+h3 {
+  margin-bottom: 0.7rem;
+  font-size: 1rem;
+}
+.mobile {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.facts div {
+  min-width: 9rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.7rem;
+  border: 1px solid #e5e7f0;
+  border-radius: 7px;
+}
+.facts span {
+  color: #69718b;
+  font-size: 0.8rem;
+}
+.facts strong {
+  font-size: 0.9rem;
+}
+.balance-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+.first-payment {
+  margin-top: 0.8rem;
+  font-size: 0.82rem;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 38rem;
+  font-size: 0.82rem;
+}
+th,
+td {
+  text-align: start;
+  padding: 0.6rem;
+  border-bottom: 1px solid #edf0f5;
+}
+th {
+  background: #f7f8fc;
+  color: #69718b;
+}
+.empty {
+  text-align: center;
+  color: #69718b;
+}

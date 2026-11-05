@@ -1,0 +1,47 @@
+.history {
+  max-height: 70vh;
+  overflow: auto;
+  color: #171a43;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+th,
+td {
+  padding: 0.7rem;
+  text-align: start;
+  border-bottom: 1px solid #edf0f5;
+}
+th {
+  background: #f7f8fc;
+  color: #69718b;
+}
+td span {
+  display: block;
+}
+.reference {
+  overflow-wrap: anywhere;
+  color: #69718b;
+  font-size: 0.75rem;
+}
+footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem;
+}
+button {
+  border: 1px solid #dfe2ef;
+  background: #fff;
+  color: #171a43;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

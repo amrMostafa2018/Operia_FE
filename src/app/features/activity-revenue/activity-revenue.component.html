@@ -1,61 +1,315 @@
 <section class="activity-revenue">
-  <header>
-    <h1>{{ 'ACTIVITY_REVENUE.TITLE' | translate }}</h1>
-    <p>{{ 'ACTIVITY_REVENUE.INSTALLMENTS_ONLY' | translate }}</p>
-    <strong
-      >{{ 'ACTIVITY_REVENUE.CONFIRMED_TOTAL' | translate }}:
-      {{ formatMoney(confirmedTotal()) }}</strong
-    >
-  </header>
-  @if (loading()) {
-    <p>{{ 'ACTIVITY_REVENUE.LOADING' | translate }}</p>
-  } @else if (rows().length) {
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ 'ACTIVITY_REVENUE.CUSTOMER' | translate }}</th>
-            <th>{{ 'ACTIVITY_REVENUE.OFFER' | translate }}</th>
-            <th>{{ 'ACTIVITY_REVENUE.INSTALLMENT' | translate }}</th>
-            <th>{{ 'ACTIVITY_REVENUE.AMOUNT' | translate }}</th>
-            <th>{{ 'ACTIVITY_REVENUE.METHOD' | translate }}</th>
-            <th>{{ 'ACTIVITY_REVENUE.DATE' | translate }}</th>
-            <th>{{ 'ACTIVITY_REVENUE.STATUS' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows(); track row.collectionId) {
-            <tr>
-              <td>{{ row.customerName }}</td>
-              <td>{{ row.offerName }}</td>
-              <td>
-                {{
-                  row.kind === 'Sale'
-                    ? ('ACTIVITY_REVENUE.SALE_FIRST_PAYMENT' | translate)
-                    : row.installmentNumber
-                }}
-              </td>
-              <td>{{ formatMoney(row.amount) }}</td>
-              <td>
-                {{ 'CUSTOMER_INQUIRY.METHOD.' + row.paymentMethod.toUpperCase() | translate }}
-              </td>
-              <td>{{ formatDate(row.confirmedAtUtc) }}</td>
-              <td>{{ 'ACTIVITY_REVENUE.CONFIRMED' | translate }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+  <header class="report-heading">
+    <div>
+      <h1>{{ 'ACTIVITY_REVENUE.TITLE' | translate }}</h1>
+      <p>{{ 'ACTIVITY_REVENUE.FINANCIAL_MOVEMENTS' | translate }}</p>
     </div>
-    <footer>
-      <button type="button" [disabled]="page() === 1" (click)="load(page() - 1)">
-        {{ 'ACTIVITY_REVENUE.PREVIOUS' | translate }}
-      </button>
-      <span>{{ page() }} / {{ pageCount() }}</span>
-      <button type="button" [disabled]="page() * 20 >= total()" (click)="load(page() + 1)">
-        {{ 'ACTIVITY_REVENUE.NEXT' | translate }}
-      </button>
-    </footer>
+  </header>
+
+  <div class="filters">
+    <label>
+      <span>{{ 'ACTIVITY_REVENUE.FROM_DATE' | translate }}</span>
+      <input #fromInput type="date" [value]="fromDate()" (change)="fromDate.set(fromInput.value)" />
+      @if (rangeError()) {
+        <small class="field-error">{{ 'ERRORS.RevenueDateRangeInvalid' | translate }}</small>
+      }
+    </label>
+    <label>
+      <span>{{ 'ACTIVITY_REVENUE.TO_DATE' | translate }}</span>
+      <input #toInput type="date" [value]="toDate()" (change)="toDate.set(toInput.value)" />
+    </label>
+    <label>
+      <span>{{ 'ACTIVITY_REVENUE.BRANCH' | translate }}</span>
+      <select #branchInput [value]="branchId()" (change)="branchId.set(branchInput.value)">
+        <option value="">{{ 'ACTIVITY_REVENUE.ALL_BRANCHES' | translate }}</option>
+        @for (branch of branches(); track branch.id) {
+          <option [value]="branch.id">{{ branch.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>{{ 'ACTIVITY_REVENUE.SERVICE' | translate }}</span>
+      <select #serviceInput [value]="serviceId()" (change)="serviceId.set(serviceInput.value)">
+        <option value="">{{ 'ACTIVITY_REVENUE.ALL_SERVICES' | translate }}</option>
+        @for (service of services(); track service.id) {
+          <option [value]="service.id">{{ service.name }}</option>
+        }
+      </select>
+      @if (serviceError()) {
+        <small class="field-error">{{ 'ERRORS.RevenueServiceInvalid' | translate }}</small>
+      }
+    </label>
+    <button type="button" class="primary" (click)="search()">
+      <i class="pi pi-search"></i> {{ 'ACTIVITY_REVENUE.SEARCH' | translate }}
+    </button>
+    <button type="button" (click)="reset()">{{ 'ACTIVITY_REVENUE.RESET' | translate }}</button>
+  </div>
+
+  @if (loading()) {
+    <p class="state">{{ 'ACTIVITY_REVENUE.LOADING' | translate }}</p>
+  } @else if (error()) {
+    <div class="state load-error">
+      <p>{{ 'ACTIVITY_REVENUE.LOAD_ERROR' | translate }}</p>
+      <button type="button" (click)="load(1)">{{ 'ACTIVITY_REVENUE.RETRY' | translate }}</button>
+    </div>
   } @else {
-    <p>{{ 'ACTIVITY_REVENUE.EMPTY' | translate }}</p>
+    @if (report(); as result) {
+      <div class="revenue-cards">
+        <article>
+          <span class="card-icon pi pi-wallet"></span
+          ><span>{{ 'ACTIVITY_REVENUE.TODAY_COUNT' | translate }}</span
+          ><strong>{{ result.today.transactionCount }}</strong
+          ><small>{{ 'ACTIVITY_REVENUE.COLLECTIONS' | translate }}</small>
+        </article>
+        <article>
+          <span class="card-icon pi pi-users"></span
+          ><span>{{ 'ACTIVITY_REVENUE.MONTH_COUNT' | translate }}</span
+          ><strong>{{ result.month.transactionCount }}</strong
+          ><small>{{ 'ACTIVITY_REVENUE.COLLECTIONS' | translate }}</small>
+        </article>
+        <article>
+          <span class="card-icon pi pi-calendar"></span
+          ><span>{{ 'ACTIVITY_REVENUE.TODAY_GROSS' | translate }}</span
+          ><strong>{{ formatMoney(result.today.grossCollections) }}</strong
+          ><small>{{ 'ACTIVITY_REVENUE.BEFORE_REFUNDS' | translate }}</small>
+        </article>
+        <article>
+          <span class="card-icon pi pi-money-bill"></span
+          ><span>{{ 'ACTIVITY_REVENUE.MONTH_GROSS' | translate }}</span
+          ><strong>{{ formatMoney(result.month.grossCollections) }}</strong
+          ><small>{{ 'ACTIVITY_REVENUE.BEFORE_REFUNDS' | translate }}</small>
+        </article>
+      </div>
+      <div class="net-summary">
+        <span
+          >{{ 'ACTIVITY_REVENUE.GROSS_TOTAL' | translate }}:
+          <strong>{{ formatMoney(result.totals.grossCollections) }}</strong></span
+        >
+        <span
+          >{{ 'ACTIVITY_REVENUE.REFUNDS_TOTAL' | translate }}:
+          <strong>{{ formatMoney(result.totals.refunds) }}</strong></span
+        >
+        <span
+          >{{ 'ACTIVITY_REVENUE.NET_TOTAL' | translate }}:
+          <strong>{{ formatMoney(result.totals.netCollected) }}</strong></span
+        >
+      </div>
+
+      <div class="table-heading">
+        <h2>{{ 'ACTIVITY_REVENUE.TRANSACTIONS' | translate }}</h2>
+        <span>{{ 'ACTIVITY_REVENUE.MATCHING_COUNT' | translate }}: {{ result.total }}</span>
+      </div>
+      @if (result.items.length) {
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{{ 'ACTIVITY_REVENUE.TRANSACTION_ID' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.MOBILE' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.CUSTOMER' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.OFFER' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.BRANCH' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.AMOUNT' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.DATE' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.PROOF' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.METHOD' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.STATUS' | translate }}</th>
+                <th>{{ 'ACTIVITY_REVENUE.ACTIONS' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of result.items; track row.transactionId; let i = $index) {
+                <tr>
+                  <td>{{ rowNumber(i) }}</td>
+                  <td>{{ row.transactionId }}</td>
+                  <td>{{ row.mobile }}</td>
+                  <td>{{ row.customerName }}</td>
+                  <td>{{ row.service }}</td>
+                  <td>{{ row.branch }}</td>
+                  <td [class.refund-amount]="row.kind === 'Refund'">
+                    {{ formatMoney(row.amount) }}
+                  </td>
+                  <td>{{ formatDate(row.transactionAtUtc) }}</td>
+                  <td>
+                    @if (row.hasProof && row.paymentId) {
+                      <button type="button" class="link-button" (click)="showProof(row.paymentId)">
+                        {{ 'ACTIVITY_REVENUE.VIEW_PROOF' | translate }}
+                      </button>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td>
+                    {{
+                      row.paymentMethod
+                        ? ('CUSTOMER_INQUIRY.METHOD.' + row.paymentMethod.toUpperCase() | translate)
+                        : '—'
+                    }}
+                  </td>
+                  <td>
+                    <span
+                      class="status"
+                      [class.pending]="row.status === 'UnderReview'"
+                      [class.failed]="row.status === 'Failed' || row.status === 'Cancelled'"
+                      [class.refunded]="row.kind === 'Refund'"
+                      >{{ 'ACTIVITY_REVENUE.STATES.' + row.status | translate }}</span
+                    >
+                  </td>
+                  <td>
+                    @if (row.paymentId || row.refundId) {
+                      <details class="row-menu">
+                        <summary [attr.aria-label]="'ACTIVITY_REVENUE.ACTIONS' | translate">
+                          ⋮
+                        </summary>
+                        <div>
+                          @if (canAct(row)) {
+                            <button type="button" (click)="chooseAction(row.paymentId!, true)">
+                              {{ 'ACTIVITY_REVENUE.CONFIRM_PAYMENT' | translate }}
+                            </button>
+                            <button type="button" (click)="chooseAction(row.paymentId!, false)">
+                              {{ 'ACTIVITY_REVENUE.CANCEL_PAYMENT' | translate }}
+                            </button>
+                          }
+                          <button
+                            type="button"
+                            (click)="showHistory(row.paymentId || row.refundId)"
+                          >
+                            {{ 'ACTIVITY_REVENUE.HISTORY' | translate }}
+                          </button>
+                        </div>
+                      </details>
+                    } @else {
+                      —
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="state">{{ 'ACTIVITY_REVENUE.EMPTY' | translate }}</p>
+      }
+      <footer>
+        <button type="button" [disabled]="result.page === 1" (click)="load(result.page - 1)">
+          {{ 'ACTIVITY_REVENUE.PREVIOUS' | translate }}
+        </button>
+        <span>{{ result.page }} / {{ pageCount() }}</span>
+        <button
+          type="button"
+          [disabled]="result.page * result.pageSize >= result.total"
+          (click)="load(result.page + 1)"
+        >
+          {{ 'ACTIVITY_REVENUE.NEXT' | translate }}
+        </button>
+        <label
+          >{{ 'ACTIVITY_REVENUE.PAGE_SIZE' | translate }}
+          <select #sizeInput [value]="pageSize()" (change)="changePageSize(sizeInput.value)">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </label>
+        @if (canExport()) {
+          <button type="button" [disabled]="exporting()" (click)="export()">
+            <i class="pi pi-download"></i> {{ 'ACTIVITY_REVENUE.EXPORT' | translate }}
+          </button>
+        }
+      </footer>
+    }
   }
 </section>
+
+@if (action(); as selected) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2>
+        {{
+          (selected.confirm
+            ? 'ACTIVITY_REVENUE.CONFIRM_PAYMENT'
+            : 'ACTIVITY_REVENUE.CANCEL_PAYMENT'
+          ) | translate
+        }}
+      </h2>
+      <p>{{ 'ACTIVITY_REVENUE.ACTION_QUESTION' | translate }}</p>
+      <div class="modal-actions">
+        <button type="button" (click)="action.set(null)">
+          {{ 'ACTIVITY_REVENUE.CLOSE' | translate }}</button
+        ><button type="button" class="primary" [disabled]="acting()" (click)="applyAction()">
+          {{ 'ACTIVITY_REVENUE.APPLY' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+@if (proofUrl(); as url) {
+  <div class="modal-backdrop">
+    <div class="modal proof-modal" role="dialog" aria-modal="true">
+      <button
+        type="button"
+        class="close"
+        [attr.aria-label]="'ACTIVITY_REVENUE.CLOSE' | translate"
+        (click)="closeProof()"
+      >
+        ×
+      </button>
+      <h2>{{ 'ACTIVITY_REVENUE.PROOF' | translate }}</h2>
+      <img [src]="url" [alt]="'ACTIVITY_REVENUE.PROOF' | translate" />
+    </div>
+  </div>
+}
+@if (history(); as entries) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button
+        type="button"
+        class="close"
+        [attr.aria-label]="'ACTIVITY_REVENUE.CLOSE' | translate"
+        (click)="history.set(null)"
+      >
+        ×
+      </button>
+      <h2>{{ 'ACTIVITY_REVENUE.HISTORY' | translate }}</h2>
+      @if (entries.length) {
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'ACTIVITY_REVENUE.DATE' | translate }}</th>
+              <th>{{ 'ACTIVITY_REVENUE.ACTOR' | translate }}</th>
+              <th>{{ 'ACTIVITY_REVENUE.EVENT' | translate }}</th>
+              <th>{{ 'ACTIVITY_REVENUE.FROM' | translate }}</th>
+              <th>{{ 'ACTIVITY_REVENUE.TO' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of entries; track $index) {
+              <tr>
+                <td>{{ formatDate(entry.atUtc) }}</td>
+                <td>{{ entry.actor }}</td>
+                <td>{{ 'ACTIVITY_REVENUE.HISTORY_ACTIONS.' + entry.action | translate }}</td>
+                <td>
+                  {{
+                    entry.oldStatus
+                      ? ('ACTIVITY_REVENUE.STATES.' + entry.oldStatus | translate)
+                      : '—'
+                  }}
+                </td>
+                <td>
+                  {{
+                    entry.newStatus
+                      ? ('ACTIVITY_REVENUE.STATES.' + entry.newStatus | translate)
+                      : '—'
+                  }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p>{{ 'ACTIVITY_REVENUE.NO_HISTORY' | translate }}</p>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,244 @@
+<p-dialog
+  [visible]="true"
+  (visibleChange)="!$event && close()"
+  [modal]="true"
+  [style]="{ width: 'min(70rem, 96vw)' }"
+  [header]="'CUSTOMER_STATEMENT.TITLE' | translate"
+  [draggable]="false"
+  [resizable]="false"
+>
+  @if (loading()) {
+    <p>{{ 'CUSTOMER_STATEMENT.LOADING' | translate }}</p>
+  } @else if (failed()) {
+    <p role="alert">{{ 'CUSTOMER_STATEMENT.LOAD_ERROR' | translate }}</p>
+  } @else {
+    @if (statement(); as data) {
+      <div class="statement">
+        <header class="customer-header">
+          <div>
+            <h2>{{ data.customerName }}</h2>
+            <span class="mobile">{{ data.mobile || '—' }}</span>
+          </div>
+          <div>{{ 'CUSTOMER_STATEMENT.OPERATIONS' | translate }}: {{ data.operationCount }}</div>
+          <div>
+            {{ 'CUSTOMER_OPERATIONS.RESTRICTIONS.' + data.customerRestriction | translate }}
+          </div>
+        </header>
+
+        <section>
+          <h3>{{ data.serviceName }}</h3>
+          <div class="facts">
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.TYPE' | translate }}</span
+              ><strong>{{ 'CUSTOMER_OPERATIONS.TYPES.' + data.serviceType | translate }}</strong>
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.PURCHASE_DATE' | translate }}</span
+              ><strong>{{ data.purchase.purchasedAt | date: 'mediumDate' }}</strong>
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.START_DATE' | translate }}</span
+              ><strong>{{ (data.purchase.startsOn | date: 'mediumDate') || '—' }}</strong>
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.END_DATE' | translate }}</span
+              ><strong>{{ (data.purchase.expiresOn | date: 'mediumDate') || '—' }}</strong>
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.PURCHASE_STATUS' | translate }}</span
+              ><strong>{{
+                'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.' + data.purchase.packageStatus | translate
+              }}</strong>
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.PAYMENT_STATUS' | translate }}</span
+              ><strong>{{
+                'CUSTOMER_OPERATIONS.PAYMENT_STATUSES.' + data.purchase.paymentStatus | translate
+              }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="balance-sections">
+          @if (data.sessionBalance; as sessions) {
+            <div>
+              <h3>{{ 'CUSTOMER_STATEMENT.SESSIONS' | translate }}</h3>
+              <div class="facts">
+                <div>
+                  <span>{{ 'CUSTOMER_STATEMENT.TOTAL' | translate }}</span
+                  ><strong>{{ sessions.total }}</strong>
+                </div>
+                <div>
+                  <span>{{ 'CUSTOMER_STATEMENT.USED' | translate }}</span
+                  ><strong>{{ sessions.used }}</strong>
+                </div>
+                <div>
+                  <span>{{ 'CUSTOMER_STATEMENT.REMAINING' | translate }}</span
+                  ><strong>{{ sessions.remaining }}</strong>
+                </div>
+              </div>
+            </div>
+          }
+          @if (data.purchase.pulses; as pulses) {
+            <div>
+              <h3>{{ 'CUSTOMER_STATEMENT.PULSES' | translate }}</h3>
+              <div class="facts">
+                <div>
+                  <span>{{ 'CUSTOMER_STATEMENT.TOTAL' | translate }}</span
+                  ><strong>{{ pulses.total }}</strong>
+                </div>
+                <div>
+                  <span>{{ 'CUSTOMER_STATEMENT.USED' | translate }}</span
+                  ><strong>{{ pulses.used }}</strong>
+                </div>
+                <div>
+                  <span>{{ 'CUSTOMER_STATEMENT.REMAINING' | translate }}</span
+                  ><strong>{{ pulses.remaining }}</strong>
+                </div>
+              </div>
+            </div>
+          }
+        </section>
+
+        <section>
+          <h3>{{ 'CUSTOMER_STATEMENT.FINANCIAL' | translate }}</h3>
+          <div class="facts">
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.PRICE' | translate }}</span
+              ><strong
+                >{{ data.purchase.purchasePrice ?? 0 | number: '1.2-2' }}
+                {{ currency.currencyLabel() }}</strong
+              >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.PAID' | translate }}</span
+              ><strong
+                >{{ data.purchase.amountPaid ?? 0 | number: '1.2-2' }}
+                {{ currency.currencyLabel() }}</strong
+              >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_STATEMENT.OWED' | translate }}</span
+              ><strong
+                >{{ data.purchase.amountRemaining ?? 0 | number: '1.2-2' }}
+                {{ currency.currencyLabel() }}</strong
+              >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_ACTION.REFUNDED' | translate }}</span>
+              <strong
+                >{{ data.purchase.refunded | number: '1.2-2' }}
+                {{ currency.currencyLabel() }}</strong
+              >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_ACTION.NET' | translate }}</span>
+              <strong
+                >{{ data.purchase.netCollected | number: '1.2-2' }}
+                {{ currency.currencyLabel() }}</strong
+              >
+            </div>
+            <div>
+              <span>{{ 'CUSTOMER_OPERATIONS.REFUND_STATUS' | translate }}</span>
+              <strong>{{
+                'CUSTOMER_OPERATIONS.REFUND_STATUSES.' + data.purchase.refundStatus | translate
+              }}</strong>
+            </div>
+          </div>
+          @if (data.firstPayment; as first) {
+            <p class="first-payment">
+              {{ 'CUSTOMER_STATEMENT.FIRST_PAYMENT' | translate }}:
+              {{ first.amount | number: '1.2-2' }} {{ currency.currencyLabel() }} ·
+              {{ first.paidAtUtc | date: 'medium' }} ·
+              {{ 'CUSTOMER_INQUIRY.METHOD.' + first.paymentMethod.toUpperCase() | translate }} ·
+              {{ first.recordedBy || '—' }}
+            </p>
+          }
+        </section>
+
+        <section>
+          <h3>{{ 'CUSTOMER_STATEMENT.COMPLETED_SESSIONS' | translate }}</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.DATE' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.TIME' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.PERFORMER' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.PULSES_USED' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.NOTES' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (session of data.purchase.completedSessions; track $index) {
+                  <tr>
+                    <td>{{ session.sessionNumber }}</td>
+                    <td>{{ session.date | date: 'mediumDate' }}</td>
+                    <td>{{ time(session.startMinutes) }}</td>
+                    <td>{{ session.performer || '—' }}</td>
+                    <td>{{ session.pulsesUsed ?? '—' }}</td>
+                    <td>{{ session.notes || '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="empty">
+                      {{ 'CUSTOMER_STATEMENT.NO_SESSIONS' | translate }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section>
+          <h3>{{ 'CUSTOMER_STATEMENT.INSTALLMENTS' | translate }}</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.DATE' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.AMOUNT' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.METHOD' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.USER' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.NOTES' | translate }}</th>
+                  <th>{{ 'CUSTOMER_STATEMENT.STATUS' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (payment of data.installments; track payment.number) {
+                  <tr>
+                    <td>{{ payment.number }}</td>
+                    <td>{{ (payment.paidAtUtc | date: 'medium') || '—' }}</td>
+                    <td>{{ payment.amount | number: '1.2-2' }} {{ currency.currencyLabel() }}</td>
+                    <td>
+                      {{
+                        payment.paymentMethod
+                          ? ('CUSTOMER_INQUIRY.METHOD.' + payment.paymentMethod.toUpperCase()
+                            | translate)
+                          : '—'
+                      }}
+                    </td>
+                    <td>{{ payment.recordedBy || '—' }}</td>
+                    <td>{{ payment.notes || '—' }}</td>
+                    <td>
+                      {{ 'CUSTOMER_STATEMENT.PAYMENT_STATUSES.' + payment.status | translate }}
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="empty">
+                      {{ 'CUSTOMER_STATEMENT.NO_INSTALLMENTS' | translate }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    }
+  }
+</p-dialog>

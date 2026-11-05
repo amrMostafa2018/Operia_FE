@@ -1,4 +1,4 @@
-# US-07 through US-15 Playwright development fixtures
+# US-07 through US-20 Playwright development fixtures
 
 Run from `Operia_FE` in PowerShell:
 
@@ -9,13 +9,14 @@ npm run test:e2e -- e2e/us-07.spec.ts e2e/us-08.spec.ts e2e/us-09.spec.ts e2e/us
 npm run test:e2e -- e2e/us-13.spec.ts
 npm run test:e2e -- e2e/us-14.spec.ts
 npm run test:e2e -- e2e/us-15.spec.ts
+npm run test:e2e -- e2e/us-16.spec.ts e2e/us-17.spec.ts e2e/us-18.spec.ts e2e/us-20.spec.ts
 ```
 
 Playwright starts the Development API on port 5151 and Angular on port 4201. The backend uses the existing local `(localdb)\OperiaDev` instance and `Operia_Dev` database. Set both values before each run; the backend resets all three reserved users to the supplied password. No test credential is committed.
 
 The current merged authentication baseline still generates `111111` instead of reading `OtpSettings:DevelopmentCode`. Until that pre-existing mismatch is corrected, set `OPERIA_E2E_OTP` to `111111`; the Playwright setting remains wired so the suite does not need another change when configurable Development OTP support is restored.
 
-`sqlcmd` must be on `PATH`. The US-13 through US-15 suites use read-only SQL assertions against the reserved LocalDB tenant to verify persisted sale, collection, customer, and booking state. The older US-07 through US-12 specs were carried forward from their fixture branch; they were not rerun on the US-15 schema. That branch removed the legacy `CustomerPackageInstallments` table, so their table-specific assertions require separate reconciliation.
+`sqlcmd` must be on `PATH`. The suites use read-only SQL assertions against the reserved LocalDB tenants to verify persisted sale, collection, customer, purchase, and booking state. The merged Phase 3.1 schema includes `CustomerPackageInstallments`; the full Playwright suite was rerun against it.
 
 The Development-only backend seed restores two reserved tenants on each test run:
 
@@ -50,6 +51,11 @@ The Development-only backend seed restores two reserved tenants on each test run
 | Free booking service        | `e2e70000-0000-4000-8000-000000000090` |
 | Pending success sale        | `e2e70000-0000-4000-8000-000000000091` |
 | Pending failure sale        | `e2e70000-0000-4000-8000-000000000092` |
+| US-20 statement sale        | `e2e70000-0000-4000-8000-000000000180` |
+| US-20 selected purchase     | `e2e70000-0000-4000-8000-000000000181` |
+| US-20 completed booking     | `e2e70000-0000-4000-8000-000000000188` |
+| US-20 future booking        | `e2e70000-0000-4000-8000-000000000189` |
+| US-20 cancelled booking     | `e2e70000-0000-4000-8000-000000000190` |
 
 The Staff identity has the real `Staff` role, is active, belongs to the seeded branch, and has a seven-day schedule. The All Staff offer backs the two distinct US-09 purchases. The selected-staff offer is assigned only to the seeded Staff employee and backs the US-10 installment purchase. The pulse offer backs a separate 8,000-pulse purchase. Every purchase stores an immutable offer snapshot.
 
@@ -74,6 +80,15 @@ The runner refuses to reuse an API or Angular server on its dedicated ports. Sto
 - `us-13.spec.ts` creates two separate direct service sales through quote and confirmation, checks their shared ledger and absent personal data, rejects packages and owned balances, and checks that switching UI modes clears a selected registered customer.
 - `us-14.spec.ts` starts collection cases from two distinct pending installment sales, confirms or fails collection through the real API, and verifies due-now revenue, retry behavior, no fabricated booking, and Book Now recovery. A separate API-confirmed sale proves that an uncollected sale remains pending.
 - `us-15.spec.ts` finds and books the seeded registered customer, registers a new customer through the real API before booking, rejects a normalized duplicate and a failed registration, and books a direct customer with a standalone service.
+- `us-20.spec.ts` requests one selected purchase's statement through the real API, verifies its saved price, separate first payment, paid and unpaid numbered installments, completed execution, and tenant scope. The selected sale belongs to tenant A's primary branch; the future and cancelled bookings reserve the same purchase but do not appear as executions.
+
+## US-19 and US-20 fixture boundary
+
+US-19 bulk import is absent from this branch. The Customers screen still has disabled upload and template buttons, and the backend has no import endpoint. No import result or fake upload response is seeded. Versioned valid, duplicate, and invalid import files, plus real Playwright submissions, belong with the future US-19 workflow implementation.
+
+US-20 uses customer `...006`, selected purchase `...181`, sale `...180`, and branch `...004`. Its saved installment purchase is 2,000 EGP: the initial sale collection is 500 EGP, installment 1 is a separate confirmed 500 EGP collection, and installments 2 and 3 are unpaid. Session 1 has a completed booking with a `Closed` history record; session 2 is booked in the future; session 3 has a cancelled booking and released reservation. The statement must show only session 1 as executed. A different purchase for the same customer already exists, so the statement test names the selected purchase explicitly. The reserved-tenant reset deletes refund movements and the new statement rows along with the existing dependent records, then restores only the prerequisites on every run.
+
+On 2026-11-05, the merged full Playwright suite passed twice after separate reserved-tenant resets: 40 passed and the existing US-06 test skipped on each run. The backend Application test suite passed 231 tests with 14 existing skips; all 70 frontend unit tests and the frontend production build passed.
 
 ## US-13 through US-15 fixture boundary
 

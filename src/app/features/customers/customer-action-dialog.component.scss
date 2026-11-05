@@ -1,0 +1,102 @@
+.action-content {
+  color: #171a43;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+header,
+.figures,
+footer {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+header {
+  justify-content: space-between;
+}
+.mobile {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+section {
+  border-top: 1px solid #e5e7f0;
+  padding: 1rem 0;
+  margin-top: 1rem;
+}
+h3,
+p {
+  margin: 0 0 0.7rem;
+}
+h3 {
+  font-size: 1rem;
+}
+.figures div {
+  flex: 1;
+  min-width: 9rem;
+  padding: 0.6rem;
+  background: #f7f8fc;
+  border-radius: 6px;
+}
+.figures span,
+.figures strong {
+  display: block;
+}
+.figures span {
+  color: #69718b;
+  font-size: 0.8rem;
+}
+.hint {
+  color: #69718b;
+  font-size: 0.85rem;
+}
+form {
+  display: grid;
+  gap: 0.7rem;
+}
+label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+.check {
+  display: flex;
+  align-items: center;
+}
+input,
+textarea,
+button {
+  font: inherit;
+  border: 1px solid #dfe2ef;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+textarea {
+  resize: vertical;
+}
+button {
+  justify-self: start;
+  background: #2520cd;
+  color: white;
+  cursor: pointer;
+}
+button.danger {
+  background: #b72d38;
+  border-color: #b72d38;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+footer {
+  justify-content: flex-end;
+  border-top: 1px solid #e5e7f0;
+  padding-top: 1rem;
+}
+footer button {
+  background: white;
+  color: #171a43;
+}
+.field-error {
+  color: #c02b38;
+}

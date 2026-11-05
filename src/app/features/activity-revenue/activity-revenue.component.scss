@@ -10,6 +10,111 @@
   p {
     color: var(--text-secondary);
   }
+
+  header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.filters {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 0;
+
+  label {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 9rem;
+  }
+}
+
+.branch-filter,
+.filters label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 12rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+
+  select,
+  input {
+    padding: 0.65rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 0.5rem;
+    background: var(--surface-card);
+    color: var(--text-color);
+  }
+}
+
+.field-error {
+  flex-basis: 100%;
+  color: #bd2432;
+}
+
+.revenue-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 0.75rem;
+
+  article {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 1.25rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+  }
+
+  strong {
+    font-size: 1.65rem;
+    color: var(--text-color);
+  }
+
+  small {
+    color: var(--text-secondary);
+  }
+}
+
+.card-icon {
+  align-self: flex-start;
+  padding: 0.55rem;
+  border-radius: 0.5rem;
+  background: #f1edff;
+  color: #5134ce;
+}
+
+.net-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--surface-ground);
+}
+
+.load-error {
+  padding: 1rem 0;
+}
+
+@media (max-width: 900px) {
+  .revenue-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .revenue-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .table-scroll {
@@ -33,10 +138,131 @@ table {
 
 footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 1rem;
   padding: 1rem;
+}
+
+.table-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  h2 {
+    font-size: 1rem;
+  }
+}
+
+.state {
+  padding: 1.5rem;
+  text-align: center;
+}
+.refund-amount {
+  color: #b42332;
+}
+.status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.35rem;
+  background: #e6f5eb;
+  color: #1f7a43;
+  white-space: nowrap;
+
+  &.pending {
+    background: #fff0dc;
+    color: #a65e08;
+  }
+  &.failed {
+    background: #f5ecee;
+    color: #9b3040;
+  }
+  &.refunded {
+    background: #fae8ea;
+    color: #b42332;
+  }
+}
+
+.row-menu {
+  position: relative;
+  summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 0.25rem 0.6rem;
+  }
+  > div {
+    position: absolute;
+    z-index: 3;
+    inset-inline-end: 0;
+    min-width: 10rem;
+    padding: 0.25rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 0.5rem;
+    background: var(--surface-card);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 10%);
+  }
+  button {
+    display: block;
+    width: 100%;
+    text-align: start;
+    border: 0;
+  }
+}
+
+.link-button {
+  border: 0;
+  color: #4d2dcc;
+  text-decoration: underline;
+}
+.primary {
+  background: #4b13e2;
+  color: #fff;
+  border-color: #4b13e2;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 45%);
+}
+
+.modal {
+  position: relative;
+  width: min(100%, 42rem);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--surface-card);
+
+  h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+  }
+  .close {
+    position: absolute;
+    inset-inline-end: 1rem;
+    top: 1rem;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+}
+
+.proof-modal img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
 }
 
 button {
