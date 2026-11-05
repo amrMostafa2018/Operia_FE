@@ -45,6 +45,7 @@ import { ConfirmSaleResult } from '@app/features/sales/sale.service';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import { CustomerInquiryDialogComponent } from './customer-inquiry-dialog/customer-inquiry-dialog.component';
 import { MOCK_STATS, StatCard } from './models/dashboard.model';
+import { DashboardRevenueService } from './dashboard-revenue.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -73,6 +74,7 @@ export class DashboardComponent {
   private readonly languageService = inject(LanguageService);
   private readonly permissions = inject(PermissionService);
   private readonly bookingService = inject(BookingService);
+  private readonly revenueService = inject(DashboardRevenueService);
   private readonly toast = inject(MessageService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
@@ -84,7 +86,12 @@ export class DashboardComponent {
   readonly canExport = computed(() => this.permissions.hasPermission(Policies.DashboardExport));
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
 
-  readonly stats: StatCard[] = MOCK_STATS;
+  readonly stats = signal<StatCard[]>(
+    MOCK_STATS.map(stat => ({
+      ...stat,
+      value: stat.isCurrency ? 0 : stat.value,
+    }))
+  );
   readonly allBookings = signal<Booking[]>([]);
 
   readonly dateFrom = signal<Date | null>(new Date());
@@ -173,6 +180,7 @@ export class DashboardComponent {
 
   constructor() {
     this.loadBookings();
+    this.loadRevenue();
     this.bookingService
       .getEmployees()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -186,6 +194,26 @@ export class DashboardComponent {
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('DASHBOARD.PAGE_REPORT'));
     });
+  }
+
+  private loadRevenue(): void {
+    this.revenueService
+      .current()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: revenue =>
+          this.stats.update(stats =>
+            stats.map(stat => ({
+              ...stat,
+              value:
+                stat.labelKey === 'DASHBOARD.TODAY_REVENUE'
+                  ? revenue.today
+                  : stat.labelKey === 'DASHBOARD.MONTHLY_REVENUE_TOTAL'
+                    ? revenue.month
+                    : stat.value,
+            }))
+          ),
+      });
   }
 
   formatStatValue(stat: StatCard): string {
@@ -291,11 +319,19 @@ export class DashboardComponent {
     this.sellOpen.set(false);
   }
 
-  onSaleConfirmed(_result: ConfirmSaleResult): void {
+  onSaleConfirmed(result: ConfirmSaleResult): void {
+    this.loadRevenue();
     this.toast.add({
       severity: 'success',
       summary: 'OPERIA',
-      detail: this.translate.instant('SALE_BUILDER.CONFIRMED'),
+      detail:
+        this.translate.instant(
+          result.status === 'Booked'
+            ? 'SALE_BUILDER.BOOKED'
+            : result.status === 'Closed'
+              ? 'SALE_BUILDER.CLOSED'
+              : 'SALE_BUILDER.CONFIRMED'
+        ) + (result.status === 'ReadyToBook' ? ` ${result.saleId}` : ''),
     });
     this.closeSellDialog();
   }

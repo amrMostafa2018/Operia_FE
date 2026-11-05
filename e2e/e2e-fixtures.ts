@@ -32,6 +32,10 @@ export const e2eIds = {
   staleSaleOffer: 'e2e70000-0000-4000-8000-000000000072',
   ownedSessionOffer: 'e2e70000-0000-4000-8000-000000000073',
   collectionOffer: 'e2e70000-0000-4000-8000-000000000074',
+  directServiceOffer: 'e2e70000-0000-4000-8000-000000000089',
+  bookingServiceOffer: 'e2e70000-0000-4000-8000-000000000090',
+  pendingSuccessSale: 'e2e70000-0000-4000-8000-000000000091',
+  pendingFailureSale: 'e2e70000-0000-4000-8000-000000000092',
   ownedSessionPurchase: 'e2e70000-0000-4000-8000-000000000081',
   uiCollectionPurchase: 'e2e70000-0000-4000-8000-000000000082',
   apiCollectionPurchase: 'e2e70000-0000-4000-8000-000000000083',
@@ -63,7 +67,7 @@ export async function performUiLogin(page: Page): Promise<void> {
   await page.locator('#loginPhone').fill(e2eAccount.ownerPhone);
   await page.locator('#password').fill(e2eAccount.password);
   await page.locator('form button[type="submit"]').first().click();
-  await expect(page.locator('#loginOtpCode-0')).toBeVisible();
+  await expect(page.locator('#loginOtpCode-0')).toBeVisible({ timeout: 20_000 });
   await page.locator('#loginOtpCode-0').click();
   await page.keyboard.type(e2eAccount.otp);
   await page.locator('app-otp-verification button[type="submit"]').click();

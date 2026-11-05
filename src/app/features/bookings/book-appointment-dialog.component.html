@@ -73,77 +73,148 @@
       {{ 'BOOKINGS.BOOK.CLIENT_SECTION' | translate }}
     </h4>
 
-    <form class="client-form" [formGroup]="clientForm">
-      <div class="field field--phone">
-        <label for="booking-client-mobile">{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
-        <span class="phone-row phone-row--intl phone-row--filter" dir="ltr">
-          <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
-          <ngx-intl-tel-input
-            [cssClass]="phoneInputCssClass"
-            [onlyCountries]="onlyCountries"
-            [selectedCountryISO]="selectedCountryISO()"
-            [enableAutoCountrySelect]="false"
-            [enablePlaceholder]="true"
-            [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
-            [searchCountryFlag]="false"
-            [selectFirstCountry]="false"
-            [separateDialCode]="true"
-            [phoneValidation]="true"
-            inputId="booking-client-mobile"
-            [formControl]="mobileControl"
-            (countryChange)="onMobileCountryChange($event)"
+    <div
+      class="customer-modes"
+      role="group"
+      [attr.aria-label]="'BOOKINGS.BOOK.CLIENT_SECTION' | translate"
+    >
+      <button
+        type="button"
+        [class.active]="customerMode() === 'registered'"
+        (click)="setCustomerMode('registered')"
+      >
+        {{ 'BOOKINGS.BOOK.MODE_REGISTERED' | translate }}
+      </button>
+      <button
+        type="button"
+        [class.active]="customerMode() === 'new'"
+        [disabled]="!canRegisterCustomer()"
+        (click)="setCustomerMode('new')"
+      >
+        {{ 'BOOKINGS.BOOK.MODE_NEW' | translate }}
+      </button>
+      <button
+        type="button"
+        [class.active]="customerMode() === 'direct'"
+        (click)="setCustomerMode('direct')"
+      >
+        {{ 'BOOKINGS.BOOK.MODE_DIRECT' | translate }}
+      </button>
+    </div>
+
+    @if (customerMode() === 'direct') {
+      <p class="direct-customer-hint">{{ 'BOOKINGS.BOOK.DIRECT_HINT' | translate }}</p>
+    } @else {
+      @if (customerMode() === 'registered') {
+        <div class="customer-name-search">
+          <input
+            pInputText
+            [value]="customerNameSearch()"
+            (input)="customerNameSearch.set($any($event.target).value)"
+            [placeholder]="'BOOKINGS.BOOK.SEARCH_NAME' | translate"
           />
-        </span>
-        @if (mobileError(); as errorKey) {
-          <small class="field-error">{{ errorKey | translate }}</small>
-        }
-        @if (matchedClient(); as client) {
-          <span class="client-badge registered">
-            <i class="pi pi-check-circle"></i>
-            {{ 'BOOKINGS.BOOK.REGISTERED' | translate }}
+          <button type="button" (click)="searchCustomerName()">
+            {{ 'COMMON.SEARCH' | translate }}
+          </button>
+          @for (result of customerNameResults(); track result.id) {
+            <button type="button" class="customer-result" (click)="selectCustomer(result)">
+              {{ result.fullName }} · {{ result.mobileNumber }}
+            </button>
+          }
+        </div>
+      }
+
+      <form class="client-form" [formGroup]="clientForm">
+        <div class="field field--phone">
+          <label for="booking-client-mobile">{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
+          <span class="phone-row phone-row--intl phone-row--filter" dir="ltr">
+            <i class="pi pi-phone phone-row-icon" aria-hidden="true"></i>
+            <ngx-intl-tel-input
+              [cssClass]="phoneInputCssClass"
+              [onlyCountries]="onlyCountries"
+              [selectedCountryISO]="selectedCountryISO()"
+              [enableAutoCountrySelect]="false"
+              [enablePlaceholder]="true"
+              [customPlaceholder]="'AUTH.LOGIN_PAGE.PHONE_PLACEHOLDER' | translate"
+              [searchCountryFlag]="false"
+              [selectFirstCountry]="false"
+              [separateDialCode]="true"
+              [phoneValidation]="true"
+              inputId="booking-client-mobile"
+              [formControl]="mobileControl"
+              (countryChange)="onMobileCountryChange($event)"
+            />
           </span>
-        } @else if (customerLookupPending()) {
-          <span class="client-badge">
-            <i class="pi pi-spin pi-spinner"></i>
-            {{ 'APP.LOADING' | translate }}
+          @if (mobileError(); as errorKey) {
+            <small class="field-error">{{ errorKey | translate }}</small>
+          }
+          @if (matchedClient(); as client) {
+            <span class="client-badge registered">
+              <i class="pi pi-check-circle"></i>
+              {{ 'BOOKINGS.BOOK.REGISTERED' | translate }}
+            </span>
+          } @else if (customerLookupPending()) {
+            <span class="client-badge">
+              <i class="pi pi-spin pi-spinner"></i>
+              {{ 'APP.LOADING' | translate }}
+            </span>
+          } @else if (clientForm.controls.mobile.value) {
+            <span class="client-badge unregistered">
+              {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
+            </span>
+          }
+        </div>
+        <div class="field">
+          <label for="booking-client-name">{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
+          <span class="input-icon-wrap">
+            <i class="pi pi-user"></i>
+            <input
+              id="booking-client-name"
+              pInputText
+              formControlName="name"
+              [readonly]="customerMode() === 'registered'"
+            />
           </span>
-        } @else if (clientForm.controls.mobile.value) {
-          <span class="client-badge unregistered">
-            {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
-          </span>
+          @if (nameError(); as errorKey) {
+            <small class="field-error">{{ errorKey | translate }}</small>
+          }
+        </div>
+        @if (customerMode() === 'registered') {
+          <div class="field field-package">
+            <label for="booking-client-package">{{
+              'BOOKINGS.BOOK.PACKAGE_SELECT' | translate
+            }}</label>
+            <p-multiSelect
+              inputId="booking-client-package"
+              [options]="packageOptions()"
+              [ngModel]="selectedPackageIds()"
+              (ngModelChange)="onPackageIdsChange($event)"
+              [ngModelOptions]="{ standalone: true }"
+              optionLabel="label"
+              optionValue="value"
+              display="chip"
+              appendTo="body"
+              [filter]="packageOptions().length > 5"
+              [maxSelectedLabels]="3"
+              [selectedItemsLabel]="'BOOKINGS.BOOK.PACKAGE_SELECTED_COUNT' | translate"
+              [placeholder]="'BOOKINGS.BOOK.PACKAGE_SELECT_PLACEHOLDER' | translate"
+              styleClass="booking-package-multiselect"
+              panelStyleClass="booking-package-multiselect-panel"
+            />
+          </div>
         }
-      </div>
-      <div class="field">
-        <label for="booking-client-name">{{ 'BOOKINGS.BOOK.CLIENT_NAME' | translate }}</label>
-        <span class="input-icon-wrap">
-          <i class="pi pi-user"></i>
-          <input id="booking-client-name" pInputText formControlName="name" />
-        </span>
-        @if (nameError(); as errorKey) {
-          <small class="field-error">{{ errorKey | translate }}</small>
-        }
-      </div>
-      <div class="field field-package">
-        <label for="booking-client-package">{{ 'BOOKINGS.BOOK.PACKAGE_SELECT' | translate }}</label>
-        <p-multiSelect
-          inputId="booking-client-package"
-          [options]="packageOptions()"
-          [ngModel]="selectedPackageIds()"
-          (ngModelChange)="onPackageIdsChange($event)"
-          [ngModelOptions]="{ standalone: true }"
-          optionLabel="label"
-          optionValue="value"
-          display="chip"
-          appendTo="body"
-          [filter]="packageOptions().length > 5"
-          [maxSelectedLabels]="3"
-          [selectedItemsLabel]="'BOOKINGS.BOOK.PACKAGE_SELECTED_COUNT' | translate"
-          [placeholder]="'BOOKINGS.BOOK.PACKAGE_SELECT_PLACEHOLDER' | translate"
-          styleClass="booking-package-multiselect"
-          panelStyleClass="booking-package-multiselect-panel"
-        />
-      </div>
-    </form>
+      </form>
+      @if (customerMode() === 'new') {
+        <button
+          type="button"
+          class="register-customer-btn"
+          [disabled]="registering()"
+          (click)="registerCustomer()"
+        >
+          {{ 'BOOKINGS.BOOK.REGISTER_CUSTOMER' | translate }}
+        </button>
+      }
+    }
 
     @for (pkg of selectedClientPackages(); track pkg.packageId) {
       <div class="package-stats">
@@ -335,7 +406,7 @@
               <p-dropdown
                 inputId="book-unlisted-offer-type"
                 formControlName="offerType"
-                [options]="offerTypeOptions"
+                [options]="offerTypeOptions()"
                 optionLabel="label"
                 optionValue="value"
                 appendTo="body"
@@ -583,7 +654,9 @@
     <button
       type="button"
       class="confirm-btn"
-      [disabled]="customerLookupPending() || saving()"
+      [disabled]="
+        customerLookupPending() || customerSelectionLoading() || registering() || saving()
+      "
       (click)="submit()"
     >
       <i

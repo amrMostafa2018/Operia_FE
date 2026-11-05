@@ -103,6 +103,7 @@ interface PendingBookingDraft {
   clientName: string;
   clientMobile: string;
   clientId: string | null;
+  directCustomer: boolean;
   lineItems: BookingLineItem[];
   serviceDuration: number;
   paymentMethod: PaymentMethodId | null;
@@ -1040,7 +1041,7 @@ export class AppointmentsComponent {
 
   /** Sends a registered customer's booking with an idempotency key and current selections. */
   private commitBooking(payload: PendingBookingDraft): void {
-    if (!payload.clientId) {
+    if (!payload.clientId && !payload.directCustomer) {
       this.showToast('BOOKINGS.BOOK.CUSTOMER_NOT_REGISTERED', 'error');
       return;
     }
@@ -1064,6 +1065,7 @@ export class AppointmentsComponent {
       .create({
         idempotencyKey: requestKey,
         customerId: payload.clientId,
+        directCustomer: payload.directCustomer,
         branchId: payload.selection.branchId,
         employeeId: payload.selection.employeeId,
         scheduledDate: toDateKey(payload.selection.date),

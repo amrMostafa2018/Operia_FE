@@ -8,7 +8,6 @@
     <PackageJsonScriptsBuild Condition="$(PackageJsonScriptsBuild) == ''">ng build</PackageJsonScriptsBuild>
     <PackageJsonScriptsWatch Condition="$(PackageJsonScriptsWatch) == ''">ng build --watch --configuration development</PackageJsonScriptsWatch>
     <PackageJsonScriptsTest Condition="$(PackageJsonScriptsTest) == ''">ng test</PackageJsonScriptsTest>
-    <PackageJsonScriptsTestE2e Condition="$(PackageJsonScriptsTestE2e) == ''">playwright test</PackageJsonScriptsTestE2e>
     <PackageJsonScriptsLint Condition="$(PackageJsonScriptsLint) == ''">ng lint</PackageJsonScriptsLint>
     <PackageJsonScriptsFormat Condition="$(PackageJsonScriptsFormat) == ''">prettier --write "src/**/*.{ts,html,scss,json}"</PackageJsonScriptsFormat>
     <PackageJsonScriptsPrepare Condition="$(PackageJsonScriptsPrepare) == ''">husky</PackageJsonScriptsPrepare>
@@ -37,9 +36,8 @@
     <PackageJsonDevdependenciesAngularDevkitBuildAngular Condition="$(PackageJsonDevdependenciesAngularDevkitBuildAngular) == ''">^18.2.21</PackageJsonDevdependenciesAngularDevkitBuildAngular>
     <PackageJsonDevdependenciesAngularCli Condition="$(PackageJsonDevdependenciesAngularCli) == ''">^18.2.21</PackageJsonDevdependenciesAngularCli>
     <PackageJsonDevdependenciesAngularCompilerCli Condition="$(PackageJsonDevdependenciesAngularCompilerCli) == ''">^18.2.0</PackageJsonDevdependenciesAngularCompilerCli>
-    <PackageJsonDevdependenciesPlaywrightTest Condition="$(PackageJsonDevdependenciesPlaywrightTest) == ''">^1.64.1</PackageJsonDevdependenciesPlaywrightTest>
     <PackageJsonDevdependenciesTypesJasmine Condition="$(PackageJsonDevdependenciesTypesJasmine) == ''">~5.1.0</PackageJsonDevdependenciesTypesJasmine>
-    <PackageJsonDevdependenciesAngularEslint Condition="$(PackageJsonDevdependenciesAngularEslint) == ''">^18.4.3</PackageJsonDevdependenciesAngularEslint>
+    <PackageJsonDevdependenciesAngularEslint Condition="$(PackageJsonDevdependenciesAngularEslint) == ''">21.0.1</PackageJsonDevdependenciesAngularEslint>
     <PackageJsonDevdependenciesEslint Condition="$(PackageJsonDevdependenciesEslint) == ''">^9.39.1</PackageJsonDevdependenciesEslint>
     <PackageJsonDevdependenciesEslintConfigPrettier Condition="$(PackageJsonDevdependenciesEslintConfigPrettier) == ''">^10.1.5</PackageJsonDevdependenciesEslintConfigPrettier>
     <PackageJsonDevdependenciesHusky Condition="$(PackageJsonDevdependenciesHusky) == ''">^9.1.7</PackageJsonDevdependenciesHusky>

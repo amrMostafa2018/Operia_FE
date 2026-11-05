@@ -1,0 +1,68 @@
+<section class="customer-ledger">
+  <header>
+    <div>
+      <h1>{{ 'CUSTOMER_LEDGER.TITLE' | translate }}</h1>
+      <p>{{ 'CUSTOMER_LEDGER.SUBTITLE' | translate }}</p>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading()">
+      <i class="pi pi-refresh"></i> {{ 'CUSTOMER_LEDGER.REFRESH' | translate }}
+    </button>
+  </header>
+
+  @if (loading()) {
+    <p class="empty">{{ 'CUSTOMER_LEDGER.LOADING' | translate }}</p>
+  } @else if (ledger()) {
+    <article class="ledger-record">
+      <div class="record-heading">
+        <span class="record-icon"><i class="pi pi-users"></i></span>
+        <div>
+          <h2>{{ 'CUSTOMER_LEDGER.DIRECT_CUSTOMER' | translate }}</h2>
+          <small>{{ ledger()!.totalSales }} {{ 'CUSTOMER_LEDGER.SALES' | translate }}</small>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'CUSTOMER_LEDGER.REFERENCE' | translate }}</th>
+              <th>{{ 'CUSTOMER_LEDGER.DATE' | translate }}</th>
+              <th>{{ 'CUSTOMER_LEDGER.ITEMS' | translate }}</th>
+              <th>{{ 'CUSTOMER_LEDGER.AMOUNT' | translate }}</th>
+              <th>{{ 'CUSTOMER_LEDGER.CASHIER' | translate }}</th>
+              <th>{{ 'CUSTOMER_LEDGER.STATUS' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sale of ledger()!.sales; track sale.saleId) {
+              <tr>
+                <td>{{ sale.saleId }}</td>
+                <td>{{ sale.createdAt | date: 'medium' }}</td>
+                <td>{{ sale.items.join('، ') }}</td>
+                <td>{{ sale.amount }} {{ currency.currencyLabel() }}</td>
+                <td>{{ sale.cashierId || '—' }}</td>
+                <td>{{ 'CUSTOMER_LEDGER.STATUSES.' + sale.status | translate }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (ledger()!.totalSales > 20) {
+        <nav class="pagination" [attr.aria-label]="'CUSTOMER_LEDGER.PAGES' | translate">
+          <button type="button" [disabled]="page() === 1" (click)="changePage(page() - 1)">
+            {{ 'CUSTOMER_LEDGER.PREVIOUS' | translate }}
+          </button>
+          <span>{{ page() }}</span>
+          <button
+            type="button"
+            [disabled]="page() * 20 >= ledger()!.totalSales"
+            (click)="changePage(page() + 1)"
+          >
+            {{ 'CUSTOMER_LEDGER.NEXT' | translate }}
+          </button>
+        </nav>
+      }
+    </article>
+  } @else {
+    <p class="empty">{{ 'CUSTOMER_LEDGER.EMPTY' | translate }}</p>
+  }
+</section>

@@ -24,6 +24,7 @@ export interface SaleQuoteRequest {
   customerId: string | null;
   branchId: string | null;
   items: SaleDraftItem[];
+  directCustomer: boolean;
 }
 
 export interface SaleQuoteLine {
@@ -50,12 +51,12 @@ export interface SaleQuote {
 }
 
 export interface ConfirmSaleRequest extends SaleQuoteRequest {
-  customerId: string;
   branchId: string;
   paymentMethod: string | null;
   expectedGrandTotal: number;
   expectedDueNow: number;
   idempotencyKey: string;
+  disposition: 'Close' | 'Later' | 'BookNow';
 }
 
 export interface ConfirmSaleResult {
@@ -63,6 +64,42 @@ export interface ConfirmSaleResult {
   status: string;
   grandTotal: number;
   dueNow: number;
+}
+
+export interface SaleState {
+  saleId: string;
+  status: string;
+  disposition: 'Close' | 'Later' | 'BookNow';
+  branchId: string;
+  durationMinutes: number;
+  grandTotal: number;
+  dueNow: number;
+  collectionId: string | null;
+  paymentConfirmed: boolean;
+  bookingId: string | null;
+}
+
+export interface CollectSaleResult {
+  saleId: string;
+  collectionId: string;
+  paymentConfirmed: boolean;
+  amountCollected: number;
+  saleStatus: string;
+}
+
+export interface BookSaleRequest {
+  saleId: string;
+  employeeId: string;
+  scheduledDate: string;
+  startMinutes: number;
+  endMinutes: number;
+}
+
+export interface BookSaleResult {
+  saleId: string;
+  bookingId: string | null;
+  status: 'Booked' | 'BookingPending';
+  recoveryCode: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -98,5 +135,25 @@ export class SaleService {
 
   confirm(request: ConfirmSaleRequest): Observable<ConfirmSaleResult> {
     return this.http.post<ConfirmSaleResult>(`${this.url}/confirm`, request);
+  }
+
+  state(saleId: string): Observable<SaleState> {
+    return this.http.get<SaleState>(`${this.url}/${encodeURIComponent(saleId)}`);
+  }
+
+  collect(
+    saleId: string,
+    idempotencyKey: string,
+    paymentConfirmed: boolean
+  ): Observable<CollectSaleResult> {
+    return this.http.post<CollectSaleResult>(`${this.url}/collect`, {
+      saleId,
+      idempotencyKey,
+      paymentConfirmed,
+    });
+  }
+
+  book(request: BookSaleRequest): Observable<BookSaleResult> {
+    return this.http.post<BookSaleResult>(`${this.url}/book`, request);
   }
 }

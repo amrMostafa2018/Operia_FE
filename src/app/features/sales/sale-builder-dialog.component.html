@@ -24,7 +24,97 @@
     </div>
   </ng-template>
 
-  @if (pendingConfirmation()) {
+  @if (activeSale(); as sale) {
+    <section class="sale-recovery">
+      <h3>{{ 'SALE_BUILDER.SAVED_SALE' | translate }}</h3>
+      <p class="sale-reference">
+        {{ 'SALE_BUILDER.SALE_REFERENCE' | translate }}: {{ sale.saleId }}
+      </p>
+      <p>{{ 'SALE_BUILDER.SAVED_TRACE' | translate }}</p>
+      @if (!sale.paymentConfirmed) {
+        <div class="summary-row due">
+          <span>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</span>
+          <strong>{{ sale.dueNow }} {{ currency.currencyLabel() }}</strong>
+        </div>
+        <p>{{ 'SALE_BUILDER.RECEIPT_DECISION' | translate }}</p>
+        <div class="actions">
+          <button
+            type="button"
+            class="outline-button"
+            [disabled]="saving()"
+            (click)="collect(false)"
+          >
+            {{ 'SALE_BUILDER.PAYMENT_FAILED' | translate }}
+          </button>
+          <button
+            type="button"
+            class="primary-button"
+            [disabled]="saving()"
+            (click)="collect(true)"
+          >
+            {{ 'SALE_BUILDER.PAYMENT_RECEIVED' | translate }}
+          </button>
+        </div>
+      } @else if (bookingRequested()) {
+        <h3>{{ 'SALE_BUILDER.BOOK_NOW' | translate }}</h3>
+        <p>{{ 'SALE_BUILDER.COLLECTION_SAVED' | translate }}</p>
+        <form class="booking-form" [formGroup]="bookingForm" (ngSubmit)="book()">
+          <div class="field">
+            <label for="sale-employee">{{ 'SALE_BUILDER.EMPLOYEE' | translate }}</label>
+            <p-dropdown
+              inputId="sale-employee"
+              formControlName="employeeId"
+              [options]="bookableEmployees()"
+              optionLabel="fullName"
+              optionValue="id"
+              [placeholder]="'SALE_BUILDER.EMPLOYEE_SELECT' | translate"
+              appendTo="body"
+            />
+            @if (bookingError('employeeId'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          </div>
+          <div class="field">
+            <label for="sale-book-date">{{ 'SALE_BUILDER.BOOK_DATE' | translate }}</label>
+            <input id="sale-book-date" type="date" formControlName="scheduledDate" />
+            @if (bookingError('scheduledDate'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          </div>
+          <div class="field">
+            <label for="sale-book-start">{{ 'SALE_BUILDER.BOOK_START' | translate }}</label>
+            <input id="sale-book-start" type="time" formControlName="startTime" />
+            @if (bookingError('startTime'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          </div>
+          <p>
+            {{ 'SALE_BUILDER.BOOK_DURATION' | translate }}: {{ sale.durationMinutes }}
+            {{ 'SALE_BUILDER.MINUTES' | translate }}
+          </p>
+          <button type="submit" class="primary-button" [disabled]="saving()">
+            {{ 'SALE_BUILDER.RETRY_BOOKING' | translate }}
+          </button>
+        </form>
+      } @else {
+        <p>{{ 'SALE_BUILDER.COLLECTION_SAVED' | translate }}</p>
+        @if (sale.status === 'ReadyToBook' && canBookNow()) {
+          <button type="button" class="outline-button" (click)="startBooking()">
+            {{ 'SALE_BUILDER.BOOK_SAVED_SALE' | translate }}
+          </button>
+        }
+        <button type="button" class="primary-button" (click)="complete(sale.status)">
+          {{ 'SALE_BUILDER.DONE' | translate }}
+        </button>
+      }
+      <button type="button" class="outline-button" [disabled]="saving()" (click)="startNewSale()">
+        {{ 'SALE_BUILDER.NEW_SALE' | translate }}
+      </button>
+      @if (recoveryError(); as error) {
+        <small class="field-error">{{ error }}</small>
+      }
+    </section>
+  } @else if (pendingConfirmation()) {
     <section class="confirmation-recovery" [class.loading]="saving()" role="status">
       @if (saving()) {
         <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
@@ -34,35 +124,100 @@
         <h3>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN_TITLE' | translate }}</h3>
         <p>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN' | translate }}</p>
       }
+      <div class="actions">
+        <button type="button" class="outline-button" [disabled]="saving()" (click)="closed.emit()">
+          {{ 'COMMON.CANCEL' | translate }}
+        </button>
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="saving()"
+          (click)="retryConfirmation()"
+        >
+          {{ 'SALE_BUILDER.RETRY_CONFIRMATION' | translate }}
+        </button>
+      </div>
     </section>
   } @else {
-    <form class="customer-row" [formGroup]="customerForm" (ngSubmit)="searchCustomer()">
-      <div class="field mobile-field">
-        <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
-        <div class="mobile-search">
-          <input pInputText id="sale-mobile" formControlName="mobile" (input)="mobileChanged()" />
-          <button type="submit" [disabled]="customerLoading()">
-            <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
-          </button>
+    <div class="resume-row">
+      <label for="resume-sale">{{ 'SALE_BUILDER.RESUME_SALE' | translate }}</label>
+      <input
+        id="resume-sale"
+        pInputText
+        [value]="resumeSaleId()"
+        (input)="resumeSaleId.set($any($event.target).value); resumeError.set(null)"
+        [placeholder]="'SALE_BUILDER.SALE_REFERENCE' | translate"
+      />
+      <button type="button" class="outline-button" [disabled]="saving()" (click)="resumeSale()">
+        {{ 'SALE_BUILDER.RESUME' | translate }}
+      </button>
+      @if (resumeError(); as error) {
+        <small class="field-error">{{ error }}</small>
+      }
+    </div>
+    <div
+      class="customer-choice"
+      role="group"
+      [attr.aria-label]="'SALE_BUILDER.CUSTOMER_MODE' | translate"
+    >
+      <button
+        type="button"
+        [class.active]="!directCustomer()"
+        [disabled]="saving()"
+        (click)="setDirectCustomer(false)"
+      >
+        {{ 'SALE_BUILDER.REGISTERED_CUSTOMER' | translate }}
+      </button>
+      <button
+        type="button"
+        [class.active]="directCustomer()"
+        [disabled]="saving()"
+        (click)="setDirectCustomer(true)"
+      >
+        {{ 'SALE_BUILDER.DIRECT_CUSTOMER' | translate }}
+      </button>
+    </div>
+    @if (directCustomer()) {
+      <p class="direct-hint">{{ 'SALE_BUILDER.DIRECT_HINT' | translate }}</p>
+    }
+
+    <form
+      class="customer-row"
+      [class.direct]="directCustomer()"
+      [formGroup]="customerForm"
+      (ngSubmit)="searchCustomer()"
+    >
+      @if (!directCustomer()) {
+        <div class="field mobile-field">
+          <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
+          <div class="mobile-search">
+            <input pInputText id="sale-mobile" formControlName="mobile" (input)="mobileChanged()" />
+            <button type="submit" [disabled]="customerLoading()">
+              <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
+            </button>
+          </div>
+          @if (fieldError('mobile'); as error) {
+            <small class="field-error">{{ error }}</small>
+          }
+          @if (fieldError('customerId'); as error) {
+            <small class="field-error">{{ error }}</small>
+          }
         </div>
-        @if (fieldError('mobile'); as error) {
-          <small class="field-error">{{ error }}</small>
-        }
-        @if (fieldError('customerId'); as error) {
-          <small class="field-error">{{ error }}</small>
-        }
-      </div>
-      <div class="field">
-        <span class="field-label">{{ 'SALE_BUILDER.CUSTOMER' | translate }}</span>
-        <strong class="customer-name">{{
-          customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
-        }}</strong>
-      </div>
+      }
+      @if (!directCustomer()) {
+        <div class="field">
+          <span class="field-label">{{ 'SALE_BUILDER.CUSTOMER' | translate }}</span>
+          <strong class="customer-name">{{
+            customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
+          }}</strong>
+        </div>
+      }
       <div class="field">
         <label for="sale-branch">{{ 'SALE_BUILDER.BRANCH' | translate }}</label>
         <p-dropdown
           inputId="sale-branch"
           formControlName="branchId"
+          [disabled]="saving()"
           [options]="branches()"
           optionLabel="name"
           optionValue="id"
@@ -135,7 +290,7 @@
       }
     </section>
 
-    @if (customer()?.packages?.length) {
+    @if (!directCustomer() && customer()?.packages?.length) {
       <section class="owned-section">
         <h3>{{ 'SALE_BUILDER.OWNED' | translate }}</h3>
         <div class="owned-list">
@@ -322,26 +477,40 @@
             }
           </div>
         }
-        <p class="note">{{ 'SALE_BUILDER.NO_COLLECTION' | translate }}</p>
+        <p class="note">{{ 'SALE_BUILDER.RECEIPT_NOTE' | translate }}</p>
       </section>
     </div>
-  }
 
-  <div class="actions">
-    <button type="button" class="outline-button" (click)="closed.emit()" [disabled]="saving()">
-      {{ 'COMMON.CANCEL' | translate }}
-    </button>
-    <button
-      type="button"
-      class="primary-button"
-      [disabled]="saving() || (!pendingConfirmation() && (quoteLoading() || !quote()))"
-      (click)="confirm()"
-    >
-      <i class="pi pi-calendar-plus"></i>
-      {{
-        (pendingConfirmation() ? 'SALE_BUILDER.RETRY_CONFIRMATION' : 'SALE_BUILDER.CONFIRM_LATER')
-          | translate
-      }}
-    </button>
-  </div>
+    <div class="actions">
+      <button type="button" class="outline-button" (click)="closed.emit()">
+        {{ 'COMMON.CANCEL' | translate }}
+      </button>
+      <button
+        type="button"
+        class="outline-button"
+        [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Close')"
+        (click)="confirm('Close')"
+      >
+        {{ 'SALE_BUILDER.CLOSE_SALE' | translate }}
+      </button>
+      <button
+        type="button"
+        class="primary-button"
+        [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Later')"
+        (click)="confirm('Later')"
+      >
+        <i class="pi pi-calendar-plus"></i> {{ 'SALE_BUILDER.CONFIRM_LATER' | translate }}
+      </button>
+      @if (canBookNow()) {
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('BookNow')"
+          (click)="confirm('BookNow')"
+        >
+          {{ 'SALE_BUILDER.BOOK_NOW' | translate }}
+        </button>
+      }
+    </div>
+  }
 </p-dialog>
