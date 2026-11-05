@@ -9,6 +9,7 @@ import {
   input,
   computed,
   signal,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -36,6 +37,7 @@ import {
   PackageListItem,
 } from '@app/features/packages/models/package-list.model';
 import {
+  ConfirmSaleRequest,
   ConfirmSaleResult,
   SaleDraftItem,
   SalePaymentOption,
@@ -106,6 +108,7 @@ export class SaleBuilderDialogComponent {
   readonly saving = signal(false);
   readonly loading = signal(false);
   readonly customerLoading = signal(false);
+  readonly pendingConfirmation = signal<ConfirmSaleRequest | null>(null);
   readonly showUnlisted = signal(false);
   readonly categoryId = signal('all');
   readonly searchText = signal('');
@@ -156,9 +159,13 @@ export class SaleBuilderDialogComponent {
     effect(
       () => {
         if (this.visible()) {
-          this.reset();
-          this.loadOptions();
-          this.restorePendingSale();
+          untracked(() => {
+            if (!this.pendingConfirmation()) {
+              this.reset();
+              this.loadOptions();
+              this.restorePendingSale();
+            }
+          });
         }
       },
       { allowSignalWrites: true }
@@ -169,6 +176,7 @@ export class SaleBuilderDialogComponent {
     this.quoteVersion++;
     this.customerVersion++;
     this.confirmationKey = crypto.randomUUID();
+    this.customerLoading.set(false);
     this.collectionKey = crypto.randomUUID();
     this.chosenDisposition = null;
     this.activeSale.set(null);
@@ -497,6 +505,11 @@ export class SaleBuilderDialogComponent {
   }
 
   confirm(disposition: 'Close' | 'Later' | 'BookNow'): void {
+    const pending = this.pendingConfirmation();
+    if (pending) {
+      if (!this.saving()) this.submitConfirmation(pending);
+      return;
+    }
     this.customerForm.markAllAsTouched();
     const quote = this.quote();
     if (this.customerForm.invalid || !quote || this.quoteLoading() || this.saving()) return;
@@ -504,30 +517,38 @@ export class SaleBuilderDialogComponent {
       this.itemError.set(this.translate.instant('ERRORS.SalePaymentMethodUnavailable'));
       return;
     }
-    this.saving.set(true);
     this.chosenDisposition ??= disposition;
+    const request: ConfirmSaleRequest = {
+      customerId: this.directCustomer() ? null : this.customerForm.controls.customerId.value,
+      directCustomer: this.directCustomer(),
+      branchId: this.customerForm.controls.branchId.value,
+      items: this.requestItems(),
+      paymentMethod: quote.dueNow > 0 ? this.selectedMethod() : null,
+      expectedGrandTotal: quote.grandTotal,
+      expectedDueNow: quote.dueNow,
+      idempotencyKey: this.confirmationKey,
+      disposition: this.chosenDisposition,
+    };
+    this.pendingConfirmation.set(request);
+    this.submitConfirmation(request);
+  }
+
+  private submitConfirmation(request: ConfirmSaleRequest): void {
+    this.saving.set(true);
     this.sales
-      .confirm({
-        customerId: this.directCustomer() ? null : this.customerForm.controls.customerId.value,
-        directCustomer: this.directCustomer(),
-        branchId: this.customerForm.controls.branchId.value,
-        items: this.requestItems(),
-        paymentMethod: quote.dueNow > 0 ? this.selectedMethod() : null,
-        expectedGrandTotal: quote.grandTotal,
-        expectedDueNow: quote.dueNow,
-        idempotencyKey: this.confirmationKey,
-        disposition: this.chosenDisposition,
-      })
+      .confirm(request)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
           this.saving.set(false);
+          this.pendingConfirmation.set(null);
+          const quote = this.quote();
           const state: SaleState = {
             saleId: result.saleId,
             status: result.status,
-            disposition: this.chosenDisposition ?? disposition,
-            branchId: this.customerForm.controls.branchId.value,
-            durationMinutes: quote.items.reduce(
+            disposition: this.chosenDisposition ?? 'Later',
+            branchId: request.branchId,
+            durationMinutes: (quote?.items ?? []).reduce(
               (sum, line) => sum + line.durationMinutes * line.quantity,
               0
             ),
@@ -543,6 +564,15 @@ export class SaleBuilderDialogComponent {
         },
         error: (error: HttpErrorResponse) => {
           this.saving.set(false);
+          if (error.status < 400 || error.status === 408 || error.status >= 500) {
+            this.toast.add({
+              severity: 'warn',
+              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+              detail: this.translate.instant('SALE_BUILDER.CONFIRMATION_UNKNOWN'),
+            });
+            return;
+          }
+          this.pendingConfirmation.set(null);
           const codes = Object.values(error.error?.errorCodes ?? {}).flat();
           const fields = translateApiFieldErrors(extractApiFieldErrors(error), key =>
             this.translate.instant(key)

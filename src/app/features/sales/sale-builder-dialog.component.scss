@@ -425,3 +425,31 @@ td select {
     max-width: none;
   }
 }
+.confirmation-recovery {
+  border: 1px solid #f1d49a;
+  border-radius: 10px;
+  background: #fff9ec;
+  color: #694b17;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.confirmation-recovery.loading {
+  border-color: #e6e4ef;
+  background: #f7f6fb;
+  color: #292747;
+}
+
+.confirmation-recovery i {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.confirmation-recovery h3 {
+  color: inherit;
+}
+
+.confirmation-recovery p {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}

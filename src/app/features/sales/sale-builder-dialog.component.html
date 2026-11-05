@@ -16,6 +16,7 @@
         type="button"
         class="icon-button"
         (click)="closed.emit()"
+        [disabled]="saving()"
         [attr.aria-label]="'COMMON.CLOSE' | translate"
       >
         <i class="pi pi-times"></i>
@@ -23,7 +24,22 @@
     </div>
   </ng-template>
 
-  @if (activeSale(); as sale) {
+  @if (pendingConfirmation()) {
+    <section class="confirmation-recovery" [class.loading]="saving()" role="status">
+      @if (saving()) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMING' | translate }}</h3>
+      } @else {
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <h3>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN_TITLE' | translate }}</h3>
+        <p>{{ 'SALE_BUILDER.CONFIRMATION_UNKNOWN' | translate }}</p>
+        <button type="button" class="primary-button" (click)="confirm('Later')">
+          {{ 'SALE_BUILDER.RETRY_CONFIRMATION' | translate }}
+        </button>
+      }
+    </section>
+  } @else if (activeSale()) {
+    @let sale = activeSale()!;
     <section class="sale-recovery">
       <h3>{{ 'SALE_BUILDER.SAVED_SALE' | translate }}</h3>
       <p class="sale-reference">
