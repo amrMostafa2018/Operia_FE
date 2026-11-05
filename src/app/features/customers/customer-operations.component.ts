@@ -121,7 +121,7 @@ export class CustomerOperationsComponent {
         label: this.translate.instant('CUSTOMER_OPERATIONS.EDIT_STATUS'),
         icon: 'pi pi-pencil',
         visible: this.canRefund() || this.canBlock(),
-        disabled: row.id.includes(':'),
+        disabled: row.id.includes(':') && !this.canBlock(),
         command: () => this.selectedAction.set(row),
       },
       {

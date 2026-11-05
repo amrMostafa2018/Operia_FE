@@ -3,13 +3,16 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 
-export interface CustomerAction {
+export interface CustomerBlockAction {
   customerId: string;
   customerName: string;
   mobile: string;
   customerVersion: string;
   isBlocked: boolean;
   blockReason: string | null;
+}
+
+export interface CustomerAction extends CustomerBlockAction {
   purchaseId: string;
   purchaseStatus: string;
   paid: number;
@@ -33,6 +36,12 @@ export class CustomerActionService {
   get(customerId: string, purchaseId: string): Observable<CustomerAction> {
     return this.http.get<CustomerAction>(
       `${this.base}/${encodeURIComponent(customerId)}/purchases/${encodeURIComponent(purchaseId)}/action`
+    );
+  }
+
+  getSaleAction(customerId: string, saleId: string): Observable<CustomerBlockAction> {
+    return this.http.get<CustomerBlockAction>(
+      `${this.base}/${encodeURIComponent(customerId)}/sales/${encodeURIComponent(saleId)}/action`
     );
   }
 

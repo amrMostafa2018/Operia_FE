@@ -170,8 +170,6 @@ export class ActivityRevenueComponent implements OnInit {
         },
         error: () => {
           this.exporting.set(false);
-          this.report.set(null);
-          this.error.set(true);
           this.notify('EXPORT_ERROR');
         },
       });
