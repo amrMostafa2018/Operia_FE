@@ -15,6 +15,6 @@ export class SettingsFooterComponent {
   noteKey = input<string | null>(null);
   saving = input(false);
 
-  reset = output<void>();
+  resetRequested = output<void>();
   save = output<void>();
 }

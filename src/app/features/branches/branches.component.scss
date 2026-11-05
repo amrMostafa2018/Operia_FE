@@ -310,7 +310,8 @@
     background: #fff5f5;
   }
 }
-label {
+label,
+.location-field {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -507,7 +508,8 @@ input {
     display: none;
   }
 
-  label {
+  label,
+  .location-field {
     color: #4c5567;
   }
 

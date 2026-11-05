@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize, forkJoin, switchMap } from 'rxjs';
+import { finalize, forkJoin, Subscription, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -237,6 +237,7 @@ export class AppointmentsComponent {
   private calendarRequestId = 0;
   private customerRequestId = 0;
   private employeesRequestId = 0;
+  private employeesSub?: Subscription;
   private catalogRequestId = 0;
   private holdRefreshTimer?: ReturnType<typeof setTimeout>;
   private mobileSearchTimer?: ReturnType<typeof setTimeout>;
@@ -649,6 +650,7 @@ export class AppointmentsComponent {
 
   /** Loads bookable employees for each branch and refreshes calendar selection. */
   private loadEmployeesForBranches(branchIds: string[]): void {
+    this.employeesSub?.unsubscribe();
     const requestId = ++this.employeesRequestId;
     if (!branchIds.length) {
       this.employees.set([]);
@@ -660,7 +662,9 @@ export class AppointmentsComponent {
 
     this.employeesLoading.set(true);
     const packageId = this.filters().packageId;
-    forkJoin(branchIds.map(branchId => this.employeesApi.listBookable(branchId, packageId)))
+    this.employeesSub = forkJoin(
+      branchIds.map(branchId => this.employeesApi.listBookable(branchId, packageId))
+    )
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {

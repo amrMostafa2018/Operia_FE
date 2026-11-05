@@ -193,7 +193,8 @@ export class BranchesComponent implements OnInit {
       return;
     }
     this.saveError.set('');
-    const { locationSelected: _, ...raw } = this.form.getRawValue();
+    const { locationSelected, ...raw } = this.form.getRawValue();
+    void locationSelected;
     const value = {
       ...raw,
       phoneNumber: getE164PhoneNumber(raw.phoneNumber),
