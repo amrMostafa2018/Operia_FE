@@ -188,6 +188,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly customerMode = signal<'registered' | 'new' | 'direct'>('registered');
   readonly registering = signal(false);
   readonly customerSelectionLoading = signal(false);
+  private customerSelectionVersion = 0;
   readonly selectedCustomer = signal<ClientRecord | null>(null);
   readonly customerNameSearch = signal('');
   readonly customerNameResults = signal<{ id: string; fullName: string; mobileNumber: string }[]>(
@@ -367,7 +368,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return [];
     }
     const selectedIds = new Set(this.selectedPackageIds());
-    return client.packages.filter(pkg => selectedIds.has(pkg.packageId));
+    return [...selectedIds]
+      .map(packageId => client.packages.find(pkg => pkg.packageId === packageId))
+      .filter((pkg): pkg is ClientPackage => pkg != null);
   });
 
   readonly filteredServices = computed(() => {
@@ -502,6 +505,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             Validators.maxLength(200),
           ]);
           this.selectedCustomer.set(null);
+          this.customerSelectionVersion++;
+          this.customerSelectionLoading.set(false);
           this.customerNameSearch.set('');
           this.customerNameResults.set([]);
           this.clientForm.reset({
@@ -850,6 +855,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     this.mobileInvalid.set(!!mobile && !valid);
     const nextMobile = valid ? mobile : '';
     if (nextMobile !== this.clientForm.controls.mobile.value) {
+      this.customerSelectionVersion++;
+      this.customerSelectionLoading.set(false);
       this.selectedCustomer.set(null);
       this.clientForm.controls.mobile.setValue(nextMobile);
     }
@@ -860,6 +867,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
     this.customerMode.set(mode);
+    this.customerSelectionVersion++;
+    this.customerSelectionLoading.set(false);
     this.selectedCustomer.set(null);
     this.selectedPackageIds.set([]);
     this.selectedQuantities.set({});
@@ -910,12 +919,16 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   selectCustomer(result: { id: string; fullName: string; mobileNumber: string }): void {
+    const version = ++this.customerSelectionVersion;
+    this.selectedCustomer.set(null);
+    this.selectedPackageIds.set([]);
     this.customerSelectionLoading.set(true);
     this.appointmentsApi
       .findCustomerById(result.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: customer => {
+          if (version !== this.customerSelectionVersion) return;
           this.customerSelectionLoading.set(false);
           if (this.customerMode() !== 'registered' || !customer || customer.id !== result.id) {
             return;
@@ -944,7 +957,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
           this.selectedCountryISO.set(toPhoneCountryIso(customer.mobileNumber));
           this.customerNameResults.set([]);
         },
-        error: () => this.customerSelectionLoading.set(false),
+        error: () => {
+          if (version === this.customerSelectionVersion) this.customerSelectionLoading.set(false);
+        },
       });
   }
 
@@ -1175,7 +1190,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   /** Validates the booking draft and emits the selected customer, items, slot, and payment method. */
   submit(): void {
-    if (this.saving() || this.customerLookupPending()) {
+    if (this.saving() || this.customerLookupPending() || this.customerSelectionLoading()) {
       return;
     }
     if (this.customerMode() !== 'direct') {
