@@ -23,6 +23,7 @@ export interface StatementPayment {
   amount: number;
   status: string;
   paidAtUtc: string | null;
+  dueOn: string | null;
   paymentMethod: string | null;
   recordedBy: string | null;
   notes: string | null;
@@ -48,7 +49,7 @@ export interface CustomerStatement {
     amountPaid: number | null;
     amountRemaining: number | null;
     refunded: number;
-    netCollected: number;
+    netCollected: number | null;
     refundStatus: string;
     pulses: StatementBalance | null;
     completedSessions: StatementSession[];

@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 const password = process.env.OPERIA_E2E_PASSWORD;
 const otp = process.env.OPERIA_E2E_OTP;
+const backendProject = process.env.OPERIA_E2E_BACKEND_PROJECT || '../Operia/Operia/Operia.csproj';
 if (!password || !otp || !/^\d{6}$/.test(otp)) {
   throw new Error('Set OPERIA_E2E_PASSWORD and a six-digit OPERIA_E2E_OTP.');
 }
@@ -26,8 +27,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command:
-        'dotnet run --project ../Operia/Operia/Operia.csproj --configuration Release --no-launch-profile',
+      command: `dotnet run --project "${backendProject}" --configuration Release --no-launch-profile`,
       url: 'http://localhost:5151/swagger/index.html',
       reuseExistingServer: false,
       timeout: 180_000,

@@ -1950,8 +1950,13 @@
     "IMPORT_HINT": "ستتوفر إضافة الملفات في قصة العملاء التالية.",
     "IMPORT_UPLOAD": "رفع ملف العملاء",
     "IMPORT_TEMPLATE": "تحميل قالب الاستيراد",
-    "TYPES": { "package": "باقة", "session": "جلسة واحدة" },
-    "PAYMENT_TYPES": { "cash": "كاش", "installment": "قسط", "owned": "جلسة مملوكة" },
+    "TYPES": { "package": "باقة", "session": "جلسة واحدة", "unknown": "غير مسجل" },
+    "PAYMENT_TYPES": {
+      "cash": "كاش",
+      "installment": "قسط",
+      "owned": "جلسة مملوكة",
+      "unknown": "غير مسجل"
+    },
     "RESTRICTIONS": { "active": "نشط", "blocked": "محظور", "inactive": "غير نشط" },
     "PURCHASE_STATUSES": {
       "active": "نشطة",
@@ -1963,7 +1968,8 @@
     "PAYMENT_STATUSES": {
       "fullyPaid": "مدفوع بالكامل",
       "partial": "مدفوع جزئيًا",
-      "unpaid": "غير مدفوع"
+      "unpaid": "غير مدفوع",
+      "unknown": "غير مسجل"
     },
     "REFUND_STATUSES": { "none": "لا يوجد", "partial": "مسترد جزئيًا", "full": "مسترد بالكامل" },
     "INSTALLMENT_STATUSES": {
@@ -2020,6 +2026,7 @@
     "REASON": "السبب / ملاحظات",
     "REFUND_TOTAL": "إجمالي المسترد",
     "REMAINING_BALANCE": "الرصيد المتبقي",
+    "NOT_RECORDED": "غير مسجل",
     "VALUES": {
       "active": "نشطة",
       "cancelled": "ملغاة",
@@ -2043,11 +2050,13 @@
       "SalePaymentConfirmed": "تأكيد الدفع",
       "SaleCollectionAttempted": "فشل محاولة الدفع",
       "InstallmentCollected": "تحصيل قسط",
+      "PackageInstallmentCollected": "تحصيل قسط",
       "PurchaseCancelled": "إلغاء العملية",
       "RefundPosted": "تسجيل استرداد",
       "CustomerBlocked": "حظر العميل",
       "CustomerUnblocked": "إلغاء حظر العميل",
-      "CustomerBlockReasonChanged": "تعديل سبب الحظر"
+      "CustomerBlockReasonChanged": "تعديل سبب الحظر",
+      "PurchaseBranchAttributed": "إثبات فرع الشراء"
     }
   },
   "CUSTOMER_STATEMENT": {
@@ -2149,6 +2158,7 @@
     "SUMMARY": "ملخص البيع",
     "SUBTOTAL": "الإجمالي قبل الخصم",
     "DISCOUNT": "الخصم",
+    "APPLIED_DISCOUNT_CODE": "كود خصم الكاش المطبق",
     "GRAND_TOTAL": "إجمالي البيع",
     "REMAINING": "المتبقي بعد المطلوب الآن",
     "METHOD": "طريقة الدفع",

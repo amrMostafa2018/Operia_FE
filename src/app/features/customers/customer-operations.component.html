@@ -172,14 +172,14 @@
               <td class="name">{{ row.customerName }}</td>
               <td class="mobile">{{ row.mobile || '—' }}</td>
               <td>{{ row.branchName }}</td>
-              <td>{{ row.service }}</td>
+              <td>{{ row.service || '—' }}</td>
               <td>{{ 'CUSTOMER_OPERATIONS.TYPES.' + row.serviceType | translate }}</td>
               <td>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.' + row.paymentType | translate }}</td>
-              <td>{{ row.total | number: '1.2-2' }}</td>
-              <td class="money-collected">{{ row.collected | number: '1.2-2' }}</td>
+              <td>{{ (row.total | number: '1.2-2') || '—' }}</td>
+              <td class="money-collected">{{ (row.collected | number: '1.2-2') || '—' }}</td>
               <td>{{ row.refunded | number: '1.2-2' }}</td>
-              <td class="money-collected">{{ row.netCollected | number: '1.2-2' }}</td>
-              <td class="money-remaining">{{ row.remaining | number: '1.2-2' }}</td>
+              <td class="money-collected">{{ (row.netCollected | number: '1.2-2') || '—' }}</td>
+              <td class="money-remaining">{{ (row.remaining | number: '1.2-2') || '—' }}</td>
               <td>
                 {{
                   row.unitsRemaining === null ? '—' : row.unitsRemaining + ' / ' + row.unitsTotal

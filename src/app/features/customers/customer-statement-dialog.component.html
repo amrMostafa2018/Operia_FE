@@ -105,24 +105,34 @@
           <div class="facts">
             <div>
               <span>{{ 'CUSTOMER_STATEMENT.PRICE' | translate }}</span
-              ><strong
-                >{{ data.purchase.purchasePrice ?? 0 | number: '1.2-2' }}
-                {{ currency.currencyLabel() }}</strong
-              >
+              ><strong>
+                @if (data.purchase.purchasePrice !== null) {
+                  {{ data.purchase.purchasePrice | number: '1.2-2' }} {{ currency.currencyLabel() }}
+                } @else {
+                  —
+                }
+              </strong>
             </div>
             <div>
               <span>{{ 'CUSTOMER_STATEMENT.PAID' | translate }}</span
-              ><strong
-                >{{ data.purchase.amountPaid ?? 0 | number: '1.2-2' }}
-                {{ currency.currencyLabel() }}</strong
-              >
+              ><strong>
+                @if (data.purchase.amountPaid !== null) {
+                  {{ data.purchase.amountPaid | number: '1.2-2' }} {{ currency.currencyLabel() }}
+                } @else {
+                  —
+                }
+              </strong>
             </div>
             <div>
               <span>{{ 'CUSTOMER_STATEMENT.OWED' | translate }}</span
-              ><strong
-                >{{ data.purchase.amountRemaining ?? 0 | number: '1.2-2' }}
-                {{ currency.currencyLabel() }}</strong
-              >
+              ><strong>
+                @if (data.purchase.amountRemaining !== null) {
+                  {{ data.purchase.amountRemaining | number: '1.2-2' }}
+                  {{ currency.currencyLabel() }}
+                } @else {
+                  —
+                }
+              </strong>
             </div>
             <div>
               <span>{{ 'CUSTOMER_ACTION.REFUNDED' | translate }}</span>
@@ -133,10 +143,13 @@
             </div>
             <div>
               <span>{{ 'CUSTOMER_ACTION.NET' | translate }}</span>
-              <strong
-                >{{ data.purchase.netCollected | number: '1.2-2' }}
-                {{ currency.currencyLabel() }}</strong
-              >
+              <strong>
+                @if (data.purchase.netCollected !== null) {
+                  {{ data.purchase.netCollected | number: '1.2-2' }} {{ currency.currencyLabel() }}
+                } @else {
+                  —
+                }
+              </strong>
             </div>
             <div>
               <span>{{ 'CUSTOMER_OPERATIONS.REFUND_STATUS' | translate }}</span>
@@ -211,7 +224,15 @@
                 @for (payment of data.installments; track payment.number) {
                   <tr>
                     <td>{{ payment.number }}</td>
-                    <td>{{ (payment.paidAtUtc | date: 'medium') || '—' }}</td>
+                    <td>
+                      {{
+                        payment.paidAtUtc
+                          ? (payment.paidAtUtc | date: 'medium')
+                          : payment.dueOn
+                            ? (payment.dueOn | date: 'mediumDate')
+                            : '—'
+                      }}
+                    </td>
                     <td>{{ payment.amount | number: '1.2-2' }} {{ currency.currencyLabel() }}</td>
                     <td>
                       {{

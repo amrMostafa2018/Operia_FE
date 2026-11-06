@@ -25,12 +25,12 @@ export interface CustomerOperation {
   serviceType: string;
   operationDate: string;
   paymentType: string;
-  total: number;
-  collected: number;
+  total: number | null;
+  collected: number | null;
   refunded: number;
-  netCollected: number;
+  netCollected: number | null;
   refundStatus: string;
-  remaining: number;
+  remaining: number | null;
   unitsTotal: number | null;
   unitsRemaining: number | null;
   customerRestriction: string;

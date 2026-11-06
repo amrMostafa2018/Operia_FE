@@ -18,15 +18,15 @@ test.describe('US-23: tenant-timezone, branch-scoped collected revenue', () => {
     );
     expect(baseline.month).toMatchObject({
       transactionCount: 4,
-      grossCollected: 6950,
+      grossCollected: 7200,
       refunds: 0,
-      netCollected: 6950,
+      netCollected: 7200,
     });
     expect(baseline.today).toMatchObject({
       transactionCount: localDay === 1 ? 4 : 2,
-      grossCollected: localDay === 1 ? 6950 : 5250,
+      grossCollected: localDay === 1 ? 7200 : 5500,
       refunds: 0,
-      netCollected: localDay === 1 ? 6950 : 5250,
+      netCollected: localDay === 1 ? 7200 : 5500,
     });
     const dashboardBefore = await request.get(`${apiBaseUrl}/dashboard/revenue`, {
       headers,
@@ -53,7 +53,7 @@ test.describe('US-23: tenant-timezone, branch-scoped collected revenue', () => {
     expect(collected.today.transactionCount).toBe(baseline.today.transactionCount + 1);
     expect(collected.today.grossCollected).toBe(baseline.today.grossCollected + 300);
     expect(collected.month.transactionCount).toBe(5);
-    expect(collected.month.grossCollected).toBe(7250);
+    expect(collected.month.grossCollected).toBe(7500);
 
     const refund = await request.post(
       `${apiBaseUrl}/customers/purchases/${e2eIds.revenueTodayPurchase}/cancel-refund`,
@@ -82,9 +82,9 @@ test.describe('US-23: tenant-timezone, branch-scoped collected revenue', () => {
     });
     expect(final.month).toMatchObject({
       transactionCount: 5,
-      grossCollected: 7250,
+      grossCollected: 7500,
       refunds: 1500,
-      netCollected: 5750,
+      netCollected: 6000,
     });
 
     const dashboardAfter = await request.get(`${apiBaseUrl}/dashboard/revenue`, {

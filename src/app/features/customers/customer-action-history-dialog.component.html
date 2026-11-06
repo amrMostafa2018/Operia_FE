@@ -39,14 +39,22 @@
                     }
                     <span
                       >{{ 'CUSTOMER_HISTORY.FROM' | translate }}:
-                      {{ valueLabel(event.oldValue) }}</span
+                      {{
+                        event.oldValue === null
+                          ? ('CUSTOMER_HISTORY.NOT_RECORDED' | translate)
+                          : valueLabel(event.oldValue)
+                      }}</span
                     >
                     <span
                       >{{ 'CUSTOMER_HISTORY.TO' | translate }}:
-                      {{ valueLabel(event.newValue) }}</span
+                      {{
+                        event.newValue === null
+                          ? ('CUSTOMER_HISTORY.NOT_RECORDED' | translate)
+                          : valueLabel(event.newValue)
+                      }}</span
                     >
                   } @else {
-                    —
+                    {{ 'CUSTOMER_HISTORY.NOT_RECORDED' | translate }}
                   }
                 </td>
                 <td>

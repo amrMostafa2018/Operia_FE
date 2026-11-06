@@ -1442,6 +1442,7 @@
       "SalePaymentConfirmed": "Payment confirmed",
       "SaleCollectionAttempted": "Payment attempt failed",
       "InstallmentCollected": "Installment collected",
+      "PackageInstallmentCollected": "Installment collected",
       "RefundPosted": "Refund posted"
     },
     "ALL_BRANCHES": "All allowed branches",
@@ -1947,8 +1948,13 @@
     "IMPORT_HINT": "Bulk import is coming in the next customer story.",
     "IMPORT_UPLOAD": "Upload customer file",
     "IMPORT_TEMPLATE": "Download import template",
-    "TYPES": { "package": "Package", "session": "Single session" },
-    "PAYMENT_TYPES": { "cash": "Cash", "installment": "Installment", "owned": "Owned session" },
+    "TYPES": { "package": "Package", "session": "Single session", "unknown": "Not recorded" },
+    "PAYMENT_TYPES": {
+      "cash": "Cash",
+      "installment": "Installment",
+      "owned": "Owned session",
+      "unknown": "Not recorded"
+    },
     "RESTRICTIONS": { "active": "Active", "blocked": "Blocked", "inactive": "Inactive" },
     "PURCHASE_STATUSES": {
       "active": "Active",
@@ -1957,7 +1963,12 @@
       "cancelled": "Cancelled",
       "pending": "Pending collection"
     },
-    "PAYMENT_STATUSES": { "fullyPaid": "Fully paid", "partial": "Partly paid", "unpaid": "Unpaid" },
+    "PAYMENT_STATUSES": {
+      "fullyPaid": "Fully paid",
+      "partial": "Partly paid",
+      "unpaid": "Unpaid",
+      "unknown": "Not recorded"
+    },
     "REFUND_STATUSES": { "none": "None", "partial": "Partly refunded", "full": "Fully refunded" },
     "INSTALLMENT_STATUSES": {
       "none": "—",
@@ -2013,6 +2024,7 @@
     "REASON": "Reason / notes",
     "REFUND_TOTAL": "Total refunded",
     "REMAINING_BALANCE": "Remaining balance",
+    "NOT_RECORDED": "Not recorded",
     "VALUES": {
       "active": "Active",
       "cancelled": "Cancelled",
@@ -2040,7 +2052,8 @@
       "RefundPosted": "Refund recorded",
       "CustomerBlocked": "Customer blocked",
       "CustomerUnblocked": "Customer unblocked",
-      "CustomerBlockReasonChanged": "Block reason changed"
+      "CustomerBlockReasonChanged": "Block reason changed",
+      "PurchaseBranchAttributed": "Purchase branch attributed"
     }
   },
   "CUSTOMER_STATEMENT": {
@@ -2142,6 +2155,7 @@
     "SUMMARY": "Sale summary",
     "SUBTOTAL": "Subtotal",
     "DISCOUNT": "Discount",
+    "APPLIED_DISCOUNT_CODE": "Applied cash discount code",
     "GRAND_TOTAL": "Sale total",
     "REMAINING": "Balance after due now",
     "METHOD": "Payment method",

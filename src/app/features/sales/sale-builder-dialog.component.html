@@ -451,6 +451,14 @@
           <span>{{ 'SALE_BUILDER.DISCOUNT' | translate }}</span
           ><strong>{{ quote()?.discount ?? '—' }}</strong>
         </div>
+        @for (line of quote()?.items ?? []; track $index) {
+          @if (line.appliedDiscountCode) {
+            <div class="summary-row">
+              <span>{{ 'SALE_BUILDER.APPLIED_DISCOUNT_CODE' | translate }} · {{ line.name }}</span>
+              <strong>{{ line.appliedDiscountCode }}</strong>
+            </div>
+          }
+        }
         <div class="summary-row">
           <span>{{ 'SALE_BUILDER.GRAND_TOTAL' | translate }}</span
           ><strong>{{ quote()?.grandTotal ?? '—' }}</strong>

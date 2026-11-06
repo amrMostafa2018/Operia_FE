@@ -40,6 +40,7 @@ export interface SaleQuoteLine {
   discountAmount: number;
   finalAmount: number;
   dueNow: number;
+  appliedDiscountCode?: string | null;
 }
 
 export interface SaleQuote {

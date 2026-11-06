@@ -110,6 +110,8 @@ test('US-06 offer pricing editor with authenticated account and controlled offer
       .locator('.editor [formcontrolname="installmentEnabled"] .p-inputswitch-slider')
       .click();
     await page.locator('.editor [formcontrolname="installmentPrice"] input').fill('20000');
+    await page.locator('.editor [formcontrolname="firstPayment"] input').fill('5000');
+    await page.locator('.editor .suggest-distribution').click();
     await page.locator('.editor .discount-toggle').click();
     await page.locator('.editor [formcontrolname="discountPercent"]').fill('10');
     await expect(page.locator('.editor .readonly input')).toHaveValue('16,200.00');
@@ -185,6 +187,10 @@ test('US-06 offer pricing editor with authenticated account and controlled offer
       .locator('.editor [formcontrolname="installmentEnabled"] .p-inputswitch-slider')
       .click();
     await page.locator('.editor [formcontrolname="installmentPrice"] input').fill('0');
+    const planReplacement = page.getByRole('dialog');
+    if (await planReplacement.isVisible()) {
+      await planReplacement.getByRole('button').last().click();
+    }
     await page.locator('.editor footer button[type="submit"]').click();
     await expect(
       page.locator('.editor .form-field:has([formcontrolname="installmentPrice"]) .field-error')
