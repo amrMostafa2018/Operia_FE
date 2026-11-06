@@ -1,4 +1,28 @@
-# US-07 through US-20 Playwright development fixtures
+# Development-only Playwright fixtures
+
+## US-21 through US-23 scenarios
+
+The backend seed runs only in Development against the local `Operia_Local` or `Operia_Dev` database. It clears and restores only the two reserved `e2e70000` tenants on each API start. Run the focused suites twice with a fresh Playwright server each time to verify the opening totals and audit history are repeatable:
+
+```powershell
+$env:OPERIA_E2E_PASSWORD = Read-Host 'Temporary E2E account password'
+$env:OPERIA_E2E_OTP = '111111'
+npm run test:e2e -- e2e/us-21.spec.ts e2e/us-22.spec.ts e2e/us-23.spec.ts
+npm run test:e2e -- e2e/us-21.spec.ts e2e/us-22.spec.ts e2e/us-23.spec.ts
+```
+
+| Starting scenario | Reserved ID suffix | What the test changes through the API |
+| --- | --- | --- |
+| Paid cash purchase, 5,000 refundable, three sessions used | `...203` | Posts a partial and final refund; checks cap and retry |
+| Future booked appointment with active reservation on that purchase | `...205` | The refund cancels the booking and releases its reservation |
+| Unblocked and already-blocked center customers | `...210`, `...211` | Blocks and unblocks separately, then checks audits |
+| Selected and unrelated audit-history customers | `...212`, `...213` | Reads two stable pages and checks tenant/permission scope |
+| Secondary tenant-A branch ledger | `...116` | Collects sale `...227`, refunds purchase `...222`, checks gross/net and dashboard delta |
+| Tenant B owner and separate branch | `+201000000072`, `...170` | Verifies inaccessible purchase, history, and branch summary |
+
+The revenue ledger starts with 5,000 collected today, 1,200 and 500 collected at the start of this month, a 250 numbered installment today, 700 from the previous month, and separate pending and failed 300 attempts. Period boundaries use the tenant's saved `Africa/Cairo` timezone. On day one, the month-start collections also belong to Today. The Activity Revenue baseline is 6,950 gross for This Month, with four confirmed movements and zero refunds; Today is 5,250 with two movements on later days, or 6,950 with four on day one. Tests post the new 300 collection and 1,500 refund through the real APIs, then check totals and one audit per action. The already-blocked customer and its earlier audit are an unblock prerequisite; none of the refunds, block changes, or payment outcomes asserted by the new tests is preloaded.
+
+Verified on 2026-11-06: the complete Playwright suite passed 46 tests with the existing US-06 skip. A second API start and reserved-tenant reset passed all six US-21–US-23 tests, including the opening revenue totals and audit pagination.
 
 Run from `Operia_FE` in PowerShell:
 
