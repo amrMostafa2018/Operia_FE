@@ -18,24 +18,26 @@
           <strong>{{ action.customerName }}</strong>
           <span class="mobile">{{ action.mobile }}</span>
         </header>
-        @if (canRefund()) {
+        @if (canRefund() && purchaseAction(); as purchase) {
           <section>
             <h3>{{ 'CUSTOMER_ACTION.REFUND_TITLE' | translate }}</h3>
             <div class="figures">
               <div>
                 <span>{{ 'CUSTOMER_ACTION.PAID' | translate }}</span
-                ><strong>{{ action.paid | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong>
+                ><strong
+                  >{{ purchase.paid | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong
+                >
               </div>
               <div>
                 <span>{{ 'CUSTOMER_ACTION.REFUNDED' | translate }}</span
                 ><strong
-                  >{{ action.refunded | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong
+                  >{{ purchase.refunded | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong
                 >
               </div>
               <div>
                 <span>{{ 'CUSTOMER_ACTION.MAXIMUM' | translate }}</span
                 ><strong
-                  >{{ action.remainingRefundable | number: '1.2-2' }}
+                  >{{ purchase.remainingRefundable | number: '1.2-2' }}
                   {{ currency.currencyLabel() }}</strong
                 >
               </div>
@@ -59,7 +61,7 @@
               <button
                 type="submit"
                 class="danger"
-                [disabled]="savingRefund() || action.remainingRefundable <= 0"
+                [disabled]="savingRefund() || purchase.remainingRefundable <= 0"
               >
                 {{ 'CUSTOMER_ACTION.CANCEL_REFUND' | translate }}
               </button>

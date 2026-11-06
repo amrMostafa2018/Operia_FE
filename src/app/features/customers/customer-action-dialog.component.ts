@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   inject,
   input,
   output,
@@ -23,7 +24,11 @@ import {
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
 import { CustomerOperation } from './customer-operations.service';
-import { CustomerAction, CustomerActionService } from './customer-action.service';
+import {
+  CustomerAction,
+  CustomerActionService,
+  CustomerBlockAction,
+} from './customer-action.service';
 
 @Component({
   selector: 'app-customer-action-dialog',
@@ -43,7 +48,11 @@ export class CustomerActionDialogComponent {
   private readonly toast = inject(MessageService);
   private readonly translate = inject(TranslateService);
   readonly currency = inject(CurrencyService);
-  readonly data = signal<CustomerAction | null>(null);
+  readonly data = signal<CustomerAction | CustomerBlockAction | null>(null);
+  readonly purchaseAction = computed(() => {
+    const data = this.data();
+    return data && 'purchaseId' in data ? data : null;
+  });
   readonly loading = signal(true);
   readonly failed = signal(false);
   readonly savingRefund = signal(false);
@@ -106,7 +115,7 @@ export class CustomerActionDialogComponent {
   }
 
   saveRefund(): void {
-    const data = this.data();
+    const data = this.purchaseAction();
     if (!data || !this.canRefund() || this.savingRefund()) return;
     this.refundForm.controls.amount.setValidators([
       Validators.required,
@@ -175,20 +184,20 @@ export class CustomerActionDialogComponent {
     this.loading.set(true);
     this.failed.set(false);
     const row = this.row();
-    this.service
-      .get(row.customerId, row.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: data => {
-          this.data.set(data);
-          this.blockForm.setValue({ isBlocked: data.isBlocked, reason: data.blockReason ?? '' });
-          this.loading.set(false);
-        },
-        error: () => {
-          this.loading.set(false);
-          this.failed.set(true);
-        },
-      });
+    const request = row.id.includes(':')
+      ? this.service.getSaleAction(row.customerId, row.saleId)
+      : this.service.get(row.customerId, row.id);
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: data => {
+        this.data.set(data);
+        this.blockForm.setValue({ isBlocked: data.isBlocked, reason: data.blockReason ?? '' });
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.failed.set(true);
+      },
+    });
   }
 
   private showError(error: HttpErrorResponse, form: FormGroup): void {

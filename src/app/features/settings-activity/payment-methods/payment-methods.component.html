@@ -82,10 +82,11 @@
               <span class="accordion-method-name">{{ method.labelKey | translate }}</span>
             </div>
 
-            <div class="accordion-header-end" (click)="onHeaderSwitchClick($event)">
+            <div class="accordion-header-end">
               <p-inputSwitch
                 [ngModel]="method.enabled"
                 [disabled]="!canManage()"
+                (click)="onHeaderSwitchClick($event)"
                 (ngModelChange)="toggleMethod(method.id, $event)"
               />
             </div>
@@ -98,11 +99,12 @@
                   <form [formGroup]="bankForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label
+                        <label for="paymentBank"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.BANK' | translate }}
                           <span class="required">*</span></label
                         >
                         <p-dropdown
+                          inputId="paymentBank"
                           formControlName="bank"
                           [options]="bankOptions"
                           optionLabel="label"
@@ -115,11 +117,12 @@
                         }
                       </div>
                       <div class="field">
-                        <label
+                        <label for="paymentBankHolder"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.HOLDER' | translate }}
                           <span class="required">*</span></label
                         >
                         <input
+                          id="paymentBankHolder"
                           pInputText
                           formControlName="accountHolder"
                           class="field-input"
@@ -130,11 +133,12 @@
                         }
                       </div>
                       <div class="field">
-                        <label
+                        <label for="paymentBankAccount"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.ACCOUNT' | translate }}
                           <span class="required">*</span></label
                         >
                         <input
+                          id="paymentBankAccount"
                           pInputText
                           formControlName="accountNumber"
                           class="field-input"
@@ -145,8 +149,8 @@
                         }
                       </div>
                       <div class="field">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.IBAN' | translate }}</label>
-                        <input pInputText formControlName="iban" class="field-input" />
+                        <label for="paymentBankIban">{{ 'SETTINGS_ACTIVITY.PAYMENTS.BANK.IBAN' | translate }}</label>
+                        <input id="paymentBankIban" pInputText formControlName="iban" class="field-input" />
                       </div>
                     </div>
                   </form>
@@ -155,11 +159,12 @@
                   <form [formGroup]="instapayForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label
+                        <label for="paymentInstapayHolder"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.HOLDER' | translate }}
                           <span class="required">*</span></label
                         >
                         <input
+                          id="paymentInstapayHolder"
                           pInputText
                           formControlName="accountHolder"
                           class="field-input"
@@ -170,11 +175,12 @@
                         }
                       </div>
                       <div class="field">
-                        <label
+                        <label for="paymentInstapayId"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.INSTAPAY.ID' | translate }}
                           <span class="required">*</span></label
                         >
                         <input
+                          id="paymentInstapayId"
                           pInputText
                           formControlName="instapayId"
                           class="field-input"
@@ -191,11 +197,12 @@
                   <form [formGroup]="walletForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label
+                        <label for="paymentWalletType"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.TYPE' | translate }}
                           <span class="required">*</span></label
                         >
                         <p-dropdown
+                          inputId="paymentWalletType"
                           formControlName="walletType"
                           [options]="walletOptions"
                           optionLabel="label"
@@ -208,11 +215,12 @@
                         }
                       </div>
                       <div class="field">
-                        <label
+                        <label for="paymentWalletNumber"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.NUMBER' | translate }}
                           <span class="required">*</span></label
                         >
                         <input
+                          id="paymentWalletNumber"
                           pInputText
                           formControlName="walletNumber"
                           class="field-input"
@@ -223,11 +231,12 @@
                         }
                       </div>
                       <div class="field full-width">
-                        <label
+                        <label for="paymentWalletHolder"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.WALLET.HOLDER' | translate }}
                           <span class="required">*</span></label
                         >
                         <input
+                          id="paymentWalletHolder"
                           pInputText
                           formControlName="holderName"
                           class="field-input"
@@ -244,11 +253,12 @@
                   <form [formGroup]="fawryForm" class="method-form">
                     <div class="form-grid">
                       <div class="field">
-                        <label
+                        <label for="paymentFawryCode"
                           >{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.CODE' | translate }}
                           <span class="required">*</span></label
                         >
                         <input
+                          id="paymentFawryCode"
                           pInputText
                           formControlName="serviceCode"
                           class="field-input"
@@ -259,8 +269,9 @@
                         }
                       </div>
                       <div class="field full-width">
-                        <label>{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.NOTES' | translate }}</label>
+                        <label for="paymentFawryNotes">{{ 'SETTINGS_ACTIVITY.PAYMENTS.FAWRY.NOTES' | translate }}</label>
                         <textarea
+                          id="paymentFawryNotes"
                           pInputTextarea
                           formControlName="notes"
                           rows="3"
@@ -345,7 +356,7 @@
   </section>
 
   @if (canManage()) {
-    <app-settings-footer [saving]="saving()" (reset)="onReset()" (save)="onSave()" />
+    <app-settings-footer [saving]="saving()" (resetRequested)="onReset()" (save)="onSave()" />
   }
 </div>
 

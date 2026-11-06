@@ -109,11 +109,12 @@
   @if (step() === 'schedule') {
     <p class="step-label">{{ 'BOOKINGS.INQUIRY.STEP_SCHEDULE' | translate }}</p>
     <form [formGroup]="scheduleForm" novalidate>
-      <label>
+      <label for="inquiryBranch">
         <span class="field-label"
           >{{ 'BOOKINGS.INQUIRY.BRANCH' | translate }} <span class="required">*</span></span
         >
         <p-dropdown
+          inputId="inquiryBranch"
           formControlName="branchId"
           [options]="branches()"
           optionLabel="name"
@@ -122,11 +123,12 @@
           [placeholder]="'BOOKINGS.INQUIRY.SELECT_BRANCH' | translate"
         />
       </label>
-      <label>
+      <label for="inquiryEmployee">
         <span class="field-label"
           >{{ 'BOOKINGS.INQUIRY.SPECIALIST' | translate }} <span class="required">*</span></span
         >
         <p-dropdown
+          inputId="inquiryEmployee"
           formControlName="employeeId"
           [options]="employees()"
           optionLabel="fullName"
@@ -135,11 +137,12 @@
           [placeholder]="'BOOKINGS.INQUIRY.SELECT_SPECIALIST' | translate"
         />
       </label>
-      <label>
+      <label for="inquiryDate">
         <span class="field-label"
           >{{ 'BOOKINGS.INQUIRY.DATE' | translate }} <span class="required">*</span></span
         >
         <p-calendar
+          inputId="inquiryDate"
           formControlName="date"
           [showIcon]="true"
           dateFormat="dd/mm/yy"

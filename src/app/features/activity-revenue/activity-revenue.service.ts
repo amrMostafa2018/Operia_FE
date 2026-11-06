@@ -6,6 +6,10 @@ import {
   ActivityRevenueSummary,
   InstallmentRevenuePage,
   RevenueBranch,
+  RevenueReport,
+  RevenueReportFilters,
+  RevenueService,
+  RevenuePaymentHistory,
 } from './models/installment-revenue.model';
 
 @Injectable({ providedIn: 'root' })
@@ -29,5 +33,51 @@ export class ActivityRevenueService {
 
   branches(): Observable<RevenueBranch[]> {
     return this.http.get<RevenueBranch[]>(`${environment.apiUrl}/revenue/branches`);
+  }
+
+  services(): Observable<RevenueService[]> {
+    return this.http.get<RevenueService[]>(`${environment.apiUrl}/revenue/services`);
+  }
+
+  report(filters: RevenueReportFilters, page: number, pageSize: number): Observable<RevenueReport> {
+    return this.http.get<RevenueReport>(`${environment.apiUrl}/revenue/report`, {
+      params: this.reportParams(filters).set('page', page).set('pageSize', pageSize),
+    });
+  }
+
+  exportReport(filters: RevenueReportFilters): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}/revenue/report/export`, {
+      params: this.reportParams(filters),
+      responseType: 'blob',
+    });
+  }
+
+  review(paymentId: string, confirm: boolean): Observable<{ paymentId: string; status: string }> {
+    return this.http.post<{ paymentId: string; status: string }>(
+      `${environment.apiUrl}/revenue/payments/${encodeURIComponent(paymentId)}/${confirm ? 'confirm' : 'cancel'}`,
+      {}
+    );
+  }
+
+  proof(paymentId: string): Observable<Blob> {
+    return this.http.get(
+      `${environment.apiUrl}/revenue/payments/${encodeURIComponent(paymentId)}/proof`,
+      { responseType: 'blob' }
+    );
+  }
+
+  history(paymentId: string): Observable<RevenuePaymentHistory[]> {
+    return this.http.get<RevenuePaymentHistory[]>(
+      `${environment.apiUrl}/revenue/payments/${encodeURIComponent(paymentId)}/history`
+    );
+  }
+
+  private reportParams(filters: RevenueReportFilters): HttpParams {
+    let params = new HttpParams();
+    if (filters.fromDate) params = params.set('fromDate', filters.fromDate);
+    if (filters.toDate) params = params.set('toDate', filters.toDate);
+    if (filters.branchId) params = params.set('branchId', filters.branchId);
+    if (filters.serviceId) params = params.set('serviceId', filters.serviceId);
+    return params;
   }
 }

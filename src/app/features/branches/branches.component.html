@@ -219,7 +219,7 @@
           <small class="field-error">{{ phoneError }}</small>
         }
       </div>
-      <label
+      <div class="location-field"
         ><span class="field-label"
           >{{ 'BRANCHES.LOCATION' | translate }} <span class="required">*</span></span
         >
@@ -249,7 +249,7 @@
           class="field-error"
           *ngIf="form.controls.locationSelected.touched && form.controls.locationSelected.invalid"
           >{{ 'BRANCHES.LOCATION_REQUIRED' | translate }}</small
-        ></label
+        ></div
       >
     </div>
     <div id="branch-map"></div>
