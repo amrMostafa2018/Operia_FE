@@ -34,12 +34,13 @@ export interface InquiryCollection {
   paymentMethod: string;
   confirmedAtUtc: string;
   idempotencyKey: string;
+  recordedBy: string | null;
 }
 
 export interface InquiryInstallment {
   number: number;
   amount: number;
-  status: 'due' | 'paid';
+  status: 'due' | 'paid' | 'cancelled';
 }
 
 export interface InquiryCompletedSession {
@@ -49,6 +50,7 @@ export interface InquiryCompletedSession {
   performer: string | null;
   pulsesUsed: number | null;
   notes: string | null;
+  sessionType: string | null;
 }
 
 export interface InquiryPurchaseDetails {

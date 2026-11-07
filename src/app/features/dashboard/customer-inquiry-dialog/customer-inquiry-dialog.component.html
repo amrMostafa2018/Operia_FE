@@ -6,7 +6,7 @@
   [resizable]="false"
   appendTo="body"
   styleClass="customer-inquiry-dialog"
-  [style]="{ width: 'min(920px, 96vw)' }"
+  [style]="{ width: 'min(1100px, 96vw)' }"
   (onHide)="close()"
 >
   <ng-template pTemplate="header">
@@ -273,38 +273,58 @@
                   </div>
                 }
 
-                @if (details.collections.length) {
+                @if (details.installments.length || details.collections.length) {
                   <div class="previous-sessions">
                     <h4>
                       <i class="pi pi-receipt"></i>{{ 'CUSTOMER_INQUIRY.STATEMENT' | translate }}
                     </h4>
-                    <div class="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
-                            <th>{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}</th>
-                            <th>{{ 'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate }}</th>
-                            <th>{{ 'CUSTOMER_INQUIRY.COL_DATE' | translate }}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @for (collection of details.collections; track collection.id) {
+                    @if (details.collections.length) {
+                      <div class="table-scroll">
+                        <table>
+                          <thead>
                             <tr>
-                              <td>{{ collection.installmentNumber }}</td>
-                              <td>{{ formatMoney(collection.amount) }}</td>
-                              <td>
-                                {{
-                                  'CUSTOMER_INQUIRY.METHOD.' +
-                                    collection.paymentMethod.toUpperCase() | translate
-                                }}
-                              </td>
-                              <td>{{ formatDate(collection.confirmedAtUtc) }}</td>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_DATE' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_EMPLOYEE' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_NOTES' | translate }}</th>
                             </tr>
-                          }
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            @for (
+                              collection of details.collections;
+                              track collection.id;
+                              let index = $index
+                            ) {
+                              <tr>
+                                <td>{{ index + 1 }}</td>
+                                <td>{{ formatDate(collection.confirmedAtUtc) }}</td>
+                                <td>{{ formatMoney(collection.amount) }}</td>
+                                <td>
+                                  {{
+                                    'CUSTOMER_INQUIRY.METHOD.' +
+                                      collection.paymentMethod.toUpperCase() | translate
+                                  }}
+                                </td>
+                                <td>{{ collection.recordedBy || '—' }}</td>
+                                <td>
+                                  {{
+                                    collection.installmentNumber === 0
+                                      ? ('CUSTOMER_INQUIRY.INITIAL_PAYMENT' | translate)
+                                      : '—'
+                                  }}
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    } @else {
+                      <p class="no-completions">
+                        {{ 'CUSTOMER_INQUIRY.NO_COLLECTIONS' | translate }}
+                      </p>
+                    }
                   </div>
                 }
 
@@ -321,6 +341,7 @@
                             <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
                             <th>{{ 'CUSTOMER_INQUIRY.COL_DATE' | translate }}</th>
                             <th>{{ 'CUSTOMER_INQUIRY.COL_TIME' | translate }}</th>
+                            <th>{{ 'CUSTOMER_INQUIRY.COL_SESSION_TYPE' | translate }}</th>
                             <th>{{ 'CUSTOMER_INQUIRY.COL_EMPLOYEE' | translate }}</th>
                             @if (details.pulses) {
                               <th>{{ 'CUSTOMER_INQUIRY.COL_PULSES' | translate }}</th>
@@ -334,6 +355,7 @@
                               <td>{{ session.sessionNumber }}</td>
                               <td>{{ formatDate(session.date) }}</td>
                               <td>{{ formatTime(session.startMinutes) }}</td>
+                              <td>{{ session.sessionType || '—' }}</td>
                               <td>{{ session.performer || '—' }}</td>
                               @if (details.pulses) {
                                 <td>{{ session.pulsesUsed ?? '—' }}</td>

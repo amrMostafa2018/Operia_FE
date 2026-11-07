@@ -305,6 +305,10 @@
 }
 
 .previous-sessions {
+  & + & {
+    margin-top: 0.9rem;
+  }
+
   h4 {
     display: flex;
     align-items: center;
