@@ -77,7 +77,6 @@ const DEFAULT_FORM_VALUE: PackageFormValue = {
   firstPayment: null,
   installmentCount: null,
   installments: [],
-  allStaff: true,
   staffIds: [],
   discountCode: '',
   discountPercent: 0,
@@ -131,9 +130,6 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
     totalMismatch: 'ERRORS.PACKAGE_INSTALLMENT_TOTAL_MISMATCH',
     sessionsInvalid: 'ERRORS.PACKAGE_INSTALLMENT_SESSIONS_INVALID',
     releaseCap: 'ERRORS.PACKAGE_INSTALLMENT_RELEASE_CAP',
-  },
-  staffIds: {
-    requiredStaff: 'ERRORS.PACKAGE_STAFF_INVALID',
   },
   discountCode: {
     maxlength: 'PACKAGES.CREATE.ERRORS.DISCOUNT_CODE_MAX',
@@ -239,7 +235,6 @@ export class PackagesComponent implements OnInit {
     firstPayment: [null as number | null],
     installmentCount: [null as number | null],
     installments: [[] as PackageInstallmentRow[]],
-    allStaff: [true],
     staffIds: [[] as string[]],
     discountCode: ['', [Validators.maxLength(50)]],
     discountPercent: [0 as number | null, [Validators.min(0), Validators.max(100)]],
@@ -276,7 +271,6 @@ export class PackagesComponent implements OnInit {
   });
   readonly statusValue = computed(() => this.formValue().status);
   readonly installmentEnabledValue = computed(() => this.formValue().installmentEnabled);
-  readonly allStaffValue = computed(() => this.formValue().allStaff);
   readonly installmentRows = computed(() => this.formValue().installments);
   readonly installmentTotal = computed(() =>
     this.installmentRows().reduce((total, row) => total + (Number(row.amount) || 0), 0)
@@ -381,10 +375,6 @@ export class PackagesComponent implements OnInit {
         this.form.controls.subServiceCategoryId.setValue(null, { emitEvent: false });
         this.loadSubServiceCategories(categoryId);
       });
-    this.form.controls.allStaff.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.syncStaffValidator());
-    this.syncStaffValidator();
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('PACKAGES.PAGE_REPORT'));
     });
@@ -485,7 +475,6 @@ export class PackagesComponent implements OnInit {
               amount: row.amount,
               sessionsUnlocked: row.sessionsUnlocked,
             })),
-            allStaff: detail.allStaff,
             staffIds: detail.staffIds,
             discountCode: detail.discountCode ?? '',
             discountPercent: detail.discountPercent ?? 0,
@@ -519,7 +508,6 @@ export class PackagesComponent implements OnInit {
     }
     this.syncPackageFieldValidators(type);
     this.syncPaymentValidators();
-    this.syncStaffValidator();
   }
 
   confirmPlanReplacement(): void {
@@ -914,7 +902,6 @@ export class PackagesComponent implements OnInit {
     this.form.reset(value, { emitEvent: false });
     this.syncPackageFieldValidators(value.offerType);
     this.syncPaymentValidators();
-    this.syncStaffValidator();
     this.formValue.set(this.form.getRawValue());
     this.loadSubServiceCategories(value.serviceCategoryId);
   }
@@ -976,19 +963,6 @@ export class PackagesComponent implements OnInit {
       this.manualPlanEdited.set(false);
     }
     this.form.controls.cashEnabled.updateValueAndValidity({ emitEvent: false });
-  }
-
-  private syncStaffValidator(): void {
-    const staffIds = this.form.controls.staffIds;
-    staffIds.setValidators(
-      this.form.controls.allStaff.value
-        ? []
-        : [control => (control.value.length ? null : { requiredStaff: true })]
-    );
-    staffIds.updateValueAndValidity({ emitEvent: false });
-    if (this.form.controls.allStaff.value) {
-      staffIds.setValue([], { emitEvent: false });
-    }
   }
 
   private installmentsValidation(rows: PackageInstallmentRow[]): ValidationErrors | null {
@@ -1085,8 +1059,8 @@ export class PackagesComponent implements OnInit {
       firstPayment: value.installmentEnabled ? value.firstPayment : null,
       installmentCount: value.installmentEnabled ? value.installmentCount : null,
       installments: value.installmentEnabled ? value.installments : [],
-      allStaff: value.allStaff,
-      staffIds: value.allStaff ? [] : value.staffIds,
+      allStaff: value.staffIds.length === 0,
+      staffIds: value.staffIds,
       discountCode: value.discountCode.trim(),
       discountPercent: value.discountPercent,
     };

@@ -114,7 +114,7 @@
       "SUB_CATEGORY_EMPTY": "No sub-categories yet. Type a name, then click +.",
       "SUB_CATEGORY_EMPTY_FILTER": "No matching sub-category. Click + to create it.",
       "ADD_CATEGORY": "Add",
-      "AVAILABLE_STAFF_LABEL": "Available Staff",
+      "AVAILABLE_STAFF_LABEL": "Service available to",
       "ALL_STAFF": "All Staff",
       "STAFF_PLACEHOLDER": "Select staff who can provide this service",
       "STAFF_EMPTY": "No active staff are assigned to your branches.",

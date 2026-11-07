@@ -114,7 +114,7 @@
       "SUB_CATEGORY_EMPTY": "لا توجد تصنيفات فرعية بعد. اكتب اسماً ثم اضغط +.",
       "SUB_CATEGORY_EMPTY_FILTER": "لا يوجد تصنيف فرعي مطابق. اضغط + لإنشائه.",
       "ADD_CATEGORY": "إضافة",
-      "AVAILABLE_STAFF_LABEL": "الموظفون المتاحون للخدمة",
+      "AVAILABLE_STAFF_LABEL": "الخدمة متاحة لـ",
       "ALL_STAFF": "جميع الموظفين",
       "STAFF_PLACEHOLDER": "اختر الموظفين الذين يقدمون هذه الخدمة",
       "STAFF_EMPTY": "لا يوجد موظفون نشطون تابعون لفروعك.",
