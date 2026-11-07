@@ -1507,6 +1507,7 @@
     "STATEMENT": "Payment statement",
     "INITIAL_PAYMENT": "Initial payment",
     "NO_COLLECTIONS": "No confirmed payments recorded",
+    "CUSTOMER": "Customer",
     "SELECTED_PURCHASE": "Selected purchase",
     "NEXT_INSTALLMENT": "Next installment",
     "PAYMENT_METHOD": "Payment method",

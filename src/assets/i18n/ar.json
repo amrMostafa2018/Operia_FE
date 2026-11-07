@@ -1509,6 +1509,7 @@
     "STATEMENT": "كشف المدفوعات",
     "INITIAL_PAYMENT": "دفعة أولى",
     "NO_COLLECTIONS": "لا توجد دفعات مؤكدة مسجلة",
+    "CUSTOMER": "العميل",
     "SELECTED_PURCHASE": "عملية الشراء المختارة",
     "NEXT_INSTALLMENT": "القسط التالي",
     "PAYMENT_METHOD": "طريقة الدفع",

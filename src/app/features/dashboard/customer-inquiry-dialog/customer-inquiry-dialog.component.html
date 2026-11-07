@@ -217,22 +217,26 @@
 
                 @if (details.installments.length) {
                   <div class="previous-sessions">
-                    <h4>
-                      <i class="pi pi-wallet"></i>{{ 'CUSTOMER_INQUIRY.INSTALLMENTS' | translate }}
-                      @if (details.nextInstallmentNumber) {
-                        ({{ details.nextInstallmentNumber }} / {{ details.installmentCount }})
+                    <div class="section-heading">
+                      <h4>
+                        <i class="pi pi-wallet"></i
+                        >{{ 'CUSTOMER_INQUIRY.INSTALLMENTS' | translate }}
+                        @if (details.nextInstallmentNumber) {
+                          ({{ details.nextInstallmentNumber }} / {{ details.installmentCount }})
+                        }
+                      </h4>
+                      @if (
+                        canCollectInstallment() &&
+                        details.nextInstallmentEligible &&
+                        details.paymentMethods.length
+                      ) {
+                        <button type="button" class="collect-button" (click)="openPayment()">
+                          <i class="pi pi-plus"></i>
+                          {{ 'CUSTOMER_INQUIRY.PAY_NEW_INSTALLMENT' | translate }}
+                        </button>
                       }
-                    </h4>
+                    </div>
                     @if (
-                      canCollectInstallment() &&
-                      details.nextInstallmentEligible &&
-                      details.paymentMethods.length
-                    ) {
-                      <button type="button" class="collect-button" (click)="openPayment()">
-                        <i class="pi pi-plus"></i>
-                        {{ 'CUSTOMER_INQUIRY.PAY_NEW_INSTALLMENT' | translate }}
-                      </button>
-                    } @else if (
                       canCollectInstallment() &&
                       details.nextInstallmentEligible &&
                       !details.paymentMethods.length
@@ -402,6 +406,13 @@
   @if (purchaseDetails(); as details) {
     <form class="collection-form" [formGroup]="paymentForm" (ngSubmit)="collectInstallment()">
       <div class="collection-summary">
+        @if (result(); as inquiry) {
+          <span
+            >{{ 'CUSTOMER_INQUIRY.CUSTOMER' | translate }}:
+            <strong>{{ inquiry.fullName }}</strong>
+            <bdi>{{ inquiry.mobileNumber }}</bdi></span
+          >
+        }
         <span
           >{{ 'CUSTOMER_INQUIRY.SELECTED_PURCHASE' | translate }}:
           <strong>{{ selectedPurchaseName() }}</strong></span
