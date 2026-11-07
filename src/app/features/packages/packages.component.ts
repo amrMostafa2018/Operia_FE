@@ -114,6 +114,7 @@ const FIELD_ERROR_KEYS: Record<string, Record<string, string>> = {
   installmentPrice: {
     required: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_REQUIRED',
     min: 'PACKAGES.CREATE.ERRORS.INSTALLMENT_PRICE_MIN',
+    precision: 'ERRORS.PACKAGE_INSTALLMENT_PRICE_PRECISION',
   },
   firstPayment: {
     required: 'ERRORS.PACKAGE_FIRST_PAYMENT_REQUIRED',
@@ -290,11 +291,14 @@ export class PackagesComponent implements OnInit {
   readonly distributedSessions = computed(() =>
     this.installmentRows().reduce((total, row) => total + (Number(row.sessionsUnlocked) || 0), 0)
   );
+  readonly installmentBalanceDifference = computed(
+    () => Math.round(this.remainingInstallmentBalance() * 100 - this.installmentTotal() * 100) / 100
+  );
+  readonly unassignedSessions = computed(
+    () => (this.formValue().sessionCount || 0) - this.distributedSessions()
+  );
   readonly prepaymentReleaseLimit = computed(() =>
-    Math.min(
-      Math.max(0, (Number(this.formValue().sessionCount) || 0) - 1),
-      Math.ceil((Number(this.formValue().sessionCount) || 0) * 0.7 - 0.5)
-    )
+    this.releaseLimit(this.formValue().sessionCount ?? 0)
   );
 
   readonly offerTypeOptions: { label: string; value: PackageOfferType }[] = [
@@ -565,23 +569,22 @@ export class PackagesComponent implements OnInit {
       this.suggestDistribution();
       return;
     }
-    const rows = this.distributedAmounts(count).map(amount => ({ amount, sessionsUnlocked: 0 }));
-    const totalSessions = Math.max(0, Number(this.form.controls.sessionCount.value) || 0);
-    const fullyPaidUpfront =
-      (Number(this.form.controls.installmentPrice.value) || 0) -
-        (Number(this.form.controls.firstPayment.value) || 0) ===
-      0;
-    if (!fullyPaidUpfront) {
-      const early = Math.min(Math.max(0, totalSessions - 1), Math.ceil(totalSessions * 0.7 - 0.5));
-      for (let index = 0; index < count - 1; index++) {
-        rows[index].sessionsUnlocked =
-          Math.floor(early / (count - 1)) + (index < early % (count - 1) ? 1 : 0);
-      }
-      rows[count - 1].sessionsUnlocked = totalSessions - early;
-    }
+    const { installmentPrice, firstPayment, sessionCount } = this.form.getRawValue();
+    const releaseLimit =
+      (installmentPrice ?? 0) > (firstPayment ?? 0) ? this.releaseLimit(sessionCount ?? 0) : 0;
+    const rows = this.distributedAmounts(count).map((amount, index) => ({
+      amount,
+      sessionsUnlocked:
+        Math.round((releaseLimit * (index + 1)) / count) -
+        Math.round((releaseLimit * index) / count),
+    }));
     this.form.controls.installments.setValue(rows);
     this.manualPlanEdited.set(false);
     this.validateInstallmentRows();
+  }
+
+  private releaseLimit(sessions: number): number {
+    return Math.min(Math.max(0, sessions - 1), Math.floor((sessions * 7 + 4) / 10));
   }
 
   private distributedAmounts(count: number): number[] {
@@ -619,7 +622,7 @@ export class PackagesComponent implements OnInit {
   private recalculateAmounts(): void {
     this.form.controls.firstPayment.updateValueAndValidity({ emitEvent: false });
     const rows = this.form.controls.installments.value;
-    if (rows.length === 0 || this.manualPlanEdited()) {
+    if (rows.length === 0 || this.form.controls.firstPayment.invalid) {
       this.validateInstallmentRows();
       return;
     }
@@ -926,7 +929,18 @@ export class PackagesComponent implements OnInit {
     price.updateValueAndValidity({ emitEvent: false });
     const installmentPrice = this.form.controls.installmentPrice;
     installmentPrice.setValidators(
-      this.form.controls.installmentEnabled.value ? [Validators.required, Validators.min(0.01)] : []
+      this.form.controls.installmentEnabled.value
+        ? [
+            Validators.required,
+            Validators.min(0.01),
+            control => {
+              const amount = control.value;
+              return amount != null && (amount >= 10 ** 16 || Number(amount.toFixed(2)) !== amount)
+                ? { precision: true }
+                : null;
+            },
+          ]
+        : []
     );
     installmentPrice.updateValueAndValidity({ emitEvent: false });
     const enabled =
@@ -955,9 +969,11 @@ export class PackagesComponent implements OnInit {
     );
     installments.updateValueAndValidity({ emitEvent: false });
     if (!enabled) {
+      installmentPrice.setValue(null, { emitEvent: false });
       firstPayment.setValue(null, { emitEvent: false });
       installmentCount.setValue(null, { emitEvent: false });
       installments.setValue([], { emitEvent: false });
+      this.manualPlanEdited.set(false);
     }
     this.form.controls.cashEnabled.updateValueAndValidity({ emitEvent: false });
   }
@@ -999,6 +1015,9 @@ export class PackagesComponent implements OnInit {
       return { totalMismatch: true };
     }
     const sessions = Number(this.form.controls.sessionCount.value) || 0;
+    if (sessions <= 0) {
+      return { sessionsInvalid: true };
+    }
     let released = 0;
     let paid = Number(this.form.controls.firstPayment.value) || 0;
     for (const row of rows) {
@@ -1014,7 +1033,7 @@ export class PackagesComponent implements OnInit {
       if (
         Math.round(paid * 100) <
           Math.round(Number(this.form.controls.installmentPrice.value) * 100) &&
-        released > Math.min(Math.max(0, sessions - 1), Math.ceil(sessions * 0.7 - 0.5))
+        released > this.releaseLimit(sessions)
       ) {
         return { releaseCap: true };
       }

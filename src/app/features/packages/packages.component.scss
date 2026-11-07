@@ -1124,14 +1124,27 @@
   }
 }
 
+.installment-plan {
+  padding: 0.75rem;
+  border: 1px solid #e3def7;
+  border-radius: 8px;
+  background: #f7f5ff;
+}
+
+.installment-plan .payment-option-toggle {
+  justify-content: space-between;
+}
+
 .installment-plan-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
-.installment-plan-fields .p-inputnumber {
-  width: 100%;
+@media (max-width: $bp-md) {
+  .installment-plan-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .installment-plan-summary {
@@ -1140,6 +1153,9 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  background: #ede9fb;
   font-size: 0.8rem;
   color: #50536a;
 }
@@ -1159,6 +1175,8 @@
 
 .installment-plan-table {
   width: 100%;
+  min-width: 26rem;
+  table-layout: fixed;
   border-collapse: collapse;
   text-align: start;
   font-size: 0.78rem;
@@ -1171,9 +1189,14 @@
   text-align: start;
 }
 
-.installment-plan-table .p-inputnumber {
+.installment-plan-table th:first-child {
+  width: 3rem;
+}
+
+:host ::ng-deep .installment-plan .p-inputnumber,
+:host ::ng-deep .installment-plan .installment-plan-input {
   width: 100%;
-  min-width: 5rem;
+  min-width: 0;
 }
 
 .plan-hint {
