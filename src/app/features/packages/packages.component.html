@@ -528,32 +528,6 @@
               }
             </div>
           }
-          <div class="form-field" [class.error]="isFieldInvalid(form, 'price')">
-            <span class="field-label">
-              {{ 'PACKAGES.CREATE.CASH_PRICE_LABEL' | translate }}
-              @if (formValue().cashEnabled) {
-                <em>*</em>
-              }
-            </span>
-            <div class="input-with-addon price-input">
-              <p-inputNumber
-                formControlName="price"
-                [min]="0"
-                [useGrouping]="true"
-                locale="en-US"
-                [minFractionDigits]="0"
-                [maxFractionDigits]="2"
-                styleClass="price-input-number"
-                inputStyleClass="price-input-field"
-              />
-              @if (currencyService.hasCurrency()) {
-                <span class="addon">{{ currencyService.currencyLabel() }}</span>
-              }
-            </div>
-            @if (getFieldError('price'); as priceError) {
-              <small class="field-error">{{ priceError }}</small>
-            }
-          </div>
         </div>
 
         <section
@@ -569,6 +543,72 @@
               </div>
               @if (getFieldError('cashEnabled'); as paymentError) {
                 <small class="field-error">{{ paymentError }}</small>
+              }
+              @if (formValue().cashEnabled) {
+                <div class="cash-price-fields">
+                  <div class="form-field" [class.error]="isFieldInvalid(form, 'price')">
+                    <span class="field-label">
+                      {{ 'PACKAGES.CREATE.CASH_PRICE_LABEL' | translate }} <em>*</em>
+                    </span>
+                    <div class="input-with-addon price-input">
+                      <p-inputNumber
+                        formControlName="price"
+                        [min]="0"
+                        [useGrouping]="true"
+                        locale="en-US"
+                        [minFractionDigits]="0"
+                        [maxFractionDigits]="2"
+                        styleClass="price-input-number"
+                        inputStyleClass="price-input-field"
+                      />
+                      @if (currencyService.hasCurrency()) {
+                        <span class="addon">{{ currencyService.currencyLabel() }}</span>
+                      }
+                    </div>
+                    @if (getFieldError('price'); as priceError) {
+                      <small class="field-error">{{ priceError }}</small>
+                    }
+                  </div>
+                  <div class="form-field" [class.error]="isFieldInvalid(form, 'discountPercent')">
+                    <span class="field-label">{{
+                      'PACKAGES.CREATE.DISCOUNT_PERCENT_LABEL' | translate
+                    }}</span>
+                    <div class="input-with-addon">
+                      <input
+                        pInputText
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        formControlName="discountPercent"
+                      />
+                      <span class="addon">%</span>
+                    </div>
+                    @if (getFieldError('discountPercent'); as percentError) {
+                      <small class="field-error">{{ percentError }}</small>
+                    }
+                  </div>
+                  <div class="form-field">
+                    <span class="field-label">{{
+                      'PACKAGES.CREATE.PRICE_AFTER_DISCOUNT' | translate
+                    }}</span>
+                    <div class="input-with-addon readonly">
+                      <input
+                        pInputText
+                        [value]="priceAfterDiscount() | number: '1.2-2'"
+                        readonly
+                        tabindex="-1"
+                      />
+                      @if (currencyService.hasCurrency()) {
+                        <span class="addon">{{ currencyService.currencyLabel() }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <p class="discount-note">
+                  <i class="pi pi-info-circle" aria-hidden="true"></i>
+                  {{ 'PACKAGES.CREATE.DISCOUNT_NOTE' | translate }}
+                </p>
               }
             </div>
             @if (isPackageOffer()) {
@@ -718,17 +758,12 @@
           </div>
         </section>
 
-        <section class="discount-accordion" [class.open]="discountOpen()">
-          <button type="button" class="discount-toggle" (click)="toggleDiscount()">
-            <span>{{ 'PACKAGES.CREATE.DISCOUNT_SECTION' | translate }}</span>
-            <i
-              class="pi"
-              [class.pi-chevron-up]="discountOpen()"
-              [class.pi-chevron-down]="!discountOpen()"
-            ></i>
-          </button>
-          @if (discountOpen()) {
+        @if (formValue().cashEnabled) {
+          <section class="discount-accordion">
             <div class="discount-body">
+              <label class="field-label" for="offer-discount-code">{{
+                'PACKAGES.CREATE.DISCOUNT_SECTION' | translate
+              }}</label>
               <div class="form-field" [class.error]="isFieldInvalid(form, 'discountCode')">
                 <span class="field-label">{{
                   'PACKAGES.CREATE.DISCOUNT_CODE_LABEL' | translate
@@ -736,6 +771,7 @@
                 <div class="input-with-addon">
                   <i class="pi pi-ticket" aria-hidden="true"></i>
                   <input
+                    id="offer-discount-code"
                     pInputText
                     formControlName="discountCode"
                     [placeholder]="'PACKAGES.CREATE.DISCOUNT_CODE_PLACEHOLDER' | translate"
@@ -745,50 +781,9 @@
                   <small class="field-error">{{ discountCodeError }}</small>
                 }
               </div>
-              <div class="discount-metrics">
-                <div class="form-field" [class.error]="isFieldInvalid(form, 'discountPercent')">
-                  <span class="field-label">
-                    {{ 'PACKAGES.CREATE.DISCOUNT_PERCENT_LABEL' | translate }}
-                  </span>
-                  <div class="input-with-addon">
-                    <input
-                      pInputText
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="1"
-                      formControlName="discountPercent"
-                    />
-                    <span class="addon">%</span>
-                  </div>
-                  @if (getFieldError('discountPercent'); as percentError) {
-                    <small class="field-error">{{ percentError }}</small>
-                  }
-                </div>
-                <div class="form-field">
-                  <span class="field-label">
-                    {{ 'PACKAGES.CREATE.PRICE_AFTER_DISCOUNT' | translate }}
-                  </span>
-                  <div class="input-with-addon readonly">
-                    <input
-                      pInputText
-                      [value]="priceAfterDiscount() | number: '1.2-2'"
-                      readonly
-                      tabindex="-1"
-                    />
-                    @if (currencyService.hasCurrency()) {
-                      <span class="addon">{{ currencyService.currencyLabel() }}</span>
-                    }
-                  </div>
-                </div>
-              </div>
-              <p class="discount-note">
-                <i class="pi pi-info-circle" aria-hidden="true"></i>
-                {{ 'PACKAGES.CREATE.DISCOUNT_NOTE' | translate }}
-              </p>
             </div>
-          }
-        </section>
+          </section>
+        }
       </div>
 
       <footer>

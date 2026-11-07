@@ -207,7 +207,6 @@ export class PackagesComponent implements OnInit {
   readonly pendingDelete = signal<PackageListItem | null>(null);
   readonly dialogOpen = signal(false);
   readonly editing = signal<PackageListItem | null>(null);
-  readonly discountOpen = signal(false);
   readonly saving = signal(false);
   readonly pendingPlanReplacement = signal<'singleSession' | number | null>(null);
   private readonly manualPlanEdited = signal(false);
@@ -252,7 +251,7 @@ export class PackagesComponent implements OnInit {
     const price = Number(this.formValue().price) || 0;
     const percent = Number(this.formValue().discountPercent) || 0;
     const clamped = Math.min(100, Math.max(0, percent));
-    return Math.max(0, price * (1 - clamped / 100));
+    return Math.round(Math.max(0, price * (1 - clamped / 100)) * 100 + Number.EPSILON) / 100;
   });
   readonly offerTypeValue = computed(() => this.formValue().offerType);
   readonly isPackageOffer = computed(() => this.offerTypeValue() === 'package');
@@ -447,13 +446,11 @@ export class PackagesComponent implements OnInit {
   openCreate(): void {
     this.editing.set(null);
     this.resetForm(DEFAULT_FORM_VALUE);
-    this.discountOpen.set(false);
     this.dialogOpen.set(true);
   }
 
   openEdit(item: PackageListItem): void {
     this.editing.set(item);
-    this.discountOpen.set(false);
     this.dialogOpen.set(true);
     this.service
       .get(item.id)
@@ -490,9 +487,6 @@ export class PackagesComponent implements OnInit {
             discountPercent: detail.discountPercent ?? 0,
           });
           this.manualPlanEdited.set(detail.installmentEnabled && detail.installments.length > 0);
-          this.discountOpen.set(
-            !!(detail.discountCode?.trim() || (detail.discountPercent ?? 0) > 0)
-          );
         },
         error: () => {
           this.close();
@@ -644,10 +638,6 @@ export class PackagesComponent implements OnInit {
     this.formValue.set(this.form.getRawValue());
   }
 
-  toggleDiscount(): void {
-    this.discountOpen.update(open => !open);
-  }
-
   addServiceCategory(): void {
     const name = this.serviceCategorySearchText().trim();
     if (!name || this.categorySaving()) {
@@ -776,9 +766,6 @@ export class PackagesComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      if (this.form.controls.discountCode.invalid || this.form.controls.discountPercent.invalid) {
-        this.discountOpen.set(true);
-      }
       return;
     }
     const value = this.form.getRawValue();
