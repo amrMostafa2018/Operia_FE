@@ -85,6 +85,7 @@
               {{ 'CUSTOMER_INQUIRY.TYPE.' + purchase.offerType.toUpperCase() | translate }}
             </span>
             <strong class="record-name">{{ purchase.offerName }}</strong>
+            <span class="purchase-date">{{ formatDate(purchase.purchasedAt) }}</span>
             <p-tag
               [value]="'CUSTOMER_INQUIRY.STATUS.' + purchase.status.toUpperCase() | translate"
               [severity]="
