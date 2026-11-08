@@ -9,6 +9,7 @@ import { AuthHttpService } from './auth-http.service';
 import { OnboardingService } from './onboarding.service';
 import { OnboardingStateService } from './onboarding-state.service';
 import { onboardingRouteForStep } from '@app/features/onboarding/models/onboarding.model';
+import { Policies } from '@core/models/permissions.model';
 
 const RT_KEY = 'operia_rt';
 const USER_KEY = 'operia_user';
@@ -122,6 +123,13 @@ export class SessionService {
       .subscribe(url => {
         if (url === DASHBOARD_URL) {
           this.clearOnboardingEntrySource();
+          const permissions = this.authStore.permissions();
+          if (
+            !permissions.includes(Policies.DashboardRead) &&
+            permissions.includes(Policies.BookingsRead)
+          ) {
+            url = '/bookings';
+          }
         }
         void this.router.navigateByUrl(url, { replaceUrl: true });
       });

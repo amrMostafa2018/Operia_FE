@@ -195,11 +195,13 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   readonly canClose = computed(
     () =>
       this.booking()?.status === 'booked' &&
-      this.canManage() &&
+      this.permissions.hasPermission(Policies.BookingsChangeStatus) &&
       (this.booking()?.lineItems.length ?? 0) > 0
   );
   readonly showActions = computed(
-    () => this.booking()?.status === 'booked' && (this.canManage() || this.canCancel())
+    () =>
+      this.booking()?.status === 'booked' &&
+      (this.canManage() || this.canCancel() || this.canClose())
   );
 
   readonly categoryTabs = computed<CatalogCategoryTab[]>(() => [
@@ -303,6 +305,10 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     this.customerPackagesLoading.set(true);
     this.matchedClient.set(null);
     this.initializeDraftLineItems(booking, []);
+    if (!this.canManage()) {
+      this.customerPackagesLoading.set(false);
+      return;
+    }
     this.appointmentsApi
       .findCustomer(booking.clientMobile, booking.id)
       .pipe(
