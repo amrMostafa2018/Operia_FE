@@ -91,8 +91,12 @@ export class SaleBuilderDialogComponent {
     branchId: ['', Validators.required],
   });
   readonly unlistedForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(200)]],
-    price: [0, [Validators.required, Validators.min(0)]],
+    name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+    price: this.fb.control<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+      Validators.max(999999999.99),
+    ]),
     durationMinutes: [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
   });
   readonly bookingForm = this.fb.nonNullable.group({
@@ -116,6 +120,7 @@ export class SaleBuilderDialogComponent {
   readonly customerLoading = signal(false);
   readonly pendingConfirmation = signal<PendingConfirmation | null>(null);
   readonly showUnlisted = signal(false);
+  readonly editingUnlistedKey = signal<string | null>(null);
   readonly categoryId = signal('all');
   readonly searchText = signal('');
   readonly selectedMethod = signal<string | null>(null);
@@ -153,6 +158,7 @@ export class SaleBuilderDialogComponent {
         this.catalog().some(offer => offer.id === row.offerId && offer.offerType === 'package')
       )
   );
+  readonly hasUnlisted = computed(() => this.rows().some(row => row.unlistedName !== null));
 
   constructor() {
     setupServerErrorClearing(this.customerForm, this.destroyRef, [
@@ -201,7 +207,7 @@ export class SaleBuilderDialogComponent {
     this.bookableEmployees.set([]);
     this.bookingForm.reset({ employeeId: '', scheduledDate: '', startTime: '' });
     this.customerForm.reset({ mobile: '', customerId: '', branchId: '' });
-    this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
+    this.unlistedForm.reset({ name: '', price: null, durationMinutes: 30 });
     this.customer.set(null);
     this.directCustomer.set(false);
     this.pendingCustomerMode.set(null);
@@ -218,6 +224,7 @@ export class SaleBuilderDialogComponent {
     this.categoryId.set('all');
     this.searchText.set('');
     this.showUnlisted.set(false);
+    this.editingUnlistedKey.set(null);
   }
 
   private loadOptions(): void {
@@ -419,29 +426,62 @@ export class SaleBuilderDialogComponent {
     this.changed();
   }
 
+  openUnlisted(row?: DraftRow): void {
+    if (!row && this.rows().some(item => item.unlistedName !== null)) {
+      this.itemError.set(this.translate.instant('ERRORS.SaleUnlistedLimit'));
+      return;
+    }
+    this.editingUnlistedKey.set(row?.key ?? null);
+    this.unlistedForm.reset({
+      name: row?.unlistedName ?? '',
+      price: row?.unlistedPrice ?? null,
+      durationMinutes: row?.unlistedDurationMinutes ?? 30,
+    });
+    this.showUnlisted.set(true);
+  }
+
+  closeUnlisted(): void {
+    this.showUnlisted.set(false);
+    this.editingUnlistedKey.set(null);
+  }
+
+  unlistedVisibilityChanged(visible: boolean): void {
+    if (!visible) this.closeUnlisted();
+  }
+
   addUnlisted(): void {
     this.unlistedForm.markAllAsTouched();
     if (this.unlistedForm.invalid) return;
-    if (this.rows().some(row => row.unlistedName !== null)) {
+    const editingKey = this.editingUnlistedKey();
+    if (this.rows().some(row => row.unlistedName !== null && row.key !== editingKey)) {
       this.itemError.set(this.translate.instant('ERRORS.SaleUnlistedLimit'));
       return;
     }
     const value = this.unlistedForm.getRawValue();
-    this.rows.update(rows => [
-      ...rows,
-      {
-        key: crypto.randomUUID(),
-        offerId: null,
-        ownedCustomerPackageId: null,
-        unlistedName: value.name.trim(),
-        unlistedPrice: value.price,
-        unlistedDurationMinutes: value.durationMinutes,
-        paymentOption: 'cash',
-        quantity: 1,
-      },
-    ]);
-    this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
-    this.showUnlisted.set(false);
+    if (value.price === null) return;
+    const details = {
+      unlistedName: value.name.trim(),
+      unlistedPrice: value.price,
+      unlistedDurationMinutes: value.durationMinutes,
+    };
+    if (editingKey) {
+      this.rows.update(rows =>
+        rows.map(row => (row.key === editingKey ? { ...row, ...details } : row))
+      );
+    } else {
+      this.rows.update(rows => [
+        ...rows,
+        {
+          key: crypto.randomUUID(),
+          offerId: null,
+          ownedCustomerPackageId: null,
+          ...details,
+          paymentOption: 'cash',
+          quantity: 1,
+        },
+      ]);
+    }
+    this.closeUnlisted();
     this.changed();
   }
 
@@ -880,7 +920,7 @@ export class SaleBuilderDialogComponent {
     if (!control.touched) return null;
     if (control.hasError('server')) return String(control.getError('server'));
     if (control.hasError('required')) return this.translate.instant('SALE_BUILDER.REQUIRED');
-    if (control.hasError('maxlength'))
+    if (control.hasError('maxlength') || control.hasError('pattern'))
       return this.translate.instant('ERRORS.SaleUnlistedNameInvalid');
     if (control.hasError('min') || control.hasError('max')) {
       return this.translate.instant(

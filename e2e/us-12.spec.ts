@@ -96,7 +96,9 @@ test.describe('US-12: Build and confirm a sale', () => {
     await page.getByRole('button', { name: 'Sell Service / Offer' }).click();
     const dialog = page.locator('.sale-builder-dialog');
     await expect(dialog).toBeVisible();
-    await dialog.locator('p-dropdown[formcontrolname="branchId"]').click();
+    const branchDropdown = dialog.locator('p-dropdown[formcontrolname="branchId"]');
+    await branchDropdown.scrollIntoViewIfNeeded();
+    await branchDropdown.locator('.p-dropdown-trigger').click();
     await page.getByRole('option', { name: 'US-07 E2E Branch' }).click();
     await expect(dialog.getByText('E2E Sale Cash Service', { exact: true })).toBeVisible();
     await expect(dialog.getByText('E2E Sale Installment Package', { exact: true })).toBeVisible();
@@ -134,7 +136,7 @@ test.describe('US-12: Build and confirm a sale', () => {
       hasText: 'E2E Owned Session Package',
     });
     await expect(ownedRow).toContainText('Owned session');
-    await expect(ownedRow.locator('td').nth(4)).toHaveText('0');
+    await expect(ownedRow.locator('td').nth(5)).toHaveText('0');
 
     const cashRow = dialog.locator('.selected-panel tbody tr').filter({
       hasText: 'E2E Sale Cash Service',
@@ -148,11 +150,21 @@ test.describe('US-12: Build and confirm a sale', () => {
     ).toBe(salesBefore);
 
     await dialog.getByRole('button', { name: 'Add one unlisted service' }).click();
-    await dialog.locator('#sale-unlisted-name').fill('E2E One-off UI Service');
-    await dialog.locator('#sale-unlisted-price').fill('125');
-    await dialog.locator('#sale-unlisted-duration').fill('25');
-    await dialog.locator('.unlisted-form').getByRole('button', { name: 'Add' }).click();
+    const unlistedDialog = page.locator('.sale-unlisted-dialog');
+    await unlistedDialog.locator('.p-dialog-header-close').click();
+    await expect(unlistedDialog).toBeHidden();
+    await dialog.getByRole('button', { name: 'Add one unlisted service' }).click();
+    await unlistedDialog.locator('#sale-unlisted-name').fill('E2E One-off UI Service');
+    await unlistedDialog.locator('#sale-unlisted-price').fill('125');
+    await unlistedDialog.locator('#sale-unlisted-duration').fill('25');
+    await unlistedDialog.locator('.unlisted-form').getByRole('button', { name: 'Add' }).click();
     await expect(dialog.locator('.selected-panel tbody')).toContainText('E2E One-off UI Service');
+    await expect(dueNow).toContainText('625');
+    await expect(dialog.locator('.unlisted-card')).toBeDisabled();
+    await dialog.getByRole('button', { name: 'Edit unlisted service' }).click();
+    await unlistedDialog.locator('#sale-unlisted-duration').fill('35');
+    await unlistedDialog.getByRole('button', { name: 'Save changes' }).click();
+    await expect(dialog.locator('.selected-panel tbody')).toContainText('35 minutes');
     await expect(dueNow).toContainText('625');
 
     const confirmResponse = page.waitForResponse(

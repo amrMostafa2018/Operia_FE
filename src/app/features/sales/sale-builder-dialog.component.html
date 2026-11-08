@@ -6,7 +6,7 @@
   [resizable]="false"
   appendTo="body"
   styleClass="sale-builder-dialog"
-  [style]="{ width: 'min(1060px, 96vw)' }"
+  [style]="{ width: 'min(1280px, 96vw)' }"
   (onHide)="closed.emit()"
 >
   <ng-template pTemplate="header">
@@ -162,82 +162,6 @@
         <small class="field-error">{{ error }}</small>
       }
     </div>
-    <div
-      class="customer-choice"
-      role="group"
-      [attr.aria-label]="'SALE_BUILDER.CUSTOMER_MODE' | translate"
-    >
-      <button
-        type="button"
-        [class.active]="!directCustomer()"
-        [disabled]="saving()"
-        (click)="setDirectCustomer(false)"
-      >
-        {{ 'SALE_BUILDER.REGISTERED_CUSTOMER' | translate }}
-      </button>
-      <button
-        type="button"
-        [class.active]="directCustomer()"
-        [disabled]="saving()"
-        (click)="setDirectCustomer(true)"
-      >
-        {{ 'SALE_BUILDER.DIRECT_CUSTOMER' | translate }}
-      </button>
-    </div>
-    @if (directCustomer()) {
-      <p class="direct-hint">{{ 'SALE_BUILDER.DIRECT_HINT' | translate }}</p>
-    }
-
-    <form
-      class="customer-row"
-      [class.direct]="directCustomer()"
-      [formGroup]="customerForm"
-      (ngSubmit)="searchCustomer()"
-    >
-      @if (!directCustomer()) {
-        <div class="field mobile-field">
-          <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
-          <div class="mobile-search">
-            <input pInputText id="sale-mobile" formControlName="mobile" (input)="mobileChanged()" />
-            <button type="submit" [disabled]="customerLoading()">
-              <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
-            </button>
-          </div>
-          @if (fieldError('mobile'); as error) {
-            <small class="field-error">{{ error }}</small>
-          }
-          @if (fieldError('customerId'); as error) {
-            <small class="field-error">{{ error }}</small>
-          }
-        </div>
-      }
-      @if (!directCustomer()) {
-        <div class="field">
-          <span class="field-label">{{ 'SALE_BUILDER.CUSTOMER' | translate }}</span>
-          <strong class="customer-name">{{
-            customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
-          }}</strong>
-        </div>
-      }
-      <div class="field">
-        <label for="sale-branch">{{ 'SALE_BUILDER.BRANCH' | translate }}</label>
-        <p-dropdown
-          inputId="sale-branch"
-          formControlName="branchId"
-          [disabled]="saving()"
-          [options]="branches()"
-          optionLabel="name"
-          optionValue="id"
-          [placeholder]="'SALE_BUILDER.BRANCH_SELECT' | translate"
-          (onChange)="branchChanged()"
-          appendTo="body"
-        />
-        @if (fieldError('branchId'); as error) {
-          <small class="field-error">{{ error }}</small>
-        }
-      </div>
-    </form>
-
     <section class="catalog-section">
       <div class="section-title">
         <h3>{{ 'SALE_BUILDER.CATALOG' | translate }}</h3>
@@ -266,17 +190,29 @@
           </button>
         }
       </div>
-      @if (loading()) {
-        <p class="empty">{{ 'SALE_BUILDER.LOADING' | translate }}</p>
-      } @else if (filteredCatalog().length === 0) {
-        <p class="empty">{{ 'SALE_BUILDER.NO_CATALOG' | translate }}</p>
-      } @else {
-        <div class="catalog-grid">
+      <div class="catalog-grid">
+        <button
+          type="button"
+          class="unlisted-card"
+          [disabled]="hasUnlisted()"
+          (click)="openUnlisted()"
+        >
+          <strong>{{ 'SALE_BUILDER.UNLISTED' | translate }}</strong>
+          <i class="pi pi-plus-circle" aria-hidden="true"></i>
+          <span>{{
+            (hasUnlisted() ? 'SALE_BUILDER.UNLISTED_ADDED' : 'SALE_BUILDER.UNLISTED_HINT')
+              | translate
+          }}</span>
+        </button>
+        @if (!loading()) {
           @for (offer of filteredCatalog(); track offer.id) {
             <article class="catalog-card">
-              <span class="card-icon"
-                ><i [class]="offer.offerType === 'package' ? 'pi pi-gift' : 'pi pi-sparkles'"></i
-              ></span>
+              <span class="item-type" [class.package]="offer.offerType === 'package'">
+                {{
+                  (offer.offerType === 'package' ? 'SALE_BUILDER.PACKAGE' : 'SALE_BUILDER.SERVICE')
+                    | translate
+                }}
+              </span>
               <strong>{{ offer.name }}</strong>
               <small
                 >{{ offer.sessionDurationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}</small
@@ -293,8 +229,96 @@
               </div>
             </article>
           }
-        </div>
+        }
+      </div>
+      @if (loading()) {
+        <p class="empty">{{ 'SALE_BUILDER.LOADING' | translate }}</p>
+      } @else if (filteredCatalog().length === 0) {
+        <p class="empty">{{ 'SALE_BUILDER.NO_CATALOG' | translate }}</p>
       }
+    </section>
+
+    <section class="customer-section">
+      <div
+        class="customer-choice"
+        role="group"
+        [attr.aria-label]="'SALE_BUILDER.CUSTOMER_MODE' | translate"
+      >
+        <button
+          type="button"
+          [class.active]="!directCustomer()"
+          [disabled]="saving()"
+          (click)="setDirectCustomer(false)"
+        >
+          {{ 'SALE_BUILDER.REGISTERED_CUSTOMER' | translate }}
+        </button>
+        <button
+          type="button"
+          [class.active]="directCustomer()"
+          [disabled]="saving()"
+          (click)="setDirectCustomer(true)"
+        >
+          {{ 'SALE_BUILDER.DIRECT_CUSTOMER' | translate }}
+        </button>
+      </div>
+      @if (directCustomer()) {
+        <p class="direct-hint">{{ 'SALE_BUILDER.DIRECT_HINT' | translate }}</p>
+      }
+
+      <form
+        class="customer-row"
+        [class.direct]="directCustomer()"
+        [formGroup]="customerForm"
+        (ngSubmit)="searchCustomer()"
+      >
+        @if (!directCustomer()) {
+          <div class="field mobile-field">
+            <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
+            <div class="mobile-search">
+              <input
+                pInputText
+                id="sale-mobile"
+                formControlName="mobile"
+                (input)="mobileChanged()"
+              />
+              <button type="submit" [disabled]="customerLoading()">
+                <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
+              </button>
+            </div>
+            @if (fieldError('mobile'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+            @if (fieldError('customerId'); as error) {
+              <small class="field-error">{{ error }}</small>
+            }
+          </div>
+        }
+        @if (!directCustomer()) {
+          <div class="field">
+            <span class="field-label">{{ 'SALE_BUILDER.CUSTOMER' | translate }}</span>
+            <strong class="customer-name">{{
+              customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
+            }}</strong>
+          </div>
+        }
+        <div class="field">
+          <label for="sale-branch">{{ 'SALE_BUILDER.BRANCH' | translate }}</label>
+          <p-dropdown
+            inputId="sale-branch"
+            formControlName="branchId"
+            [disabled]="saving()"
+            [options]="branches()"
+            optionLabel="name"
+            optionValue="id"
+            [placeholder]="'SALE_BUILDER.BRANCH_SELECT' | translate"
+            (onChange)="branchChanged()"
+            appendTo="body"
+          />
+          @if (fieldError('branchId'); as error) {
+            <small class="field-error">{{ error }}</small>
+          }
+        </div>
+      </form>
     </section>
 
     @if (!directCustomer() && customer()?.packages?.length) {
@@ -315,50 +339,6 @@
       </section>
     }
 
-    <section class="unlisted-section">
-      <button type="button" class="unlisted-toggle" (click)="showUnlisted.set(!showUnlisted())">
-        <i class="pi pi-plus-circle"></i> {{ 'SALE_BUILDER.UNLISTED' | translate }}
-        <i
-          class="pi"
-          [class.pi-chevron-up]="showUnlisted()"
-          [class.pi-chevron-down]="!showUnlisted()"
-        ></i>
-      </button>
-      @if (showUnlisted()) {
-        <form class="unlisted-form" [formGroup]="unlistedForm" (ngSubmit)="addUnlisted()">
-          <div class="field">
-            <label for="sale-unlisted-name">{{ 'SALE_BUILDER.NAME' | translate }}</label>
-            <input pInputText id="sale-unlisted-name" formControlName="name" />
-            @if (unlistedError('name'); as error) {
-              <small class="field-error">{{ error }}</small>
-            }
-          </div>
-          <div class="field">
-            <label for="sale-unlisted-price">{{ 'SALE_BUILDER.PRICE' | translate }}</label>
-            <p-inputNumber inputId="sale-unlisted-price" formControlName="price" [min]="0" />
-            @if (unlistedError('price'); as error) {
-              <small class="field-error">{{ error }}</small>
-            }
-          </div>
-          <div class="field">
-            <label for="sale-unlisted-duration">{{ 'SALE_BUILDER.DURATION' | translate }}</label>
-            <p-inputNumber
-              inputId="sale-unlisted-duration"
-              formControlName="durationMinutes"
-              [min]="1"
-              [max]="1440"
-            />
-            @if (unlistedError('durationMinutes'); as error) {
-              <small class="field-error">{{ error }}</small>
-            }
-          </div>
-          <button type="submit" class="outline-button">
-            {{ 'SALE_BUILDER.ADD_ITEM' | translate }}
-          </button>
-        </form>
-      }
-    </section>
-
     <div class="bottom-grid">
       <section class="selected-panel">
         <h3>
@@ -372,6 +352,7 @@
               <thead>
                 <tr>
                   <th>{{ 'SALE_BUILDER.ITEM' | translate }}</th>
+                  <th>{{ 'SALE_BUILDER.DURATION' | translate }}</th>
                   <th>{{ 'SALE_BUILDER.QUANTITY' | translate }}</th>
                   <th>{{ 'SALE_BUILDER.PAYMENT' | translate }}</th>
                   <th>{{ 'SALE_BUILDER.PRICE' | translate }}</th>
@@ -384,6 +365,22 @@
                   <tr>
                     <td>
                       <strong>{{ lineAt(index)?.name || rowName(row) }}</strong>
+                      @if (row.unlistedName) {
+                        <small class="row-type">{{
+                          'SALE_BUILDER.UNLISTED_TYPE' | translate
+                        }}</small>
+                      }
+                    </td>
+                    <td>
+                      @if (lineAt(index); as line) {
+                        @if (line.offerType === 'package' && line.sessionCount) {
+                          {{ line.sessionCount }} {{ 'SALE_BUILDER.SESSIONS' | translate }}
+                        } @else {
+                          {{ line.durationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}
+                        }
+                      } @else {
+                        —
+                      }
                     </td>
                     <td>
                       @if (row.paymentOption === 'owned' || row.unlistedName) {
@@ -428,6 +425,16 @@
                     <td>{{ lineAt(index)?.finalAmount ?? '—' }}</td>
                     <td>{{ lineAt(index)?.dueNow ?? '—' }}</td>
                     <td>
+                      @if (row.unlistedName) {
+                        <button
+                          type="button"
+                          class="icon-button edit"
+                          (click)="openUnlisted(row)"
+                          [attr.aria-label]="'SALE_BUILDER.EDIT_UNLISTED' | translate"
+                        >
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                      }
                       <button
                         type="button"
                         class="icon-button danger"
@@ -474,10 +481,6 @@
           <span>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</span
           ><strong>{{ quote()?.dueNow ?? '—' }} {{ currency.currencyLabel() }}</strong>
         </div>
-        <div class="summary-row">
-          <span>{{ 'SALE_BUILDER.REMAINING' | translate }}</span
-          ><strong>{{ quote() ? quote()!.grandTotal - quote()!.dueNow : '—' }}</strong>
-        </div>
         @if (quote() && quote()!.dueNow > 0) {
           <h4>{{ 'SALE_BUILDER.METHOD' | translate }}</h4>
           <div class="method-options">
@@ -499,7 +502,7 @@
     @if (hasDirectPackage()) {
       <p class="note">{{ 'SALE_BUILDER.DIRECT_PACKAGE_INCOME_ONLY' | translate }}</p>
     }
-    <div class="actions">
+    <div class="actions draft-actions">
       <button type="button" class="outline-button" (click)="closed.emit()">
         {{ 'COMMON.CANCEL' | translate }}
       </button>
@@ -533,6 +536,65 @@
       }
     </div>
   }
+</p-dialog>
+
+<p-dialog
+  [visible]="visible() && showUnlisted()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="sale-unlisted-dialog"
+  [header]="
+    (editingUnlistedKey() ? 'SALE_BUILDER.EDIT_UNLISTED' : 'SALE_BUILDER.UNLISTED') | translate
+  "
+  [style]="{ width: 'min(92vw, 30rem)' }"
+  (visibleChange)="unlistedVisibilityChanged($event)"
+  (onHide)="closeUnlisted()"
+>
+  <form class="unlisted-form" [formGroup]="unlistedForm" (ngSubmit)="addUnlisted()">
+    <div class="field">
+      <label for="sale-unlisted-name">{{ 'SALE_BUILDER.NAME' | translate }}</label>
+      <input pInputText id="sale-unlisted-name" formControlName="name" />
+      @if (unlistedError('name'); as error) {
+        <small class="field-error">{{ error }}</small>
+      }
+    </div>
+    <div class="field">
+      <label for="sale-unlisted-price">{{ 'SALE_BUILDER.PRICE' | translate }}</label>
+      <p-inputNumber
+        inputId="sale-unlisted-price"
+        formControlName="price"
+        [min]="0"
+        [maxFractionDigits]="2"
+      />
+      @if (unlistedError('price'); as error) {
+        <small class="field-error">{{ error }}</small>
+      }
+    </div>
+    <div class="field">
+      <label for="sale-unlisted-duration">{{ 'SALE_BUILDER.DURATION' | translate }}</label>
+      <p-inputNumber
+        inputId="sale-unlisted-duration"
+        formControlName="durationMinutes"
+        [min]="1"
+        [max]="1440"
+      />
+      @if (unlistedError('durationMinutes'); as error) {
+        <small class="field-error">{{ error }}</small>
+      }
+    </div>
+    <div class="actions">
+      <button type="button" class="outline-button" (click)="closeUnlisted()">
+        {{ 'COMMON.CANCEL' | translate }}
+      </button>
+      <button type="submit" class="primary-button">
+        {{
+          (editingUnlistedKey() ? 'SALE_BUILDER.SAVE_ITEM' : 'SALE_BUILDER.ADD_ITEM') | translate
+        }}
+      </button>
+    </div>
+  </form>
 </p-dialog>
 
 <p-dialog

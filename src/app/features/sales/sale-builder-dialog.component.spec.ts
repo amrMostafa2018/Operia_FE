@@ -20,11 +20,15 @@ describe('SaleBuilderDialogComponent confirmation', () => {
       'paymentMethods',
       'customer',
       'confirm',
+      'quote',
     ]);
     sales.catalog.and.returnValue(of({ items: [] }));
     sales.categories.and.returnValue(of([]));
     sales.branches.and.returnValue(of([]));
     sales.paymentMethods.and.returnValue(of(['cash']));
+    sales.quote.and.returnValue(
+      of({ items: [], subtotal: 0, discount: 0, grandTotal: 0, dueNow: 0 })
+    );
     sessionStorage.removeItem('operia.sale.pending');
     await TestBed.configureTestingModule({
       imports: [SaleBuilderDialogComponent],
@@ -187,5 +191,52 @@ describe('SaleBuilderDialogComponent confirmation', () => {
     expect(sales.confirm.calls.mostRecent().args[0]).toEqual(
       jasmine.objectContaining({ directCustomer: true, disposition: 'Close' })
     );
+  });
+
+  it('edits a single unlisted draft and requotes without adding a second row', () => {
+    const { component } = createReadyComponent();
+    component.openUnlisted();
+    component.unlistedForm.setValue({ name: '  Consultation  ', price: 125, durationMinutes: 25 });
+    component.addUnlisted();
+    const original = component.rows()[0];
+    expect(original.unlistedName).toBe('Consultation');
+    expect(component.showUnlisted()).toBeFalse();
+
+    component.openUnlisted(original);
+    component.unlistedForm.setValue({ name: 'Updated', price: 150, durationMinutes: 40 });
+    component.addUnlisted();
+
+    expect(component.rows().length).toBe(1);
+    expect(component.rows()[0]).toEqual(
+      jasmine.objectContaining({
+        key: original.key,
+        unlistedName: 'Updated',
+        unlistedPrice: 150,
+        unlistedDurationMinutes: 40,
+      })
+    );
+    expect(sales.quote.calls.mostRecent().args[0].items[0]).toEqual(
+      jasmine.objectContaining({
+        unlistedName: 'Updated',
+        unlistedPrice: 150,
+        unlistedDurationMinutes: 40,
+      })
+    );
+
+    component.openUnlisted(component.rows()[0]);
+    component.unlistedForm.controls.name.setValue('Discarded');
+    component.closeUnlisted();
+    expect(component.rows()[0].unlistedName).toBe('Updated');
+  });
+
+  it('rejects a blank name and a missing price without creating a draft row', () => {
+    const { component } = createReadyComponent();
+    component.openUnlisted();
+    component.unlistedForm.setValue({ name: '   ', price: null, durationMinutes: 30 });
+    component.addUnlisted();
+    expect(component.rows()).toEqual([]);
+    expect(component.unlistedError('name')).toBeTruthy();
+    expect(component.unlistedError('price')).toBeTruthy();
+    expect(sales.quote).not.toHaveBeenCalled();
   });
 });
