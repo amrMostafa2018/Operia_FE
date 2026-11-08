@@ -913,7 +913,7 @@ export class AppointmentsComponent {
   /** Finds a registered customer and ignores responses for an older mobile search. */
   onMobileSearch(): void {
     const mobile = this.filters().clientMobile.trim();
-    if (!mobile) {
+    if (!mobile || this.mobileInvalid()) {
       return;
     }
     this.lastAutoSearchedMobile = mobile;

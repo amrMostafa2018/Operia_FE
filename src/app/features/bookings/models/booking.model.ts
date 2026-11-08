@@ -747,6 +747,7 @@ export interface ServiceCatalogItem {
   category: string;
   durationMinutes: number;
   price: number;
+  listPrice?: number;
   cashEnabled?: boolean;
   installmentEnabled?: boolean;
   installmentPrice?: number | null;

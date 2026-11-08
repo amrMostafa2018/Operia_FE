@@ -20,6 +20,7 @@ export function mapPackageToCatalogItem(
     category: pkg.serviceCategoryId,
     durationMinutes: pkg.sessionDurationMinutes,
     price: pkg.cashPriceAfterDiscount ?? pkg.price,
+    listPrice: pkg.price,
     cashEnabled: pkg.cashEnabled ?? true,
     installmentEnabled: !!pkg.installmentEnabled,
     installmentPrice: pkg.installmentPrice ?? null,

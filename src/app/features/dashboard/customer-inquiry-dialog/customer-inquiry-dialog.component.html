@@ -174,6 +174,10 @@
                           {{ 'CUSTOMER_INQUIRY.SESSION_UNIT' | translate }}</strong
                         >
                       </div>
+                      <div class="balance-cell is-total">
+                        <small>{{ 'CUSTOMER_INQUIRY.RELEASED' | translate }}</small>
+                        <strong>{{ balance.released }}</strong>
+                      </div>
                       <div class="balance-cell is-used">
                         <small>{{ 'CUSTOMER_INQUIRY.COMPLETED' | translate }}</small>
                         <strong
@@ -202,6 +206,10 @@
                           >{{ balance.total }}
                           {{ 'CUSTOMER_INQUIRY.PULSE_UNIT' | translate }}</strong
                         >
+                      </div>
+                      <div class="balance-cell is-total">
+                        <small>{{ 'CUSTOMER_INQUIRY.RELEASED' | translate }}</small>
+                        <strong>{{ balance.released }}</strong>
                       </div>
                       <div class="balance-cell is-used">
                         <small>{{ 'CUSTOMER_INQUIRY.USED' | translate }}</small>
@@ -382,7 +390,9 @@
                               <tr>
                                 <td>{{ index + 1 }}</td>
                                 <td>{{ formatDate(collection.confirmedAtUtc) }}</td>
-                                <td><strong>{{ formatMoney(collection.amount) }}</strong></td>
+                                <td>
+                                  <strong>{{ formatMoney(collection.amount) }}</strong>
+                                </td>
                                 <td>
                                   {{
                                     'CUSTOMER_INQUIRY.METHOD.' +

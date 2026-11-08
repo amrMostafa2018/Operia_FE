@@ -988,13 +988,27 @@
       "CONTROL_PANEL": "Control panel"
     },
     "PAYMENT": {
-      "CASH": "Cash",
+      "TITLE": "Collect booking payment",
+      "EXPLANATION": "Confirm the actual collection result before booking. Selecting a method does not collect money.",
+      "CASH": "Cash price",
+      "INSTALLMENT": "Installment plan",
+      "DUE_NOW": "Due now",
+      "SALE_VALUE": "Sale value",
+      "REMAINING_BALANCE": "Remaining balance",
+      "COLLECTED": "Payment collected",
+      "FAILED_ACTION": "Payment failed",
+      "CHECK_STATUS": "Check payment status",
+      "RESUME": "Resume booking payment",
+      "CHOOSE_SLOT": "Choose another time",
+      "CHOOSE_SLOT_HINT": "Choose another calendar slot for this collected sale.",
+      "BRANCH_MISMATCH": "Choose a time in the sale's original branch.",
+      "FAILED": "Payment failed. No booking was confirmed. Record a new collection attempt when payment succeeds.",
+      "NOT_VERIFIED": "No successful collection is recorded. Verify the payment before trying again.",
+      "BOOKING_PENDING": "Payment is recorded, but the booking needs another availability or session check. Check status to retry.",
       "BANK_TRANSFER": "Bank transfer",
-      "VODAFONE": "Vodafone Cash",
-      "INSTAPAY": "Instapay",
-      "WALLET": "Wallet",
-      "E_WALLET": "E-Wallet",
-      "FAWRY": "Fawry"
+      "E_WALLET": "E-wallet",
+      "FAWRY": "Fawry",
+      "INSTAPAY": "InstaPay"
     },
     "SERVICE_TABS": {
       "ALL": "All",
@@ -1190,26 +1204,9 @@
         "MOBILE_INVALID": "Enter a valid mobile number.",
         "NAME_REQUIRED": "Client name is required.",
         "NAME_MAX": "Client name cannot exceed 200 characters."
-      }
-    },
-    "PAYMENT": {
-      "TITLE": "Collect booking payment",
-      "EXPLANATION": "Confirm the actual collection result before booking. Selecting a method does not collect money.",
-      "CASH": "Cash price",
-      "INSTALLMENT": "Installment plan",
-      "DUE_NOW": "Due now",
-      "SALE_VALUE": "Sale value",
-      "REMAINING_BALANCE": "Remaining balance",
-      "COLLECTED": "Payment collected",
-      "FAILED_ACTION": "Payment failed",
-      "CHECK_STATUS": "Check payment status",
-      "RESUME": "Resume booking payment",
-      "CHOOSE_SLOT": "Choose another time",
-      "CHOOSE_SLOT_HINT": "Choose another calendar slot for this collected sale.",
-      "BRANCH_MISMATCH": "Choose a time in the sale's original branch.",
-      "FAILED": "Payment failed. No booking was confirmed. Record a new collection attempt when payment succeeds.",
-      "NOT_VERIFIED": "No successful collection is recorded. Verify the payment before trying again.",
-      "BOOKING_PENDING": "Payment is recorded, but the booking needs another availability or session check. Check status to retry."
+      },
+      "INVALID_SELECTION": "Invalid selection",
+      "SERVICE_REQUIRED": "Select at least one service"
     },
     "MISMATCH": {
       "TITLE": "Booking duration warning",
@@ -1595,7 +1592,8 @@
     "ERRORS": {
       "MOBILE_REQUIRED": "Mobile number is required.",
       "MOBILE_INVALID": "Enter a valid mobile number."
-    }
+    },
+    "RELEASED": "Released"
   },
   "OPERIA_SUBSCRIPTIONS": {
     "TITLE": "Your OPERIA Subscriptions",
@@ -1973,14 +1971,22 @@
     "IMPORT_HINT": "Bulk import is coming in the next customer story.",
     "IMPORT_UPLOAD": "Upload customer file",
     "IMPORT_TEMPLATE": "Download import template",
-    "TYPES": { "package": "Package", "session": "Single session", "unknown": "Not recorded" },
+    "TYPES": {
+      "package": "Package",
+      "session": "Single session",
+      "unknown": "Not recorded"
+    },
     "PAYMENT_TYPES": {
       "cash": "Cash",
       "installment": "Installment",
       "owned": "Owned session",
       "unknown": "Not recorded"
     },
-    "RESTRICTIONS": { "active": "Active", "blocked": "Blocked", "inactive": "Inactive" },
+    "RESTRICTIONS": {
+      "active": "Active",
+      "blocked": "Blocked",
+      "inactive": "Inactive"
+    },
     "PURCHASE_STATUSES": {
       "active": "Active",
       "completed": "Completed",
@@ -1994,7 +2000,11 @@
       "unpaid": "Unpaid",
       "unknown": "Not recorded"
     },
-    "REFUND_STATUSES": { "none": "None", "partial": "Partly refunded", "full": "Fully refunded" },
+    "REFUND_STATUSES": {
+      "none": "None",
+      "partial": "Partly refunded",
+      "full": "Fully refunded"
+    },
     "INSTALLMENT_STATUSES": {
       "none": "—",
       "paid": "Paid",
@@ -2117,7 +2127,11 @@
     "USER": "Recorded by",
     "STATUS": "Status",
     "NO_INSTALLMENTS": "No installment plan for this purchase.",
-    "PAYMENT_STATUSES": { "paid": "Paid", "due": "Due", "cancelled": "Cancelled" }
+    "PAYMENT_STATUSES": {
+      "paid": "Paid",
+      "due": "Due",
+      "cancelled": "Cancelled"
+    }
   },
   "CUSTOMER_LEDGER": {
     "TITLE": "Customers",

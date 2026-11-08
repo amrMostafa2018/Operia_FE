@@ -25,6 +25,7 @@ export interface InquiryBalance {
   used: number;
   remaining: number;
   bookable: number;
+  released: number;
 }
 
 export interface InquiryCollection {

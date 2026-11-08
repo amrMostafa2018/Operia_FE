@@ -22,13 +22,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { isFieldInvalid } from '@app/shared/utils/form-field.util';
 import { applyServerFieldErrors, clearServerFieldError } from '@core/utils/api-error.util';
 import { CloseBookingItemInput } from './appointments-api.service';
-import {
-  BookingLineItem,
-  BookingRecord,
-  displayedPackageRemainingUnits,
-  displayedPackageUsedUnits,
-  packageUsesPulses,
-} from './models/booking.model';
+import { BookingLineItem, BookingRecord, packageUsesPulses } from './models/booking.model';
 
 type CloseLineStatus = 'complete' | 'cancel';
 
@@ -174,15 +168,7 @@ export class ConfirmPackageUsageDialogComponent {
       return null;
     }
 
-    const total = line.packageTotal ?? 0;
-    const remaining = line.packageRemainingSessions ?? 0;
-    const reserved = Math.max(0, total - line.packageUsed - remaining);
-    return displayedPackageUsedUnits({
-      usedSessions: line.packageUsed,
-      reservedSessions: reserved,
-      pulseCount: line.packagePulseCount,
-      offerType: line.type === 'package' ? 'package' : 'session',
-    });
+    return line.packageUsed;
   }
 
   lineRemaining(line: BookingLineItem): number | null {
@@ -190,16 +176,7 @@ export class ConfirmPackageUsageDialogComponent {
       return line.packageRemainingSessions ?? null;
     }
 
-    const total = line.packageTotal ?? 0;
-    const remaining = line.packageRemainingSessions ?? 0;
-    const reserved = Math.max(0, total - line.packageUsed - remaining);
-    return displayedPackageRemainingUnits({
-      totalSessions: line.packageTotal,
-      usedSessions: line.packageUsed,
-      reservedSessions: reserved,
-      pulseCount: line.packagePulseCount,
-      offerType: line.type === 'package' ? 'package' : 'session',
-    });
+    return Math.max(0, line.packageTotal - line.packageUsed);
   }
 
   showPulseInput(line: BookingLineItem, index: number): boolean {
@@ -310,7 +287,7 @@ export class ConfirmPackageUsageDialogComponent {
     pulsesControl.clearValidators();
 
     if (this.isPulseLine(line) && status === 'complete') {
-      const max = this.lineRemaining(line) ?? 0;
+      const max = line.packageRemainingSessions ?? 0;
       pulsesControl.setValidators([Validators.required, Validators.min(1), Validators.max(max)]);
     } else {
       pulsesControl.setValue(null);
@@ -359,7 +336,7 @@ export class ConfirmPackageUsageDialogComponent {
       return false;
     }
 
-    return pulses > (this.lineRemaining(line) ?? 0);
+    return pulses > (line.packageRemainingSessions ?? 0);
   }
 
   private toastPulsesExceedRemaining(): void {

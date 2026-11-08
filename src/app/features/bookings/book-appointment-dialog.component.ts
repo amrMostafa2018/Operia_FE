@@ -16,16 +16,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import {
-  catchError,
-  concat,
-  distinctUntilChanged,
-  map,
-  of,
-  startWith,
-  switchMap,
-  timer,
-} from 'rxjs';
+import { Subject, merge, catchError, concat, map, of, startWith, switchMap, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -258,11 +249,11 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   });
 
   private readonly appointmentsApi = inject(AppointmentsApiService);
+  private readonly mobileSearch = new Subject<string>();
   private readonly customerLookup = toSignal(
-    this.clientForm.controls.mobile.valueChanges.pipe(
+    merge(this.clientForm.controls.mobile.valueChanges, this.mobileSearch).pipe(
       startWith(this.clientForm.controls.mobile.value),
       map(mobile => mobile.trim()),
-      distinctUntilChanged(),
       switchMap(mobile => {
         const normalizedMobile = mobile.replace(/\D/g, '');
         const pending: CustomerLookupState = {
@@ -464,7 +455,27 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly hasPayableItems = computed(() => this.dueNow() > 0);
   readonly remainingBalance = computed(() => Math.max(0, this.netTotal() - this.dueNow()));
   readonly sessionCount = computed(() =>
-    this.lineItems().reduce((total, item) => total + item.quantity, 0)
+    this.lineItems().reduce(
+      (total, item) => total + (item.type === 'package' ? 1 : item.quantity),
+      0
+    )
+  );
+  readonly discount = computed(() =>
+    this.lineItems().reduce((total, item) => {
+      const catalog = this.catalogItems().find(entry => entry.id === item.catalogPackageId);
+      const units =
+        item.type === 'package'
+          ? (item.newPurchaseUnits ?? 0)
+          : item.packageSessionLinked
+            ? 0
+            : item.quantity;
+      return (
+        total +
+        (item.paymentOption === 'installment' || !catalog
+          ? 0
+          : Math.max(0, (catalog.listPrice ?? catalog.price) - item.price) * units)
+      );
+    }, 0)
   );
 
   readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
@@ -840,6 +851,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   lineTotal(item: BookingLineItem): number {
     return bookAppointmentLineTotal(item);
+  }
+
+  searchMobile(): void {
+    const mobile = this.clientForm.controls.mobile.value.trim();
+    if (mobile && !this.mobileInvalid()) {
+      this.mobileSearch.next(mobile);
+    }
   }
 
   /** Stores a country-code mobile and searches only after the number is valid. */

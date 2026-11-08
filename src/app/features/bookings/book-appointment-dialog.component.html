@@ -144,7 +144,7 @@
         </div>
       }
 
-      <form class="client-form" [formGroup]="clientForm">
+      <form class="client-form" [formGroup]="clientForm" (ngSubmit)="searchMobile()">
         <div class="field field--phone">
           <label for="booking-client-mobile">{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
           <span class="phone-row phone-row--intl phone-row--filter" dir="ltr">
@@ -165,6 +165,14 @@
               (countryChange)="onMobileCountryChange($event)"
             />
           </span>
+          <button
+            class="phone-search-submit"
+            type="submit"
+            tabindex="-1"
+            [disabled]="customerLookupPending() || mobileInvalid()"
+          >
+            {{ 'COMMON.SEARCH' | translate }}
+          </button>
           @if (mobileError(); as errorKey) {
             <small class="field-error">{{ errorKey | translate }}</small>
           }
@@ -683,7 +691,7 @@
         </li>
         <li>
           <span><i class="pi pi-percentage"></i>{{ 'BOOKINGS.BOOK.DISCOUNT' | translate }}</span>
-          <strong>0</strong>
+          <strong>{{ discount() }}</strong>
         </li>
       </ul>
 
