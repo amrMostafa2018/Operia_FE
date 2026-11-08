@@ -54,7 +54,6 @@ import {
   extractApiFieldErrors,
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
-import { PackageService } from '@app/features/packages/package.service';
 import { AppointmentsApiService, EligibleBookingEmployee } from './appointments-api.service';
 import { getRtlStartScrollLeft } from '@app/shared/utils/rtl.util';
 import {
@@ -74,9 +73,6 @@ import {
   CatalogCategoryTab,
   ClientPackage,
   ClientRecord,
-  EMPTY_UNLISTED_FORM,
-  UNLISTED_DURATION_UNIT_OPTIONS,
-  UNLISTED_OFFER_TYPE_OPTIONS,
   bookAppointmentCatalogQuantityLineItem,
   bookAppointmentLineDuration,
   bookAppointmentLineTotal,
@@ -93,12 +89,6 @@ import {
   PaymentMethodId,
   PAYMENT_METHODS,
 } from './models/booking.model';
-import { UnlistedCategoryFieldComponent } from './unlisted-category-field.component';
-import {
-  applyUnlistedPackageApiErrors,
-  toLineItemFromCreatedPackage,
-  toUnlistedPackagePayload,
-} from './unlisted-package.util';
 
 /** Describes book appointment payload used by the booking UI. */
 export interface BookAppointmentPayload {
@@ -136,7 +126,6 @@ interface CustomerLookupState {
     NgxIntlTelInputModule,
     InputNumberModule,
     TranslatePipe,
-    UnlistedCategoryFieldComponent,
   ],
   templateUrl: './book-appointment-dialog.component.html',
   styleUrl: './book-appointment-dialog.component.scss',
@@ -148,7 +137,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   private readonly languageService = inject(LanguageService);
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(MessageService);
-  private readonly packagesApi = inject(PackageService);
   private readonly permissions = inject(PermissionService);
   private readonly destroyRef = inject(DestroyRef);
   readonly packageUsesPulses = packageUsesPulses;
@@ -194,9 +182,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly customerNameResults = signal<{ id: string; fullName: string; mobileNumber: string }[]>(
     []
   );
-  readonly showServicesSection = signal(false);
+  readonly showServicesSection = signal(true);
   readonly showUnlisted = signal(false);
-  readonly unlistedSaving = signal(false);
+  readonly editingUnlistedId = signal<string | null>(null);
 
   readonly clientForm = this.fb.nonNullable.group({
     mobile: ['', Validators.required],
@@ -209,26 +197,14 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
 
   readonly unlistedForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(200)]],
-    serviceCategoryId: this.fb.control<string | null>(null, Validators.required),
-    offerType: this.fb.nonNullable.control<'singleSession' | 'package'>(
-      EMPTY_UNLISTED_FORM.offerType,
-      Validators.required
-    ),
-    durationMinutes: [
-      EMPTY_UNLISTED_FORM.durationMinutes,
-      [Validators.required, Validators.min(1)],
-    ],
-    sessionDurationUnit: [EMPTY_UNLISTED_FORM.sessionDurationUnit],
-    price: [0, [Validators.required, Validators.min(0)]],
+    name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+    durationMinutes: [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
+    price: this.fb.control<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+      Validators.max(999999999.99),
+    ]),
   });
-
-  readonly durationUnitOptions = UNLISTED_DURATION_UNIT_OPTIONS;
-  readonly offerTypeOptions = computed(() =>
-    this.customerMode() === 'direct'
-      ? UNLISTED_OFFER_TYPE_OPTIONS.filter(option => option.value === 'singleSession')
-      : UNLISTED_OFFER_TYPE_OPTIONS
-  );
 
   readonly canScrollLeft = signal(false);
   readonly canScrollRight = signal(false);
@@ -462,7 +438,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     )
   );
   readonly hasPayableItems = computed(() => this.dueNow() > 0);
-  readonly remainingBalance = computed(() => Math.max(0, this.netTotal() - this.dueNow()));
   readonly sessionCount = computed(() =>
     this.lineItems().reduce(
       (total, item) => total + (item.type === 'package' ? 1 : item.quantity),
@@ -500,8 +475,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     setupServerErrorClearing(this.clientForm, this.destroyRef, ['mobile', 'name']);
     setupServerErrorClearing(this.unlistedForm, this.destroyRef, [
       'name',
-      'serviceCategoryId',
-      'offerType',
       'durationMinutes',
       'price',
     ]);
@@ -533,7 +506,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             mobile: toBookingSearchMobile(parsedMobile) || this.initialClientMobile().trim(),
             name: this.initialClientName(),
           });
-          this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
+          this.unlistedForm.reset({ name: '', price: null, durationMinutes: 30 });
+          this.editingUnlistedId.set(null);
           this.unlistedItems.set(this.extractUnlistedItems(this.initialLineItems()));
           this.packagePaymentOptions.set(
             Object.fromEntries(
@@ -553,7 +527,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
           this.selectedPackageIds.set(selectedPackageIds);
           this.selectedEmployeeId.set(this.selection()?.employeeId ?? null);
           this.eligibleEmployees.set([]);
-          this.showServicesSection.set(false);
+          this.showServicesSection.set(true);
           this.showUnlisted.set(false);
           this.activeCategory.set('all');
           this.searchQuery.set('');
@@ -862,6 +836,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return bookAppointmentLineTotal(item);
   }
 
+  lineDueNow(item: BookingLineItem): number {
+    if (item.packageSessionLinked || (item.type === 'package' && !item.newPurchaseUnits)) return 0;
+    return item.paymentOption === 'installment'
+      ? (item.firstPayment ?? 0) * (item.newPurchaseUnits ?? item.quantity)
+      : this.lineTotal(item);
+  }
+
   /** Stores a country-code mobile and searches only after the number is valid. */
   onMobileInput(value: ChangeData | string | null): void {
     if (typeof value === 'string') {
@@ -1076,12 +1057,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return this.unlistedControlError(this.unlistedForm.controls.name, {
       required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_NAME_REQUIRED',
       maxlength: 'ERRORS.PACKAGE_NAME_MAX',
-    });
-  }
-
-  unlistedOfferTypeError(): string | null {
-    return this.unlistedControlError(this.unlistedForm.controls.offerType, {
-      required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_OFFER_TYPE_REQUIRED',
+      pattern: 'ERRORS.SaleUnlistedNameInvalid',
     });
   }
 
@@ -1089,6 +1065,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return this.unlistedControlError(this.unlistedForm.controls.durationMinutes, {
       required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_DURATION_REQUIRED',
       min: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_DURATION_MIN',
+      max: 'ERRORS.SaleUnlistedDurationInvalid',
     });
   }
 
@@ -1096,6 +1073,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return this.unlistedControlError(this.unlistedForm.controls.price, {
       required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_PRICE_REQUIRED',
       min: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_PRICE_MIN',
+      max: 'ERRORS.SaleUnlistedPriceInvalid',
     });
   }
 
@@ -1140,69 +1118,41 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     this.selectedPackageIds.set(packageIds ?? []);
   }
 
-  /** Validates and creates an unlisted service before adding it to the booking draft. */
-  addUnlisted(): void {
-    if (this.unlistedSaving()) {
-      return;
-    }
-    this.unlistedForm.markAllAsTouched();
-    if (this.unlistedForm.invalid) {
-      return;
-    }
-    if (
-      this.customerMode() === 'direct' &&
-      this.unlistedForm.controls.offerType.value === 'package'
-    ) {
-      this.toast.add({
-        severity: 'error',
-        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-        detail: this.translate.instant('ERRORS.BookingDirectCustomerPackageUnavailable'),
-      });
-      return;
-    }
-    if (!this.permissions.hasPermission(Policies.PackagesManage)) {
-      this.toast.add({
-        severity: 'error',
-        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-        detail: this.translate.instant('BOOKINGS.DETAILS.UNLISTED_NO_PERMISSION'),
-      });
-      return;
-    }
+  openUnlisted(item?: BookingLineItem): void {
+    this.editingUnlistedId.set(item?.id ?? null);
+    this.unlistedForm.reset({
+      name: item?.name ?? '',
+      price: item?.price ?? null,
+      durationMinutes: item?.durationMinutes ?? 30,
+    });
+    this.showUnlisted.set(true);
+  }
 
-    const payload = toUnlistedPackagePayload(this.unlistedForm.getRawValue());
-    this.unlistedSaving.set(true);
-    this.packagesApi
-      .create(payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: created => {
-          this.unlistedSaving.set(false);
-          this.unlistedItems.update(items => [...items, toLineItemFromCreatedPackage(created)]);
-          this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
-          this.showUnlisted.set(false);
-          this.packageCreated.emit();
-          this.toast.add({
-            severity: 'success',
-            summary: this.translate.instant('PACKAGES.TITLE'),
-            detail: this.translate.instant('BOOKINGS.DETAILS.UNLISTED_ADDED'),
-          });
-        },
-        error: (error: HttpErrorResponse) => {
-          this.unlistedSaving.set(false);
-          const hasFieldErrors = applyUnlistedPackageApiErrors(this.unlistedForm, error, key =>
-            this.translate.instant(key)
-          );
-          if (!hasFieldErrors) {
-            this.toast.add({
-              severity: 'error',
-              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-              detail:
-                (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
-                this.translate.instant('HTTP_ERRORS.SERVER'),
-            });
-          }
-        },
-      });
+  closeUnlisted(): void {
+    this.showUnlisted.set(false);
+    this.editingUnlistedId.set(null);
+  }
+
+  /** Adds or edits a sale-only service without changing the catalog. */
+  addUnlisted(): void {
+    this.unlistedForm.markAllAsTouched();
+    const value = this.unlistedForm.getRawValue();
+    if (this.unlistedForm.invalid || value.price === null) return;
+    const id = this.editingUnlistedId();
+    if (!id && this.unlistedItems().length) return;
+    const line: BookingLineItem = {
+      id: id ?? `unlisted-${crypto.randomUUID()}`,
+      name: value.name.trim(),
+      type: 'unlisted',
+      quantity: 1,
+      price: value.price,
+      durationMinutes: value.durationMinutes,
+      paymentOption: 'cash',
+    };
+    this.unlistedItems.update(items =>
+      id ? items.map(item => (item.id === id ? line : item)) : [...items, line]
+    );
+    this.closeUnlisted();
   }
 
   /** Validates the booking draft and emits the selected customer, items, slot, and payment method. */
@@ -1321,6 +1271,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     if (this.saving()) {
       return;
     }
+    this.closeUnlisted();
     this.closed.emit();
   }
 

@@ -270,6 +270,7 @@
     "BookingDirectCustomerSelectionInvalid": "اختر عميلاً مسجلاً أو عميلاً مباشراً.",
     "BookingDirectCustomerPackageUnavailable": "لا يمكن للعميل المباشر استخدام أو شراء باقة في هذا الحجز.",
     "BookingDirectCustomerItemsReadOnly": "لا يمكن تغيير عناصر حجز العميل المباشر بعد التأكيد.",
+    "BookingSaleUnlistedEditNotAllowed": "لا يمكن تعديل هذا الحجز لأنه يحتوي على خدمة غير مدرجة من عملية بيع مؤكدة.",
     "BookingCustomerNameTooLong": "لا يمكن أن يتجاوز اسم العميل 200 حرف.",
     "BookingCustomerSearchTermInvalid": "ابحث عن عميل باستخدام 2 إلى 100 حرف.",
     "BookingRequestInvalid": "راجع تفاصيل الحجز وحاول مرة أخرى.",

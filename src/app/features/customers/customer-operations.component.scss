@@ -1,6 +1,7 @@
 .customer-operations {
   padding: 1.5rem;
   color: #171a43;
+  min-width: 0;
 }
 
 h1,
@@ -49,6 +50,9 @@ th {
   justify-content: center;
   margin-bottom: 0.8rem;
 }
+.date-row label {
+  flex: 0 1 14rem;
+}
 .filter-grid {
   flex-wrap: wrap;
 }
@@ -91,16 +95,48 @@ button.primary {
   color: #c02b38;
 }
 .summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: stretch;
   margin-bottom: 0.9rem;
 }
 .summary article {
-  flex: 1;
+  grid-column: span 2;
   border-radius: 8px;
   padding: 1rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.8rem;
+  align-content: center;
+  align-items: center;
+  min-width: 0;
+}
+.summary .secondary-summary {
+  grid-column: span 3;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.7rem 1rem;
+}
+.summary-icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 8px;
+  color: #3124dd;
+  background: #e4ddff;
+  font-size: 1.1rem;
+}
+.collected .summary-icon {
+  color: #138459;
+  background: #d5f2e2;
+}
+.remaining .summary-icon {
+  color: #245cc9;
+  background: #dceaff;
 }
 .summary .sales {
   background: #f2efff;
@@ -110,6 +146,9 @@ button.primary {
 }
 .summary .remaining {
   background: #edf4ff;
+}
+.summary .refunded {
+  background: #fff2f1;
 }
 .summary span {
   font-weight: 600;
@@ -123,7 +162,10 @@ button.primary {
   font-weight: 400;
 }
 .grid-card h2 {
-  margin-bottom: 0.8rem;
+  margin: -1rem -1rem 0.8rem;
+  padding: 0.85rem 1rem;
+  background: #f3f5fb;
+  border-radius: 9px 9px 0 0;
 }
 .table-wrap {
   overflow-x: auto;
@@ -144,6 +186,9 @@ td {
 th {
   background: #f7f8fc;
   font-weight: 600;
+}
+tbody tr:nth-child(even) {
+  background: #fbfbfe;
 }
 .name {
   font-weight: 600;
@@ -213,9 +258,15 @@ th {
   .customer-operations {
     padding: 0.75rem;
   }
-  .summary,
   .import-panel {
     flex-direction: column;
+  }
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .summary article,
+  .summary .secondary-summary {
+    grid-column: span 1;
   }
   .summary article {
     width: 100%;
@@ -225,5 +276,14 @@ th {
   }
   .grid-card footer {
     flex-wrap: wrap;
+  }
+  .page-controls {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 420px) {
+  .summary article,
+  .summary .secondary-summary {
+    grid-column: span 2;
   }
 }

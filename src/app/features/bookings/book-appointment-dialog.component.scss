@@ -895,3 +895,110 @@
     color: var(--primary-color);
   }
 }
+
+/* US-15 to US-17: keep the catalog and selected items visible in the booking flow. */
+.service-carousel-viewport {
+  display: block;
+}
+
+.carousel-arrow {
+  display: none;
+}
+
+.service-carousel-track {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 0.65rem;
+  max-height: 24rem;
+  overflow: auto;
+}
+
+.service-card {
+  width: auto;
+  min-width: 0;
+}
+
+.bottom-layout {
+  grid-template-columns: 1fr;
+}
+
+.selected-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.selected-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  text-align: start;
+
+  th,
+  td {
+    padding: 0.65rem;
+    border-bottom: 1px solid var(--surface-border);
+    text-align: start;
+    vertical-align: middle;
+  }
+
+  th {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+  }
+
+  td small {
+    display: block;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+  }
+}
+
+.selected-actions {
+  white-space: nowrap;
+}
+
+.package-payment-choice {
+  margin-top: 0;
+}
+
+.unlisted-panel small {
+  display: block;
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+}
+
+.unlisted-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.booking-unlisted-form {
+  display: grid;
+  gap: 1rem;
+
+  input {
+    width: 100%;
+  }
+
+  .unlisted-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+:host ::ng-deep .booking-unlisted-form .p-inputnumber,
+:host ::ng-deep .booking-unlisted-form .p-inputnumber-input {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .slot-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-carousel-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

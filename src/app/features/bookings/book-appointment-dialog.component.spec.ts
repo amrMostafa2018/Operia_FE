@@ -78,4 +78,56 @@ describe('BookAppointmentDialogComponent customer selection', () => {
     expect(component.selectedCustomer()?.id).toBe('b');
     expect(component.clientForm.controls.mobile.value).toBe('222');
   });
+
+  it('adds, edits, and removes an unlisted service as a local draft', () => {
+    const fixture = TestBed.createComponent(BookAppointmentDialogComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.openUnlisted();
+    component.unlistedForm.setValue({
+      name: '  Temporary service  ',
+      price: 125,
+      durationMinutes: 25,
+    });
+    component.addUnlisted();
+
+    const item = component.unlistedItems()[0];
+    expect(item).toEqual(
+      jasmine.objectContaining({
+        name: 'Temporary service',
+        type: 'unlisted',
+        price: 125,
+        durationMinutes: 25,
+      })
+    );
+    expect(item.catalogPackageId).toBeUndefined();
+    expect(component.lineItems()).toContain(item);
+    expect(component.serviceDuration()).toBe(25);
+    expect(component.dueNow()).toBe(125);
+
+    component.openUnlisted(item);
+    component.unlistedForm.setValue({ name: 'Updated', price: 100, durationMinutes: 40 });
+    component.addUnlisted();
+    expect(component.unlistedItems().length).toBe(1);
+    expect(component.unlistedItems()[0].id).toBe(item.id);
+    expect(component.serviceDuration()).toBe(40);
+    expect(component.dueNow()).toBe(100);
+
+    component.removeLineItem(item.id);
+    expect(component.lineItems()).toEqual([]);
+    expect(component.dueNow()).toBe(0);
+  });
+
+  it('rejects empty price and whitespace-only unlisted name', () => {
+    const fixture = TestBed.createComponent(BookAppointmentDialogComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.openUnlisted();
+    component.unlistedForm.setValue({ name: '   ', price: null, durationMinutes: 30 });
+    component.addUnlisted();
+    expect(component.unlistedItems()).toEqual([]);
+    expect(component.unlistedNameError()).toBe('ERRORS.SaleUnlistedNameInvalid');
+    expect(component.unlistedPriceError()).toBe('BOOKINGS.DETAILS.ERRORS.UNLISTED_PRICE_REQUIRED');
+  });
 });

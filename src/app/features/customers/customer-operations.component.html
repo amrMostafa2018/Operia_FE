@@ -101,6 +101,7 @@
 
   <div class="summary">
     <article class="sales">
+      <i class="pi pi-database summary-icon" aria-hidden="true"></i>
       <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_SALES' | translate }}</span>
       <strong
         >{{ result()?.totalSales ?? 0 | number: '1.2-2' }}
@@ -108,6 +109,7 @@
       >
     </article>
     <article class="collected">
+      <i class="pi pi-wallet summary-icon" aria-hidden="true"></i>
       <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_COLLECTED' | translate }}</span>
       <strong
         >{{ result()?.totalCollected ?? 0 | number: '1.2-2' }}
@@ -115,23 +117,24 @@
       >
     </article>
     <article class="remaining">
+      <i class="pi pi-hourglass summary-icon" aria-hidden="true"></i>
+      <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_REMAINING' | translate }}</span>
+      <strong
+        >{{ result()?.totalRemaining ?? 0 | number: '1.2-2' }}
+        <small>{{ currency.currencyLabel() }}</small></strong
+      >
+    </article>
+    <article class="refunded secondary-summary">
       <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_REFUNDED' | translate }}</span>
       <strong
         >{{ result()?.totalRefunded ?? 0 | number: '1.2-2' }}
         <small>{{ currency.currencyLabel() }}</small></strong
       >
     </article>
-    <article class="collected">
+    <article class="collected secondary-summary">
       <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_NET' | translate }}</span>
       <strong
         >{{ result()?.totalNetCollected ?? 0 | number: '1.2-2' }}
-        <small>{{ currency.currencyLabel() }}</small></strong
-      >
-    </article>
-    <article class="remaining">
-      <span>{{ 'CUSTOMER_OPERATIONS.TOTAL_REMAINING' | translate }}</span>
-      <strong
-        >{{ result()?.totalRemaining ?? 0 | number: '1.2-2' }}
         <small>{{ currency.currencyLabel() }}</small></strong
       >
     </article>

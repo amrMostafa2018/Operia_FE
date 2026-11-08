@@ -44,18 +44,42 @@ test.describe('US-13: direct customer', () => {
     ).toBe('1|0|0|0');
   });
 
-  test('refuses a package or someone else’s owned balance for direct mode', async ({ request }) => {
+  test('permits an income-only cash package and refuses installments or an owned balance', async ({
+    request,
+  }) => {
     const headers = await authenticate(request);
+    const { sale } = await confirmQuotedSale(request, headers, {
+      key: 'e2e-us13-direct-package',
+      directCustomer: true,
+      offerId: e2eIds.saleInstallmentOffer,
+      disposition: 'Close',
+    });
+    const collection = await request.post(`${apiBaseUrl}/sales/collect`, {
+      headers,
+      data: {
+        saleId: sale.saleId,
+        idempotencyKey: 'e2e-us13-direct-package-collection',
+        paymentConfirmed: true,
+      },
+    });
+    expect(collection.ok(), await collection.text()).toBeTruthy();
+    expect(await collection.json()).toMatchObject({ paymentConfirmed: true, saleStatus: 'Closed' });
+    expect(
+      queryE2eDatabase(`SELECT CONCAT(
+      (SELECT COUNT(*) FROM dbo.CustomerPackages WHERE SaleId = '${sale.saleId}'), '|',
+      (SELECT COUNT(*) FROM dbo.Bookings WHERE SaleId = '${sale.saleId}'));`)
+    ).toBe('0|0');
+
     const packageQuote = await request.post(`${apiBaseUrl}/sales/quote`, {
       headers,
       data: {
         customerId: null,
         directCustomer: true,
         branchId: e2eIds.branch,
-        items: [catalogItem(e2eIds.saleInstallmentOffer)],
+        items: [catalogItem(e2eIds.saleInstallmentOffer, 'installment')],
       },
     });
-    await expectCode(packageQuote, 409, 'SaleDirectServiceOnly');
+    await expectCode(packageQuote, 409, 'SaleDirectPackageIncomeOnly');
 
     const ownedQuote = await request.post(`${apiBaseUrl}/sales/quote`, {
       headers,
@@ -84,6 +108,7 @@ test.describe('US-13: direct customer', () => {
     await dialog.locator('.mobile-search button[type="submit"]').click();
     await expect(dialog.locator('.customer-name')).toHaveText('US-07 Test Customer');
     await dialog.locator('.customer-choice button').nth(1).click();
+    await page.getByRole('button', { name: 'Switch customer type', exact: true }).click();
     await expect(dialog.locator('#sale-mobile')).toHaveCount(0);
     await expect(dialog.locator('.customer-name')).toHaveCount(0);
     await dialog.locator('.customer-choice button').first().click();

@@ -1,8 +1,72 @@
 import { expect, test } from '@playwright/test';
-import { apiBaseUrl, authenticate, e2eAccount, e2eIds, queryE2eDatabase } from './e2e-fixtures';
+import {
+  apiBaseUrl,
+  authenticate,
+  e2eAccount,
+  e2eIds,
+  performUiLogin,
+  queryE2eDatabase,
+} from './e2e-fixtures';
 import { createServiceBooking, expectCode, futureDate } from './us-13-15-helpers';
 
 test.describe('US-15: booking customer paths', () => {
+  test('keeps an unlisted service in the booking draft rather than the catalog', async ({
+    page,
+  }) => {
+    await performUiLogin(page);
+    await page.goto('/bookings');
+    await page.locator('.four-day-head button').last().click();
+    const slot = page.locator('button.available-overlay').first();
+    await expect(slot).toBeVisible({ timeout: 30_000 });
+    await slot.click();
+    const dialog = page.locator('.bookings-book-dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Direct customer', exact: true }).click();
+    await dialog.getByRole('button', { name: /unlisted/i }).click();
+    const unlisted = page.locator('.booking-unlisted-dialog');
+    await expect(unlisted).toBeVisible();
+    await unlisted.locator('#book-unlisted-name').fill('US-15 One-time Service');
+    await unlisted.locator('#book-unlisted-price').fill('125');
+    await unlisted.locator('#book-unlisted-duration').fill('20');
+    await unlisted.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(dialog.locator('.selected-table')).toContainText('US-15 One-time Service');
+    expect(
+      queryE2eDatabase(
+        `SELECT COUNT(*) FROM dbo.Packages WHERE TenantId = '${e2eIds.tenantA}' AND Name = 'US-15 One-time Service';`
+      )
+    ).toBe('0');
+
+    await dialog.getByRole('button', { name: 'Edit unlisted service' }).click();
+    await unlisted.locator('#book-unlisted-price').fill('150');
+    await unlisted.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(dialog.locator('.selected-table')).toContainText('150');
+    expect(
+      queryE2eDatabase(
+        `SELECT COUNT(*) FROM dbo.Packages WHERE TenantId = '${e2eIds.tenantA}' AND Name = 'US-15 One-time Service';`
+      )
+    ).toBe('0');
+
+    await dialog.locator('.payment-grid button').first().click();
+    const confirm = page.waitForResponse(
+      response =>
+        response.url().endsWith('/sales/confirm') && response.request().method() === 'POST'
+    );
+    await dialog.locator('.confirm-btn').click();
+    const confirmation = await confirm;
+    expect(confirmation.ok(), await confirmation.text()).toBeTruthy();
+    const sale = await confirmation.json();
+    const booked = page.waitForResponse(
+      response => response.url().endsWith('/sales/book') && response.request().method() === 'POST'
+    );
+    await page.getByRole('button', { name: 'Payment collected', exact: true }).click();
+    expect((await booked).ok()).toBeTruthy();
+    expect(
+      queryE2eDatabase(`SELECT CONCAT(
+      (SELECT COUNT(*) FROM dbo.Packages WHERE TenantId = '${e2eIds.tenantA}' AND Name = 'US-15 One-time Service'), '|',
+      (SELECT COUNT(*) FROM dbo.Sales WHERE Id = '${sale.saleId}' AND ItemsSnapshotJson LIKE '%US-15 One-time Service%'), '|',
+      (SELECT COUNT(*) FROM dbo.Bookings WHERE SaleId = '${sale.saleId}'));`)
+    ).toBe('0|1|1');
+  });
   test('finds a registered customer by name and mobile before booking', async ({ request }) => {
     const headers = await authenticate(request);
     const byName = await request.get(`${apiBaseUrl}/bookings/customers/search?term=US-07`, {

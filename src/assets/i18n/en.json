@@ -270,6 +270,7 @@
     "BookingDirectCustomerSelectionInvalid": "Choose either a registered customer or Direct Customer.",
     "BookingDirectCustomerPackageUnavailable": "Direct customers cannot use or buy packages in this booking.",
     "BookingDirectCustomerItemsReadOnly": "Direct customer booking items cannot be changed after confirmation.",
+    "BookingSaleUnlistedEditNotAllowed": "This booking cannot be edited because it contains an unlisted service from a confirmed sale.",
     "BookingCustomerNameTooLong": "Customer name cannot exceed 200 characters.",
     "BookingCustomerSearchTermInvalid": "Search for a customer with 2 to 100 characters.",
     "BookingRequestInvalid": "Review the booking details and try again.",

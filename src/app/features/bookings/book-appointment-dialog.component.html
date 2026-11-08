@@ -396,124 +396,17 @@
       </div>
 
       <div class="unlisted-panel">
-        <button type="button" class="unlisted-toggle" (click)="showUnlisted.set(!showUnlisted())">
-          <span>
-            <i class="pi pi-plus-circle"></i>
-            {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
-          </span>
-          <i
-            class="pi"
-            [class.pi-chevron-up]="showUnlisted()"
-            [class.pi-chevron-down]="!showUnlisted()"
-          ></i>
+        <button
+          type="button"
+          class="unlisted-toggle"
+          [disabled]="unlistedItems().length > 0"
+          (click)="openUnlisted()"
+        >
+          <i class="pi pi-plus-circle"></i>
+          {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
         </button>
-        @if (showUnlisted()) {
-          <form class="unlisted-form" [formGroup]="unlistedForm" (ngSubmit)="addUnlisted()">
-            <div class="field field-name" [class.error]="!!unlistedNameError()">
-              <label for="book-unlisted-name">
-                {{ 'BOOKINGS.DETAILS.UNLISTED_NAME' | translate }} <em>*</em>
-              </label>
-              <input pInputText id="book-unlisted-name" formControlName="name" />
-              @if (unlistedNameError(); as errorKey) {
-                <small class="field-error">{{ errorKey | translate }}</small>
-              }
-            </div>
-            <app-unlisted-category-field (categoryCreated)="packageCreated.emit()" />
-            <div class="field field-offer-type" [class.error]="!!unlistedOfferTypeError()">
-              <label for="book-unlisted-offer-type">
-                {{ 'PACKAGES.CREATE.OFFER_TYPE_LABEL' | translate }} <em>*</em>
-              </label>
-              <p-dropdown
-                inputId="book-unlisted-offer-type"
-                formControlName="offerType"
-                [options]="offerTypeOptions()"
-                optionLabel="label"
-                optionValue="value"
-                appendTo="body"
-                [placeholder]="'BOOKINGS.DETAILS.UNLISTED_OFFER_TYPE_PLACEHOLDER' | translate"
-                styleClass="unlisted-dropdown"
-                panelStyleClass="unlisted-dropdown-panel"
-              >
-                <ng-template pTemplate="selectedItem" let-item>
-                  @if (item) {
-                    {{ item.label | translate }}
-                  }
-                </ng-template>
-                <ng-template pTemplate="item" let-item>
-                  {{ item.label | translate }}
-                </ng-template>
-              </p-dropdown>
-              @if (unlistedOfferTypeError(); as errorKey) {
-                <small class="field-error">{{ errorKey | translate }}</small>
-              }
-            </div>
-            <div class="field field-duration" [class.error]="!!unlistedDurationError()">
-              <label for="book-unlisted-duration">
-                {{ 'BOOKINGS.DETAILS.DURATION' | translate }} <em>*</em>
-              </label>
-              <div class="input-with-addon duration-input">
-                <i class="pi pi-clock" aria-hidden="true"></i>
-                <input
-                  pInputText
-                  id="book-unlisted-duration"
-                  type="number"
-                  min="1"
-                  formControlName="durationMinutes"
-                />
-                <p-dropdown
-                  formControlName="sessionDurationUnit"
-                  [options]="durationUnitOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  appendTo="body"
-                  styleClass="duration-unit-dropdown"
-                >
-                  <ng-template pTemplate="selectedItem" let-item>
-                    @if (item) {
-                      {{ item.label | translate }}
-                    }
-                  </ng-template>
-                  <ng-template pTemplate="item" let-item>
-                    {{ item.label | translate }}
-                  </ng-template>
-                </p-dropdown>
-              </div>
-              @if (unlistedDurationError(); as errorKey) {
-                <small class="field-error">{{ errorKey | translate }}</small>
-              }
-            </div>
-            <div class="field field-price" [class.error]="!!unlistedPriceError()">
-              <label for="book-unlisted-price">
-                {{ 'BOOKINGS.BOOK.TOTAL_PRICE' | translate }} <em>*</em>
-              </label>
-              <div class="input-with-addon price-input">
-                <p-inputNumber
-                  inputId="book-unlisted-price"
-                  formControlName="price"
-                  [min]="0"
-                  [useGrouping]="true"
-                  locale="en-US"
-                  [minFractionDigits]="0"
-                  [maxFractionDigits]="2"
-                  styleClass="price-input-number"
-                  inputStyleClass="price-input-field"
-                />
-                @if (currencyService.hasCurrency()) {
-                  <span class="addon">{{ currencyService.currencyLabel() }}</span>
-                }
-              </div>
-              @if (unlistedPriceError(); as errorKey) {
-                <small class="field-error">{{ errorKey | translate }}</small>
-              }
-            </div>
-            <div class="unlisted-actions">
-              <span class="unlisted-actions-spacer" aria-hidden="true"></span>
-              <button type="submit" class="add-unlisted-btn" [disabled]="unlistedSaving()">
-                <i class="pi pi-plus"></i>
-                {{ 'COMMON.ADD' | translate }}
-              </button>
-            </div>
-          </form>
+        @if (unlistedItems().length) {
+          <small>{{ 'SALE_BUILDER.UNLISTED_ADDED' | translate }}</small>
         }
       </div>
     }
@@ -523,74 +416,94 @@
     <section class="panel-card payments-section">
       <h4>
         <i class="pi pi-wallet"></i>
-        {{ 'BOOKINGS.BOOK.PAYMENTS_TITLE' | translate }} ({{ paymentLineItems().length }})
+        {{ 'SALE_BUILDER.SELECTED' | translate }} ({{ lineItems().length }})
       </h4>
 
-      <ul class="payment-lines">
-        @if (paymentLineItems().length === 0) {
-          <li class="payment-lines-empty">
-            {{ 'BOOKINGS.BOOK.PAYMENTS_EMPTY' | translate }}
-          </li>
-        }
-        @for (item of paymentLineItems(); track item.id) {
-          <li>
-            <div class="payment-line-main">
-              <button
-                type="button"
-                class="icon-btn delete-btn"
-                (click)="removeLineItem(item.id)"
-                [attr.aria-label]="'COMMON.DELETE' | translate"
-              >
-                <i class="pi pi-trash"></i>
-              </button>
-              <div class="payment-line-content">
-                <strong>
-                  {{ item.name }}
-                  @if (item.type === 'package') {
-                    <span class="line-count">
-                      {{ 'BOOKINGS.BOOK.PACKAGE_COUNT' | translate: { count: item.quantity } }}
-                    </span>
+      <div class="selected-table-wrap">
+        <table class="selected-table">
+          <thead>
+            <tr>
+              <th>{{ 'SALE_BUILDER.ITEM' | translate }}</th>
+              <th>{{ 'BOOKINGS.BOOK.STAFF' | translate }}</th>
+              <th>{{ 'BOOKINGS.BOOK.DURATION' | translate }}</th>
+              <th>{{ 'SALE_BUILDER.PRICE' | translate }}</th>
+              <th>{{ 'SALE_BUILDER.PAYMENT' | translate }}</th>
+              <th>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</th>
+              <th>{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of lineItems(); track item.id) {
+              <tr>
+                <td>
+                  <strong>{{ item.name }}</strong
+                  ><small>{{ lineTypeKey(item.type) | translate }}</small>
+                </td>
+                <td>{{ selectedEmployee()?.fullName ?? '—' }}</td>
+                <td>{{ item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</td>
+                <td>{{ lineTotal(item) }} {{ currencyService.currencyLabel() }}</td>
+                <td>
+                  @if (
+                    item.packageSessionLinked || (item.type === 'package' && !item.newPurchaseUnits)
+                  ) {
+                    {{ 'SALE_BUILDER.COVERED' | translate }}
+                  } @else if (
+                    item.type === 'package' && item.catalogPackageId && item.newPurchaseUnits
+                  ) {
+                    <div class="package-payment-choice">
+                      @if (cashAvailable(item.catalogPackageId)) {
+                        <button
+                          type="button"
+                          [class.active]="item.paymentOption !== 'installment'"
+                          (click)="selectPackagePaymentOption(item.catalogPackageId, 'cash')"
+                        >
+                          {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
+                        </button>
+                      }
+                      @if (installmentAvailable(item.catalogPackageId)) {
+                        <button
+                          type="button"
+                          [class.active]="item.paymentOption === 'installment'"
+                          (click)="selectPackagePaymentOption(item.catalogPackageId, 'installment')"
+                        >
+                          {{ 'BOOKINGS.PAYMENT.INSTALLMENT' | translate }}
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
                   }
-                </strong>
-                <small>
-                  {{ item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}
-                  ·
-                  {{ lineTotal(item) }}
-                  @if (currencyService.hasCurrency()) {
-                    {{ currencyService.currencyLabel() }}
+                </td>
+                <td>{{ lineDueNow(item) }} {{ currencyService.currencyLabel() }}</td>
+                <td class="selected-actions">
+                  @if (item.type === 'unlisted') {
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      (click)="openUnlisted(item)"
+                      [attr.aria-label]="'SALE_BUILDER.EDIT_UNLISTED' | translate"
+                    >
+                      <i class="pi pi-pencil"></i>
+                    </button>
                   }
-                  @if (item.categoryName) {
-                    · {{ item.categoryName }}
-                  }
-                </small>
-                @if (item.type === 'package' && item.catalogPackageId && item.newPurchaseUnits) {
-                  <div class="package-payment-choice">
-                    @if (cashAvailable(item.catalogPackageId)) {
-                      <button
-                        type="button"
-                        [class.active]="item.paymentOption !== 'installment'"
-                        (click)="selectPackagePaymentOption(item.catalogPackageId, 'cash')"
-                      >
-                        {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
-                      </button>
-                    }
-                    @if (installmentAvailable(item.catalogPackageId)) {
-                      <button
-                        type="button"
-                        [class.active]="item.paymentOption === 'installment'"
-                        (click)="selectPackagePaymentOption(item.catalogPackageId, 'installment')"
-                      >
-                        {{ 'BOOKINGS.PAYMENT.INSTALLMENT' | translate }}
-                      </button>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-          </li>
-        }
-      </ul>
-
+                  <button
+                    type="button"
+                    class="icon-btn delete-btn"
+                    (click)="removeLineItem(item.id)"
+                    [attr.aria-label]="'COMMON.DELETE' | translate"
+                  >
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">{{ 'BOOKINGS.BOOK.PAYMENTS_EMPTY' | translate }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
       <div class="payments-total">
         <span>{{ 'BOOKINGS.BOOK.TOTAL' | translate }}</span>
         <strong>
@@ -604,13 +517,6 @@
         <span>{{ 'BOOKINGS.PAYMENT.DUE_NOW' | translate }}</span>
         <strong>{{ dueNow() }} {{ currencyService.currencyLabel() }}</strong>
       </div>
-      @if (remainingBalance() > 0) {
-        <div class="payments-total">
-          <span>{{ 'BOOKINGS.PAYMENT.REMAINING_BALANCE' | translate }}</span>
-          <strong>{{ remainingBalance() }} {{ currencyService.currencyLabel() }}</strong>
-        </div>
-      }
-
       @if (hasPayableItems()) {
         <div class="payment-methods-section">
           <h5 class="payment-method-title">{{ 'BOOKINGS.DETAILS.PAYMENT_METHOD' | translate }}</h5>
@@ -720,4 +626,71 @@
       {{ 'BOOKINGS.BOOK.CONFIRM' | translate }}
     </button>
   </div>
+</p-dialog>
+
+<p-dialog
+  [visible]="visible() && showUnlisted()"
+  (visibleChange)="!$event && closeUnlisted()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  styleClass="booking-unlisted-dialog"
+  [style]="{ width: 'min(460px, 95vw)' }"
+  [header]="
+    (editingUnlistedId() ? 'SALE_BUILDER.EDIT_UNLISTED' : 'BOOKINGS.DETAILS.ADD_UNLISTED')
+      | translate
+  "
+>
+  <form
+    class="booking-unlisted-form"
+    [formGroup]="unlistedForm"
+    (ngSubmit)="addUnlisted()"
+    novalidate
+  >
+    <div class="field">
+      <label for="book-unlisted-name">{{ 'BOOKINGS.DETAILS.UNLISTED_NAME' | translate }} *</label>
+      <input pInputText id="book-unlisted-name" formControlName="name" />
+      @if (unlistedNameError(); as errorKey) {
+        <small class="field-error">{{ errorKey | translate }}</small>
+      }
+    </div>
+    <div class="field">
+      <label for="book-unlisted-price">{{ 'BOOKINGS.BOOK.TOTAL_PRICE' | translate }} *</label>
+      <p-inputNumber
+        inputId="book-unlisted-price"
+        formControlName="price"
+        [min]="0"
+        [maxFractionDigits]="2"
+      />
+      @if (unlistedPriceError(); as errorKey) {
+        <small class="field-error">{{ errorKey | translate }}</small>
+      }
+    </div>
+    <div class="field">
+      <label for="book-unlisted-duration"
+        >{{ 'BOOKINGS.DETAILS.DURATION' | translate }} ({{ 'BOOKINGS.MINUTES' | translate }})
+        *</label
+      >
+      <input
+        pInputText
+        type="number"
+        id="book-unlisted-duration"
+        min="1"
+        max="1440"
+        formControlName="durationMinutes"
+      />
+      @if (unlistedDurationError(); as errorKey) {
+        <small class="field-error">{{ errorKey | translate }}</small>
+      }
+    </div>
+    <div class="unlisted-actions">
+      <button type="button" class="cancel-btn" (click)="closeUnlisted()">
+        {{ 'COMMON.CANCEL' | translate }}
+      </button>
+      <button type="submit" class="confirm-btn">
+        {{ (editingUnlistedId() ? 'COMMON.SAVE' : 'COMMON.ADD') | translate }}
+      </button>
+    </div>
+  </form>
 </p-dialog>
