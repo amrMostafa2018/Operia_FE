@@ -555,7 +555,8 @@ export class SaleBuilderDialogComponent {
     const confirmation: PendingConfirmation = {
       request,
       durationMinutes: quote.items.reduce(
-        (sum, line) => sum + line.durationMinutes * line.quantity,
+        (sum, line) =>
+          sum + line.durationMinutes * (line.offerType === 'package' ? 1 : line.quantity),
         0
       ),
     };

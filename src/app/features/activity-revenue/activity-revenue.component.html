@@ -213,7 +213,7 @@
           </select>
         </label>
         @if (canExport()) {
-          <button type="button" [disabled]="exporting()" (click)="export()">
+          <button type="button" [disabled]="exporting() || !report()" (click)="export()">
             <i class="pi pi-download"></i> {{ 'ACTIVITY_REVENUE.EXPORT' | translate }}
           </button>
         }

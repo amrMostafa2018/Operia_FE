@@ -166,7 +166,7 @@ export class CustomerOperationsComponent {
   }
 
   export(): void {
-    if (!this.canExport() || this.exporting()) return;
+    if (!this.canExport() || this.exporting() || !this.result()) return;
     this.exporting.set(true);
     this.service
       .export(this.applied)

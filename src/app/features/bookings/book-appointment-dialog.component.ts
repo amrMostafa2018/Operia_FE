@@ -602,13 +602,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         const requestItems = items
           .filter(item => !!item.catalogPackageId)
           .map(item => mapBookingLineToApiItem(item, items));
-        if (requestItems.length !== items.length) {
-          this.eligibleEmployeesRequestId++;
-          this.eligibleEmployees.set([]);
-          this.selectedEmployeeId.set(null);
-          this.eligibleEmployeesLoading.set(false);
-          return;
-        }
+        const unlistedDurationMinutes = items
+          .filter(item => !item.catalogPackageId)
+          .reduce((total, item) => total + item.durationMinutes * item.quantity, 0);
         const requestId = ++this.eligibleEmployeesRequestId;
         this.eligibleEmployeesLoading.set(true);
         this.appointmentsApi
@@ -622,6 +618,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
             startMinutes: slot.startMinutes,
             endMinutes: slot.startMinutes + slot.slotDurationMinutes,
             items: requestItems,
+            unlistedDurationMinutes,
           })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
@@ -1228,10 +1225,15 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
 
-    if (
-      this.serviceDuration() <= this.selection()!.slotDurationMinutes &&
-      (!this.selectedEmployee() || this.eligibleEmployeesLoading())
-    ) {
+    if (this.serviceDuration() > this.selection()!.slotDurationMinutes) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.BookingDurationMismatch'),
+      });
+      return;
+    }
+    if (!this.selectedEmployee() || this.eligibleEmployeesLoading()) {
       this.toast.add({
         severity: 'error',
         summary: this.translate.instant('BOOKINGS.BOOK.EMPLOYEE_REQUIRED'),

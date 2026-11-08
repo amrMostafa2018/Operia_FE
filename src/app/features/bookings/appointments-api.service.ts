@@ -184,6 +184,7 @@ export class AppointmentsApiService {
       quantity: number;
       type: string;
     }[];
+    unlistedDurationMinutes?: number;
   }): Observable<EligibleBookingEmployee[]> {
     return this.http.post<EligibleBookingEmployee[]>(`${this.url}/eligible-employees`, request);
   }
