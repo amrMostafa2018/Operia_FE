@@ -330,7 +330,9 @@ export class DashboardComponent {
             ? 'SALE_BUILDER.BOOKED'
             : result.status === 'Closed'
               ? 'SALE_BUILDER.CLOSED'
-              : 'SALE_BUILDER.CONFIRMED'
+              : result.dueNow === 0
+                ? 'SALE_BUILDER.SAVED_SALE'
+                : 'SALE_BUILDER.CONFIRMED'
         ) + (result.status === 'ReadyToBook' ? ` ${result.saleId}` : ''),
     });
     this.closeSellDialog();

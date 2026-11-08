@@ -566,10 +566,18 @@ export class SaleBuilderDialogComponent {
             collectionId: null,
             paymentConfirmed: false,
             bookingId: null,
+            requiresCollection: confirmation.request.items.some(
+              item => item.paymentOption !== 'owned'
+            ),
           };
           this.activeSale.set(state);
           sessionStorage.setItem(this.recoveryStorageKey, result.saleId);
-          if (result.dueNow === 0) this.collect(true);
+          if (state.requiresCollection && result.dueNow === 0) {
+            this.collect(true);
+          } else if (!state.requiresCollection && confirmation.request.disposition === 'BookNow') {
+            this.bookingRequested.set(true);
+            this.loadBookableEmployees();
+          }
         },
         error: (error: HttpErrorResponse) => {
           this.saving.set(false);
@@ -648,7 +656,13 @@ export class SaleBuilderDialogComponent {
   book(): void {
     const sale = this.activeSale();
     this.bookingForm.markAllAsTouched();
-    if (!sale?.paymentConfirmed || this.bookingForm.invalid || this.saving()) return;
+    if (
+      !sale ||
+      (!sale.paymentConfirmed && sale.requiresCollection) ||
+      this.bookingForm.invalid ||
+      this.saving()
+    )
+      return;
     const value = this.bookingForm.getRawValue();
     const [hours, minutes] = value.startTime.split(':').map(Number);
     const startMinutes = hours * 60 + minutes;
@@ -727,7 +741,10 @@ export class SaleBuilderDialogComponent {
             return;
           }
           this.activeSale.set(state);
-          if (state.paymentConfirmed && state.disposition === 'BookNow') {
+          if (
+            (state.paymentConfirmed || !state.requiresCollection) &&
+            state.disposition === 'BookNow'
+          ) {
             this.bookingRequested.set(true);
             this.loadBookableEmployees();
           }
@@ -745,7 +762,10 @@ export class SaleBuilderDialogComponent {
       .subscribe({
         next: state => {
           this.activeSale.set(state);
-          if (state.paymentConfirmed && state.disposition === 'BookNow') {
+          if (
+            (state.paymentConfirmed || !state.requiresCollection) &&
+            state.disposition === 'BookNow'
+          ) {
             this.bookingRequested.set(true);
             this.loadBookableEmployees();
           }
@@ -794,7 +814,10 @@ export class SaleBuilderDialogComponent {
           this.saving.set(false);
           this.activeSale.set(state);
           sessionStorage.setItem(this.recoveryStorageKey, state.saleId);
-          if (state.paymentConfirmed && state.disposition === 'BookNow') {
+          if (
+            (state.paymentConfirmed || !state.requiresCollection) &&
+            state.disposition === 'BookNow'
+          ) {
             this.startBooking();
           }
         },

@@ -78,6 +78,7 @@ export interface SaleState {
   collectionId: string | null;
   paymentConfirmed: boolean;
   bookingId: string | null;
+  requiresCollection: boolean;
 }
 
 export interface CollectSaleResult {

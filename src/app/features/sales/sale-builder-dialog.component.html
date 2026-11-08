@@ -31,7 +31,7 @@
         {{ 'SALE_BUILDER.SALE_REFERENCE' | translate }}: {{ sale.saleId }}
       </p>
       <p>{{ 'SALE_BUILDER.SAVED_TRACE' | translate }}</p>
-      @if (!sale.paymentConfirmed) {
+      @if (!sale.paymentConfirmed && sale.requiresCollection) {
         <div class="summary-row due">
           <span>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</span>
           <strong>{{ sale.dueNow }} {{ currency.currencyLabel() }}</strong>
@@ -97,7 +97,14 @@
           </button>
         </form>
       } @else {
-        <p>{{ 'SALE_BUILDER.COLLECTION_SAVED' | translate }}</p>
+        <p>
+          {{
+            (sale.requiresCollection
+              ? 'SALE_BUILDER.COLLECTION_SAVED'
+              : 'SALE_BUILDER.NO_COLLECTION'
+            ) | translate
+          }}
+        </p>
         @if (sale.status === 'ReadyToBook' && canBookNow()) {
           <button type="button" class="outline-button" (click)="startBooking()">
             {{ 'SALE_BUILDER.BOOK_SAVED_SALE' | translate }}
