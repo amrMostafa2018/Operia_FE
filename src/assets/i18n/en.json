@@ -1139,7 +1139,7 @@
       "MODE_NEW": "New customer",
       "MODE_DIRECT": "Direct customer",
       "DIRECT_HINT": "Direct customer — no personal details. Only standalone services can be booked.",
-      "SEARCH_NAME": "Search registered customers by name",
+      "SEARCH_NAME": "Search registered customers by name or phone number",
       "REGISTER_CUSTOMER": "Register customer",
       "CUSTOMER_REGISTERED": "Customer registered",
       "CLIENT_SECTION": "Client details",

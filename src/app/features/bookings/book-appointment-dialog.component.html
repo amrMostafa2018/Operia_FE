@@ -126,14 +126,14 @@
       <p class="direct-customer-hint">{{ 'BOOKINGS.BOOK.DIRECT_HINT' | translate }}</p>
     } @else {
       @if (customerMode() === 'registered') {
-        <div class="customer-name-search">
+        <form class="customer-name-search" (ngSubmit)="searchCustomerName()">
           <input
             pInputText
             [value]="customerNameSearch()"
             (input)="customerNameSearch.set($any($event.target).value)"
             [placeholder]="'BOOKINGS.BOOK.SEARCH_NAME' | translate"
           />
-          <button type="button" (click)="searchCustomerName()">
+          <button type="submit">
             {{ 'COMMON.SEARCH' | translate }}
           </button>
           @for (result of customerNameResults(); track result.id) {
@@ -141,10 +141,10 @@
               {{ result.fullName }} · {{ result.mobileNumber }}
             </button>
           }
-        </div>
+        </form>
       }
 
-      <form class="client-form" [formGroup]="clientForm" (ngSubmit)="searchMobile()">
+      <form class="client-form" [formGroup]="clientForm">
         <div class="field field--phone">
           <label for="booking-client-mobile">{{ 'BOOKINGS.BOOK.CLIENT_MOBILE' | translate }}</label>
           <span class="phone-row phone-row--intl phone-row--filter" dir="ltr">
@@ -165,14 +165,6 @@
               (countryChange)="onMobileCountryChange($event)"
             />
           </span>
-          <button
-            class="phone-search-submit"
-            type="submit"
-            tabindex="-1"
-            [disabled]="customerLookupPending() || mobileInvalid()"
-          >
-            {{ 'COMMON.SEARCH' | translate }}
-          </button>
           @if (mobileError(); as errorKey) {
             <small class="field-error">{{ errorKey | translate }}</small>
           }

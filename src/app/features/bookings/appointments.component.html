@@ -2,7 +2,7 @@
 <section class="appointments-page" [attr.aria-busy]="calendarBusy() || customerSearchLoading()">
   <div class="filter-section">
     <div class="filter-bar">
-      <form class="filter-field mobile-field field--phone" (ngSubmit)="onMobileSearch()">
+      <div class="filter-field mobile-field field--phone">
         <label class="field-label" for="appointments-client-mobile">
           {{ 'BOOKINGS.FILTER_CLIENT_MOBILE' | translate }}
         </label>
@@ -26,14 +26,6 @@
             />
           </span>
         </span>
-        <button
-          class="phone-search-submit"
-          type="submit"
-          tabindex="-1"
-          [disabled]="customerSearchLoading() || mobileInvalid()"
-        >
-          {{ 'COMMON.SEARCH' | translate }}
-        </button>
         @if (mobileInvalid()) {
           <small class="field-error">{{ 'BOOKINGS.FILTER_MOBILE_INVALID' | translate }}</small>
         }
@@ -47,7 +39,7 @@
             {{ 'BOOKINGS.BOOK.UNREGISTERED' | translate }}
           </span>
         }
-      </form>
+      </div>
 
       <label class="filter-field">
         <span class="field-label">{{ 'BOOKINGS.FILTER_CLIENT_NAME' | translate }}</span>

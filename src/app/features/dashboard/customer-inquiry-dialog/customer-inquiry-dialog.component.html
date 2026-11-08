@@ -175,8 +175,11 @@
                         >
                       </div>
                       <div class="balance-cell is-total">
-                        <small>{{ 'CUSTOMER_INQUIRY.RELEASED' | translate }}</small>
-                        <strong>{{ balance.released }}</strong>
+                        <small>{{ 'CUSTOMER_INQUIRY.BOOKABLE' | translate }}</small>
+                        <strong
+                          >{{ balance.bookable }}
+                          {{ 'CUSTOMER_INQUIRY.SESSION_UNIT' | translate }}</strong
+                        >
                       </div>
                       <div class="balance-cell is-used">
                         <small>{{ 'CUSTOMER_INQUIRY.COMPLETED' | translate }}</small>
@@ -208,8 +211,11 @@
                         >
                       </div>
                       <div class="balance-cell is-total">
-                        <small>{{ 'CUSTOMER_INQUIRY.RELEASED' | translate }}</small>
-                        <strong>{{ balance.released }}</strong>
+                        <small>{{ 'CUSTOMER_INQUIRY.BOOKABLE' | translate }}</small>
+                        <strong
+                          >{{ balance.bookable }}
+                          {{ 'CUSTOMER_INQUIRY.PULSE_UNIT' | translate }}</strong
+                        >
                       </div>
                       <div class="balance-cell is-used">
                         <small>{{ 'CUSTOMER_INQUIRY.USED' | translate }}</small>

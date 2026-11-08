@@ -58,7 +58,7 @@
           @if (itemGroup(index); as group) {
             <div class="tab-panel" role="tabpanel" [formGroup]="group">
               @if (isPulseLine(line) || isSessionPackageLine(line)) {
-                <div class="balance-row">
+                <div class="balance-row" [class.balance-row--pulses]="isPulseLine(line)">
                   <div class="balance-item">
                     <span class="balance-label">{{ 'BOOKINGS.CLOSE.TOTAL' | translate }}</span>
                     <strong>{{ lineTotal(line) ?? '—' }}</strong>
@@ -67,6 +67,14 @@
                     <span class="balance-label">{{ 'BOOKINGS.CLOSE.USED' | translate }}</span>
                     <strong>{{ lineUsed(line) ?? '—' }}</strong>
                   </div>
+                  @if (isPulseLine(line)) {
+                    <div class="balance-item">
+                      <span class="balance-label">{{
+                        'CUSTOMER_INQUIRY.BOOKABLE' | translate
+                      }}</span>
+                      <strong>{{ line.packageRemainingSessions ?? '—' }}</strong>
+                    </div>
+                  }
                   <div class="balance-item">
                     <span class="balance-label">{{ 'BOOKINGS.CLOSE.REMAINING' | translate }}</span>
                     <strong>{{ lineRemaining(line) ?? '—' }}</strong>

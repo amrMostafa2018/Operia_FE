@@ -88,16 +88,6 @@ describe('AppointmentsComponent employee request race condition', () => {
     workingDays: [],
   };
 
-  it('does not search an invalid phone number when the form is submitted', () => {
-    const component = TestBed.createComponent(AppointmentsComponent).componentInstance;
-    component.filters.update(current => ({ ...current, clientMobile: '123' }));
-    component.mobileInvalid.set(true);
-
-    component.onMobileSearch();
-
-    expect(appointmentsApi.findCustomer).not.toHaveBeenCalled();
-  });
-
   it('ensures slower earlier package employee response does not overwrite latest selection', () => {
     const subjectA = new Subject<BookableEmployee[]>();
     const subjectB = new Subject<BookableEmployee[]>();
