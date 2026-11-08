@@ -120,6 +120,31 @@ describe('AppointmentsComponent employee request race condition', () => {
     expect(component.matchesSelectedPackage(otherPackage)).toBeTrue();
   });
 
+  it('clears a selected employee when the calendar branch changes', () => {
+    branchService.listBookable.and.returnValue(
+      of([
+        { id: 'branch-1', name: 'Branch 1' },
+        { id: 'branch-2', name: 'Branch 2' },
+      ])
+    );
+    employeeService.listBookable.and.callFake(branchId =>
+      of(branchId === 'branch-1' ? [empA] : [empB])
+    );
+    const fixture = TestBed.createComponent(AppointmentsComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.viewMode.set('4days');
+    component.updateFilter('branchId', 'branch-1');
+    component.updateFilter('employeeId', empA.id);
+    expect(component.filters().employeeId).toBe(empA.id);
+
+    component.updateFilter('branchId', 'branch-2');
+
+    expect(component.filters().employeeId).toBeNull();
+    expect(component.employeeOptions().map(option => option.value)).toContain(empB.id);
+    expect(component.employeeOptions().map(option => option.value)).not.toContain(empA.id);
+  });
+
   it('ensures slower earlier package employee response does not overwrite latest selection', () => {
     const subjectA = new Subject<BookableEmployee[]>();
     const subjectB = new Subject<BookableEmployee[]>();

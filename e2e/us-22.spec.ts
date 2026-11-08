@@ -1,7 +1,24 @@
 import { expect, test } from '@playwright/test';
-import { apiBaseUrl, authenticate, e2eAccount, e2eIds } from './e2e-fixtures';
+import { apiBaseUrl, authenticate, e2eAccount, e2eIds, performUiLogin } from './e2e-fixtures';
 
 test.describe('US-22: scoped customer audit history', () => {
+  test('opens the selected customer history and pages it in the UI', async ({ page }) => {
+    await performUiLogin(page);
+    await page.goto('/customers');
+    const grid = page.locator('.customer-operations');
+    await grid.getByPlaceholder('Mobile').fill('01000000212');
+    await grid.locator('.filter-actions .primary').click();
+    const row = grid.locator('tbody tr').filter({ hasText: 'US-22 History Customer' });
+    await expect(row).toHaveCount(1);
+    await row.locator('.menu-toggle').click();
+    await page.getByRole('menuitem', { name: /Change history/ }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customer change history' });
+    await expect(dialog.locator('tbody tr')).toHaveCount(10);
+    await dialog.getByRole('button', { name: 'Next page' }).click();
+    await expect(dialog.locator('tbody tr')).toHaveCount(2);
+    await expect(dialog.getByRole('button', { name: 'Next page' })).toBeDisabled();
+  });
+
   test('pages a selected customer without duplicating or leaking another customer', async ({
     request,
   }) => {

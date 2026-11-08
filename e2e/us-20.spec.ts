@@ -1,7 +1,31 @@
 import { expect, test } from '@playwright/test';
-import { apiBaseUrl, authenticate, e2eAccount, e2eIds, queryE2eDatabase } from './e2e-fixtures';
+import {
+  apiBaseUrl,
+  authenticate,
+  e2eAccount,
+  e2eIds,
+  performUiLogin,
+  queryE2eDatabase,
+} from './e2e-fixtures';
 
 test.describe('US-20: selected customer purchase statement', () => {
+  test('opens the selected purchase statement from the customer row menu', async ({ page }) => {
+    await performUiLogin(page);
+    await page.goto('/customers');
+    const grid = page.locator('.customer-operations');
+    await grid.getByPlaceholder('Service or offer').fill('E2E US-20 Saved Statement Package');
+    await grid.locator('.filter-actions .primary').click();
+    const row = grid.locator('tbody tr').filter({ hasText: 'E2E US-20 Saved Statement Package' });
+    await expect(row).toHaveCount(1);
+    await row.locator('.menu-toggle').click();
+    await page.getByRole('menuitem', { name: 'Customer statement' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Customer statement' });
+    await expect(dialog.locator('.statement')).toBeVisible();
+    await expect(dialog).toContainText('E2E US-20 Saved Statement Package');
+    await expect(dialog).toContainText('US-20 completed execution');
+    await expect(dialog).not.toContainText('US-20 future booking');
+  });
+
   test('shows the saved purchase, collections, and completed execution only', async ({
     request,
   }) => {
@@ -62,6 +86,15 @@ test.describe('US-20: selected customer purchase statement', () => {
     const headers = await authenticate(request, e2eAccount.tenantBPhone);
     const response = await request.get(
       `${apiBaseUrl}/customers/${e2eIds.customer}/purchases/${e2eIds.statementPurchase}/statement`,
+      { headers }
+    );
+    expect(response.status()).toBe(404);
+  });
+
+  test('does not attach a purchase to another customer in the same tenant', async ({ request }) => {
+    const headers = await authenticate(request);
+    const response = await request.get(
+      `${apiBaseUrl}/customers/${e2eIds.gridCustomer}/purchases/${e2eIds.statementPurchase}/statement`,
       { headers }
     );
     expect(response.status()).toBe(404);

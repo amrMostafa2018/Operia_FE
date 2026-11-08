@@ -1,8 +1,96 @@
 import { expect, test } from '@playwright/test';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { apiBaseUrl, authenticate, e2eIds, queryE2eDatabase } from './e2e-fixtures';
-import { expectCode, futureDate } from './us-13-15-helpers';
+import { confirmQuotedSale, expectCode, futureDate } from './us-13-15-helpers';
 
 test.describe('US-17: collect payment before confirming a booking', () => {
+  test('recovers a lost collection response without a duplicate payment or booking', async ({
+    request,
+  }) => {
+    const headers = await authenticate(request);
+    const { sale } = await confirmQuotedSale(request, headers, {
+      key: 'e2e-us17-unknown-sale',
+      customerId: e2eIds.customer,
+      offerId: e2eIds.cashServiceOffer,
+      disposition: 'BookNow',
+    });
+    const bookingInput = {
+      saleId: sale.saleId,
+      employeeId: e2eIds.staffEmployee,
+      scheduledDate: futureDate(207),
+      startMinutes: 600,
+      endMinutes: 645,
+    };
+    const beforePayment = await request.post(`${apiBaseUrl}/sales/book`, {
+      headers,
+      data: bookingInput,
+    });
+    await expectCode(beforePayment, 409, 'SaleBookingUnavailable');
+
+    const paymentInput = {
+      saleId: sale.saleId,
+      idempotencyKey: 'e2e-us17-unknown-collection',
+      paymentConfirmed: true,
+    };
+    // Forward the payment, then drop the client connection after the server replies.
+    const proxy = createServer(async (incoming, outgoing) => {
+      try {
+        const body: Buffer[] = [];
+        for await (const chunk of incoming) body.push(Buffer.from(chunk));
+        await fetch(`${apiBaseUrl}/sales/collect`, {
+          method: 'POST',
+          headers: { ...headers, 'content-type': 'application/json' },
+          body: Buffer.concat(body),
+        });
+        outgoing.destroy();
+      } catch (error) {
+        outgoing.destroy(error as Error);
+      }
+    });
+    await new Promise<void>(resolve => proxy.listen(0, '127.0.0.1', resolve));
+    try {
+      const port = (proxy.address() as AddressInfo).port;
+      await expect(
+        request.post(`http://127.0.0.1:${port}/collect`, {
+          headers,
+          data: paymentInput,
+          maxRetries: 0,
+        })
+      ).rejects.toThrow();
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        proxy.close(error => (error ? reject(error) : resolve()))
+      );
+    }
+    // The client has an unknown result; recover from server state before retrying.
+    const recovered = await request.get(`${apiBaseUrl}/sales/${sale.saleId}`, { headers });
+    expect(recovered.ok(), await recovered.text()).toBeTruthy();
+    expect(await recovered.json()).toMatchObject({ paymentConfirmed: true, bookingId: null });
+
+    const retry = await request.post(`${apiBaseUrl}/sales/collect`, {
+      headers,
+      data: paymentInput,
+    });
+    expect(retry.ok(), await retry.text()).toBeTruthy();
+    expect(await retry.json()).toMatchObject({ paymentConfirmed: true });
+    const booked = await request.post(`${apiBaseUrl}/sales/book`, { headers, data: bookingInput });
+    expect(booked.ok(), await booked.text()).toBeTruthy();
+    const booking = await booked.json();
+    expect(booking.status).toBe('Booked');
+    const bookingRetry = await request.post(`${apiBaseUrl}/sales/book`, {
+      headers,
+      data: bookingInput,
+    });
+    expect(bookingRetry.ok(), await bookingRetry.text()).toBeTruthy();
+    expect(await bookingRetry.json()).toMatchObject({ bookingId: booking.bookingId });
+    expect(
+      queryE2eDatabase(`SELECT CONCAT(
+        (SELECT COUNT(*) FROM dbo.SaleCollections WHERE SaleId = '${sale.saleId}' AND Confirmed = 1), '|',
+        (SELECT COUNT(*) FROM dbo.Bookings WHERE SaleId = '${sale.saleId}'));`)
+    ).toBe('1|1');
+  });
+
   test('collects the success scenario and creates the booking through the sale API', async ({
     request,
   }) => {

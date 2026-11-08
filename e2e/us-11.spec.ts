@@ -7,6 +7,7 @@ import {
   performUiLogin,
   queryE2eDatabase,
 } from './e2e-fixtures';
+import { futureDate } from './us-13-15-helpers';
 
 function errorCodes(responseBody: { errorCodes?: Record<string, string | string[]> }): string[] {
   return Object.values(responseBody.errorCodes ?? {}).flatMap(value =>
@@ -59,22 +60,55 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
 
     await performUiLogin(page);
     const { card } = await openInquiryPurchase(page, 'E2E Collect in UI');
-    await expect(card.locator('.bookable-count strong')).toHaveText('0');
+    const bookableBalance = card
+      .locator('.balance-cell')
+      .filter({ hasText: 'Available to book now' });
+    await expect(bookableBalance.locator('strong')).toHaveText('0 sessions');
     await card.getByRole('button', { name: 'Pay new installment' }).click();
 
     const paymentDialog = page.getByRole('dialog', { name: 'Pay new installment' });
     await expect(paymentDialog).toContainText('E2E Collect in UI');
     await expect(paymentDialog).toContainText('500');
     await paymentDialog.locator('#collection-payment-method').selectOption('cash');
+    let originalKey = '';
+    const collectionUrl = `**/customers/purchases/${e2eIds.uiCollectionPurchase}/installments`;
+    const inquiryUrl = `**/customers/purchases/${e2eIds.uiCollectionPurchase}/inquiry`;
+    await page.route(
+      collectionUrl,
+      async route => {
+        originalKey = route.request().postDataJSON().idempotencyKey;
+        await route.abort('failed');
+      },
+      { times: 1 }
+    );
+    await page.route(inquiryUrl, route => route.abort('failed'), { times: 1 });
+    await paymentDialog.getByRole('button', { name: 'Record confirmed payment' }).click();
+    await expect(
+      paymentDialog.getByRole('button', { name: 'Record confirmed payment' })
+    ).toBeDisabled();
+    await expect(
+      paymentDialog.getByRole('button', { name: 'Recheck payment status' })
+    ).toBeVisible();
+    await paymentDialog.getByRole('button', { name: 'Recheck payment status' }).click();
+    await expect(
+      paymentDialog.getByRole('button', { name: 'Record confirmed payment' })
+    ).toBeEnabled();
+    const retryKey = page.waitForRequest(
+      request =>
+        request.method() === 'POST' &&
+        request.url().endsWith(`/customers/purchases/${e2eIds.uiCollectionPurchase}/installments`)
+    );
     const collectionResponse = page.waitForResponse(
       response =>
         response.request().method() === 'POST' &&
         response.url().endsWith(`/customers/purchases/${e2eIds.uiCollectionPurchase}/installments`)
     );
     await paymentDialog.getByRole('button', { name: 'Record confirmed payment' }).click();
+    expect((await retryKey).postDataJSON().idempotencyKey).toBe(originalKey);
+    expect(originalKey).toBeTruthy();
     expect((await collectionResponse).ok()).toBeTruthy();
     await expect(page.getByText('Installment collection recorded.')).toBeVisible();
-    await expect(card.locator('.bookable-count strong')).toHaveText('3');
+    await expect(bookableBalance.locator('strong')).toHaveText('3 sessions');
     await expect(card).toContainText('Complete the sessions released by the previous installment');
 
     const after = await request.get(
@@ -89,6 +123,29 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
       sessions: { total: 10, used: 0, remaining: 10, bookable: 3 },
       collections: [{ installmentNumber: 1, amount: 500, paymentMethod: 'cash' }],
     });
+
+    const statement = await request.get(
+      `${apiBaseUrl}/customers/${e2eIds.customer}/purchases/${e2eIds.uiCollectionPurchase}/statement`,
+      { headers }
+    );
+    expect(statement.ok(), await statement.text()).toBeTruthy();
+    expect(await statement.json()).toMatchObject({
+      purchase: { id: e2eIds.uiCollectionPurchase, amountRemaining: 1000 },
+      installments: expect.arrayContaining([
+        expect.objectContaining({ number: 1, amount: 500, status: 'paid', paymentMethod: 'cash' }),
+      ]),
+    });
+    const revenue = await request.get(
+      `${apiBaseUrl}/revenue/installment-collections?pageSize=100`,
+      { headers }
+    );
+    expect(revenue.ok(), await revenue.text()).toBeTruthy();
+    const revenueRows = (await revenue.json()).items.filter(
+      (row: { purchaseId: string; installmentNumber: number }) =>
+        row.purchaseId === e2eIds.uiCollectionPurchase && row.installmentNumber === 1
+    );
+    expect(revenueRows).toHaveLength(1);
+    expect(revenueRows[0]).toMatchObject({ amount: 500, paymentMethod: 'cash' });
 
     expect(
       queryE2eDatabase(`SELECT CONCAT(
@@ -109,9 +166,54 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
     const url = `${apiBaseUrl}/customers/purchases/${e2eIds.apiCollectionPurchase}/installments`;
     const data = { paymentMethod: 'cash', idempotencyKey: 'e2e-us11-api-collection-1' };
 
-    const first = await request.post(url, { headers, data });
-    expect(first.ok()).toBeTruthy();
-    const firstResult = await first.json();
+    const invalidMethod = await request.post(url, {
+      headers,
+      data: { paymentMethod: 'not-enabled', idempotencyKey: 'e2e-us11-invalid-method' },
+    });
+    await expectErrorCode(invalidMethod, 409, 'CustomerInstallmentPaymentMethodUnavailable');
+    const before = await request.get(
+      `${apiBaseUrl}/customers/purchases/${e2eIds.apiCollectionPurchase}/inquiry`,
+      { headers }
+    );
+    expect(before.ok()).toBeTruthy();
+    expect(await before.json()).toMatchObject({
+      amountRemaining: 1500,
+      sessions: { bookable: 0 },
+      collections: [],
+    });
+
+    const [first, competing, booking] = await Promise.all([
+      request.post(url, { headers, data }),
+      request.post(url, { headers, data: { ...data, idempotencyKey: 'e2e-us11-competing' } }),
+      request.post(`${apiBaseUrl}/bookings`, {
+        headers,
+        data: {
+          idempotencyKey: 'e2e-us11-concurrent-booking',
+          customerId: e2eIds.customer,
+          branchId: e2eIds.branch,
+          employeeId: e2eIds.staffEmployee,
+          scheduledDate: futureDate(200),
+          startMinutes: 540,
+          endMinutes: 570,
+          items: [
+            {
+              packageId: e2eIds.collectionOffer,
+              customerPackageId: e2eIds.apiCollectionPurchase,
+              quantity: 1,
+            },
+          ],
+          paymentMethod: null,
+        },
+      }),
+    ]);
+    const successful = [first, competing].find(response => response.ok());
+    const rejected = [first, competing].find(response => !response.ok());
+    expect(successful).toBeDefined();
+    expect(rejected?.status()).toBe(409);
+    if (booking.status() !== 201) {
+      await expectErrorCode(booking, 409, 'BookingPackageSessionUnavailable');
+    }
+    const firstResult = await successful!.json();
     expect(firstResult).toMatchObject({
       installmentNumber: 1,
       amount: 500,
@@ -120,7 +222,11 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
       fullyPaid: false,
     });
 
-    const retry = await request.post(url, { headers, data });
+    const winningKey = successful === first ? data.idempotencyKey : 'e2e-us11-competing';
+    const retry = await request.post(url, {
+      headers,
+      data: { ...data, idempotencyKey: winningKey },
+    });
     expect(retry.ok()).toBeTruthy();
     await expect(retry.json()).resolves.toMatchObject({
       collectionId: firstResult.collectionId,
@@ -140,9 +246,18 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
       amountRemaining: 1000,
       nextInstallmentNumber: 2,
       nextInstallmentEligible: false,
-      sessions: { total: 10, used: 0, remaining: 10, bookable: 3 },
+      sessions: { total: 10, used: 0, remaining: 10, bookable: booking.status() === 201 ? 2 : 3 },
       collections: [{ id: firstResult.collectionId, installmentNumber: 1 }],
     });
+
+    expect(
+      queryE2eDatabase(`SELECT CONCAT(p.ReservedSessions, '|', COUNT(r.Id))
+        FROM dbo.CustomerPackages p
+        LEFT JOIN dbo.BookingPackageReservations r ON r.CustomerPackageId = p.Id
+          AND r.CancellationAtUtc IS NULL
+        WHERE p.Id = '${e2eIds.apiCollectionPurchase}' AND p.TenantId = '${e2eIds.tenantA}'
+        GROUP BY p.ReservedSessions`)
+    ).toBe(booking.status() === 201 ? '1|1' : '0|0');
 
     expect(
       queryE2eDatabase(`SELECT CONCAT(
@@ -219,13 +334,47 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
     await expect(card.getByRole('button', { name: 'Pay new installment' })).toHaveCount(0);
   });
 
-  test('collects the final installment through the API and releases every remaining session once', async ({
+  test('shows the collection dialog in Arabic and RTL', async ({ page }) => {
+    await performUiLogin(page);
+    await page.getByRole('button', { name: 'العربية' }).click();
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    const { card } = await openInquiryPurchase(page, 'E2E Final Installment');
+    await expect(card.getByText('المتاح للحجز')).toBeVisible();
+    await card.getByRole('button', { name: 'دفع قسط جديد' }).click();
+    const dialog = page.getByRole('dialog', { name: 'دفع قسط جديد' });
+    await expect(dialog).toContainText('عملية الشراء المختارة');
+    await expect(dialog).toContainText('E2E Final Installment');
+    await expect(dialog.getByRole('button', { name: 'تسجيل الدفع المؤكد' })).toBeVisible();
+    await expect(dialog.locator('#collection-payment-method option[value="cash"]')).toHaveCount(1);
+  });
+
+  test('reconciles a lost final-payment response and releases every remaining session once', async ({
+    page,
     request,
   }) => {
     const headers = await authenticate(request);
     const url = `${apiBaseUrl}/customers/purchases/${e2eIds.finalCollectionPurchase}/installments`;
-    const data = { paymentMethod: 'cash', idempotencyKey: 'e2e-us11-final-collection' };
-
+    await performUiLogin(page);
+    const { card } = await openInquiryPurchase(page, 'E2E Final Installment');
+    await card.getByRole('button', { name: 'Pay new installment' }).click();
+    const paymentDialog = page.getByRole('dialog', { name: 'Pay new installment' });
+    await paymentDialog.locator('#collection-payment-method').selectOption('cash');
+    let key = '';
+    await page.route(
+      `**/customers/purchases/${e2eIds.finalCollectionPurchase}/installments`,
+      async route => {
+        key = route.request().postDataJSON().idempotencyKey;
+        const response = await route.fetch();
+        expect(response.ok()).toBeTruthy();
+        await route.abort('failed');
+      },
+      { times: 1 }
+    );
+    await paymentDialog.getByRole('button', { name: 'Record confirmed payment' }).click();
+    await expect(paymentDialog).toBeHidden();
+    await expect(page.getByText('Installment collection recorded.')).toBeVisible();
+    expect(key).toBeTruthy();
+    const data = { paymentMethod: 'cash', idempotencyKey: key };
     const first = await request.post(url, { headers, data });
     expect(first.ok()).toBeTruthy();
     const result = await first.json();
@@ -259,6 +408,7 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
       sessions: { total: 10, used: 6, remaining: 4, bookable: 4 },
     });
     expect(details.collections).toHaveLength(3);
+    await expect(card.getByRole('button', { name: 'Pay new installment' })).toHaveCount(0);
 
     expect(
       queryE2eDatabase(`SELECT CONCAT(
@@ -275,6 +425,11 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
   test('enforces collection permission and tenant scope at the API boundary', async ({
     request,
   }) => {
+    const unauthenticated = await request.post(
+      `${apiBaseUrl}/customers/purchases/${e2eIds.apiCollectionPurchase}/installments`,
+      { data: { paymentMethod: 'cash', idempotencyKey: 'e2e-us11-unauthenticated' } }
+    );
+    expect(unauthenticated.status()).toBe(401);
     const staffHeaders = await authenticate(request, e2eAccount.staffPhone);
     const forbidden = await request.post(
       `${apiBaseUrl}/customers/purchases/${e2eIds.apiCollectionPurchase}/installments`,

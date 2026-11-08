@@ -89,6 +89,22 @@ test.describe('US-16: duration, employee eligibility, and conflicts', () => {
       offerId: e2eIds.legacyUnassignedOffer,
     });
     expect(secondaryBranch).toEqual([expect.objectContaining({ id: e2eIds.branchStaffEmployee })]);
+    expect(secondaryBranch.map((employee: { id: string }) => employee.id)).not.toContain(
+      e2eIds.staffEmployee
+    );
+    const wrongBranch = await request.post(`${apiBaseUrl}/bookings`, {
+      headers,
+      data: bookingInput({
+        key: 'e2e-us16-wrong-branch',
+        date,
+        employeeId: e2eIds.staffEmployee,
+        branchId: e2eIds.secondaryBranch,
+        startMinutes: 480,
+        endMinutes: 510,
+        offerIds: [e2eIds.legacyUnassignedOffer],
+      }),
+    });
+    await expectCode(wrongBranch, 400, 'BookingEmployeeNotInBranch');
 
     const heldDate = futureDate(201);
     const held = await eligibleEmployees(request, headers, {

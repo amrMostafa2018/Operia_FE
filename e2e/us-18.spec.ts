@@ -1,7 +1,75 @@
 import { expect, test } from '@playwright/test';
-import { apiBaseUrl, authenticate, e2eAccount, e2eIds, queryE2eDatabase } from './e2e-fixtures';
+import { readFile } from 'node:fs/promises';
+import { inflateRawSync } from 'node:zlib';
+import {
+  apiBaseUrl,
+  authenticate,
+  e2eAccount,
+  e2eIds,
+  performUiLogin,
+  queryE2eDatabase,
+} from './e2e-fixtures';
+
+function worksheetXml(workbook: Buffer): string {
+  const eocd = workbook.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  if (eocd < 0) throw new Error('Excel workbook has no ZIP directory');
+  let offset = workbook.readUInt32LE(eocd + 16);
+  const entries = workbook.readUInt16LE(eocd + 10);
+  for (let index = 0; index < entries; index++) {
+    if (workbook.readUInt32LE(offset) !== 0x02014b50) throw new Error('Invalid ZIP directory');
+    const method = workbook.readUInt16LE(offset + 10);
+    const size = workbook.readUInt32LE(offset + 20);
+    const nameLength = workbook.readUInt16LE(offset + 28);
+    const extraLength = workbook.readUInt16LE(offset + 30);
+    const commentLength = workbook.readUInt16LE(offset + 32);
+    const name = workbook.subarray(offset + 46, offset + 46 + nameLength).toString();
+    if (name === 'xl/worksheets/sheet1.xml') {
+      const local = workbook.readUInt32LE(offset + 42);
+      const start =
+        local + 30 + workbook.readUInt16LE(local + 26) + workbook.readUInt16LE(local + 28);
+      const data = workbook.subarray(start, start + size);
+      if (method === 0) return data.toString();
+      if (method === 8) return inflateRawSync(data).toString();
+      throw new Error(`Unsupported ZIP compression method: ${method}`);
+    }
+    offset += 46 + nameLength + extraLength + commentLength;
+  }
+  throw new Error('Excel worksheet is missing');
+}
 
 test.describe('US-18: customer operations grid', () => {
+  test('filters the displayed grid and downloads the matching Excel export', async ({ page }) => {
+    await performUiLogin(page);
+    await page.goto('/customers');
+    const grid = page.locator('.customer-operations');
+    await grid.getByPlaceholder('Mobile').fill('01000000180');
+    const search = page.waitForResponse(
+      response =>
+        response.url().includes('/customers/operations?') &&
+        new URL(response.url()).searchParams.get('mobile') === '01000000180'
+    );
+    await grid.locator('.filter-actions .primary').click();
+    expect((await search).ok()).toBeTruthy();
+    await expect(grid.locator('tbody tr')).toHaveCount(2);
+    await expect(grid.locator('tbody .mobile')).toHaveText(['01000000180', '01000000180']);
+    const download = page.waitForEvent('download');
+    const exported = page.waitForResponse(
+      response =>
+        response.url().includes('/customers/operations/export?') &&
+        new URL(response.url()).searchParams.get('mobile') === '01000000180'
+    );
+    await grid.locator('button.export').click();
+    expect((await exported).ok()).toBeTruthy();
+    const file = await download;
+    expect(file.suggestedFilename()).toBe('customer-operations.xlsx');
+    const contents = await readFile(await file.path());
+    expect(contents.subarray(0, 2).toString()).toBe('PK');
+    const sheet = worksheetXml(contents);
+    expect(sheet.match(/<row\b/g)).toHaveLength(3); // header plus the two displayed operations
+    expect(sheet.match(/01000000180/g)).toHaveLength(2);
+    expect(sheet).toContain('US-18 Grid Customer');
+  });
+
   test('updates the filtered grid through a real collection and exports the same filter', async ({
     request,
   }) => {

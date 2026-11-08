@@ -112,7 +112,6 @@ test('US-06 offer pricing editor with authenticated account and controlled offer
     await page.locator('.editor [formcontrolname="installmentPrice"] input').fill('20000');
     await page.locator('.editor [formcontrolname="firstPayment"] input').fill('5000');
     await page.locator('.editor .suggest-distribution').click();
-    await page.locator('.editor .discount-toggle').click();
     await page.locator('.editor [formcontrolname="discountPercent"]').fill('10');
     await expect(page.locator('.editor .readonly input')).toHaveValue('16,200.00');
     await expect(page.locator('.editor [formcontrolname="installmentPrice"] input')).toHaveValue(
@@ -123,7 +122,9 @@ test('US-06 offer pricing editor with authenticated account and controlled offer
   await test.step('TC-04: invalid discount and cash price show field errors and block save', async () => {
     await page.locator('.editor [formcontrolname="discountPercent"]').fill('101');
     await page.locator('.editor footer button[type="submit"]').click();
-    await expect(page.locator('.editor .discount-metrics .field-error')).toBeVisible();
+    await expect(
+      page.locator('.editor .form-field:has([formcontrolname="discountPercent"]) .field-error')
+    ).toBeVisible();
     expect(submitted).toHaveLength(0);
     await page.locator('.editor [formcontrolname="discountPercent"]').fill('10');
     await page.locator('.editor [formcontrolname="price"] input').fill('-1');

@@ -405,7 +405,7 @@ test.describe('US-07: Installment plan and session release', () => {
       await page.locator('.editor footer button[type="submit"]').click();
 
       // Inline plan-total error appears
-      await expect(page.locator('.payment-option .field-error')).toBeVisible();
+      await expect(page.locator('.payment-option .field-error').last()).toBeVisible();
       // Editor remains open
       await expect(page.locator('.editor')).toBeVisible();
       // No create/update request sent
@@ -1196,7 +1196,7 @@ test.describe('US-07: Installment plan and session release', () => {
     expect(repeatData.amountDue).toBe(10000);
     expect(repeatData.availableSessions).toBe(3);
 
-    // 7. Make second numbered payment (row 2, 5000)
+    // The next payment remains locked until the first released sessions are used.
     const pay2Res = await request.post(
       `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/2/collect`,
       {
@@ -1204,25 +1204,16 @@ test.describe('US-07: Installment plan and session release', () => {
         data: { amount: 5000, paymentMethod: 'cash' },
       }
     );
-    expect(pay2Res.ok()).toBeTruthy();
-    const afterPay2 = await pay2Res.json();
-    expect(afterPay2.amountDue).toBe(5000);
-    // Cumulative sessions become 7
-    expect(afterPay2.availableSessions).toBe(7);
-
-    // 8. Make final confirmed payment (row 3, 5000)
-    const pay3Res = await request.post(
-      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}/installments/3/collect`,
-      {
-        headers: headersA,
-        data: { amount: 5000, paymentMethod: 'cash' },
-      }
+    expect(pay2Res.status()).toBe(409);
+    const locked = await pay2Res.json();
+    expect(Object.values(locked.errorCodes ?? {}).flat()).toContain(
+      'CustomerInstallmentNotEligible'
     );
-    expect(pay3Res.ok()).toBeTruthy();
-    const afterPay3 = await pay3Res.json();
-    // When balance reaches zero, remaining sessions are released once (all 10 available)
-    expect(afterPay3.amountDue).toBe(0);
-    expect(afterPay3.availableSessions).toBe(10);
-    expect(afterPay3.totalSessions).toBe(10);
+    const unchanged = await request.get(
+      `http://localhost:5151/api/packages/installment-purchases/${purchaseId}`,
+      { headers: headersA }
+    );
+    expect(unchanged.ok(), await unchanged.text()).toBeTruthy();
+    expect(await unchanged.json()).toMatchObject({ amountDue: 10000, availableSessions: 3 });
   });
 });

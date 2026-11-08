@@ -100,6 +100,25 @@ test.describe('US-14: confirm cash or installment collection', () => {
         (SELECT COUNT(*) FROM dbo.CustomerPackages WHERE SaleId = '${sale.saleId}'), '|',
         (SELECT COUNT(*) FROM dbo.Bookings WHERE SaleId = '${sale.saleId}'));`)
     ).toBe('0|0|0');
+    const payment = await request.post(`${apiBaseUrl}/sales/collect`, {
+      headers,
+      data: {
+        saleId: sale.saleId,
+        idempotencyKey: 'e2e-us14-later-payment',
+        paymentConfirmed: true,
+      },
+    });
+    expect(payment.ok(), await payment.text()).toBeTruthy();
+    expect(await payment.json()).toMatchObject({
+      saleStatus: 'ReadyToBook',
+      paymentConfirmed: true,
+    });
+    const state = await request.get(`${apiBaseUrl}/sales/${sale.saleId}`, { headers });
+    expect(state.ok(), await state.text()).toBeTruthy();
+    expect(await state.json()).toMatchObject({ disposition: 'Later', bookingId: null });
+    expect(
+      queryE2eDatabase(`SELECT COUNT(*) FROM dbo.Bookings WHERE SaleId = '${sale.saleId}';`)
+    ).toBe('0');
     const invalid = await request.post(`${apiBaseUrl}/sales/quote`, {
       headers,
       data: {

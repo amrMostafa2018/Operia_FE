@@ -15,13 +15,47 @@ test.describe('US-15: booking customer paths', () => {
   }) => {
     await performUiLogin(page);
     await page.goto('/bookings');
+    await page.locator('p-dropdown[inputid="appointments-branch"] .p-dropdown-trigger').click();
+    await page.getByRole('option', { name: 'US-07 E2E Branch', exact: true }).click();
     await page.locator('.four-day-head button').last().click();
     const slot = page.locator('button.available-overlay').first();
     await expect(slot).toBeVisible({ timeout: 30_000 });
+    const employee = (
+      await slot
+        .locator('xpath=ancestor::div[contains(@class,"employee-column")]')
+        .locator('.column-head strong')
+        .innerText()
+    ).trim();
+    const time = (await slot.locator('.slot-time').innerText()).trim();
+    const date = (await page.locator('.four-day-head h2').innerText()).trim();
+    const customerCount = queryE2eDatabase(
+      `SELECT COUNT(*) FROM dbo.Customers WHERE TenantId = '${e2eIds.tenantA}';`
+    );
     await slot.click();
     const dialog = page.locator('.bookings-book-dialog');
     await expect(dialog).toBeVisible();
+    const metadata = dialog.locator('.slot-meta article');
+    await expect(metadata.nth(1)).toContainText(time.split(/[-–]/)[0].trim());
+    await expect(metadata.nth(3)).toContainText(employee);
+    await expect(metadata.nth(0).locator('strong')).toHaveText(date);
+    await expect(metadata.nth(4).locator('strong')).toHaveText('US-07 E2E Branch');
+    const originalContext = await metadata.allTextContents();
+    await dialog.locator('.customer-name-search input').fill('US-07');
+    await dialog.locator('.customer-name-search button[type="submit"]').click();
+    await dialog.locator('.customer-result').filter({ hasText: e2eAccount.customerMobile }).click();
+    expect(await metadata.allTextContents()).toEqual(originalContext);
+    await dialog.locator('p-multiselect .p-multiselect-trigger').click();
+    await page.getByRole('option', { name: 'E2E Owned Session Package', exact: true }).click();
+    await expect(dialog.locator('.package-stats')).toContainText('E2E Owned Session Package');
+    await dialog.locator('p-multiselect .p-multiselect-trigger').click();
+    expect(
+      queryE2eDatabase(`SELECT COUNT(*) FROM dbo.Customers WHERE TenantId = '${e2eIds.tenantA}';`)
+    ).toBe(customerCount);
     await dialog.getByRole('button', { name: 'Direct customer', exact: true }).click();
+    await expect(dialog.locator('.package-stats')).toHaveCount(0);
+    await expect(dialog.locator('.selected-table')).not.toContainText('E2E Owned Session Package');
+    await expect(dialog.locator('#booking-client-mobile')).toHaveCount(0);
+    await expect(dialog.locator('#booking-client-name')).toHaveCount(0);
     await dialog.getByRole('button', { name: /unlisted/i }).click();
     const unlisted = page.locator('.booking-unlisted-dialog');
     await expect(unlisted).toBeVisible();
@@ -46,6 +80,17 @@ test.describe('US-15: booking customer paths', () => {
       )
     ).toBe('0');
 
+    // Switching away from an owned package can clear an ineligible employee.
+    const employeePicker = metadata.nth(3).locator('.p-dropdown-trigger');
+    if (
+      await metadata
+        .nth(3)
+        .getByText(/Choose an employee/)
+        .isVisible()
+    ) {
+      await employeePicker.click();
+      await page.getByRole('option').first().click();
+    }
     await dialog.locator('.payment-grid button').first().click();
     const confirm = page.waitForResponse(
       response =>
@@ -64,8 +109,9 @@ test.describe('US-15: booking customer paths', () => {
       queryE2eDatabase(`SELECT CONCAT(
       (SELECT COUNT(*) FROM dbo.Packages WHERE TenantId = '${e2eIds.tenantA}' AND Name = 'US-15 One-time Service'), '|',
       (SELECT COUNT(*) FROM dbo.Sales WHERE Id = '${sale.saleId}' AND ItemsSnapshotJson LIKE '%US-15 One-time Service%'), '|',
-      (SELECT COUNT(*) FROM dbo.Bookings WHERE SaleId = '${sale.saleId}'));`)
-    ).toBe('0|1|1');
+      (SELECT COUNT(*) FROM dbo.Bookings WHERE SaleId = '${sale.saleId}'), '|',
+      (SELECT COUNT(*) FROM dbo.Sales WHERE Id = '${sale.saleId}' AND ItemsSnapshotJson LIKE '%${e2eIds.ownedSessionPurchase}%'));`)
+    ).toBe('0|1|1|0');
   });
   test('finds a registered customer by name and mobile before booking', async ({ request }) => {
     const headers = await authenticate(request);

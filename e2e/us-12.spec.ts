@@ -91,6 +91,9 @@ test.describe('US-12: Build and confirm a sale', () => {
     const salesBefore = Number(
       queryE2eDatabase(`SELECT COUNT(*) FROM dbo.Sales WHERE TenantId = '${e2eIds.tenantA}';`)
     );
+    const collectionsBefore = queryE2eDatabase(
+      `SELECT COUNT(*) FROM dbo.SaleCollections WHERE TenantId = '${e2eIds.tenantA}' AND Confirmed = 1;`
+    );
 
     await performUiLogin(page);
     await page.getByRole('button', { name: 'Sell Service / Offer' }).click();
@@ -148,6 +151,11 @@ test.describe('US-12: Build and confirm a sale', () => {
         queryE2eDatabase(`SELECT COUNT(*) FROM dbo.Sales WHERE TenantId = '${e2eIds.tenantA}';`)
       )
     ).toBe(salesBefore);
+    expect(
+      queryE2eDatabase(
+        `SELECT COUNT(*) FROM dbo.SaleCollections WHERE TenantId = '${e2eIds.tenantA}' AND Confirmed = 1;`
+      )
+    ).toBe(collectionsBefore);
 
     await dialog.getByRole('button', { name: 'Add one unlisted service' }).click();
     const unlistedDialog = page.locator('.sale-unlisted-dialog');
@@ -327,6 +335,21 @@ test.describe('US-12: Build and confirm a sale', () => {
          WHERE TenantId = '${e2eIds.tenantA}' AND Id = '${firstResult.saleId}';`
       )
     ).toBe(savedSnapshot);
+
+    const history = await request.get(
+      `${apiBaseUrl}/customers/operations?service=${encodeURIComponent('E2E Sale Installment Package')}`,
+      { headers }
+    );
+    expect(history.ok(), await history.text()).toBeTruthy();
+    expect((await history.json()).rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          saleId: firstResult.saleId,
+          service: 'E2E Sale Installment Package',
+          total: 2000,
+        }),
+      ])
+    );
 
     const catalog = await request.get(`${apiBaseUrl}/sales/catalog`, { headers });
     expect(catalog.ok()).toBeTruthy();

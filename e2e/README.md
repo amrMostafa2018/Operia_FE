@@ -4,6 +4,14 @@
 
 The backend seed runs only in Development against the local `Operia_Local` or `Operia_Dev` database. It clears and restores only the two reserved `e2e70000` tenants on each API start. Run the focused suites twice with a fresh Playwright server each time to verify the opening totals and audit history are repeatable:
 
+The US-11 SQL rollback test is opt-in because it uses the reserved US-11 purchase in `Operia_Dev`. Run it after a seeded Playwright run has stopped and while no other E2E test is using that database. The test forces a failure after a save inside the collection store's transaction and verifies the purchase was rolled back:
+
+```powershell
+$env:OPERIA_US11_SQL_TEST = '1'
+dotnet test ../Operia/Operia.Application.Tests/Operia.Application.Tests.csproj --configuration Release --filter FullyQualifiedName~InstallmentCollectionSqlTests
+Remove-Item Env:OPERIA_US11_SQL_TEST
+```
+
 ```powershell
 $env:OPERIA_E2E_PASSWORD = Read-Host 'Temporary E2E account password'
 $env:OPERIA_E2E_OTP = '111111'

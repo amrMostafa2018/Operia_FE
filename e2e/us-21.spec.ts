@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiBaseUrl, authenticate, e2eAccount, e2eIds, queryE2eDatabase } from './e2e-fixtures';
-import { expectCode } from './us-13-15-helpers';
+import { createServiceBooking, expectCode, futureDate } from './us-13-15-helpers';
 
 test.describe('US-21: paid refund and center block', () => {
   test('caps two real refunds, cancels the reserved appointment, and audits once', async ({
@@ -18,6 +18,15 @@ test.describe('US-21: paid refund and center block', () => {
     });
 
     const endpoint = `${apiBaseUrl}/customers/purchases/${e2eIds.refundPurchase}/cancel-refund`;
+    const initiallyExcess = await request.post(endpoint, {
+      headers,
+      data: { amount: 5001, idempotencyKey: 'e2e-us21-initial-excess' },
+    });
+    await expectCode(initiallyExcess, 409, 'CustomerRefundExceedsPaid');
+    expect(
+      queryE2eDatabase(`SELECT COUNT(*) FROM dbo.RefundTransactions
+      WHERE CustomerPackageId = '${e2eIds.refundPurchase}';`)
+    ).toBe('0');
     const firstRequest = {
       amount: 1500,
       idempotencyKey: 'e2e-us21-first-refund',
@@ -32,6 +41,18 @@ test.describe('US-21: paid refund and center block', () => {
       remainingRefundable: 3500,
       purchaseStatus: 'cancelled',
     });
+    const history = await request.get(
+      `${apiBaseUrl}/customers/${e2eIds.refundCustomer}/purchases/${e2eIds.refundPurchase}/history`,
+      { headers }
+    );
+    expect(history.ok(), await history.text()).toBeTruthy();
+    const entry = (await history.json()).items.find(
+      (item: { action: string; referenceId: string }) =>
+        item.action === 'RefundPosted' && item.referenceId === firstResult.refundId
+    );
+    expect(entry).toMatchObject({ amount: 1500, reason: 'E2E partial refund' });
+    expect(entry.actor).toBeTruthy();
+    expect(Number.isNaN(Date.parse(entry.atUtc))).toBeFalsy();
 
     const repeated = await request.post(endpoint, { headers, data: firstRequest });
     expect(repeated.ok(), await repeated.text()).toBeTruthy();
@@ -106,6 +127,29 @@ test.describe('US-21: paid refund and center block', () => {
       isBlocked: true,
       reason: 'E2E center restriction',
     });
+    const blockedBooking = await createServiceBooking(request, headers, {
+      key: 'e2e-us21-blocked-booking',
+      customerId: e2eIds.blockCustomer,
+      date: futureDate(210),
+      startMinutes: 600,
+    });
+    await expectCode(blockedBooking, 409, 'CustomerBlocked');
+    expect(
+      queryE2eDatabase(`SELECT COUNT(*) FROM dbo.Bookings
+      WHERE TenantId = '${e2eIds.tenantA}' AND IdempotencyKey = 'e2e-us21-blocked-booking';`)
+    ).toBe('0');
+    const tenantB = await authenticate(request, e2eAccount.tenantBPhone);
+    const otherCenterCustomer = await request.post(`${apiBaseUrl}/customers/registration`, {
+      headers: tenantB,
+      data: { fullName: 'US-21 Other Center Customer', mobileNumber: '01000000210' },
+    });
+    expect(otherCenterCustomer.status(), await otherCenterCustomer.text()).toBe(201);
+    const otherCustomer = await otherCenterCustomer.json();
+    expect(
+      queryE2eDatabase(`SELECT CONCAT(
+        (SELECT CAST(IsBlocked AS int) FROM dbo.Customers WHERE Id = '${e2eIds.blockCustomer}'), '|',
+        (SELECT CAST(IsBlocked AS int) FROM dbo.Customers WHERE Id = '${otherCustomer.id}'));`)
+    ).toBe('1|0');
 
     const unblockAction = await request.get(
       `${apiBaseUrl}/customers/${e2eIds.unblockCustomer}/sales/${e2eIds.unblockSale}/action`,
