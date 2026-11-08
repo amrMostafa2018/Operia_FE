@@ -144,7 +144,6 @@ describe('PackagesComponent payment validation', () => {
         { amount: 750, sessionsUnlocked: 3 },
         { amount: 750, sessionsUnlocked: 7 },
       ],
-      allStaff: true,
       staffIds: [],
     });
 

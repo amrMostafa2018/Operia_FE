@@ -30,7 +30,7 @@ describe('SaleBuilderDialogComponent confirmation', () => {
       imports: [SaleBuilderDialogComponent],
       providers: [
         { provide: SaleService, useValue: sales },
-        { provide: EmployeeService, useValue: {} },
+        { provide: EmployeeService, useValue: { listBookable: () => of([]) } },
         { provide: CurrencyService, useValue: {} },
         { provide: PermissionService, useValue: { hasPermission: () => true } },
         { provide: MessageService, useValue: { add: () => undefined } },
@@ -138,5 +138,54 @@ describe('SaleBuilderDialogComponent confirmation', () => {
     component.customerForm.controls.mobile.setValue('01098765432');
     component.searchCustomer();
     expect(sales.customer).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a walk-in package cash-only and allows only an income-only close', () => {
+    const response = new Subject<ConfirmSaleResult>();
+    sales.confirm.and.returnValue(response.asObservable());
+    const { component } = createReadyComponent();
+    component.catalog.set([
+      {
+        id: 'package',
+        name: 'Walk-in package',
+        offerType: 'package',
+        sessionDurationMinutes: 30,
+        serviceCategoryId: 'category',
+        serviceCategoryName: 'Category',
+        price: 100,
+        status: 'active',
+        createdAt: '2026-11-08',
+        endsAt: null,
+        cashEnabled: true,
+        installmentEnabled: true,
+      },
+    ]);
+    component.directCustomer.set(true);
+    component.customerForm.controls.mobile.disable();
+    component.customerForm.controls.customerId.disable();
+    component.rows.set([
+      {
+        key: 'walk-in-package',
+        offerId: 'package',
+        ownedCustomerPackageId: null,
+        unlistedName: null,
+        unlistedPrice: null,
+        unlistedDurationMinutes: null,
+        paymentOption: 'cash',
+        quantity: 1,
+      },
+    ]);
+
+    expect(component.filteredCatalog().map(offer => offer.id)).toEqual(['package']);
+    expect(component.hasDirectPackage()).toBeTrue();
+    expect(component.canInstallment(component.rows()[0])).toBeFalse();
+    component.setOption('walk-in-package', 'installment');
+    expect(component.rows()[0].paymentOption).toBe('cash');
+    component.confirm('Later');
+    expect(sales.confirm).not.toHaveBeenCalled();
+    component.confirm('Close');
+    expect(sales.confirm.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({ directCustomer: true, disposition: 'Close' })
+    );
   });
 });

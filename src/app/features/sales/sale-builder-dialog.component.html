@@ -496,6 +496,9 @@
       </section>
     </div>
 
+    @if (hasDirectPackage()) {
+      <p class="note">{{ 'SALE_BUILDER.DIRECT_PACKAGE_INCOME_ONLY' | translate }}</p>
+    }
     <div class="actions">
       <button type="button" class="outline-button" (click)="closed.emit()">
         {{ 'COMMON.CANCEL' | translate }}
@@ -508,15 +511,17 @@
       >
         {{ 'SALE_BUILDER.CLOSE_SALE' | translate }}
       </button>
-      <button
-        type="button"
-        class="primary-button"
-        [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Later')"
-        (click)="confirm('Later')"
-      >
-        <i class="pi pi-calendar-plus"></i> {{ 'SALE_BUILDER.CONFIRM_LATER' | translate }}
-      </button>
-      @if (canBookNow()) {
+      @if (!hasDirectPackage()) {
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Later')"
+          (click)="confirm('Later')"
+        >
+          <i class="pi pi-calendar-plus"></i> {{ 'SALE_BUILDER.CONFIRM_LATER' | translate }}
+        </button>
+      }
+      @if (canBookNow() && !hasDirectPackage()) {
         <button
           type="button"
           class="primary-button"

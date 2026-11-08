@@ -38,7 +38,7 @@
             </div>
             <div>
               <span>{{ 'CUSTOMER_STATEMENT.START_DATE' | translate }}</span
-              ><strong>{{ (data.purchase.startsOn | date: 'mediumDate') || '—' }}</strong>
+              ><strong>{{ data.purchase.startsOn ? (data.purchase.startsOn | date: 'mediumDate') : ('CUSTOMER_STATEMENT.NOT_RECORDED' | translate) }}</strong>
             </div>
             <div>
               <span>{{ 'CUSTOMER_STATEMENT.END_DATE' | translate }}</span
@@ -230,7 +230,7 @@
                           ? (payment.paidAtUtc | date: 'medium')
                           : payment.dueOn
                             ? (payment.dueOn | date: 'mediumDate')
-                            : '—'
+                            : ('CUSTOMER_STATEMENT.NOT_RECORDED' | translate)
                       }}
                     </td>
                     <td>{{ payment.amount | number: '1.2-2' }} {{ currency.currencyLabel() }}</td>

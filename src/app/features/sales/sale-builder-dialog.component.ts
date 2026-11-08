@@ -139,11 +139,20 @@ export class SaleBuilderDialogComponent {
     const search = this.searchText().trim().toLocaleLowerCase();
     return this.catalog().filter(
       offer =>
-        (!this.directCustomer() || offer.offerType === 'singleSession') &&
+        (!this.directCustomer() ||
+          offer.offerType === 'singleSession' ||
+          offer.cashEnabled !== false) &&
         (category === 'all' || offer.serviceCategoryId === category) &&
         (!search || offer.name.toLocaleLowerCase().includes(search))
     );
   });
+  readonly hasDirectPackage = computed(
+    () =>
+      this.directCustomer() &&
+      this.rows().some(row =>
+        this.catalog().some(offer => offer.id === row.offerId && offer.offerType === 'package')
+      )
+  );
 
   constructor() {
     setupServerErrorClearing(this.customerForm, this.destroyRef, [
@@ -295,7 +304,12 @@ export class SaleBuilderDialogComponent {
     const removedRows = this.rows().some(
       row =>
         row.ownedCustomerPackageId ||
-        this.catalog().some(offer => offer.id === row.offerId && offer.offerType === 'package')
+        this.catalog().some(
+          offer =>
+            offer.id === row.offerId &&
+            offer.offerType === 'package' &&
+            (row.paymentOption !== 'cash' || offer.cashEnabled === false)
+        )
     );
     if (direct && (hadCustomer || removedRows)) {
       this.pendingCustomerMode.set(direct);
@@ -323,7 +337,10 @@ export class SaleBuilderDialogComponent {
           !row.ownedCustomerPackageId &&
           (!direct ||
             !this.catalog().some(
-              offer => offer.id === row.offerId && offer.offerType === 'package'
+              offer =>
+                offer.id === row.offerId &&
+                offer.offerType === 'package' &&
+                (row.paymentOption !== 'cash' || offer.cashEnabled === false)
             ))
       )
     );
@@ -350,8 +367,8 @@ export class SaleBuilderDialogComponent {
   }
 
   addOffer(offer: PackageListItem): void {
-    if (this.directCustomer() && offer.offerType !== 'singleSession') {
-      this.itemError.set(this.translate.instant('ERRORS.SaleDirectServiceOnly'));
+    if (this.directCustomer() && offer.offerType === 'package' && offer.cashEnabled === false) {
+      this.itemError.set(this.translate.instant('ERRORS.SaleDirectPackageIncomeOnly'));
       return;
     }
     const option: SalePaymentOption = offer.cashEnabled !== false ? 'cash' : 'installment';
@@ -434,6 +451,7 @@ export class SaleBuilderDialogComponent {
   }
 
   setOption(key: string, option: SalePaymentOption): void {
+    if (this.directCustomer() && option === 'installment') return;
     this.rows.update(rows =>
       rows.map(row => (row.key === key ? { ...row, paymentOption: option } : row))
     );
@@ -451,7 +469,9 @@ export class SaleBuilderDialogComponent {
 
   canInstallment(row: DraftRow): boolean {
     const offer = this.catalog().find(item => item.id === row.offerId);
-    return offer?.offerType === 'package' && offer.installmentEnabled === true;
+    return (
+      !this.directCustomer() && offer?.offerType === 'package' && offer.installmentEnabled === true
+    );
   }
 
   canCash(row: DraftRow): boolean {
@@ -527,6 +547,7 @@ export class SaleBuilderDialogComponent {
   }
 
   confirm(disposition: 'Close' | 'Later' | 'BookNow'): void {
+    if (this.hasDirectPackage() && disposition !== 'Close') return;
     const pending = this.pendingConfirmation();
     if (pending) {
       if (!this.saving() && pending.request.disposition === disposition) {
