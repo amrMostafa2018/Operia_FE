@@ -202,7 +202,7 @@
                   'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.' + row.installmentDueStatus | translate
                 }}
               </td>
-              <td>{{ row.operationDate | date: 'shortDate' }}</td>
+              <td>{{ formatOperationDate(row.operationDate) }}</td>
               <td class="actions-cell">
                 <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
                 <button

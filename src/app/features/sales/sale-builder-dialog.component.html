@@ -529,3 +529,24 @@
     </div>
   }
 </p-dialog>
+
+<p-dialog
+  [visible]="pendingCustomerMode() !== null"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  [header]="'SALE_BUILDER.CUSTOMER_SWITCH_CONFIRM_TITLE' | translate"
+  [style]="{ width: 'min(92vw, 30rem)' }"
+>
+  <p>{{ 'SALE_BUILDER.CUSTOMER_SWITCH_CONFIRM' | translate }}</p>
+  <div class="actions">
+    <button type="button" class="outline-button" (click)="pendingCustomerMode.set(null)">
+      {{ 'COMMON.CANCEL' | translate }}
+    </button>
+    <button type="button" class="primary-button" (click)="confirmCustomerMode()">
+      {{ 'SALE_BUILDER.CUSTOMER_SWITCH_CONTINUE' | translate }}
+    </button>
+  </div>
+</p-dialog>

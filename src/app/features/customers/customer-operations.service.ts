@@ -40,6 +40,7 @@ export interface CustomerOperation {
 }
 
 export interface CustomerOperationsPage {
+  timezoneId: string;
   totalCount: number;
   page: number;
   pageSize: number;

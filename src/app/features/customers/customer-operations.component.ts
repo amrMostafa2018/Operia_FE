@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -42,7 +42,6 @@ const emptyFilters = (): CustomerOperationsFilters => ({
   selector: 'app-customer-operations',
   standalone: true,
   imports: [
-    DatePipe,
     DecimalPipe,
     FormsModule,
     MenuModule,
@@ -141,6 +140,7 @@ export class CustomerOperationsComponent {
   load(): void {
     const id = ++this.requestId;
     this.loading.set(true);
+    this.result.set(null);
     this.service
       .list(this.applied, this.page(), this.pageSize())
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -186,6 +186,15 @@ export class CustomerOperationsComponent {
           this.error('EXPORT_ERROR');
         },
       });
+  }
+
+  formatOperationDate(value: string): string {
+    const timezone = this.result()?.timezoneId;
+    if (!timezone) return '—';
+    return new Intl.DateTimeFormat(this.translate.currentLang() === 'ar' ? 'ar-EG' : 'en-GB', {
+      dateStyle: 'short',
+      timeZone: timezone,
+    }).format(new Date(value));
   }
 
   private error(key: string, apiCode = false): void {

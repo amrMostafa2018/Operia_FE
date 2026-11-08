@@ -107,6 +107,7 @@ export class SaleBuilderDialogComponent {
   readonly paymentMethods = signal<string[]>([]);
   readonly customer = signal<BookingCustomerDto | null>(null);
   readonly directCustomer = signal(false);
+  readonly pendingCustomerMode = signal<boolean | null>(null);
   readonly rows = signal<DraftRow[]>([]);
   readonly quote = signal<SaleQuote | null>(null);
   readonly quoteLoading = signal(false);
@@ -194,6 +195,7 @@ export class SaleBuilderDialogComponent {
     this.unlistedForm.reset({ name: '', price: 0, durationMinutes: 30 });
     this.customer.set(null);
     this.directCustomer.set(false);
+    this.pendingCustomerMode.set(null);
     this.customerForm.controls.mobile.enable({ emitEvent: false });
     this.customerForm.controls.customerId.enable({ emitEvent: false });
     this.catalog.set([]);
@@ -295,6 +297,21 @@ export class SaleBuilderDialogComponent {
         row.ownedCustomerPackageId ||
         this.catalog().some(offer => offer.id === row.offerId && offer.offerType === 'package')
     );
+    if (direct && (hadCustomer || removedRows)) {
+      this.pendingCustomerMode.set(direct);
+      return;
+    }
+    this.applyCustomerMode(direct);
+  }
+
+  confirmCustomerMode(): void {
+    const direct = this.pendingCustomerMode();
+    if (direct === null) return;
+    this.pendingCustomerMode.set(null);
+    this.applyCustomerMode(direct);
+  }
+
+  private applyCustomerMode(direct: boolean): void {
     this.customerVersion++;
     this.customerLoading.set(false);
     this.customer.set(null);
@@ -318,7 +335,7 @@ export class SaleBuilderDialogComponent {
       this.customerForm.controls.mobile.enable({ emitEvent: false });
       this.customerForm.controls.customerId.enable({ emitEvent: false });
     }
-    if (hadCustomer || removedRows || !direct) {
+    if (!direct) {
       this.toast.add({
         severity: 'warn',
         summary: this.translate.instant('SALE_BUILDER.CUSTOMER_SWITCH_TITLE'),
