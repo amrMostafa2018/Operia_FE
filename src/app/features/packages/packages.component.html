@@ -705,7 +705,14 @@
                         <tr>
                           <th>#</th>
                           <th>{{ 'PACKAGES.CREATE.INSTALLMENT_AMOUNT' | translate }}</th>
-                          <th>{{ 'PACKAGES.CREATE.SESSIONS_UNLOCKED' | translate }}</th>
+                          <th>
+                            {{
+                              (installmentUsesPulses()
+                                ? 'PACKAGES.CREATE.PULSES_UNLOCKED'
+                                : 'PACKAGES.CREATE.SESSIONS_UNLOCKED'
+                              ) | translate
+                            }}
+                          </th>
                           <th>{{ 'PACKAGES.CREATE.CUMULATIVE_SESSIONS' | translate }}</th>
                         </tr>
                       </thead>
@@ -750,8 +757,12 @@
                       {{ installmentTotal() | number: '1.2-2' }}</span
                     >
                     <span
-                      >{{ 'PACKAGES.CREATE.DISTRIBUTED_SESSIONS' | translate }}:
-                      {{ distributedSessions() }} / {{ formValue().sessionCount || 0 }}</span
+                      >{{
+                        (installmentUsesPulses()
+                          ? 'PACKAGES.CREATE.DISTRIBUTED_PULSES'
+                          : 'PACKAGES.CREATE.DISTRIBUTED_SESSIONS'
+                        ) | translate
+                      }}: {{ distributedSessions() }} / {{ installmentUnits() }}</span
                     >
                   </div>
                   @if (installmentBalanceDifference() !== 0) {
@@ -760,16 +771,20 @@
                         | translate: { amount: (installmentBalanceDifference() | number: '1.2-2') }
                     }}</small>
                   }
-                  @if ((formValue().sessionCount || 0) > 0) {
+                  @if (installmentUnits() > 0) {
                     <small class="plan-hint">{{
-                      'PACKAGES.CREATE.RELEASE_LIMIT'
-                        | translate: { count: prepaymentReleaseLimit() }
+                      (installmentUsesPulses()
+                        ? 'PACKAGES.CREATE.PULSE_RELEASE_LIMIT'
+                        : 'PACKAGES.CREATE.RELEASE_LIMIT'
+                      ) | translate: { count: prepaymentReleaseLimit() }
                     }}</small>
                   }
                   @if (unassignedSessions() > 0) {
                     <small class="plan-hint">{{
-                      'PACKAGES.CREATE.REMAINING_SESSIONS_ON_FULL_PAYMENT'
-                        | translate: { count: unassignedSessions() }
+                      (installmentUsesPulses()
+                        ? 'PACKAGES.CREATE.REMAINING_PULSES_ON_FULL_PAYMENT'
+                        : 'PACKAGES.CREATE.REMAINING_SESSIONS_ON_FULL_PAYMENT'
+                      ) | translate: { count: unassignedSessions() }
                     }}</small>
                   }
                   <small class="plan-hint">{{

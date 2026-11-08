@@ -285,15 +285,17 @@ export class PackagesComponent implements OnInit {
   readonly distributedSessions = computed(() =>
     this.installmentRows().reduce((total, row) => total + (Number(row.sessionsUnlocked) || 0), 0)
   );
+  readonly installmentUnits = computed(() =>
+    Number(this.formValue().sessionCount || this.formValue().pulseCount || 0)
+  );
+  readonly installmentUsesPulses = computed(() => (this.formValue().pulseCount || 0) > 0);
   readonly installmentBalanceDifference = computed(
     () => Math.round(this.remainingInstallmentBalance() * 100 - this.installmentTotal() * 100) / 100
   );
   readonly unassignedSessions = computed(
-    () => (this.formValue().sessionCount || 0) - this.distributedSessions()
+    () => this.installmentUnits() - this.distributedSessions()
   );
-  readonly prepaymentReleaseLimit = computed(() =>
-    this.releaseLimit(this.formValue().sessionCount ?? 0)
-  );
+  readonly prepaymentReleaseLimit = computed(() => this.releaseLimit(this.installmentUnits()));
 
   readonly offerTypeOptions: { label: string; value: PackageOfferType }[] = [
     { label: 'PACKAGES.OFFER_TYPE_PACKAGE', value: 'package' },
@@ -367,6 +369,9 @@ export class PackagesComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.resizeInstallmentRows());
     this.form.controls.sessionCount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.validateInstallmentRows());
+    this.form.controls.pulseCount.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.validateInstallmentRows());
     this.form.controls.serviceCategoryId.valueChanges
@@ -557,9 +562,11 @@ export class PackagesComponent implements OnInit {
       this.suggestDistribution();
       return;
     }
-    const { installmentPrice, firstPayment, sessionCount } = this.form.getRawValue();
+    const { installmentPrice, firstPayment, sessionCount, pulseCount } = this.form.getRawValue();
     const releaseLimit =
-      (installmentPrice ?? 0) > (firstPayment ?? 0) ? this.releaseLimit(sessionCount ?? 0) : 0;
+      (installmentPrice ?? 0) > (firstPayment ?? 0)
+        ? this.releaseLimit(sessionCount || pulseCount || 0)
+        : 0;
     const rows = this.distributedAmounts(count).map((amount, index) => ({
       amount,
       sessionsUnlocked:
@@ -988,7 +995,8 @@ export class PackagesComponent implements OnInit {
     ) {
       return { totalMismatch: true };
     }
-    const sessions = Number(this.form.controls.sessionCount.value) || 0;
+    const sessions =
+      Number(this.form.controls.sessionCount.value || this.form.controls.pulseCount.value) || 0;
     if (sessions <= 0) {
       return { sessionsInvalid: true };
     }

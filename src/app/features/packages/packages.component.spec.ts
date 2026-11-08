@@ -158,4 +158,35 @@ describe('PackagesComponent payment validation', () => {
     expect(payload.installmentEnabled).toBe(true);
     expect(payload.installmentPrice).toBe(2000);
   });
+
+  it('suggests and saves a pulse installment plan', () => {
+    const fixture = TestBed.createComponent(PackagesComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.openCreate();
+    component.selectOfferType('package');
+    component.form.patchValue({
+      name: 'Pulse package',
+      serviceCategoryId: 'cat-1',
+      sessionDurationValue: 30,
+      sessionDurationUnit: 'minute',
+      sessionCount: null,
+      pulseCount: 1000,
+      packageExpiryMonths: 12,
+      cashEnabled: false,
+      installmentEnabled: true,
+      installmentPrice: 1000,
+      firstPayment: 100,
+      installmentCount: 3,
+    });
+    component.suggestDistribution();
+    expect(component.form.controls.installments.value).toEqual([
+      { amount: 300, sessionsUnlocked: 233 },
+      { amount: 300, sessionsUnlocked: 234 },
+      { amount: 300, sessionsUnlocked: 233 },
+    ]);
+    expect(component.form.valid).toBe(true);
+    component.save();
+    expect(packageService.create).toHaveBeenCalledTimes(1);
+  });
 });
