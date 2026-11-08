@@ -16,7 +16,6 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
 import { CurrencyService } from '@core/services/currency.service';
 import { LanguageService } from '@core/services/language.service';
 import {
@@ -33,7 +32,7 @@ import { Policies } from '@core/models/permissions.model';
 @Component({
   selector: 'app-customer-inquiry-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, DialogModule, InputTextModule, TagModule],
+  imports: [ReactiveFormsModule, TranslatePipe, DialogModule, InputTextModule],
   templateUrl: './customer-inquiry-dialog.component.html',
   styleUrl: './customer-inquiry-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -144,14 +143,21 @@ export class CustomerInquiryDialogComponent {
     return null;
   }
 
-  customerInitial(name: string): string {
-    return name.trim().charAt(0) || '?';
-  }
-
   selectedPurchaseName(): string {
     return (
       this.result()?.purchases.find(purchase => purchase.id === this.selectedPurchaseId())
         ?.offerName ?? ''
+    );
+  }
+
+  paidInstallmentCount(details: InquiryPurchaseDetails): number {
+    return details.installments.filter(installment => installment.status === 'paid').length;
+  }
+
+  installmentTotal(details: InquiryPurchaseDetails): number {
+    return Math.max(
+      details.installmentCount,
+      details.installments.length
     );
   }
 

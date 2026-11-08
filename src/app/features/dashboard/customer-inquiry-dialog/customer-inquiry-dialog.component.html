@@ -6,7 +6,7 @@
   [resizable]="false"
   appendTo="body"
   styleClass="customer-inquiry-dialog"
-  [style]="{ width: 'min(1100px, 96vw)' }"
+  [style]="{ width: 'min(1080px, calc(100vw - 32px))' }"
   (onHide)="close()"
 >
   <ng-template pTemplate="header">
@@ -26,18 +26,21 @@
   <form class="search-form" [formGroup]="searchForm" (ngSubmit)="search()">
     <div class="search-row">
       <span class="search-wrap">
-        <i class="pi pi-search"></i>
         <input
           pInputText
           formControlName="mobile"
           type="tel"
           [placeholder]="'CUSTOMER_INQUIRY.SEARCH_PLACEHOLDER' | translate"
         />
+        <button
+          type="submit"
+          class="search-btn"
+          [disabled]="loading()"
+          [attr.aria-label]="'CUSTOMER_INQUIRY.SEARCH' | translate"
+        >
+          <i class="pi pi-search"></i>
+        </button>
       </span>
-      <button type="submit" class="search-btn" [disabled]="loading()">
-        <i class="pi pi-search"></i>
-        {{ 'CUSTOMER_INQUIRY.SEARCH' | translate }}
-      </button>
     </div>
     @if (mobileError(); as errorKey) {
       <small class="field-error">{{ errorKey | translate }}</small>
@@ -49,25 +52,31 @@
   }
   @if (result(); as inquiry) {
     <div class="customer-header">
-      <span class="avatar">{{ customerInitial(inquiry.fullName) }}</span>
-      <div class="customer-meta">
-        <strong>{{ inquiry.fullName }}</strong>
-        <span>{{ inquiry.mobileNumber }}</span>
-        <small
-          >{{ 'CUSTOMER_INQUIRY.REGISTERED_AT' | translate }}:
-          {{ formatDate(inquiry.registeredAt) }}</small
-        >
+      <div class="customer-identity">
+        <span class="avatar"><i class="pi pi-user"></i></span>
+        <div class="customer-meta">
+          <strong>{{ inquiry.fullName }}</strong>
+          <span dir="ltr">{{ inquiry.mobileNumber }}</span>
+        </div>
       </div>
-      <div class="header-status">
-        <p-tag
-          [value]="
-            'CUSTOMER_INQUIRY.MEMBERSHIP.' + inquiry.membershipStatus.toUpperCase() | translate
-          "
-          [severity]="inquiry.membershipStatus === 'active' ? 'success' : 'secondary'"
-        />
-        <span class="count-chip"
-          >{{ inquiry.operationCount }} {{ 'CUSTOMER_INQUIRY.OPERATIONS' | translate }}</span
-        >
+      <div class="header-stat operation-count">
+        <i class="pi pi-calendar"></i>
+        <strong>{{ inquiry.operationCount }}</strong>
+        <span>{{ 'CUSTOMER_INQUIRY.OPERATIONS' | translate }}</span>
+      </div>
+      <span class="header-spacer"></span>
+      <div class="membership-chip" [class.is-inactive]="inquiry.membershipStatus !== 'active'">
+        <i class="pi pi-user"></i>
+        <span>
+          {{ 'CUSTOMER_INQUIRY.MEMBERSHIP.' + inquiry.membershipStatus.toUpperCase() | translate }}
+        </span>
+      </div>
+      <div class="customer-since">
+        <i class="pi pi-calendar"></i>
+        <span>
+          <small>{{ 'CUSTOMER_INQUIRY.CUSTOMER_SINCE' | translate }}</small>
+          <strong>{{ formatDate(inquiry.registeredAt) }}</strong>
+        </span>
       </div>
     </div>
 
@@ -80,30 +89,35 @@
             (click)="togglePurchase(purchase.id)"
             [attr.aria-expanded]="selectedPurchaseId() === purchase.id"
           >
-            <span class="record-index">{{ index + 1 }}</span>
-            <span class="type-badge">
+            <span class="type-badge" [class.is-session]="purchase.offerType === 'session'">
               {{ 'CUSTOMER_INQUIRY.TYPE.' + purchase.offerType.toUpperCase() | translate }}
             </span>
-            <strong class="record-name">{{ purchase.offerName }}</strong>
-            <span class="purchase-date">{{ formatDate(purchase.purchasedAt) }}</span>
-            <p-tag
-              [value]="'CUSTOMER_INQUIRY.STATUS.' + purchase.status.toUpperCase() | translate"
-              [severity]="
-                purchase.status === 'active'
-                  ? 'info'
-                  : purchase.status === 'completed'
-                    ? 'success'
-                    : purchase.status === 'expired'
-                      ? 'secondary'
-                      : 'danger'
-              "
-            />
+            <span class="record-index">{{ index + 1 }}</span>
+            <span class="record-name">
+              <i class="record-dot"></i>
+              <strong>{{ purchase.offerName }}</strong>
+            </span>
+            <span class="purchase-date">
+              <i class="pi pi-calendar"></i>
+              {{ formatDate(purchase.purchasedAt) }}
+            </span>
+            <span [class]="'status-pill status-' + purchase.status">
+              @if (purchase.status === 'completed') {
+                <i class="pi pi-check-circle"></i>
+              } @else if (purchase.status === 'cancelled') {
+                <i class="pi pi-ban"></i>
+              } @else if (purchase.status === 'expired') {
+                <i class="pi pi-clock"></i>
+              }
+              {{ 'CUSTOMER_INQUIRY.STATUS.' + purchase.status.toUpperCase() | translate }}
+            </span>
             <i
-              class="pi"
+              class="pi record-chevron"
               [class.pi-chevron-up]="selectedPurchaseId() === purchase.id"
               [class.pi-chevron-down]="selectedPurchaseId() !== purchase.id"
             ></i>
           </button>
+
           @if (selectedPurchaseId() === purchase.id) {
             <div class="record-body">
               @if (detailsLoading()) {
@@ -111,232 +125,128 @@
               }
               @if (purchaseDetails(); as details) {
                 <div class="meta-row">
-                  <div>
-                    <small>{{ 'CUSTOMER_INQUIRY.PURCHASE_DATE' | translate }}</small
-                    ><strong>{{ formatDate(details.purchasedAt) }}</strong>
+                  <div class="meta-item">
+                    <i class="pi pi-calendar"></i>
+                    <span>
+                      <small>{{ 'CUSTOMER_INQUIRY.PURCHASE_DATE' | translate }}</small>
+                      <strong>{{ formatDate(details.purchasedAt) }}</strong>
+                    </span>
                   </div>
-                  <div>
-                    <small>{{ 'CUSTOMER_INQUIRY.START_DATE' | translate }}</small
-                    ><strong>{{
-                      details.startsOn
-                        ? formatDate(details.startsOn)
-                        : ('CUSTOMER_INQUIRY.NOT_RECORDED' | translate)
-                    }}</strong>
+                  <div class="meta-item">
+                    <i class="pi pi-calendar"></i>
+                    <span>
+                      <small>{{ 'CUSTOMER_INQUIRY.START_DATE' | translate }}</small>
+                      <strong>
+                        {{
+                          details.startsOn
+                            ? formatDate(details.startsOn)
+                            : ('CUSTOMER_INQUIRY.NOT_RECORDED' | translate)
+                        }}
+                      </strong>
+                    </span>
                   </div>
-                  <div>
-                    <small>{{ 'CUSTOMER_INQUIRY.EXPIRY_DATE' | translate }}</small
-                    ><strong>{{
-                      details.expiresOn
-                        ? formatDate(details.expiresOn)
-                        : ('CUSTOMER_INQUIRY.NOT_RECORDED' | translate)
-                    }}</strong>
-                  </div>
-                  <div>
-                    <small>{{ 'CUSTOMER_INQUIRY.VALID_FOR' | translate }}</small
-                    ><strong
-                      >{{ details.validityMonths ?? '—' }}
-                      @if (details.validityMonths !== null) {
-                        {{ 'CUSTOMER_INQUIRY.MONTHS' | translate }}
-                      }
-                    </strong>
-                  </div>
-                  <div>
-                    <small>{{ 'CUSTOMER_INQUIRY.PACKAGE_STATUS' | translate }}</small
-                    ><strong>{{
-                      'CUSTOMER_INQUIRY.STATUS.' + details.packageStatus.toUpperCase() | translate
-                    }}</strong>
-                  </div>
-                  <div>
-                    <small>{{ 'CUSTOMER_INQUIRY.PAYMENT_STATUS' | translate }}</small
-                    ><strong>{{
-                      'CUSTOMER_INQUIRY.PAYMENT.' + details.paymentStatus.toUpperCase() | translate
-                    }}</strong>
+                  <div class="meta-item">
+                    <i class="pi pi-calendar"></i>
+                    <span>
+                      <small>{{ 'CUSTOMER_INQUIRY.EXPIRY_DATE' | translate }}</small>
+                      <strong>
+                        {{
+                          details.expiresOn
+                            ? formatDate(details.expiresOn)
+                            : ('CUSTOMER_INQUIRY.NOT_RECORDED' | translate)
+                        }}
+                      </strong>
+                    </span>
                   </div>
                 </div>
 
-                @if (details.sessions; as balance) {
-                  <div class="balance-section">
-                    <h4>{{ 'CUSTOMER_INQUIRY.SESSIONS' | translate }}</h4>
-                    <div class="sessions-summary">
-                      <div>
-                        <small>{{ 'CUSTOMER_INQUIRY.TOTAL' | translate }}</small
-                        ><strong>{{ balance.total }}</strong>
+                <div class="balance-matrix">
+                  @if (details.sessions; as balance) {
+                    <div class="balance-row">
+                      <div class="balance-label">
+                        <i class="pi pi-sliders-h"></i>
+                        <strong>{{ 'CUSTOMER_INQUIRY.SESSIONS' | translate }}</strong>
                       </div>
-                      <div>
-                        <small>{{ 'CUSTOMER_INQUIRY.COMPLETED' | translate }}</small
-                        ><strong>{{ balance.used }}</strong>
+                      <div class="balance-cell is-total">
+                        <small>{{ 'CUSTOMER_INQUIRY.TOTAL' | translate }}</small>
+                        <strong
+                          >{{ balance.total }}
+                          {{ 'CUSTOMER_INQUIRY.SESSION_UNIT' | translate }}</strong
+                        >
                       </div>
-                      <div class="remaining">
-                        <small>{{ 'CUSTOMER_INQUIRY.REMAINING' | translate }}</small
-                        ><strong>{{ balance.remaining }}</strong>
+                      <div class="balance-cell is-used">
+                        <small>{{ 'CUSTOMER_INQUIRY.COMPLETED' | translate }}</small>
+                        <strong
+                          >{{ balance.used }}
+                          {{ 'CUSTOMER_INQUIRY.SESSION_UNIT' | translate }}</strong
+                        >
                       </div>
-                    </div>
-                    <p class="bookable-count">
-                      {{ 'CUSTOMER_INQUIRY.BOOKABLE' | translate }}:
-                      <strong>{{ balance.bookable }}</strong>
-                    </p>
-                  </div>
-                }
-                @if (details.pulses; as balance) {
-                  <div class="balance-section">
-                    <h4>{{ 'CUSTOMER_INQUIRY.PULSES' | translate }}</h4>
-                    <div class="sessions-summary">
-                      <div>
-                        <small>{{ 'CUSTOMER_INQUIRY.TOTAL' | translate }}</small
-                        ><strong>{{ balance.total }}</strong>
-                      </div>
-                      <div>
-                        <small>{{ 'CUSTOMER_INQUIRY.USED' | translate }}</small
-                        ><strong>{{ balance.used }}</strong>
-                      </div>
-                      <div class="remaining">
-                        <small>{{ 'CUSTOMER_INQUIRY.REMAINING' | translate }}</small
-                        ><strong>{{ balance.remaining }}</strong>
+                      <div class="balance-cell is-remaining">
+                        <small>{{ 'CUSTOMER_INQUIRY.REMAINING' | translate }}</small>
+                        <strong
+                          >{{ balance.remaining }}
+                          {{ 'CUSTOMER_INQUIRY.SESSION_UNIT' | translate }}</strong
+                        >
                       </div>
                     </div>
-                  </div>
-                }
-
-                <div class="balance-section">
-                  <h4>{{ 'CUSTOMER_INQUIRY.FINANCIAL_POSITION' | translate }}</h4>
-                  <div class="sessions-summary">
-                    <div>
-                      <small>{{ 'CUSTOMER_INQUIRY.PURCHASE_PRICE' | translate }}</small
-                      ><strong>{{ formatMoney(details.purchasePrice) }}</strong>
+                  }
+                  @if (details.pulses; as balance) {
+                    <div class="balance-row">
+                      <div class="balance-label">
+                        <i class="pi pi-bolt"></i>
+                        <strong>{{ 'CUSTOMER_INQUIRY.PULSES' | translate }}</strong>
+                      </div>
+                      <div class="balance-cell is-total">
+                        <small>{{ 'CUSTOMER_INQUIRY.TOTAL' | translate }}</small>
+                        <strong
+                          >{{ balance.total }}
+                          {{ 'CUSTOMER_INQUIRY.PULSE_UNIT' | translate }}</strong
+                        >
+                      </div>
+                      <div class="balance-cell is-used">
+                        <small>{{ 'CUSTOMER_INQUIRY.USED' | translate }}</small>
+                        <strong
+                          >{{ balance.used }}
+                          {{ 'CUSTOMER_INQUIRY.PULSE_UNIT' | translate }}</strong
+                        >
+                      </div>
+                      <div class="balance-cell is-remaining">
+                        <small>{{ 'CUSTOMER_INQUIRY.REMAINING' | translate }}</small>
+                        <strong
+                          >{{ balance.remaining }}
+                          {{ 'CUSTOMER_INQUIRY.PULSE_UNIT' | translate }}</strong
+                        >
+                      </div>
                     </div>
-                    <div>
-                      <small>{{ 'CUSTOMER_INQUIRY.AMOUNT_PAID' | translate }}</small
-                      ><strong>{{ formatMoney(details.amountPaid) }}</strong>
+                  }
+                  <div class="balance-row">
+                    <div class="balance-label">
+                      <i class="pi pi-database"></i>
+                      <strong>{{ 'CUSTOMER_INQUIRY.INSTALLMENTS' | translate }}</strong>
                     </div>
-                    <div class="remaining">
-                      <small>{{ 'CUSTOMER_INQUIRY.AMOUNT_REMAINING' | translate }}</small
-                      ><strong>{{ formatMoney(details.amountRemaining) }}</strong>
+                    <div class="balance-cell is-total">
+                      <small>{{ 'CUSTOMER_INQUIRY.PURCHASE_PRICE' | translate }}</small>
+                      <strong>{{ formatMoney(details.purchasePrice) }}</strong>
+                    </div>
+                    <div class="balance-cell is-used">
+                      <small>{{ 'CUSTOMER_INQUIRY.AMOUNT_PAID' | translate }}</small>
+                      <strong>{{ formatMoney(details.amountPaid) }}</strong>
+                    </div>
+                    <div class="balance-cell is-remaining">
+                      <small>{{ 'CUSTOMER_INQUIRY.AMOUNT_REMAINING' | translate }}</small>
+                      <strong>{{ formatMoney(details.amountRemaining) }}</strong>
                     </div>
                   </div>
                 </div>
 
-                @if (details.installments.length) {
-                  <div class="previous-sessions">
-                    <div class="section-heading">
-                      <h4>
-                        <i class="pi pi-wallet"></i
-                        >{{ 'CUSTOMER_INQUIRY.INSTALLMENTS' | translate }}
-                        @if (details.nextInstallmentNumber) {
-                          ({{ details.nextInstallmentNumber }} / {{ details.installmentCount }})
-                        }
-                      </h4>
-                      @if (
-                        canCollectInstallment() &&
-                        details.nextInstallmentEligible &&
-                        details.paymentMethods.length
-                      ) {
-                        <button type="button" class="collect-button" (click)="openPayment()">
-                          <i class="pi pi-plus"></i>
-                          {{ 'CUSTOMER_INQUIRY.PAY_NEW_INSTALLMENT' | translate }}
-                        </button>
-                      }
-                    </div>
-                    @if (
-                      canCollectInstallment() &&
-                      details.nextInstallmentEligible &&
-                      !details.paymentMethods.length
-                    ) {
-                      <p class="payment-hint">
-                        {{ 'CUSTOMER_INQUIRY.NO_PAYMENT_METHODS' | translate }}
-                      </p>
-                    } @else if (details.nextInstallmentNumber && !details.nextInstallmentEligible) {
-                      <p class="payment-hint">
-                        {{ 'CUSTOMER_INQUIRY.WAIT_FOR_PROGRESS' | translate }}
-                      </p>
-                    }
-                    <div class="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
-                            <th>{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}</th>
-                            <th>{{ 'CUSTOMER_INQUIRY.COL_STATUS' | translate }}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @for (row of details.installments; track row.number) {
-                            <tr>
-                              <td>{{ row.number }}</td>
-                              <td>{{ formatMoney(row.amount) }}</td>
-                              <td>
-                                {{
-                                  'CUSTOMER_INQUIRY.INSTALLMENT_STATUS.' + row.status.toUpperCase()
-                                    | translate
-                                }}
-                              </td>
-                            </tr>
-                          }
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                }
-
-                @if (details.installments.length || details.collections.length) {
-                  <div class="previous-sessions">
+                <section class="detail-section sessions-detail">
+                  <div class="detail-heading">
                     <h4>
-                      <i class="pi pi-receipt"></i>{{ 'CUSTOMER_INQUIRY.STATEMENT' | translate }}
+                      <i class="pi pi-clock"></i>
+                      {{ 'CUSTOMER_INQUIRY.COMPLETED_SESSION_DETAILS' | translate }}
+                      <strong>({{ details.completedSessions.length }})</strong>
                     </h4>
-                    @if (details.collections.length) {
-                      <div class="table-scroll">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
-                              <th>{{ 'CUSTOMER_INQUIRY.COL_DATE' | translate }}</th>
-                              <th>{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}</th>
-                              <th>{{ 'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate }}</th>
-                              <th>{{ 'CUSTOMER_INQUIRY.COL_EMPLOYEE' | translate }}</th>
-                              <th>{{ 'CUSTOMER_INQUIRY.COL_NOTES' | translate }}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (
-                              collection of details.collections;
-                              track collection.id;
-                              let index = $index
-                            ) {
-                              <tr>
-                                <td>{{ index + 1 }}</td>
-                                <td>{{ formatDate(collection.confirmedAtUtc) }}</td>
-                                <td>{{ formatMoney(collection.amount) }}</td>
-                                <td>
-                                  {{
-                                    'CUSTOMER_INQUIRY.METHOD.' +
-                                      collection.paymentMethod.toUpperCase() | translate
-                                  }}
-                                </td>
-                                <td>{{ collection.recordedBy || '—' }}</td>
-                                <td>
-                                  {{
-                                    collection.installmentNumber === 0
-                                      ? ('CUSTOMER_INQUIRY.INITIAL_PAYMENT' | translate)
-                                      : '—'
-                                  }}
-                                </td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
-                      </div>
-                    } @else {
-                      <p class="no-completions">
-                        {{ 'CUSTOMER_INQUIRY.NO_COLLECTIONS' | translate }}
-                      </p>
-                    }
                   </div>
-                }
-
-                <div class="previous-sessions">
-                  <h4>
-                    <i class="pi pi-history"></i
-                    >{{ 'CUSTOMER_INQUIRY.PREVIOUS_SESSIONS' | translate }}
-                  </h4>
                   @if (details.completedSessions.length) {
                     <div class="table-scroll">
                       <table>
@@ -375,7 +285,130 @@
                       {{ 'CUSTOMER_INQUIRY.NO_COMPLETED_SESSIONS' | translate }}
                     </p>
                   }
-                </div>
+                </section>
+
+                @if (details.installments.length) {
+                  <section class="detail-section installment-detail">
+                    <div class="detail-heading">
+                      <h4>
+                        <i class="pi pi-database"></i>
+                        {{ 'CUSTOMER_INQUIRY.INSTALLMENT_DETAILS' | translate }}
+                        <strong>
+                          ({{ paidInstallmentCount(details) }}
+                          {{ 'CUSTOMER_INQUIRY.OF' | translate }} {{ installmentTotal(details) }})
+                        </strong>
+                      </h4>
+                      @if (
+                        canCollectInstallment() &&
+                        details.nextInstallmentEligible &&
+                        details.paymentMethods.length
+                      ) {
+                        <button type="button" class="collect-button" (click)="openPayment()">
+                          <i class="pi pi-plus"></i>
+                          {{ 'CUSTOMER_INQUIRY.PAY_NEW_INSTALLMENT' | translate }}
+                        </button>
+                      }
+                    </div>
+                    <div class="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
+                            <th>{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}</th>
+                            <th>{{ 'CUSTOMER_INQUIRY.COL_STATUS' | translate }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (row of details.installments; track row.number) {
+                            <tr>
+                              <td>{{ row.number }}</td>
+                              <td>
+                                <strong>{{ formatMoney(row.amount) }}</strong>
+                              </td>
+                              <td>
+                                {{
+                                  'CUSTOMER_INQUIRY.INSTALLMENT_STATUS.' + row.status.toUpperCase()
+                                    | translate
+                                }}
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    @if (
+                      canCollectInstallment() &&
+                      details.nextInstallmentEligible &&
+                      !details.paymentMethods.length
+                    ) {
+                      <p class="payment-hint">
+                        {{ 'CUSTOMER_INQUIRY.NO_PAYMENT_METHODS' | translate }}
+                      </p>
+                    } @else if (details.nextInstallmentNumber && !details.nextInstallmentEligible) {
+                      <p class="payment-hint">
+                        {{ 'CUSTOMER_INQUIRY.WAIT_FOR_PROGRESS' | translate }}
+                      </p>
+                    }
+                  </section>
+                }
+
+                @if (details.installments.length || details.collections.length) {
+                  <section class="detail-section collection-detail">
+                    <div class="detail-heading">
+                      <h4>
+                        <i class="pi pi-receipt"></i>
+                        {{ 'CUSTOMER_INQUIRY.STATEMENT' | translate }}
+                      </h4>
+                    </div>
+                    @if (details.collections.length) {
+                      <div class="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_NUMBER' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_DATE' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_EMPLOYEE' | translate }}</th>
+                              <th>{{ 'CUSTOMER_INQUIRY.COL_NOTES' | translate }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (
+                              collection of details.collections;
+                              track collection.id;
+                              let index = $index
+                            ) {
+                              <tr>
+                                <td>{{ index + 1 }}</td>
+                                <td>{{ formatDate(collection.confirmedAtUtc) }}</td>
+                                <td><strong>{{ formatMoney(collection.amount) }}</strong></td>
+                                <td>
+                                  {{
+                                    'CUSTOMER_INQUIRY.METHOD.' +
+                                      collection.paymentMethod.toUpperCase() | translate
+                                  }}
+                                </td>
+                                <td>{{ collection.recordedBy || '—' }}</td>
+                                <td>
+                                  {{
+                                    collection.installmentNumber === 0
+                                      ? ('CUSTOMER_INQUIRY.INITIAL_PAYMENT' | translate)
+                                      : '—'
+                                  }}
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    } @else {
+                      <p class="no-completions">
+                        {{ 'CUSTOMER_INQUIRY.NO_COLLECTIONS' | translate }}
+                      </p>
+                    }
+                  </section>
+                }
               }
             </div>
           }
@@ -406,29 +439,22 @@
   @if (purchaseDetails(); as details) {
     <form class="collection-form" [formGroup]="paymentForm" (ngSubmit)="collectInstallment()">
       <div class="collection-summary">
-        @if (result(); as inquiry) {
-          <span
-            >{{ 'CUSTOMER_INQUIRY.CUSTOMER' | translate }}:
-            <strong>{{ inquiry.fullName }}</strong>
-            <bdi>{{ inquiry.mobileNumber }}</bdi></span
-          >
-        }
-        <span
-          >{{ 'CUSTOMER_INQUIRY.SELECTED_PURCHASE' | translate }}:
-          <strong>{{ selectedPurchaseName() }}</strong></span
-        >
-        <span
-          >{{ 'CUSTOMER_INQUIRY.NEXT_INSTALLMENT' | translate }}:
-          <strong>{{ details.nextInstallmentNumber }}</strong></span
-        >
-        <span
-          >{{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}:
-          <strong>{{ formatMoney(details.nextInstallmentAmount) }}</strong></span
-        >
+        <span>
+          {{ 'CUSTOMER_INQUIRY.SELECTED_PURCHASE' | translate }}:
+          <strong>{{ selectedPurchaseName() }}</strong>
+        </span>
+        <span>
+          {{ 'CUSTOMER_INQUIRY.NEXT_INSTALLMENT' | translate }}:
+          <strong>{{ details.nextInstallmentNumber }}</strong>
+        </span>
+        <span>
+          {{ 'CUSTOMER_INQUIRY.COL_AMOUNT' | translate }}:
+          <strong>{{ formatMoney(details.nextInstallmentAmount) }}</strong>
+        </span>
       </div>
-      <label for="collection-payment-method">{{
-        'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate
-      }}</label>
+      <label for="collection-payment-method">
+        {{ 'CUSTOMER_INQUIRY.PAYMENT_METHOD' | translate }}
+      </label>
       <select id="collection-payment-method" formControlName="paymentMethod">
         <option value="">{{ 'CUSTOMER_INQUIRY.CHOOSE_METHOD' | translate }}</option>
         @for (method of details.paymentMethods; track method) {
