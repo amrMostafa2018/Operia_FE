@@ -11,6 +11,7 @@ import { SaleService } from '@app/features/sales/sale.service';
 import { AppointmentsApiService } from './appointments-api.service';
 import { SaleHandoffService } from './sale-handoff.service';
 import { AppointmentsComponent } from './appointments.component';
+import { BookingRecord } from './models/booking.model';
 
 describe('AppointmentsComponent employee request race condition', () => {
   let employeeService: jasmine.SpyObj<EmployeeService>;
@@ -87,6 +88,37 @@ describe('AppointmentsComponent employee request race condition', () => {
     specialty: 'General',
     workingDays: [],
   };
+
+  it('matches the selected customer and package without removing occupied bookings', () => {
+    const fixture = TestBed.createComponent(AppointmentsComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.clients.set([
+      { id: 'customer-a', name: 'A', mobile: '123', registered: true, packages: [] },
+    ]);
+    component.filters.update(filters => ({ ...filters, packageId: 'pkg-a' }));
+
+    const booking = {
+      clientId: 'customer-a',
+      lineItems: [{ catalogPackageId: 'pkg-a' }],
+    } as BookingRecord;
+    const otherPackage = {
+      ...booking,
+      lineItems: [{ catalogPackageId: 'pkg-b' }],
+    } as BookingRecord;
+    const otherCustomer = { ...booking, clientId: 'customer-b' };
+    const multipleItems = {
+      ...booking,
+      lineItems: [{ catalogPackageId: 'pkg-b' }, { catalogPackageId: 'pkg-a' }],
+    } as BookingRecord;
+
+    expect(component.matchesSelectedPackage(booking)).toBeTrue();
+    expect(component.matchesSelectedPackage(multipleItems)).toBeTrue();
+    expect(component.matchesSelectedPackage(otherPackage)).toBeFalse();
+    expect(component.matchesSelectedPackage(otherCustomer)).toBeFalse();
+    component.filters.update(filters => ({ ...filters, packageId: null }));
+    expect(component.matchesSelectedPackage(otherPackage)).toBeTrue();
+  });
 
   it('ensures slower earlier package employee response does not overwrite latest selection', () => {
     const subjectA = new Subject<BookableEmployee[]>();

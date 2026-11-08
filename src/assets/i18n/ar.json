@@ -974,6 +974,7 @@
     "SLOT_AVAILABLE": "متاح",
     "SLOT_BOOKED": "محجوز",
     "SLOT_COMPLETED": "مكتمل",
+    "SLOT_UNAVAILABLE": "غير متاح",
     "SLOT_HELD": "محجوز مؤقتاً",
     "SLOT_CLOSED": "مغلق",
     "FOOTER_CANCEL": "إلغاء",

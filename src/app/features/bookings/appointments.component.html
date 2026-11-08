@@ -404,26 +404,39 @@
                         </button>
                       }
                       @for (booking of bookingsForColumn(column); track booking.id) {
-                        <button
-                          type="button"
-                          class="slot-cell booking-overlay"
-                          [class.booked]="booking.status === 'booked'"
-                          [class.completed]="booking.status === 'completed'"
-                          [style.top.px]="bookingTop(booking.startMinutes)"
-                          [style.height.px]="bookingHeight(booking.slotDurationMinutes)"
-                          (click)="onBookingClick(booking)"
-                        >
-                          <span class="slot-time" dir="ltr">{{ bookingTimeLabel(booking) }}</span>
-                          <span class="slot-status">
-                            {{
-                              (booking.status === 'completed'
-                                ? 'BOOKINGS.SLOT_COMPLETED'
-                                : 'BOOKINGS.SLOT_BOOKED'
-                              ) | translate
-                            }}
-                          </span>
-                          <strong>{{ booking.clientName }}</strong>
-                        </button>
+                        @if (matchesSelectedPackage(booking)) {
+                          <button
+                            type="button"
+                            class="slot-cell booking-overlay"
+                            [class.booked]="booking.status === 'booked'"
+                            [class.completed]="booking.status === 'completed'"
+                            [style.top.px]="bookingTop(booking.startMinutes)"
+                            [style.height.px]="bookingHeight(booking.slotDurationMinutes)"
+                            (click)="onBookingClick(booking)"
+                          >
+                            <span class="slot-time" dir="ltr">{{ bookingTimeLabel(booking) }}</span>
+                            <span class="slot-status">
+                              {{
+                                (booking.status === 'completed'
+                                  ? 'BOOKINGS.SLOT_COMPLETED'
+                                  : 'BOOKINGS.SLOT_BOOKED'
+                                ) | translate
+                              }}
+                            </span>
+                            <strong>{{ booking.clientName }}</strong>
+                          </button>
+                        } @else {
+                          <div
+                            class="slot-cell booking-overlay other-booking"
+                            [style.top.px]="bookingTop(booking.startMinutes)"
+                            [style.height.px]="bookingHeight(booking.slotDurationMinutes)"
+                          >
+                            <span class="slot-time" dir="ltr">{{ bookingTimeLabel(booking) }}</span>
+                            <span class="slot-status">{{
+                              'BOOKINGS.SLOT_UNAVAILABLE' | translate
+                            }}</span>
+                          </div>
+                        }
                       }
                     </div>
                   </div>

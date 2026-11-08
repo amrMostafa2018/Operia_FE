@@ -974,6 +974,7 @@
     "SLOT_AVAILABLE": "Available",
     "SLOT_BOOKED": "Booked",
     "SLOT_COMPLETED": "Completed",
+    "SLOT_UNAVAILABLE": "Unavailable",
     "SLOT_HELD": "Temporarily held",
     "SLOT_CLOSED": "Closed",
     "FOOTER_CANCEL": "Cancel",

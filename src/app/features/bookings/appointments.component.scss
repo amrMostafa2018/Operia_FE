@@ -595,6 +595,13 @@
   border: 2px solid #93c5fd;
 }
 
+.slot-cell.booking-overlay.other-booking {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  cursor: not-allowed;
+}
+
 .slot-time {
   font-size: 0.72rem;
   line-height: 1.2;

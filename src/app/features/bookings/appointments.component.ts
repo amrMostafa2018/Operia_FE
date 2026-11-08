@@ -1517,6 +1517,21 @@ export class AppointmentsComponent {
     );
   }
 
+  /** Identifies bookings that match the selected customer's package. */
+  matchesSelectedPackage(booking: BookingRecord): boolean {
+    const packageId = this.filters().packageId;
+    if (!packageId) {
+      return true;
+    }
+
+    const customerId = this.clients()[0]?.id;
+    return (
+      !!customerId &&
+      booking.clientId === customerId &&
+      booking.lineItems.some(item => item.catalogPackageId === packageId)
+    );
+  }
+
   private columnKey(column: { branchId: string; employeeId: string; date: Date }): string {
     return `${column.branchId}|${column.employeeId}|${toDateKey(column.date)}`;
   }
