@@ -259,7 +259,7 @@
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .calendar-main {
@@ -267,10 +267,14 @@
   flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
+  min-height: 0;
 }
 
 .calendar-stage {
   position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-height: 280px;
 }
 
@@ -290,27 +294,33 @@
   --calendar-head-height: 72px;
   --calendar-branch-head-height: 0px;
   --slot-row-height: 58px;
+  --time-axis-width: 72px;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
   direction: ltr;
   overflow: auto;
   max-height: calc(100dvh - #{$header-height} - 13.5rem);
   border: 1px solid var(--surface-border);
   border-radius: $border-radius-lg;
   background: var(--surface-card);
-  min-height: 420px;
+  min-height: max(420px, 100%);
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 
-  &.has-branch-headers {
+  &.has-branch-headers,
+  &:has(.branch-headers) {
     --calendar-branch-head-height: calc(2.5rem + 1px);
   }
 }
 
 .calendar-days {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
   min-width: max-content;
+  min-height: 100%;
   overflow: visible;
 }
 
@@ -325,10 +335,12 @@
 .branch-headers,
 .time-axis-branch {
   box-sizing: border-box;
+  flex: 0 0 var(--calendar-branch-head-height);
   height: var(--calendar-branch-head-height);
+  min-height: var(--calendar-branch-head-height);
+  max-height: var(--calendar-branch-head-height);
   border-bottom: 1px solid var(--surface-border);
   background: #f3efff;
-  flex-shrink: 0;
 }
 
 .branch-headers {
@@ -374,7 +386,9 @@
   --calendar-col-min: 180px;
   --calendar-col-count: 1;
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: repeat(var(--calendar-col-count), minmax(var(--calendar-col-min), 1fr));
+  align-items: stretch;
   width: max-content;
   min-width: 100%;
   gap: 0;
@@ -389,6 +403,9 @@
 }
 
 .employee-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
   border-inline-end: 1px solid var(--surface-border);
   overflow: visible;
 }
@@ -403,6 +420,7 @@
   top: var(--calendar-branch-head-height);
   z-index: 5;
   box-sizing: border-box;
+  flex: 0 0 var(--calendar-head-height);
   height: var(--calendar-head-height);
   min-height: var(--calendar-head-height);
   max-height: var(--calendar-head-height);
@@ -460,6 +478,7 @@
 
 .empty-calendar {
   min-height: 280px;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -486,13 +505,17 @@
 .time-axis {
   display: flex;
   flex-direction: column;
-  flex: 0 0 72px;
-  width: 72px;
+  flex: 0 0 var(--time-axis-width);
+  align-self: stretch;
+  width: var(--time-axis-width);
+  min-width: var(--time-axis-width);
+  min-height: max-content;
   position: sticky;
   right: 0;
   z-index: 6;
   border-left: 1px solid var(--surface-border);
   background: #fafbff;
+  box-sizing: border-box;
 }
 
 .time-axis-head {
@@ -500,12 +523,12 @@
   top: var(--calendar-branch-head-height);
   z-index: 1;
   box-sizing: border-box;
+  flex: 0 0 var(--calendar-head-height);
   height: var(--calendar-head-height);
   min-height: var(--calendar-head-height);
   max-height: var(--calendar-head-height);
   border-bottom: 1px solid var(--surface-border);
   background: #fafbff;
-  flex-shrink: 0;
 }
 
 .time-label,
@@ -521,6 +544,7 @@
 .slots-stack {
   position: relative;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
 }
 
@@ -663,6 +687,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  height: 100%;
   background: var(--surface-card);
   border: 1px solid var(--surface-border);
   border-radius: $border-radius-lg;
@@ -708,6 +733,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: auto;
 
   h4 {
     margin: 0 0 0.15rem;
@@ -1103,6 +1129,48 @@
     grid-template-columns: 1fr;
   }
 
+  .calendar-board {
+    --time-axis-width: 3.75rem;
+    overflow-x: auto;
+    scrollbar-gutter: stable;
+  }
+
+  .calendar-days {
+    min-width: 0;
+  }
+
+  .calendar-grid,
+  .branch-headers {
+    width: 100%;
+    min-width: 0;
+    --calendar-col-min: 0;
+    grid-template-columns: repeat(var(--calendar-col-count), minmax(0, 1fr));
+  }
+
+  .employee-column {
+    min-width: 0;
+  }
+
+  .branch-headers,
+  .column-head,
+  .time-axis-head,
+  .time-axis-branch {
+    position: static;
+    top: auto;
+  }
+
+  .time-axis {
+    position: relative;
+    right: auto;
+    z-index: 2;
+    overflow: visible;
+    align-self: flex-start;
+    min-height: max-content;
+    flex: 0 0 var(--time-axis-width);
+    width: var(--time-axis-width);
+    min-width: var(--time-axis-width);
+  }
+
   .appointments-page {
     padding-bottom: 15rem;
   }
@@ -1129,6 +1197,7 @@
 
   .legend {
     min-width: 0;
+    margin-top: 0;
   }
 
   .footer-confirm {
@@ -1240,30 +1309,37 @@
     }
   }
 
-  .calendar-grid {
-    --calendar-col-min: 200px;
-  }
-
   .calendar-board {
     --calendar-head-height: 64px;
-    min-height: 480px;
+    --time-axis-width: 3.75rem;
+    min-height: max(480px, 100%);
     -webkit-overflow-scrolling: touch;
   }
 
   .four-day-board {
     container-type: inline-size;
+    overflow-x: hidden;
     scroll-snap-type: x proximity;
   }
 
-  .four-day-board .calendar-grid {
-    --calendar-col-min: 200px;
-    --calendar-col-min: max(200px, 50cqw);
+  .four-day-board .calendar-days {
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .four-day-board .calendar-grid,
+  .four-day-board .branch-headers {
+    width: max-content;
+    min-width: 100%;
+    --calendar-col-min: max(10rem, 50cqw);
     grid-template-columns: repeat(var(--calendar-col-count), var(--calendar-col-min));
   }
 
   .four-day-board .employee-column {
     scroll-snap-align: start;
     min-width: var(--calendar-col-min);
+    overflow: hidden;
   }
 
   .column-head {
@@ -1284,16 +1360,22 @@
     font-size: 0.74rem;
   }
 
-  .time-axis {
-    flex-basis: 64px;
-    width: 64px;
+  .time-label {
+    overflow: visible;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    padding: 0.45rem 0.4rem 0.45rem 0.15rem;
   }
 
-  .time-label {
-    font-size: 0.78rem;
+  .slot-cell {
+    min-width: 0;
+    padding: 0.35rem 0.4rem;
   }
 
   .slot-time {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 0.7rem;
   }
 
