@@ -23,6 +23,7 @@ export interface BookingCustomerPackageDto {
   offerType: 'package' | 'session';
   sessionCount: number | null;
   pulseCount: number | null;
+  installmentDueNow: boolean;
 }
 
 /** Describes booking customer dto exchanged with the API. */

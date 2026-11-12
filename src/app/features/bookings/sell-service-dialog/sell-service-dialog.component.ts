@@ -53,6 +53,7 @@ import {
   displayedPackageRemainingUnits,
   packageUsesPulses,
   bookAppointmentCatalogQuantityLineItem,
+  packageSelectOptions,
   bookAppointmentMaxQuantity,
   bookAppointmentOwnedPackageLineItem,
   bookAppointmentLineTotal,
@@ -166,16 +167,14 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   readonly packageOptions = computed(() => {
     const client = this.matchedClient();
     if (client?.packages.length) {
-      return client.packages.map(pkg => ({
-        label: pkg.packageName,
-        value: pkg.packageId,
-      }));
+      return packageSelectOptions(client.packages);
     }
     return this.catalogItems()
       .filter(item => item.type === 'package')
       .map(pkg => ({
         label: pkg.name,
         value: pkg.id,
+        disabled: false,
       }));
   });
 
@@ -185,7 +184,14 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
       return [];
     }
     const selectedIds = new Set(this.selectedPackageIds());
-    return client.packages.filter(pkg => selectedIds.has(pkg.packageId));
+    return [...selectedIds]
+      .map(
+        packageId =>
+          client.packages.find(
+            pkg => pkg.packageId === packageId && pkg.installmentDueNow !== true
+          ) ?? client.packages.find(pkg => pkg.packageId === packageId)
+      )
+      .filter((pkg): pkg is ClientPackage => pkg != null);
   });
 
   readonly filteredServices = computed(() => {
@@ -291,7 +297,7 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
         const client = this.matchedClient();
         if (client) {
           this.clientForm.controls.name.setValue(client.name, { emitEvent: false });
-          if (client.packages.length === 1) {
+          if (client.packages.length === 1 && client.packages[0].installmentDueNow !== true) {
             this.selectedPackageIds.set([client.packages[0].packageId]);
           }
         }
@@ -552,7 +558,14 @@ export class SellServiceDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   onPackageIdsChange(packageIds: string[] | null): void {
-    this.selectedPackageIds.set(packageIds ?? []);
+    const requested = packageIds ?? [];
+    const blocked = new Set(
+      this.packageOptions()
+        .filter(option => option.disabled)
+        .map(option => option.value)
+    );
+    const current = new Set(this.selectedPackageIds());
+    this.selectedPackageIds.set(requested.filter(id => !blocked.has(id) || current.has(id)));
   }
 
   selectPayment(method: PaymentMethodId): void {

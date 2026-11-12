@@ -74,6 +74,7 @@ import {
   ClientPackage,
   ClientRecord,
   bookAppointmentCatalogQuantityLineItem,
+  packageSelectOptions,
   bookAppointmentLineDuration,
   bookAppointmentLineTotal,
   bookAppointmentMaxQuantity,
@@ -278,6 +279,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
                               offerType: pkg.offerType,
                               sessionCount: pkg.sessionCount,
                               pulseCount: pkg.pulseCount,
+                              installmentDueNow: pkg.installmentDueNow,
                             })),
                           } satisfies ClientRecord)
                         : null,
@@ -294,7 +296,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   );
 
   readonly matchedClient = computed(() => {
-    if (this.customerMode() !== 'registered') {
+    if (this.customerMode() === 'direct') {
       return null;
     }
     const mobile = this.clientMobile().trim();
@@ -326,14 +328,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly packageOptions = computed(() => {
     const client = this.matchedClient();
     if (client?.packages.length) {
-      return client.packages
-        .filter(
-          (pkg, index, all) => all.findIndex(item => item.packageId === pkg.packageId) === index
-        )
-        .map(pkg => ({
-          label: pkg.packageName,
-          value: pkg.packageId,
-        }));
+      return packageSelectOptions(client.packages);
     }
     return [];
   });
@@ -345,7 +340,12 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     }
     const selectedIds = new Set(this.selectedPackageIds());
     return [...selectedIds]
-      .map(packageId => client.packages.find(pkg => pkg.packageId === packageId))
+      .map(
+        packageId =>
+          client.packages.find(
+            pkg => pkg.packageId === packageId && pkg.installmentDueNow !== true
+          ) ?? client.packages.find(pkg => pkg.packageId === packageId)
+      )
       .filter((pkg): pkg is ClientPackage => pkg != null);
   });
 
@@ -570,7 +570,9 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
         if (!initialPackageId) {
           return;
         }
-        const hasOption = this.packageOptions().some(option => option.value === initialPackageId);
+        const hasOption = this.packageOptions().some(
+          option => option.value === initialPackageId && !option.disabled
+        );
         if (!hasOption) {
           return;
         }
@@ -660,6 +662,23 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
           this.mobileInvalid.set(false);
           this.clientForm.reset({ mobile: '', name: '' });
         }
+      },
+      { allowSignalWrites: true }
+    );
+
+    effect(
+      () => {
+        if (this.customerMode() !== 'new' || this.customerLookupPending()) {
+          return;
+        }
+        const client = this.matchedClient();
+        if (!client) {
+          return;
+        }
+        untracked(() => {
+          this.selectedCustomer.set(client);
+          this.customerMode.set('registered');
+        });
       },
       { allowSignalWrites: true }
     );
@@ -946,6 +965,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
               offerType: pkg.offerType,
               sessionCount: pkg.sessionCount,
               pulseCount: pkg.pulseCount,
+              installmentDueNow: pkg.installmentDueNow,
             })),
           });
           this.clientForm.patchValue({ mobile: customer.mobileNumber, name: customer.fullName });
@@ -1115,7 +1135,14 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   onPackageIdsChange(packageIds: string[] | null): void {
-    this.selectedPackageIds.set(packageIds ?? []);
+    const requested = packageIds ?? [];
+    const blocked = new Set(
+      this.packageOptions()
+        .filter(option => option.disabled)
+        .map(option => option.value)
+    );
+    const current = new Set(this.selectedPackageIds());
+    this.selectedPackageIds.set(requested.filter(id => !blocked.has(id) || current.has(id)));
   }
 
   openUnlisted(item?: BookingLineItem): void {
@@ -1170,7 +1197,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
     const client = this.matchedClient();
-    if (this.customerMode() === 'new' || (this.customerMode() === 'registered' && !client)) {
+    if (this.customerMode() !== 'direct' && !client) {
       this.toast.add({
         severity: 'error',
         summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),

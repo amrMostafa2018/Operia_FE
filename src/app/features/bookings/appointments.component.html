@@ -66,11 +66,23 @@
             [options]="packages()"
             optionLabel="name"
             optionValue="id"
+            optionDisabled="installmentDueNow"
             [showClear]="true"
             [ngModel]="filters().packageId"
             (ngModelChange)="onPackageSelected($event)"
             [placeholder]="'BOOKINGS.FILTER_PACKAGE' | translate"
-          />
+          >
+            <ng-template pTemplate="item" let-item>
+              <span class="package-option">
+                <span>{{ item.name }}</span>
+                @if (item.installmentDueNow) {
+                  <small class="package-option-hint">{{
+                    'BOOKINGS.BOOK.PACKAGE_INSTALLMENT_DUE' | translate
+                  }}</small>
+                }
+              </span>
+            </ng-template>
+          </p-dropdown>
         </span>
       </label>
 

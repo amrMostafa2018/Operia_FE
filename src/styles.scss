@@ -46,6 +46,15 @@ a {
   }
 }
 
+// Menu rows are actions, not text links. The global anchor hover must not underline them.
+.p-menuitem-link,
+.p-menuitem-link:hover,
+.p-menuitem-link:focus,
+.p-menuitem-link:focus-visible,
+.p-menuitem-link:active {
+  text-decoration: none;
+}
+
 // ─── Scrollbar ────────────────────────────────────────────────────────────────
 ::-webkit-scrollbar {
   width: 6px;
@@ -457,6 +466,48 @@ a {
     width: 0.9rem;
     height: 0.9rem;
   }
+
+  .package-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    min-width: 0;
+    line-height: 1.3;
+  }
+
+  .package-option-hint {
+    color: #9a6b12;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .p-multiselect-item.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.p-dropdown-panel.filter-dropdown-panel {
+  .package-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    min-width: 0;
+    line-height: 1.3;
+  }
+
+  .package-option-hint {
+    color: #9a6b12;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .p-dropdown-item.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 // ─── Arabic placeholder alignment for intl-tel-input ─────────────────────────
@@ -477,5 +528,123 @@ html[dir='rtl'] .phone-row--intl {
       direction: rtl !important;
       font-family: $font-ar;
     }
+  }
+}
+
+// Customer operations row menu is appended to body, so these rules stay global.
+.customer-row-menu.p-menu {
+  width: max-content;
+  min-width: 16.5rem;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.35rem;
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  background: var(--surface-card);
+  box-shadow: $shadow-lg;
+
+  .p-menu-list {
+    margin: 0;
+    padding: 0;
+  }
+
+  .p-menuitem > .p-menuitem-content {
+    border-radius: 8px;
+    color: var(--text-primary);
+    background: transparent;
+  }
+
+  .p-menuitem > .p-menuitem-content .p-menuitem-link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    outline: none;
+  }
+
+  .p-menuitem-text {
+    color: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
+    width: 1.85rem;
+    height: 1.85rem;
+    margin: 0;
+    border-radius: 8px;
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    color: var(--color-primary);
+    font-size: 0.85rem;
+  }
+
+  .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon.pi-pencil,
+  .p-menuitem:not(.p-highlight):not(.p-disabled)
+    > .p-menuitem-content:hover
+    .p-menuitem-link
+    .p-menuitem-icon.pi-pencil,
+  .p-menuitem:not(.p-highlight):not(.p-disabled).p-focus
+    > .p-menuitem-content
+    .p-menuitem-link
+    .p-menuitem-icon.pi-pencil {
+    background: #fff3df;
+    color: #b45309;
+  }
+
+  .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon.pi-history,
+  .p-menuitem:not(.p-highlight):not(.p-disabled)
+    > .p-menuitem-content:hover
+    .p-menuitem-link
+    .p-menuitem-icon.pi-history,
+  .p-menuitem:not(.p-highlight):not(.p-disabled).p-focus
+    > .p-menuitem-content
+    .p-menuitem-link
+    .p-menuitem-icon.pi-history {
+    background: color-mix(in srgb, var(--color-info) 14%, transparent);
+    color: var(--color-info);
+  }
+
+  .p-menuitem:not(.p-highlight):not(.p-disabled)
+    > .p-menuitem-content:hover
+    .p-menuitem-link
+    .p-menuitem-icon.pi-list,
+  .p-menuitem:not(.p-highlight):not(.p-disabled).p-focus
+    > .p-menuitem-content
+    .p-menuitem-link
+    .p-menuitem-icon.pi-list {
+    color: var(--color-primary);
+  }
+
+  .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover,
+  .p-menuitem:not(.p-highlight):not(.p-disabled).p-focus > .p-menuitem-content,
+  .p-menuitem.p-highlight > .p-menuitem-content {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+
+  .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover .p-menuitem-link,
+  .p-menuitem:not(.p-highlight):not(.p-disabled).p-focus > .p-menuitem-content .p-menuitem-link,
+  .p-menuitem.p-highlight > .p-menuitem-content .p-menuitem-link,
+  .p-menuitem:not(.p-highlight):not(.p-disabled)
+    > .p-menuitem-content:hover
+    .p-menuitem-link
+    .p-menuitem-text,
+  .p-menuitem:not(.p-highlight):not(.p-disabled).p-focus
+    > .p-menuitem-content
+    .p-menuitem-link
+    .p-menuitem-text,
+  .p-menuitem.p-highlight > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
+    color: var(--color-primary-dark);
+    text-decoration: none;
+  }
+
+  .p-menuitem.p-disabled > .p-menuitem-content {
+    opacity: 0.55;
   }
 }

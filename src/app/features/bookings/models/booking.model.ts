@@ -151,6 +151,8 @@ export interface PackageOption {
   name: string;
   durationMinutes: number;
   serviceId: string;
+  /** True when every balance for this package is blocked until the due installment is collected. */
+  installmentDueNow?: boolean;
 }
 
 /** Describes client package used by booking screens. */
@@ -164,6 +166,52 @@ export interface ClientPackage {
   offerType?: 'package' | 'session';
   sessionCount?: number | null;
   pulseCount?: number | null;
+  /** True when the next installment must be collected before this balance can be booked. */
+  installmentDueNow?: boolean;
+}
+
+/** True when every owned balance for the package must wait until the due installment is collected. */
+export function packageInstallmentBlocksBooking(
+  packages: readonly { packageId: string; installmentDueNow?: boolean }[],
+  packageId: string
+): boolean {
+  const balances = packages.filter(item => item.packageId === packageId);
+  return balances.length > 0 && balances.every(item => item.installmentDueNow === true);
+}
+
+/** Package ids the booking dropdown can select. A due installment stays visible and blocked. */
+export function packageSelectOptions(packages: readonly ClientPackage[]): {
+  label: string;
+  value: string;
+  disabled: boolean;
+}[] {
+  return packages
+    .filter((pkg, index, all) => all.findIndex(item => item.packageId === pkg.packageId) === index)
+    .map(pkg => ({
+      label: pkg.packageName,
+      value: pkg.packageId,
+      disabled: packageInstallmentBlocksBooking(packages, pkg.packageId),
+    }));
+}
+
+/** Bookings-page package filter after a mobile search. A due installment stays visible and blocked. */
+export function customerPackageFilterOptions(
+  packages: readonly {
+    packageId: string;
+    packageName: string;
+    sessionDurationMinutes: number;
+    installmentDueNow?: boolean;
+  }[]
+): PackageOption[] {
+  return packages
+    .filter((pkg, index, all) => all.findIndex(item => item.packageId === pkg.packageId) === index)
+    .map(pkg => ({
+      id: pkg.packageId,
+      name: pkg.packageName,
+      durationMinutes: pkg.sessionDurationMinutes,
+      serviceId: pkg.packageId,
+      installmentDueNow: packageInstallmentBlocksBooking(packages, pkg.packageId),
+    }));
 }
 
 /** True when the package master defines a pulse balance (Package.PulseCount has a value). */

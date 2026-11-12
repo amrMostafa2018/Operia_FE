@@ -72,9 +72,21 @@
           [maxSelectedLabels]="3"
           [selectedItemsLabel]="'BOOKINGS.BOOK.PACKAGE_SELECTED_COUNT' | translate"
           [placeholder]="'BOOKINGS.BOOK.PACKAGE_SELECT_PLACEHOLDER' | translate"
+          optionDisabled="disabled"
           styleClass="booking-package-multiselect"
           panelStyleClass="booking-package-multiselect-panel"
-        />
+        >
+          <ng-template let-option pTemplate="item">
+            <span class="package-option">
+              <span class="package-option-label">{{ option.label }}</span>
+              @if (option.disabled) {
+                <small class="package-option-hint">{{
+                  'BOOKINGS.BOOK.PACKAGE_INSTALLMENT_DUE' | translate
+                }}</small>
+              }
+            </span>
+          </ng-template>
+        </p-multiSelect>
       </div>
     </form>
 

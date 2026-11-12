@@ -100,6 +100,7 @@ th {
   gap: 0.25rem;
   flex: 0 1 14rem;
   min-width: min(100%, 14rem);
+  overflow: visible;
 
   .date-label {
     font-size: 0.78rem;
@@ -466,7 +467,6 @@ button.primary {
   .date-picker .p-inputtext {
     font-size: 0.875rem;
     padding: 0.45rem 0.75rem;
-    padding-inline-start: 2rem;
     width: 100%;
     min-width: 0;
     direction: ltr;
@@ -478,6 +478,11 @@ button.primary {
 
   .date-picker.p-calendar {
     width: 100%;
+    overflow: visible;
+  }
+
+  .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
+    color: var(--text-secondary);
   }
 
   .customer-ops-table {
@@ -606,6 +611,18 @@ button.primary {
     }
   }
 }
+
+:host-context([dir='rtl']) ::ng-deep {
+  .date-picker.p-calendar-w-btn .p-inputtext {
+    padding-left: 2rem;
+  }
+
+  .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
+    right: auto !important;
+    left: 3.15rem !important;
+  }
+}
+
 .import-panel {
   display: flex;
   align-items: center;

@@ -52,6 +52,7 @@ import {
   CatalogCategoryTab,
   defaultFilters,
   defaultSelectedDate,
+  customerPackageFilterOptions,
   displayedPackageUsedUnits,
   DurationOption,
   EmployeeOption,
@@ -643,8 +644,13 @@ export class AppointmentsComponent {
 
   /** Sets the duration from the chosen owned Package or clears it when none is selected. */
   onPackageSelected(packageId: string | null): void {
+    const selectedPackage = packageId
+      ? this.packages().find(pkg => pkg.id === packageId)
+      : undefined;
+    if (selectedPackage?.installmentDueNow) {
+      return;
+    }
     this.updateFilter('packageId', packageId);
-    const selectedPackage = this.packages().find(pkg => pkg.id === packageId);
     this.updateFilter('durationMinutes', selectedPackage?.durationMinutes ?? 0);
   }
 
@@ -960,25 +966,16 @@ export class AppointmentsComponent {
             offerType: pkg.offerType,
             sessionCount: pkg.sessionCount,
             pulseCount: pkg.pulseCount,
+            installmentDueNow: pkg.installmentDueNow,
           })),
         };
         this.clients.set([client]);
-        this.packages.set(
-          customer.packages
-            .filter(
-              (pkg, index, all) => all.findIndex(item => item.packageId === pkg.packageId) === index
-            )
-            .map(pkg => ({
-              id: pkg.packageId,
-              name: pkg.packageName,
-              durationMinutes: pkg.sessionDurationMinutes,
-              serviceId: pkg.packageId,
-            }))
-        );
+        this.packages.set(customerPackageFilterOptions(customer.packages));
         this.updateFilter('clientName', client.name);
         const selectedPackageId = this.filters().packageId;
         this.onPackageSelected(
-          selectedPackageId && this.packages().some(pkg => pkg.id === selectedPackageId)
+          selectedPackageId &&
+            this.packages().some(pkg => pkg.id === selectedPackageId && !pkg.installmentDueNow)
             ? selectedPackageId
             : null
         );

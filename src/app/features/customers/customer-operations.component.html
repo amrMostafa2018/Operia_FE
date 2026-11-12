@@ -20,6 +20,7 @@
           (ngModelChange)="onDateFromChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
+          [showClear]="true"
           dateFormat="dd/mm/yy"
           [placeholder]="'CUSTOMER_OPERATIONS.FROM_DATE' | translate"
           styleClass="date-picker"
@@ -32,6 +33,7 @@
           (ngModelChange)="onDateToChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
+          [showClear]="true"
           dateFormat="dd/mm/yy"
           [placeholder]="'CUSTOMER_OPERATIONS.TO_DATE' | translate"
           styleClass="date-picker"
@@ -223,7 +225,9 @@
           <td class="col-money total-price">{{ (row.total | number: '1.2-2') || '—' }}</td>
           <td class="col-money">
             @if (row.collected != null) {
-              <span class="amount-pill amount-pill--paid">{{ row.collected | number: '1.2-2' }}</span>
+              <span class="amount-pill amount-pill--paid">{{
+                row.collected | number: '1.2-2'
+              }}</span>
             } @else {
               —
             }
@@ -267,7 +271,13 @@
           </td>
           <td>{{ formatOperationDate(row.operationDate) }}</td>
           <td class="col-actions actions-cell">
-            <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
+            <p-menu
+              #rowMenu
+              styleClass="customer-row-menu"
+              [model]="getRowMenu(row)"
+              [popup]="true"
+              appendTo="body"
+            />
             <button
               type="button"
               class="row-menu-btn"

@@ -946,6 +946,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
         offerType: pkg.offerType,
         sessionCount: pkg.sessionCount,
         pulseCount: pkg.pulseCount,
+        installmentDueNow: pkg.installmentDueNow,
       })),
     };
   }

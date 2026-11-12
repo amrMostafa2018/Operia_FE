@@ -264,4 +264,83 @@ describe('AppointmentsComponent employee request race condition', () => {
     expect(subjectA.observed).toBe(false);
     expect(subjectB.observed).toBe(true);
   });
+
+  it('dims a package with an installment due now after a mobile search and does not select it', () => {
+    employeeService.listBookable.and.returnValue(of([]));
+    appointmentsApi.findCustomer.and.returnValue(
+      of({
+        id: 'customer-1',
+        fullName: 'عميل',
+        mobileNumber: '201148908184',
+        packages: [
+          {
+            customerPackageId: 'due-balance',
+            packageId: 'due-package',
+            packageName: 'جسم كامل ليزر',
+            sessionDurationMinutes: 60,
+            totalSessions: 8,
+            usedSessions: 2,
+            reservedSessions: 0,
+            availableSessions: 0,
+            expiresOn: null,
+            offerType: 'package',
+            sessionCount: 8,
+            pulseCount: null,
+            installmentDueNow: true,
+          },
+          {
+            customerPackageId: 'open-balance',
+            packageId: 'open-package',
+            packageName: 'باقه 5000 بلس',
+            sessionDurationMinutes: 45,
+            totalSessions: 10,
+            usedSessions: 1,
+            reservedSessions: 0,
+            availableSessions: 6,
+            expiresOn: null,
+            offerType: 'package',
+            sessionCount: 10,
+            pulseCount: null,
+            installmentDueNow: false,
+          },
+          {
+            customerPackageId: 'open-balance-due',
+            packageId: 'open-package',
+            packageName: 'باقه 5000 بلس',
+            sessionDurationMinutes: 45,
+            totalSessions: 10,
+            usedSessions: 0,
+            reservedSessions: 0,
+            availableSessions: 0,
+            expiresOn: null,
+            offerType: 'package',
+            sessionCount: 10,
+            pulseCount: null,
+            installmentDueNow: true,
+          },
+        ],
+      })
+    );
+
+    const fixture = TestBed.createComponent(AppointmentsComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.updateFilter('clientMobile', '201148908184');
+    component.onMobileSearch();
+
+    expect(
+      component.packages().map(pkg => ({ id: pkg.id, installmentDueNow: pkg.installmentDueNow }))
+    ).toEqual([
+      { id: 'due-package', installmentDueNow: true },
+      { id: 'open-package', installmentDueNow: false },
+    ]);
+    expect(component.filters().packageId).toBeNull();
+
+    component.onPackageSelected('due-package');
+    expect(component.filters().packageId).toBeNull();
+
+    component.onPackageSelected('open-package');
+    expect(component.filters().packageId).toBe('open-package');
+    expect(component.filters().durationMinutes).toBe(45);
+  });
 });
