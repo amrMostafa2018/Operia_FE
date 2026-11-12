@@ -4,6 +4,7 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
+  [focusOnShow]="false"
   appendTo="body"
   styleClass="customer-inquiry-dialog"
   [style]="{ width: 'min(1080px, calc(100vw - 32px))' }"
@@ -25,13 +26,24 @@
 
   <form class="search-form" [formGroup]="searchForm" (ngSubmit)="search()">
     <div class="search-row">
-      <span class="search-wrap">
-        <input
-          pInputText
-          formControlName="mobile"
-          type="tel"
-          [placeholder]="'CUSTOMER_INQUIRY.SEARCH_PLACEHOLDER' | translate"
-        />
+      <span class="search-wrap field--phone" [class.is-invalid]="!!mobileError()" dir="ltr">
+        <span class="phone-row phone-row--intl phone-row--filter">
+          <ngx-intl-tel-input
+            [cssClass]="phoneInputCssClass"
+            [onlyCountries]="onlyCountries"
+            [selectedCountryISO]="selectedCountryISO()"
+            [enableAutoCountrySelect]="false"
+            [enablePlaceholder]="true"
+            [customPlaceholder]="'CUSTOMER_INQUIRY.SEARCH_PLACEHOLDER' | translate"
+            [searchCountryFlag]="false"
+            [selectFirstCountry]="false"
+            [separateDialCode]="true"
+            [phoneValidation]="true"
+            inputId="inquiry-mobile"
+            formControlName="mobile"
+            (countryChange)="onMobileCountryChange($event)"
+          />
+        </span>
         <button
           type="submit"
           class="search-btn"
@@ -41,10 +53,10 @@
           <i class="pi pi-search"></i>
         </button>
       </span>
+      @if (mobileError(); as errorKey) {
+        <small class="field-error">{{ errorKey | translate }}</small>
+      }
     </div>
-    @if (mobileError(); as errorKey) {
-      <small class="field-error">{{ errorKey | translate }}</small>
-    }
   </form>
 
   @if (loading()) {

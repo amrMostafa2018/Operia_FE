@@ -13,9 +13,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ChangeData, CountryISO, NgxIntlTelInputModule } from 'ngx-intl-tel-input';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyService } from '@core/services/currency.service';
 import { LanguageService } from '@core/services/language.service';
 import {
@@ -24,6 +24,16 @@ import {
   extractApiFieldErrors,
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
+import {
+  PHONE_INPUT_CSS_CLASS,
+  PHONE_INPUT_DEFAULT_COUNTRY,
+  PHONE_INPUT_ONLY_COUNTRIES,
+} from '@app/shared/constants/phone-input.config';
+import {
+  isValidPhoneChangeData,
+  toBookingSearchMobile,
+  toPhoneChangeData,
+} from '@app/shared/utils/phone-number.util';
 import { CustomerInquiryResult, InquiryPurchaseDetails } from '../models/customer-inquiry.model';
 import { CustomerInquiryService } from './customer-inquiry.service';
 import { PermissionService } from '@core/services/permission.service';
@@ -32,7 +42,7 @@ import { Policies } from '@core/models/permissions.model';
 @Component({
   selector: 'app-customer-inquiry-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, DialogModule, InputTextModule],
+  imports: [ReactiveFormsModule, TranslatePipe, DialogModule, NgxIntlTelInputModule],
   templateUrl: './customer-inquiry-dialog.component.html',
   styleUrl: './customer-inquiry-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,11 +61,15 @@ export class CustomerInquiryDialogComponent {
 
   readonly visible = input(false);
   readonly closed = output<void>();
-  readonly searchForm = this.fb.nonNullable.group({
-    mobile: ['', [Validators.required, Validators.pattern(/^\+?[\d\s()-]{8,20}$/)]],
+  readonly searchForm = this.fb.group({
+    mobile: this.fb.control<ChangeData | string | null>(null, Validators.required),
   });
+  readonly onlyCountries = PHONE_INPUT_ONLY_COUNTRIES;
+  readonly selectedCountryISO = signal<CountryISO>(PHONE_INPUT_DEFAULT_COUNTRY);
+  readonly phoneInputCssClass = PHONE_INPUT_CSS_CLASS;
   readonly result = signal<CustomerInquiryResult | null>(null);
   readonly searched = signal(false);
+  readonly searchAttempted = signal(false);
   readonly loading = signal(false);
   readonly selectedPurchaseId = signal<string | null>(null);
   readonly purchaseDetails = signal<InquiryPurchaseDetails | null>(null);
@@ -71,11 +85,16 @@ export class CustomerInquiryDialogComponent {
   });
   private paymentKey: string | null = null;
   private paymentKeyStorageName: string | null = null;
+  private readonly mobileRevision = signal(0);
+  readonly mobileError = computed(() => this.readMobileError());
 
   constructor() {
     this.searchForm.controls.mobile.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.clearInquiry());
+      .subscribe(() => {
+        this.mobileRevision.update(version => version + 1);
+        this.clearInquiry();
+      });
   }
 
   close(): void {
@@ -83,18 +102,26 @@ export class CustomerInquiryDialogComponent {
     this.searchSubscription?.unsubscribe();
     this.detailsSubscription?.unsubscribe();
     this.clearInquiry();
-    this.searchForm.reset({ mobile: '' });
+    this.searchForm.reset({ mobile: null });
+    this.searchForm.markAsPristine();
+    this.searchForm.markAsUntouched();
+    this.searchAttempted.set(false);
+    this.mobileRevision.update(version => version + 1);
+    this.selectedCountryISO.set(PHONE_INPUT_DEFAULT_COUNTRY);
     this.closed.emit();
   }
 
   search(): void {
     this.clearInquiry();
+    this.searchAttempted.set(true);
     this.searchForm.markAllAsTouched();
-    if (this.searchForm.invalid) return;
+    const parsed = this.parsedMobile();
+    const mobile = toBookingSearchMobile(parsed);
+    if (!mobile || !isValidPhoneChangeData(parsed) || this.searchForm.invalid) return;
 
     this.loading.set(true);
     this.searchSubscription = this.inquiryService
-      .findByMobile(this.searchForm.controls.mobile.value.trim())
+      .findByMobile(mobile)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
@@ -134,13 +161,41 @@ export class CustomerInquiryDialogComponent {
     );
   }
 
-  mobileError(): string | null {
+  private readMobileError(): string | null {
+    this.mobileRevision();
+    const searched = this.searchAttempted();
+    const parsed = this.parsedMobile();
+    const national = this.nationalDigits(parsed);
+    const typedNumber = national.length > 0;
+
+    if (!searched && !typedNumber) {
+      return null;
+    }
+
     const control = this.searchForm.controls.mobile;
-    if (!control.touched && !control.dirty) return null;
-    if (control.hasError('required')) return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_REQUIRED';
-    if (control.hasError('pattern')) return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_INVALID';
-    if (control.hasError('server')) return String(control.getError('server'));
+    if (control.hasError('server')) {
+      return String(control.getError('server'));
+    }
+
+    if (!typedNumber) {
+      return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_REQUIRED';
+    }
+
+    if (control.hasError('validatePhoneNumber') || !isValidPhoneChangeData(parsed)) {
+      if (!searched && national.length < 8) {
+        return null;
+      }
+      return 'CUSTOMER_INQUIRY.ERRORS.MOBILE_INVALID';
+    }
+
     return null;
+  }
+
+  onMobileCountryChange(country: { iso2: string }): void {
+    const iso = country.iso2 as CountryISO;
+    if (PHONE_INPUT_ONLY_COUNTRIES.includes(iso)) {
+      this.selectedCountryISO.set(iso);
+    }
   }
 
   selectedPurchaseName(): string {
@@ -155,10 +210,7 @@ export class CustomerInquiryDialogComponent {
   }
 
   installmentTotal(details: InquiryPurchaseDetails): number {
-    return Math.max(
-      details.installmentCount,
-      details.installments.length
-    );
+    return Math.max(details.installmentCount, details.installments.length);
   }
 
   togglePurchase(id: string): void {
@@ -371,5 +423,22 @@ export class CustomerInquiryDialogComponent {
       .padStart(2, '0');
     const minute = (minutes % 60).toString().padStart(2, '0');
     return `${hour}:${minute}`;
+  }
+
+  private parsedMobile(): ChangeData | null {
+    const raw = this.searchForm.controls.mobile.value;
+    if (!raw) {
+      return null;
+    }
+
+    return typeof raw === 'string' ? toPhoneChangeData(raw) : raw;
+  }
+
+  private nationalDigits(value: ChangeData | null): string {
+    if (!value) {
+      return '';
+    }
+
+    return (value.nationalNumber ?? value.number ?? '').replace(/\D/g, '');
   }
 }

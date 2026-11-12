@@ -22,6 +22,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DropdownModule } from 'primeng/dropdown';
 import { CurrencyService } from '@core/services/currency.service';
+import { LanguageService } from '@core/services/language.service';
 import {
   applyServerFieldErrors,
   extractApiFieldErrors,
@@ -80,6 +81,9 @@ export class SaleBuilderDialogComponent {
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
   readonly currency = inject(CurrencyService);
+  private readonly language = inject(LanguageService);
+
+  readonly isRtl = computed(() => this.language.currentLang() === 'ar');
 
   readonly visible = input(false);
   readonly closed = output<void>();
@@ -128,10 +132,9 @@ export class SaleBuilderDialogComponent {
   readonly activeSale = signal<SaleState | null>(null);
   readonly bookableEmployees = signal<BookableEmployee[]>([]);
   readonly recoveryError = signal<string | null>(null);
-  readonly resumeSaleId = signal('');
-  readonly resumeError = signal<string | null>(null);
   readonly bookingRequested = signal(false);
   readonly canBookNow = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
+  readonly catalogSkeletonSlots = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   private quoteVersion = 0;
   private customerVersion = 0;
   private optionsVersion = 0;
@@ -201,8 +204,6 @@ export class SaleBuilderDialogComponent {
     this.customerLoading.set(false);
     this.activeSale.set(null);
     this.recoveryError.set(null);
-    this.resumeSaleId.set('');
-    this.resumeError.set(null);
     this.bookingRequested.set(false);
     this.bookableEmployees.set([]);
     this.bookingForm.reset({ employeeId: '', scheduledDate: '', startTime: '' });
@@ -522,6 +523,63 @@ export class SaleBuilderDialogComponent {
     return offer.cashEnabled === false
       ? (offer.installmentPrice ?? offer.price)
       : (offer.cashPriceAfterDiscount ?? offer.price);
+  }
+
+  categoryIconClass(icon?: string): string {
+    const value = icon?.trim();
+    if (!value) return 'pi pi-tag';
+    if (value.includes(' ')) return value;
+    return value.startsWith('pi-') ? `pi ${value}` : `pi pi-${value}`;
+  }
+
+  paymentMethodIcon(method: string): string {
+    switch (method) {
+      case 'cash':
+        return 'pi pi-money-bill';
+      case 'bank_transfer':
+        return 'pi pi-credit-card';
+      case 'instapay':
+        return 'pi pi-mobile';
+      case 'e_wallet':
+        return 'pi pi-wallet';
+      case 'fawry':
+        return 'pi pi-qrcode';
+      default:
+        return 'pi pi-wallet';
+    }
+  }
+
+  rowIcon(row: DraftRow): string {
+    if (row.unlistedName) return 'pi pi-plus-circle';
+    if (row.ownedCustomerPackageId) return 'pi pi-check-circle';
+    const offer = this.catalog().find(item => item.id === row.offerId);
+    return offer?.offerType === 'package' ? 'pi pi-gift' : 'pi pi-sparkles';
+  }
+
+  formatMoney(value: number): string {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+
+  installmentDueNow(): number | null {
+    const items = this.quote()?.items.filter(item => item.paymentOption === 'installment') ?? [];
+    if (items.length === 0) return null;
+    return items.reduce((sum, item) => sum + item.dueNow, 0);
+  }
+
+  onWalkInToggle(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const next = input.checked;
+    input.checked = this.directCustomer();
+    this.setDirectCustomer(next);
+  }
+
+  chooseOption(key: string, option: SalePaymentOption, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.setOption(key, option);
+    input.checked = this.rows().find(row => row.key === key)?.paymentOption === option;
   }
 
   rowName(row: DraftRow): string {
@@ -875,36 +933,6 @@ export class SaleBuilderDialogComponent {
   startBooking(): void {
     this.bookingRequested.set(true);
     this.loadBookableEmployees();
-  }
-
-  resumeSale(): void {
-    const saleId = this.resumeSaleId().trim();
-    if (!saleId) {
-      this.resumeError.set(this.translate.instant('SALE_BUILDER.REQUIRED'));
-      return;
-    }
-    this.resumeError.set(null);
-    this.saving.set(true);
-    this.sales
-      .state(saleId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: state => {
-          this.saving.set(false);
-          this.activeSale.set(state);
-          sessionStorage.setItem(this.recoveryStorageKey, state.saleId);
-          if (
-            (state.paymentConfirmed || !state.requiresCollection) &&
-            state.disposition === 'BookNow'
-          ) {
-            this.startBooking();
-          }
-        },
-        error: (error: HttpErrorResponse) => {
-          this.saving.set(false);
-          this.resumeError.set(this.errorText(error));
-        },
-      });
   }
 
   fieldError(field: 'mobile' | 'customerId' | 'branchId'): string | null {

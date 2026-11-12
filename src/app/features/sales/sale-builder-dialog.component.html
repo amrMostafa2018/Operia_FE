@@ -5,23 +5,24 @@
   [draggable]="false"
   [resizable]="false"
   appendTo="body"
-  styleClass="sale-builder-dialog"
-  [style]="{ width: 'min(1280px, 96vw)' }"
+  styleClass="sale-builder-dialog bookings-book-dialog"
+  [style]="{ width: 'min(1440px, 98vw)' }"
   (onHide)="closed.emit()"
 >
   <ng-template pTemplate="header">
-    <div class="sale-header">
-      <h2><i class="pi pi-shopping-bag"></i> {{ 'SALE_BUILDER.TITLE' | translate }}</h2>
-      <button
-        type="button"
-        class="icon-button"
-        (click)="closed.emit()"
-        [disabled]="saving()"
-        [attr.aria-label]="'COMMON.CLOSE' | translate"
-      >
-        <i class="pi pi-times"></i>
-      </button>
+    <div class="dialog-header">
+      <i class="pi pi-shopping-bag" aria-hidden="true"></i>
+      <h3>{{ 'SALE_BUILDER.TITLE' | translate }}</h3>
     </div>
+    <button
+      type="button"
+      class="dialog-close"
+      (click)="closed.emit()"
+      [disabled]="saving()"
+      [attr.aria-label]="'COMMON.CLOSE' | translate"
+    >
+      <i class="pi pi-times"></i>
+    </button>
   </ng-template>
 
   @if (activeSale(); as sale) {
@@ -146,162 +147,197 @@
       </div>
     </section>
   } @else {
-    <div class="resume-row">
-      <label for="resume-sale">{{ 'SALE_BUILDER.RESUME_SALE' | translate }}</label>
+    <label class="catalog-search">
+      <i
+        class="pi"
+        [class.pi-search]="!loading()"
+        [class.pi-spin]="loading()"
+        [class.pi-spinner]="loading()"
+        aria-hidden="true"
+      ></i>
       <input
-        id="resume-sale"
         pInputText
-        [value]="resumeSaleId()"
-        (input)="resumeSaleId.set($any($event.target).value); resumeError.set(null)"
-        [placeholder]="'SALE_BUILDER.SALE_REFERENCE' | translate"
+        [value]="searchText()"
+        (input)="searchText.set($any($event.target).value)"
+        [placeholder]="'SALE_BUILDER.FIND_ITEM' | translate"
+        [disabled]="loading()"
       />
-      <button type="button" class="outline-button" [disabled]="saving()" (click)="resumeSale()">
-        {{ 'SALE_BUILDER.RESUME' | translate }}
-      </button>
-      @if (resumeError(); as error) {
-        <small class="field-error">{{ error }}</small>
-      }
-    </div>
-    <section class="catalog-section">
-      <div class="section-title">
-        <h3>{{ 'SALE_BUILDER.CATALOG' | translate }}</h3>
-        <input
-          pInputText
-          [value]="searchText()"
-          (input)="searchText.set($any($event.target).value)"
-          [placeholder]="'SALE_BUILDER.FIND_ITEM' | translate"
-        />
-      </div>
-      <div class="category-tabs">
+    </label>
+
+    <div class="catalog-shell" [attr.dir]="isRtl() ? 'rtl' : 'ltr'">
+    <div class="category-tabs" [class.is-loading]="loading()">
+      @for (category of categories(); track category.id) {
         <button
           type="button"
-          [class.active]="categoryId() === 'all'"
-          (click)="categoryId.set('all')"
+          class="category-tab"
+          [class.active]="categoryId() === category.id"
+          [disabled]="loading()"
+          (click)="categoryId.set(category.id)"
         >
-          {{ 'SALE_BUILDER.ALL' | translate }}
+          <i [class]="categoryIconClass(category.icon)" aria-hidden="true"></i>
+          <span>{{ category.name }}</span>
         </button>
-        @for (category of categories(); track category.id) {
-          <button
-            type="button"
-            [class.active]="categoryId() === category.id"
-            (click)="categoryId.set(category.id)"
-          >
-            {{ category.name }}
-          </button>
-        }
+      }
+      <button
+        type="button"
+        class="category-tab"
+        [class.active]="categoryId() === 'all'"
+        [disabled]="loading()"
+        (click)="categoryId.set('all')"
+      >
+        <i class="pi pi-th-large" aria-hidden="true"></i>
+        <span>{{ 'SALE_BUILDER.ALL' | translate }}</span>
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div
+        class="catalog-loading"
+        role="status"
+        [attr.aria-label]="'SALE_BUILDER.LOADING' | translate"
+      >
+        <p class="loading-banner">
+          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+          {{ 'SALE_BUILDER.LOADING' | translate }}
+        </p>
+        <div class="catalog-grid catalog-skeleton">
+          @for (slot of catalogSkeletonSlots; track slot) {
+            <article class="catalog-card skeleton-card" aria-hidden="true">
+              <span class="skeleton-line short"></span>
+              <span class="skeleton-line"></span>
+              <span class="skeleton-line tiny"></span>
+              <span class="skeleton-line price"></span>
+            </article>
+          }
+        </div>
       </div>
-      <div class="catalog-grid">
+    } @else {
+      <div class="catalog-grid" [attr.dir]="isRtl() ? 'rtl' : 'ltr'">
         <button
           type="button"
           class="unlisted-card"
           [disabled]="hasUnlisted()"
           (click)="openUnlisted()"
         >
-          <strong>{{ 'SALE_BUILDER.UNLISTED' | translate }}</strong>
-          <i class="pi pi-plus-circle" aria-hidden="true"></i>
-          <span>{{
-            (hasUnlisted() ? 'SALE_BUILDER.UNLISTED_ADDED' : 'SALE_BUILDER.UNLISTED_HINT')
+          <span class="item-type unlisted-type">{{ 'SALE_BUILDER.SERVICE' | translate }}</span>
+          <strong class="unlisted-title">{{ 'SALE_BUILDER.UNLISTED_CARD' | translate }}</strong>
+          <span class="unlisted-plus-ring" aria-hidden="true">
+            <i class="pi pi-plus"></i>
+          </span>
+          <span class="unlisted-hint">{{
+            (hasUnlisted() ? 'SALE_BUILDER.UNLISTED_ADDED' : 'SALE_BUILDER.UNLISTED_CUSTOM')
               | translate
           }}</span>
         </button>
-        @if (!loading()) {
-          @for (offer of filteredCatalog(); track offer.id) {
-            <article class="catalog-card">
-              <span class="item-type" [class.package]="offer.offerType === 'package'">
-                {{
-                  (offer.offerType === 'package' ? 'SALE_BUILDER.PACKAGE' : 'SALE_BUILDER.SERVICE')
-                    | translate
-                }}
-              </span>
-              <strong>{{ offer.name }}</strong>
-              <small
-                >{{ offer.sessionDurationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}</small
-              >
-              <div class="card-footer">
-                <span>{{ displayPrice(offer) }} {{ currency.currencyLabel() }}</span>
-                <button
-                  type="button"
-                  (click)="addOffer(offer)"
-                  [attr.aria-label]="'SALE_BUILDER.ADD_ITEM' | translate"
-                >
-                  <i class="pi pi-plus"></i>
-                </button>
-              </div>
-            </article>
-          }
+        @for (offer of filteredCatalog(); track offer.id) {
+          <article class="catalog-card">
+            <span class="item-type" [class.package]="offer.offerType === 'package'">
+              {{
+                (offer.offerType === 'package' ? 'SALE_BUILDER.PACKAGE' : 'SALE_BUILDER.SERVICE')
+                  | translate
+              }}
+            </span>
+            <strong class="catalog-card-title">{{ offer.name }}</strong>
+            <small class="catalog-card-duration"
+              >{{ offer.sessionDurationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}</small
+            >
+            <span class="offer-price">
+              @if (isRtl()) {
+                {{ currency.currencyLabel() }}
+                {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
+              } @else {
+                {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
+                {{ currency.currencyLabel() }}
+              }
+            </span>
+            <button
+              type="button"
+              class="add-offer-btn"
+              (click)="addOffer(offer)"
+              [attr.aria-label]="'SALE_BUILDER.ADD_ITEM' | translate"
+            >
+              <i class="pi pi-plus"></i>
+            </button>
+          </article>
         }
       </div>
-      @if (loading()) {
-        <p class="empty">{{ 'SALE_BUILDER.LOADING' | translate }}</p>
-      } @else if (filteredCatalog().length === 0) {
+      @if (filteredCatalog().length === 0) {
         <p class="empty">{{ 'SALE_BUILDER.NO_CATALOG' | translate }}</p>
       }
-    </section>
+    }
+    </div>
 
     <section class="customer-section">
-      <div
-        class="customer-choice"
-        role="group"
-        [attr.aria-label]="'SALE_BUILDER.CUSTOMER_MODE' | translate"
-      >
-        <button
-          type="button"
-          [class.active]="!directCustomer()"
-          [disabled]="saving()"
-          (click)="setDirectCustomer(false)"
-        >
-          {{ 'SALE_BUILDER.REGISTERED_CUSTOMER' | translate }}
-        </button>
-        <button
-          type="button"
-          [class.active]="directCustomer()"
-          [disabled]="saving()"
-          (click)="setDirectCustomer(true)"
-        >
-          {{ 'SALE_BUILDER.DIRECT_CUSTOMER' | translate }}
-        </button>
-      </div>
-      @if (directCustomer()) {
-        <p class="direct-hint">{{ 'SALE_BUILDER.DIRECT_HINT' | translate }}</p>
-      }
-
-      <form
-        class="customer-row"
-        [class.direct]="directCustomer()"
-        [formGroup]="customerForm"
-        (ngSubmit)="searchCustomer()"
-      >
-        @if (!directCustomer()) {
-          <div class="field mobile-field">
-            <label for="sale-mobile">{{ 'SALE_BUILDER.MOBILE' | translate }}</label>
-            <div class="mobile-search">
-              <input
-                pInputText
-                id="sale-mobile"
-                formControlName="mobile"
-                (input)="mobileChanged()"
-              />
-              <button type="submit" [disabled]="customerLoading()">
-                <i class="pi pi-search"></i> {{ 'SALE_BUILDER.SEARCH' | translate }}
-              </button>
-            </div>
-            @if (fieldError('mobile'); as error) {
-              <small class="field-error">{{ error }}</small>
-            }
-            @if (fieldError('customerId'); as error) {
-              <small class="field-error">{{ error }}</small>
-            }
-          </div>
-        }
-        @if (!directCustomer()) {
-          <div class="field">
-            <span class="field-label">{{ 'SALE_BUILDER.CUSTOMER' | translate }}</span>
-            <strong class="customer-name">{{
-              customer()?.fullName || ('SALE_BUILDER.CUSTOMER_EMPTY' | translate)
-            }}</strong>
-          </div>
-        }
+      <form class="customer-row" [formGroup]="customerForm" (ngSubmit)="searchCustomer()">
         <div class="field">
+          <label for="sale-client-name">{{ 'SALE_BUILDER.CLIENT_NAME' | translate }}</label>
+          <span class="icon-field">
+            <i class="pi pi-user" aria-hidden="true"></i>
+            <input
+              pInputText
+              id="sale-client-name"
+              [value]="directCustomer() ? '' : (customer()?.fullName ?? '')"
+              [placeholder]="'SALE_BUILDER.CUSTOMER_EMPTY' | translate"
+              readonly
+            />
+          </span>
+        </div>
+        <div class="field">
+          <label for="sale-mobile">
+            {{ 'SALE_BUILDER.MOBILE' | translate }}
+            @if (!directCustomer()) {
+              <em>*</em>
+            }
+          </label>
+          <span class="icon-field mobile-field">
+            <button
+              type="submit"
+              class="search-icon"
+              [disabled]="customerLoading() || directCustomer()"
+              [attr.aria-label]="'SALE_BUILDER.SEARCH' | translate"
+            >
+              <i
+                class="pi"
+                [class.pi-search]="!customerLoading()"
+                [class.pi-spin]="customerLoading()"
+                [class.pi-spinner]="customerLoading()"
+                aria-hidden="true"
+              ></i>
+            </button>
+            <input pInputText id="sale-mobile" formControlName="mobile" (input)="mobileChanged()" />
+            @if (customer() && !directCustomer()) {
+              <span class="registered-badge">
+                <i class="pi pi-check" aria-hidden="true"></i>
+                {{ 'SALE_BUILDER.REGISTERED_CUSTOMER' | translate }}
+              </span>
+            }
+          </span>
+          @if (customerLoading()) {
+            <small class="loading-hint" role="status">
+              <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+              {{ 'SALE_BUILDER.LOADING_CUSTOMER' | translate }}
+            </small>
+          }
+          @if (fieldError('mobile'); as error) {
+            <small class="field-error">{{ error }}</small>
+          }
+          @if (fieldError('customerId'); as error) {
+            <small class="field-error">{{ error }}</small>
+          }
+        </div>
+        <div class="field client-data">
+          <span class="field-label">{{ 'SALE_BUILDER.CLIENT_DATA' | translate }}</span>
+          <label class="walk-in" for="sale-direct">
+            <i class="pi pi-user" aria-hidden="true"></i>
+            <input
+              id="sale-direct"
+              type="checkbox"
+              [checked]="directCustomer()"
+              [disabled]="saving()"
+              (change)="onWalkInToggle($event)"
+            />
+            <span>{{ 'SALE_BUILDER.DIRECT_CUSTOMER' | translate }}</span>
+          </label>
           <label for="sale-branch">{{ 'SALE_BUILDER.BRANCH' | translate }}</label>
           <p-dropdown
             inputId="sale-branch"
@@ -319,6 +355,9 @@
           }
         </div>
       </form>
+      @if (directCustomer()) {
+        <p class="direct-hint">{{ 'SALE_BUILDER.DIRECT_HINT' | translate }}</p>
+      }
     </section>
 
     @if (!directCustomer() && customer()?.packages?.length) {
@@ -339,199 +378,256 @@
       </section>
     }
 
-    <div class="bottom-grid">
-      <section class="selected-panel">
+    <section class="selected-panel" [class.is-quoting]="quoteLoading()">
+      @if (quoteLoading()) {
+        <p class="quote-loading" role="status">
+          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+          {{ 'SALE_BUILDER.LOADING_QUOTE' | translate }}
+        </p>
+      }
+      <div class="selected-heading">
         <h3>
-          {{ 'SALE_BUILDER.SELECTED' | translate }} <span class="count">{{ rows().length }}</span>
+          {{ 'SALE_BUILDER.SELECTED_OFFERS' | translate }}
+          <span class="count">({{ rows().length }})</span>
         </h3>
-        @if (rows().length === 0) {
-          <p class="empty">{{ 'SALE_BUILDER.NO_ITEMS' | translate }}</p>
-        } @else {
-          <div class="table-wrap">
-            <table>
-              <thead>
+        <i class="pi pi-list" aria-hidden="true"></i>
+      </div>
+      @if (rows().length === 0) {
+        <p class="empty">{{ 'SALE_BUILDER.NO_ITEMS' | translate }}</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{{ 'SALE_BUILDER.SERVICE_OR_PACKAGE' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.DURATION' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.PRICE' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.PAYMENT_TYPE' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.ACTIONS' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.key; let index = $index) {
                 <tr>
-                  <th>{{ 'SALE_BUILDER.ITEM' | translate }}</th>
-                  <th>{{ 'SALE_BUILDER.DURATION' | translate }}</th>
-                  <th>{{ 'SALE_BUILDER.QUANTITY' | translate }}</th>
-                  <th>{{ 'SALE_BUILDER.PAYMENT' | translate }}</th>
-                  <th>{{ 'SALE_BUILDER.PRICE' | translate }}</th>
-                  <th>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of rows(); track row.key; let index = $index) {
-                  <tr>
-                    <td>
-                      <strong>{{ lineAt(index)?.name || rowName(row) }}</strong>
-                      @if (row.unlistedName) {
-                        <small class="row-type">{{
-                          'SALE_BUILDER.UNLISTED_TYPE' | translate
-                        }}</small>
-                      }
-                    </td>
-                    <td>
-                      @if (lineAt(index); as line) {
-                        @if (line.offerType === 'package' && line.sessionCount) {
-                          {{ line.sessionCount }} {{ 'SALE_BUILDER.SESSIONS' | translate }}
-                        } @else {
-                          {{ line.durationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}
+                  <td class="row-index">{{ index + 1 }}</td>
+                  <td>
+                    <div class="item-name">
+                      <i [class]="rowIcon(row)" aria-hidden="true"></i>
+                      <div>
+                        <strong>{{ lineAt(index)?.name || rowName(row) }}</strong>
+                        @if (row.unlistedName) {
+                          <small class="row-type">{{
+                            'SALE_BUILDER.UNLISTED_TYPE' | translate
+                          }}</small>
                         }
+                        @if (row.paymentOption !== 'owned' && !row.unlistedName) {
+                          <span class="qty">
+                            <button
+                              type="button"
+                              class="qty-button"
+                              (click)="setQuantity(row.key, row.quantity - 1)"
+                              [attr.aria-label]="'SALE_BUILDER.QUANTITY' | translate"
+                            >
+                              −
+                            </button>
+                            <span>{{ row.quantity }}</span>
+                            <button
+                              type="button"
+                              class="qty-button"
+                              (click)="setQuantity(row.key, row.quantity + 1)"
+                              [attr.aria-label]="'SALE_BUILDER.QUANTITY' | translate"
+                            >
+                              +
+                            </button>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    @if (lineAt(index); as line) {
+                      @if (line.offerType === 'package' && line.sessionCount) {
+                        {{ line.sessionCount }} {{ 'SALE_BUILDER.SESSIONS' | translate }}
                       } @else {
-                        —
+                        {{ line.durationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}
                       }
-                    </td>
-                    <td>
-                      @if (row.paymentOption === 'owned' || row.unlistedName) {
-                        {{ row.quantity }}
-                      } @else {
-                        <button
-                          type="button"
-                          class="qty-button"
-                          (click)="setQuantity(row.key, row.quantity - 1)"
-                        >
-                          −
-                        </button>
-                        {{ row.quantity }}
-                        <button
-                          type="button"
-                          class="qty-button"
-                          (click)="setQuantity(row.key, row.quantity + 1)"
-                        >
-                          +
-                        </button>
-                      }
-                    </td>
-                    <td>
-                      @if (row.paymentOption === 'owned') {
-                        {{ 'SALE_BUILDER.COVERED' | translate }}
-                      } @else if (canInstallment(row)) {
-                        <select
-                          [value]="row.paymentOption"
-                          (change)="setOption(row.key, $any($event.target).value)"
-                        >
-                          @if (canCash(row)) {
-                            <option value="cash">{{ 'SALE_BUILDER.CASH' | translate }}</option>
-                          }
-                          <option value="installment">
-                            {{ 'SALE_BUILDER.INSTALLMENT' | translate }}
-                          </option>
-                        </select>
-                      } @else {
-                        {{ 'SALE_BUILDER.CASH' | translate }}
-                      }
-                    </td>
-                    <td>{{ lineAt(index)?.finalAmount ?? '—' }}</td>
-                    <td>{{ lineAt(index)?.dueNow ?? '—' }}</td>
-                    <td>
-                      @if (row.unlistedName) {
-                        <button
-                          type="button"
-                          class="icon-button edit"
-                          (click)="openUnlisted(row)"
-                          [attr.aria-label]="'SALE_BUILDER.EDIT_UNLISTED' | translate"
-                        >
-                          <i class="pi pi-pencil"></i>
-                        </button>
-                      }
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="money">
+                    @if (lineAt(index); as line) {
+                      {{ line.finalAmount | number: '1.0-2' : 'en' }}
+                      {{ currency.currencyLabel() }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td>
+                    @if (row.paymentOption === 'owned') {
+                      {{ 'SALE_BUILDER.COVERED' | translate }}
+                    } @else {
+                      <label class="pay-option">
+                        <input
+                          type="checkbox"
+                          [checked]="row.paymentOption === 'installment'"
+                          [disabled]="!canInstallment(row) || saving()"
+                          (change)="chooseOption(row.key, 'installment', $event)"
+                        />
+                        {{ 'SALE_BUILDER.INSTALLMENT' | translate }}
+                      </label>
+                      <label class="pay-option">
+                        <input
+                          type="checkbox"
+                          [checked]="row.paymentOption === 'cash'"
+                          [disabled]="!canCash(row) || saving()"
+                          (change)="chooseOption(row.key, 'cash', $event)"
+                        />
+                        {{ 'SALE_BUILDER.CASH_OPTION' | translate }}
+                      </label>
+                    }
+                  </td>
+                  <td class="money due-now">
+                    @if (lineAt(index); as line) {
+                      {{ line.dueNow | number: '1.0-2' : 'en' }}
+                      {{ currency.currencyLabel() }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="row-actions">
+                    @if (row.unlistedName) {
                       <button
                         type="button"
-                        class="icon-button danger"
-                        (click)="removeRow(row.key)"
-                        [attr.aria-label]="'SALE_BUILDER.REMOVE' | translate"
+                        class="icon-button edit"
+                        (click)="openUnlisted(row)"
+                        [attr.aria-label]="'SALE_BUILDER.EDIT_UNLISTED' | translate"
                       >
-                        <i class="pi pi-trash"></i>
+                        <i class="pi pi-pencil"></i>
                       </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-        @if (itemError(); as error) {
-          <small class="field-error">{{ error }}</small>
-        }
-      </section>
+                    }
+                    <button
+                      type="button"
+                      class="icon-button danger"
+                      (click)="removeRow(row.key)"
+                      [attr.aria-label]="'SALE_BUILDER.REMOVE' | translate"
+                    >
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      @if (itemError(); as error) {
+        <small class="field-error">{{ error }}</small>
+      }
 
-      <section class="summary-panel">
-        <h3>{{ 'SALE_BUILDER.SUMMARY' | translate }}</h3>
-        <div class="summary-row">
-          <span>{{ 'SALE_BUILDER.SUBTOTAL' | translate }}</span
-          ><strong>{{ quote()?.subtotal ?? '—' }}</strong>
-        </div>
-        <div class="summary-row">
-          <span>{{ 'SALE_BUILDER.DISCOUNT' | translate }}</span
-          ><strong>{{ quote()?.discount ?? '—' }}</strong>
-        </div>
-        @for (line of quote()?.items ?? []; track $index) {
-          @if (line.appliedDiscountCode) {
-            <div class="summary-row">
-              <span>{{ 'SALE_BUILDER.APPLIED_DISCOUNT_CODE' | translate }} · {{ line.name }}</span>
-              <strong>{{ line.appliedDiscountCode }}</strong>
+      <div class="checkout-bar">
+        <div class="pay-methods">
+          <span class="pay-label">
+            {{ 'SALE_BUILDER.METHOD_FOR_DUE' | translate }}
+            <i class="pi pi-info-circle" aria-hidden="true"></i>
+          </span>
+          @if (quote() && quote()!.dueNow > 0) {
+            <div class="method-options">
+              @for (method of paymentMethods(); track method) {
+                <button
+                  type="button"
+                  [class.active]="selectedMethod() === method"
+                  (click)="selectedMethod.set(method)"
+                >
+                  <span class="method-radio" aria-hidden="true"></span>
+                  <span class="method-icon"><i [class]="paymentMethodIcon(method)"></i></span>
+                  <span>{{ 'SALE_BUILDER.METHODS.' + method | translate }}</span>
+                </button>
+              }
             </div>
           }
-        }
-        <div class="summary-row">
-          <span>{{ 'SALE_BUILDER.GRAND_TOTAL' | translate }}</span
-          ><strong>{{ quote()?.grandTotal ?? '—' }}</strong>
         </div>
-        <div class="summary-row due">
-          <span>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</span
-          ><strong>{{ quote()?.dueNow ?? '—' }} {{ currency.currencyLabel() }}</strong>
-        </div>
-        @if (quote() && quote()!.dueNow > 0) {
-          <h4>{{ 'SALE_BUILDER.METHOD' | translate }}</h4>
-          <div class="method-options">
-            @for (method of paymentMethods(); track method) {
-              <button
-                type="button"
-                [class.active]="selectedMethod() === method"
-                (click)="selectedMethod.set(method)"
-              >
-                {{ 'SALE_BUILDER.METHODS.' + method | translate }}
-              </button>
+        <div class="grand-total">
+          <span class="wallet" aria-hidden="true"><i class="pi pi-wallet"></i></span>
+          <span>{{ 'SALE_BUILDER.TOTAL_DUE' | translate }}</span>
+          <strong>
+            @if (quote(); as quoted) {
+              {{ quoted.grandTotal | number: '1.0-2' : 'en' }}
+              {{ currency.currencyLabel() }}
+            } @else {
+              —
             }
-          </div>
+          </strong>
+        </div>
+      </div>
+      @if ((quote()?.discount ?? 0) > 0) {
+        <p class="note">
+          {{ 'SALE_BUILDER.DISCOUNT' | translate }}:
+          {{ quote()?.discount | number: '1.0-2' : 'en' }}
+          {{ currency.currencyLabel() }}
+        </p>
+      }
+      @for (line of quote()?.items ?? []; track $index) {
+        @if (line.appliedDiscountCode) {
+          <p class="note">
+            {{ 'SALE_BUILDER.APPLIED_DISCOUNT_CODE' | translate }} · {{ line.name }}:
+            {{ line.appliedDiscountCode }}
+          </p>
         }
-        <p class="note">{{ 'SALE_BUILDER.RECEIPT_NOTE' | translate }}</p>
-      </section>
-    </div>
+      }
+      @if (installmentDueNow(); as due) {
+        <p class="checkout-note">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          {{
+            'SALE_BUILDER.INSTALLMENT_NOTE'
+              | translate: { due: formatMoney(due), currency: currency.currencyLabel() }
+          }}
+        </p>
+      } @else if (quote()) {
+        <p class="checkout-note">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          {{ 'SALE_BUILDER.RECEIPT_NOTE' | translate }}
+        </p>
+      }
+      @if (hasDirectPackage()) {
+        <p class="note">{{ 'SALE_BUILDER.DIRECT_PACKAGE_INCOME_ONLY' | translate }}</p>
+      }
+    </section>
 
-    @if (hasDirectPackage()) {
-      <p class="note">{{ 'SALE_BUILDER.DIRECT_PACKAGE_INCOME_ONLY' | translate }}</p>
-    }
     <div class="actions draft-actions">
-      <button type="button" class="outline-button" (click)="closed.emit()">
-        {{ 'COMMON.CANCEL' | translate }}
-      </button>
       <button
         type="button"
-        class="outline-button"
+        class="action-btn primary"
         [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Close')"
         (click)="confirm('Close')"
       >
-        {{ 'SALE_BUILDER.CLOSE_SALE' | translate }}
+        <span>
+          <strong>{{ 'SALE_BUILDER.CLOSE_SALE' | translate }}</strong>
+          <small>{{ 'SALE_BUILDER.CLOSE_HINT' | translate }}</small>
+        </span>
+        <i class="pi pi-check" aria-hidden="true"></i>
       </button>
-      @if (!hasDirectPackage()) {
-        <button
-          type="button"
-          class="primary-button"
-          [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Later')"
-          (click)="confirm('Later')"
-        >
-          <i class="pi pi-calendar-plus"></i> {{ 'SALE_BUILDER.CONFIRM_LATER' | translate }}
-        </button>
-      }
       @if (canBookNow() && !hasDirectPackage()) {
         <button
           type="button"
-          class="primary-button"
+          class="action-btn"
           [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('BookNow')"
           (click)="confirm('BookNow')"
         >
           {{ 'SALE_BUILDER.BOOK_NOW' | translate }}
+        </button>
+      }
+      @if (!hasDirectPackage()) {
+        <button
+          type="button"
+          class="action-btn"
+          [disabled]="saving() || quoteLoading() || !quote() || confirmationLockedTo('Later')"
+          (click)="confirm('Later')"
+        >
+          <i class="pi pi-calendar" aria-hidden="true"></i>
+          {{ 'SALE_BUILDER.CONFIRM_LATER' | translate }}
         </button>
       }
     </div>

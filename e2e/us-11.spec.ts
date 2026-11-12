@@ -24,7 +24,7 @@ async function openInquiryPurchase(page: Page, purchaseName: string) {
   await page.locator('.quick-actions .secondary-action').click();
   const dialog = page.locator('.customer-inquiry-dialog');
   await expect(dialog).toBeVisible();
-  await dialog.locator('input[formcontrolname="mobile"]').fill(e2eAccount.customerMobile);
+  await dialog.locator('#inquiry-mobile').fill(e2eAccount.customerMobile);
   await dialog.locator('.search-btn').click();
   await expect(dialog.getByText(e2eAccount.customerMobile)).toBeVisible();
 

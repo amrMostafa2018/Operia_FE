@@ -1,26 +1,47 @@
 <section class="customer-operations">
-  <header class="page-header">
-    <div>
+  <div class="page-header">
+    <div class="page-title">
+      <i class="pi pi-users" aria-hidden="true"></i>
       <h1>{{ 'CUSTOMER_OPERATIONS.TITLE' | translate }}</h1>
-      <p>{{ 'CUSTOMER_OPERATIONS.SUBTITLE' | translate }}</p>
     </div>
-  </header>
+    <nav class="breadcrumb" [attr.aria-label]="'COMMON.ARIA.BREADCRUMB' | translate">
+      <span>{{ 'NAV.SECTION.MAIN' | translate }}</span>
+      <i class="pi pi-angle-left" aria-hidden="true"></i>
+      <span class="breadcrumb-current">{{ 'NAV.CUSTOMERS' | translate }}</span>
+    </nav>
+  </div>
 
   <section class="filters" [attr.aria-label]="'CUSTOMER_OPERATIONS.FILTERS' | translate">
     <div class="date-row">
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.FROM_DATE' | translate }}</span>
-        <input type="date" [(ngModel)]="draft.fromDate" (ngModelChange)="rangeError.set(false)" />
-      </label>
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.TO_DATE' | translate }}</span>
-        <input type="date" [(ngModel)]="draft.toDate" (ngModelChange)="rangeError.set(false)" />
+      <div class="date-field">
+        <span class="date-label">{{ 'CUSTOMER_OPERATIONS.FROM_DATE' | translate }}</span>
+        <p-calendar
+          [ngModel]="draftFromDate()"
+          (ngModelChange)="onDateFromChange($event)"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'CUSTOMER_OPERATIONS.FROM_DATE' | translate"
+          styleClass="date-picker"
+        />
+      </div>
+      <div class="date-field">
+        <span class="date-label">{{ 'CUSTOMER_OPERATIONS.TO_DATE' | translate }}</span>
+        <p-calendar
+          [ngModel]="draftToDate()"
+          (ngModelChange)="onDateToChange($event)"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [placeholder]="'CUSTOMER_OPERATIONS.TO_DATE' | translate"
+          styleClass="date-picker"
+        />
         @if (rangeError()) {
           <small class="field-error">{{
             'CUSTOMER_OPERATIONS.DATE_RANGE_ERROR' | translate
           }}</small>
         }
-      </label>
+      </div>
     </div>
     <div class="filter-grid">
       <label>
@@ -57,7 +78,7 @@
         </select>
       </label>
       <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.STATUS' | translate }}</span>
+        <span>{{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUS' | translate }}</span>
         <select [(ngModel)]="draft.status">
           <option value="">{{ 'CUSTOMER_OPERATIONS.ALL' | translate }}</option>
           <option value="active">
@@ -140,137 +161,150 @@
     </article>
   </div>
 
-  <section class="grid-card">
-    <h2>{{ 'CUSTOMER_OPERATIONS.GRID_TITLE' | translate }} ({{ result()?.totalCount ?? 0 }})</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.CUSTOMER' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.MOBILE' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.BRANCH' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.SERVICE' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.SERVICE_TYPE' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.TOTAL' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.COLLECTED' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.REFUNDED' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.NET' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.REMAINING' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.UNITS' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.CUSTOMER_RESTRICTION' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUS' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_STATUS' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.REFUND_STATUS' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUS' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.DATE' | translate }}</th>
-            <th>{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of result()?.rows ?? []; track row.id; let index = $index) {
-            <tr>
-              <td>{{ (page() - 1) * pageSize() + index + 1 }}</td>
-              <td class="name">{{ row.customerName }}</td>
-              <td class="mobile">{{ row.mobile || '—' }}</td>
-              <td>{{ row.branchName }}</td>
-              <td>{{ row.service || '—' }}</td>
-              <td>{{ 'CUSTOMER_OPERATIONS.TYPES.' + row.serviceType | translate }}</td>
-              <td>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.' + row.paymentType | translate }}</td>
-              <td>{{ (row.total | number: '1.2-2') || '—' }}</td>
-              <td class="money-collected">{{ (row.collected | number: '1.2-2') || '—' }}</td>
-              <td>{{ row.refunded | number: '1.2-2' }}</td>
-              <td class="money-collected">{{ (row.netCollected | number: '1.2-2') || '—' }}</td>
-              <td class="money-remaining">{{ (row.remaining | number: '1.2-2') || '—' }}</td>
-              <td>
-                {{
-                  row.unitsRemaining === null ? '—' : row.unitsRemaining + ' / ' + row.unitsTotal
-                }}
-              </td>
-              <td>
-                <span class="status" [class.danger]="row.customerRestriction === 'blocked'">{{
-                  'CUSTOMER_OPERATIONS.RESTRICTIONS.' + row.customerRestriction | translate
-                }}</span>
-              </td>
-              <td>
-                <span class="status" [class.danger]="row.purchaseStatus === 'cancelled'">{{
-                  'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.' + row.purchaseStatus | translate
-                }}</span>
-              </td>
-              <td>{{ 'CUSTOMER_OPERATIONS.PAYMENT_STATUSES.' + row.paymentStatus | translate }}</td>
-              <td>{{ 'CUSTOMER_OPERATIONS.REFUND_STATUSES.' + row.refundStatus | translate }}</td>
-              <td>
-                {{
-                  'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.' + row.installmentDueStatus | translate
-                }}
-              </td>
-              <td>{{ formatOperationDate(row.operationDate) }}</td>
-              <td class="actions-cell">
-                <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
-                <button
-                  type="button"
-                  class="menu-toggle"
-                  (click)="rowMenu.toggle($event)"
-                  [attr.aria-label]="'CUSTOMER_OPERATIONS.ACTIONS' | translate"
-                >
-                  <i class="pi pi-ellipsis-v"></i>
-                </button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="20" class="empty">
-                {{
-                  (loading() ? 'CUSTOMER_OPERATIONS.LOADING' : 'CUSTOMER_OPERATIONS.EMPTY')
-                    | translate
-                }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <footer>
-      <div class="page-controls">
-        <button
-          type="button"
-          (click)="changePage(page() - 1)"
-          [disabled]="loading() || page() <= 1"
-        >
-          {{ 'CUSTOMER_OPERATIONS.PREVIOUS' | translate }}
-        </button>
-        <span>{{ page() }}</span>
-        <button
-          type="button"
-          (click)="changePage(page() + 1)"
-          [disabled]="loading() || page() * pageSize() >= (result()?.totalCount ?? 0)"
-        >
-          {{ 'CUSTOMER_OPERATIONS.NEXT' | translate }}
-        </button>
-        <select
-          [ngModel]="pageSize()"
-          (ngModelChange)="changePageSize($event)"
-          [attr.aria-label]="'CUSTOMER_OPERATIONS.PAGE_SIZE' | translate"
-        >
-          <option [ngValue]="10">10</option>
-          <option [ngValue]="25">25</option>
-          <option [ngValue]="50">50</option>
-          <option [ngValue]="100">100</option>
-        </select>
-      </div>
-      @if (canExport()) {
-        <button
-          type="button"
-          class="export"
-          (click)="export()"
-          [disabled]="exporting() || !result()"
-        >
-          <i class="pi pi-file-excel"></i> {{ 'CUSTOMER_OPERATIONS.EXPORT' | translate }}
-        </button>
-      }
-    </footer>
-  </section>
+  <div class="table-section">
+    <p-table
+      [value]="result()?.rows ?? []"
+      [rows]="rows()"
+      [first]="first()"
+      [totalRecords]="result()?.totalCount ?? 0"
+      [paginator]="true"
+      [lazy]="true"
+      [loading]="loading()"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="customer-ops-paginator"
+      styleClass="customer-ops-table"
+      (onLazyLoad)="onLazyLoad($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="col-num">#</th>
+          <th class="col-customer">{{ 'CUSTOMER_OPERATIONS.CUSTOMER' | translate }}</th>
+          <th class="col-mobile sortable-head">
+            <span>{{ 'CUSTOMER_OPERATIONS.MOBILE' | translate }}</span>
+            <i class="pi pi-sort-alt sort-icon" aria-hidden="true"></i>
+          </th>
+          <th class="col-service">{{ 'CUSTOMER_OPERATIONS.COL_SERVICE_PACKAGE' | translate }}</th>
+          <th>{{ 'CUSTOMER_OPERATIONS.SERVICE_TYPE' | translate }}</th>
+          <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</th>
+          <th class="col-money">{{ 'CUSTOMER_OPERATIONS.TOTAL' | translate }}</th>
+          <th class="col-money">{{ 'CUSTOMER_OPERATIONS.COLLECTED' | translate }}</th>
+          <th class="col-money">{{ 'CUSTOMER_OPERATIONS.REMAINING' | translate }}</th>
+          <th>{{ 'CUSTOMER_OPERATIONS.COL_SESSIONS' | translate }}</th>
+          <th>{{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUS' | translate }}</th>
+          <th>{{ 'CUSTOMER_OPERATIONS.STATUS' | translate }}</th>
+          <th>{{ 'CUSTOMER_OPERATIONS.DATE' | translate }}</th>
+          <th class="col-actions">{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+        <tr [class.row-blocked]="isRowBlocked(row)">
+          <td class="col-num">{{ rowNumber(rowIndex) }}</td>
+          <td class="col-customer customer-name">{{ row.customerName }}</td>
+          <td class="col-mobile mobile" dir="ltr">{{ row.mobile || '—' }}</td>
+          <td class="col-service">
+            <span class="service-cell">
+              <i [class]="serviceIcon(row.serviceType)" aria-hidden="true"></i>
+              <span class="service-name">{{ row.service || '—' }}</span>
+            </span>
+          </td>
+          <td>
+            <span class="type-pill" [ngClass]="serviceTypePillClass(row.serviceType)">
+              {{ 'CUSTOMER_OPERATIONS.TYPES.' + row.serviceType | translate }}
+            </span>
+          </td>
+          <td>
+            <span class="type-pill" [ngClass]="paymentTypePillClass(row.paymentType)">
+              {{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.' + row.paymentType | translate }}
+            </span>
+          </td>
+          <td class="col-money total-price">{{ (row.total | number: '1.2-2') || '—' }}</td>
+          <td class="col-money">
+            @if (row.collected != null) {
+              <span class="amount-pill amount-pill--paid">{{ row.collected | number: '1.2-2' }}</span>
+            } @else {
+              —
+            }
+          </td>
+          <td class="col-money">
+            @if (row.remaining != null) {
+              <span
+                class="amount-pill"
+                [class.amount-pill--zero]="row.remaining <= 0"
+                [class.amount-pill--due]="row.remaining > 0"
+                >{{ row.remaining | number: '1.2-2' }}</span
+              >
+            } @else {
+              —
+            }
+          </td>
+          <td class="sessions-cell">{{ sessionsLabel(row) }}</td>
+          <td class="col-installment">
+            @if (row.installmentDueStatus === 'due') {
+              <span class="installment-urgent">{{
+                'CUSTOMER_OPERATIONS.INSTALLMENT_DUE_NOW' | translate
+              }}</span>
+            } @else if (row.installmentDueStatus === 'scheduled') {
+              <span class="installment-note">
+                <i class="pi pi-info-circle" aria-hidden="true"></i>
+                {{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.scheduled' | translate }}
+              </span>
+            } @else if (row.installmentDueStatus && row.installmentDueStatus !== 'none') {
+              {{
+                'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.' + row.installmentDueStatus | translate
+              }}
+            } @else {
+              —
+            }
+          </td>
+          <td>
+            <span class="status-pill" [ngClass]="statusPillClass(row)">
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ rowStatusKey(row) | translate }}
+            </span>
+          </td>
+          <td>{{ formatOperationDate(row.operationDate) }}</td>
+          <td class="col-actions actions-cell">
+            <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
+            <button
+              type="button"
+              class="row-menu-btn"
+              (click)="rowMenu.toggle($event)"
+              [attr.aria-label]="'CUSTOMER_OPERATIONS.ACTIONS' | translate"
+            >
+              <i class="pi pi-ellipsis-v"></i>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="14" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            {{ 'CUSTOMER_OPERATIONS.EMPTY' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="paginatorleft">
+        @if (canExport()) {
+          <div class="export-action">
+            <p-button
+              [label]="'CUSTOMER_OPERATIONS.EXPORT' | translate"
+              icon="pi pi-file-excel"
+              [iconPos]="leadingIconPos()"
+              styleClass="export export-excel-btn"
+              [outlined]="true"
+              [loading]="exporting()"
+              [disabled]="exporting() || !result()"
+              (onClick)="export()"
+            />
+          </div>
+        }
+      </ng-template>
+    </p-table>
+  </div>
 
   <section class="import-panel">
     <div>

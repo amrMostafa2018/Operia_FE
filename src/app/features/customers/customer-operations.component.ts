@@ -6,16 +6,21 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MenuItem, MessageService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { MenuModule } from 'primeng/menu';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CurrencyService } from '@core/services/currency.service';
+import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
+import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import { extractApiFieldErrors } from '@core/utils/api-error.util';
 import {
   CustomerOperationsFilters,
@@ -26,6 +31,7 @@ import {
 import { CustomerStatementDialogComponent } from './customer-statement-dialog.component';
 import { CustomerActionDialogComponent } from './customer-action-dialog.component';
 import { CustomerActionHistoryDialogComponent } from './customer-action-history-dialog.component';
+import { toDateKey } from '../bookings/models/booking.model';
 
 const emptyFilters = (): CustomerOperationsFilters => ({
   fromDate: '',
@@ -43,8 +49,12 @@ const emptyFilters = (): CustomerOperationsFilters => ({
   standalone: true,
   imports: [
     DecimalPipe,
+    NgClass,
     FormsModule,
+    ButtonModule,
+    CalendarModule,
     MenuModule,
+    TableModule,
     TranslatePipe,
     CustomerStatementDialogComponent,
     CustomerActionDialogComponent,
@@ -60,6 +70,7 @@ export class CustomerOperationsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(MessageService);
   private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
   readonly currency = inject(CurrencyService);
 
   readonly canExport = computed(() => this.permissions.hasPermission(Policies.CustomersExport));
@@ -67,41 +78,142 @@ export class CustomerOperationsComponent {
   readonly canBlock = computed(() => this.permissions.hasPermission(Policies.CustomersBlock));
   readonly canHistory = computed(() => this.permissions.hasPermission(Policies.CustomersHistory));
   readonly result = signal<CustomerOperationsPage | null>(null);
-  readonly page = signal(1);
-  readonly pageSize = signal(10);
+  readonly rowsPerPageOptions = [10, 25, 50, 100];
+  readonly rows = signal(10);
+  readonly first = signal(0);
+  readonly pageReportTemplate = signal(
+    this.translate.instant('CUSTOMER_OPERATIONS.PAGE_REPORT')
+  );
+  readonly leadingIconPos = computed(() =>
+    getLeadingIconPos(this.languageService.currentLang())
+  );
   readonly loading = signal(false);
   readonly exporting = signal(false);
   readonly rangeError = signal(false);
   readonly selectedStatement = signal<CustomerOperation | null>(null);
   readonly selectedAction = signal<CustomerOperation | null>(null);
   readonly selectedHistory = signal<CustomerOperation | null>(null);
+  readonly draftFromDate = signal<Date | null>(null);
+  readonly draftToDate = signal<Date | null>(null);
   draft = emptyFilters();
   private applied = emptyFilters();
   private requestId = 0;
 
   constructor() {
-    this.load();
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pageReportTemplate.set(this.translate.instant('CUSTOMER_OPERATIONS.PAGE_REPORT'));
+    });
+  }
+
+  onDateFromChange(value: Date | null): void {
+    const to = this.draftToDate();
+    if (value && to && value > to) {
+      this.draftToDate.set(value);
+    }
+    this.draftFromDate.set(value);
+    this.rangeError.set(false);
+  }
+
+  onDateToChange(value: Date | null): void {
+    const from = this.draftFromDate();
+    if (value && from && value < from) {
+      this.draftFromDate.set(value);
+    }
+    this.draftToDate.set(value);
+    this.rangeError.set(false);
   }
 
   search(): void {
-    const invalid =
-      !!this.draft.fromDate && !!this.draft.toDate && this.draft.toDate < this.draft.fromDate;
+    this.syncDraftDates();
+    const invalid = this.isDateRangeInvalid();
     this.rangeError.set(invalid);
     if (invalid) return;
     this.applied = { ...this.draft };
-    this.page.set(1);
+    this.first.set(0);
     this.load();
   }
 
   clear(): void {
     this.draft = emptyFilters();
+    this.draftFromDate.set(null);
+    this.draftToDate.set(null);
     this.rangeError.set(false);
     this.search();
   }
 
-  changePage(page: number): void {
-    this.page.set(page);
+  onLazyLoad(event: TableLazyLoadEvent): void {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? this.rows();
+    this.first.set(first);
+    this.rows.set(rows);
     this.load();
+  }
+
+  rowNumber(index: number): number {
+    return this.first() + index + 1;
+  }
+
+  isRowBlocked(row: CustomerOperation): boolean {
+    return row.customerRestriction === 'blocked';
+  }
+
+  serviceIcon(serviceType: string): string {
+    return serviceType === 'package' ? 'pi pi-box' : 'pi pi-stopwatch';
+  }
+
+  serviceTypePillClass(serviceType: string): string {
+    return serviceType === 'package' ? 'type-pill--package' : 'type-pill--session';
+  }
+
+  paymentTypePillClass(paymentType: string): string {
+    switch (paymentType) {
+      case 'cash':
+        return 'type-pill--cash';
+      case 'installment':
+        return 'type-pill--installment';
+      case 'owned':
+        return 'type-pill--owned';
+      default:
+        return 'type-pill--neutral';
+    }
+  }
+
+  sessionsLabel(row: CustomerOperation): string {
+    if (row.unitsTotal == null) return '—';
+    if (row.unitsRemaining == null) return String(row.unitsTotal);
+    const used = Math.max(0, row.unitsTotal - row.unitsRemaining);
+    return `${used}/${row.unitsTotal}`;
+  }
+
+  rowStatusKey(row: CustomerOperation): string {
+    if (row.customerRestriction === 'blocked') {
+      return 'CUSTOMER_OPERATIONS.RESTRICTIONS.blocked';
+    }
+    if (row.paymentStatus === 'unpaid' || row.paymentStatus === 'partial') {
+      return `CUSTOMER_OPERATIONS.PAYMENT_STATUSES.${row.paymentStatus}`;
+    }
+    return `CUSTOMER_OPERATIONS.PURCHASE_STATUSES.${row.purchaseStatus}`;
+  }
+
+  statusPillClass(row: CustomerOperation): string {
+    if (row.customerRestriction === 'blocked') {
+      return 'status-pill--danger';
+    }
+    if (row.paymentStatus === 'unpaid' || row.paymentStatus === 'partial') {
+      return 'status-pill--warning';
+    }
+    switch (row.purchaseStatus) {
+      case 'active':
+      case 'completed':
+        return 'status-pill--success';
+      case 'cancelled':
+      case 'expired':
+        return 'status-pill--danger';
+      case 'pending':
+        return 'status-pill--warning';
+      default:
+        return 'status-pill--neutral';
+    }
   }
 
   openStatement(row: CustomerOperation): void {
@@ -132,17 +244,12 @@ export class CustomerOperationsComponent {
     ];
   }
 
-  changePageSize(value: string): void {
-    this.pageSize.set(Number(value));
-    this.changePage(1);
-  }
-
   load(): void {
     const id = ++this.requestId;
+    const pageSize = this.rows();
     this.loading.set(true);
-    this.result.set(null);
     this.service
-      .list(this.applied, this.page(), this.pageSize())
+      .list(this.applied, Math.floor(this.first() / pageSize) + 1, pageSize)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
@@ -195,6 +302,19 @@ export class CustomerOperationsComponent {
       dateStyle: 'short',
       timeZone: timezone,
     }).format(new Date(value));
+  }
+
+  private syncDraftDates(): void {
+    const from = this.draftFromDate();
+    const to = this.draftToDate();
+    this.draft.fromDate = from ? toDateKey(from) : '';
+    this.draft.toDate = to ? toDateKey(to) : '';
+  }
+
+  private isDateRangeInvalid(): boolean {
+    const from = this.draftFromDate();
+    const to = this.draftToDate();
+    return !!from && !!to && to < from;
   }
 
   private error(key: string, apiCode = false): void {

@@ -16,7 +16,8 @@
 .bookings-package-usage-dialog,
 .bookings-mismatch-dialog,
 .bookings-confirm-dialog,
-.sell-service-dialog {
+.sell-service-dialog,
+.sale-builder-dialog {
   &.p-dialog {
     display: flex !important;
     flex-direction: column !important;

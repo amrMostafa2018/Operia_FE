@@ -58,9 +58,31 @@ describe('CustomerInquiryDialogComponent', () => {
     expect(component.searched()).toBeFalse();
 
     component.search();
-    expect(inquiryService.findByMobile).toHaveBeenCalledWith('01098765432');
+    expect(inquiryService.findByMobile).toHaveBeenCalledWith('201098765432');
     secondRequest.next(null);
     expect(component.searched()).toBeTrue();
+  });
+
+  it('does not show a mobile error until a number is typed or search is attempted', () => {
+    const component = TestBed.createComponent(CustomerInquiryDialogComponent).componentInstance;
+    expect(component.mobileError()).toBeNull();
+
+    component.searchForm.controls.mobile.markAsTouched();
+    component.searchForm.controls.mobile.markAsDirty();
+    expect(component.mobileError()).toBeNull();
+
+    component.searchForm.controls.mobile.setValue('01012');
+    expect(component.mobileError()).toBeNull();
+
+    component.searchForm.controls.mobile.setValue('01312345678');
+    expect(component.mobileError()).toBe('CUSTOMER_INQUIRY.ERRORS.MOBILE_INVALID');
+
+    component.searchForm.controls.mobile.setValue('01012345678');
+    expect(component.mobileError()).toBeNull();
+
+    component.searchForm.controls.mobile.setValue(null);
+    component.search();
+    expect(component.mobileError()).toBe('CUSTOMER_INQUIRY.ERRORS.MOBILE_REQUIRED');
   });
 
   it('formats money using the tenant currency label', () => {

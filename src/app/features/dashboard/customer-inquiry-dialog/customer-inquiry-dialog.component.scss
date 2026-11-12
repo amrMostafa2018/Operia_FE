@@ -1,4 +1,5 @@
 @use '../../../../styles/variables' as *;
+@use '../../../shared/styles/phone-intl-input';
 @use '../../bookings/_bookings-dialog' as dialog;
 
 @include dialog.bookings-dialog-header;
@@ -17,6 +18,14 @@
     padding: 0.65rem 1rem 0.8rem;
     overflow-y: auto;
   }
+
+  &:has(.dropdown-menu.show) {
+    overflow: visible;
+
+    .p-dialog-content {
+      overflow: visible;
+    }
+  }
 }
 
 .dialog-header h3 {
@@ -27,25 +36,32 @@
 }
 
 .search-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
   margin-bottom: 0.65rem;
+
+  &:has(.dropdown-menu.show) {
+    position: relative;
+    z-index: 30;
+  }
 }
 
 .search-row {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
 }
 
 .search-wrap {
-  width: min(380px, 100%);
+  --phone-flag-width: 92px;
+  --auth-field-padding-block: 0.52rem;
+  width: min(420px, 100%);
+  min-height: 42px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   border: 1px solid #dde1ea;
-  border-radius: 7px;
+  border-radius: 8px;
   background: #fff;
-  overflow: hidden;
+  overflow: visible;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -55,27 +71,46 @@
     box-shadow: 0 0 0 2px rgb(112 80 255 / 10%);
   }
 
-  input {
+  &.is-invalid {
+    border-color: var(--color-danger);
+  }
+
+  .phone-row--filter {
+    flex: 1 1 auto;
     min-width: 0;
-    width: 100%;
-    padding: 0.58rem 0.75rem;
+    height: auto;
     border: 0;
     border-radius: 0;
-    outline: 0;
-    box-shadow: none;
     background: transparent;
-    font-size: 0.82rem;
+    box-shadow: none;
+
+    &:focus-within {
+      border-color: transparent;
+      box-shadow: none;
+    }
   }
 }
 
+.search-wrap.field--phone:has(.dropdown-menu.show) {
+  position: relative;
+  z-index: 20;
+}
+
 .search-btn {
-  width: 40px;
-  align-self: stretch;
+  width: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
-  border-inline-start: 1px solid #eef0f5;
+  border-left: 1px solid #eef0f5;
   background: #fff;
   color: #2314bb;
   cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #f7f6ff;
+  }
 
   &:disabled {
     opacity: 0.55;
@@ -83,7 +118,52 @@
   }
 }
 
+.search-wrap ::ng-deep .phone-row--filter {
+  .iti__flag-container {
+    min-width: var(--phone-flag-width);
+    border-right-color: #eef0f5;
+  }
+
+  .iti__flag-container,
+  .iti__selected-flag {
+    z-index: 5;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .iti__selected-flag,
+  .iti.separate-dial-code .iti__selected-flag,
+  .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-2 .iti__selected-flag,
+  .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-3 .iti__selected-flag,
+  .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-4 .iti__selected-flag {
+    background: #fff !important;
+    border-radius: 0;
+    padding-inline: 0.65rem 0.45rem;
+  }
+
+  .operia-tel-input,
+  .iti input.iti__tel-input.operia-tel-input,
+  .iti.separate-dial-code input,
+  .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-2 input,
+  .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-3 input,
+  .iti.separate-dial-code.iti--allow-dropdown.iti-sdc-4 input {
+    padding-left: 0.8rem !important;
+    padding-right: 0.65rem !important;
+  }
+
+  .dropdown-menu.iti__dropdown-content {
+    top: calc(100% + 2px) !important;
+    overflow: hidden !important;
+  }
+
+  .dropdown-menu.iti__dropdown-content.show {
+    display: block !important;
+    z-index: 5000 !important;
+  }
+}
+
 .field-error {
+  width: min(420px, 100%);
   color: var(--color-danger);
   font-size: 0.76rem;
 }
