@@ -532,7 +532,8 @@ html[dir='rtl'] .phone-row--intl {
 }
 
 // Customer operations row menu is appended to body, so these rules stay global.
-.customer-row-menu.p-menu {
+.customer-row-menu.p-menu,
+.activity-revenue-row-menu.p-menu {
   width: max-content;
   min-width: 16.5rem;
   max-width: min(22rem, calc(100vw - 1.5rem));

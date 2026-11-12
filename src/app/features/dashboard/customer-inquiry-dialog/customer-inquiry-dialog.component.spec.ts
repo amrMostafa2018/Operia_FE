@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,7 +31,7 @@ describe('CustomerInquiryDialogComponent', () => {
       .compileComponents();
   });
 
-  it('drops an earlier result when the mobile field changes', () => {
+  it('drops an earlier result when the mobile field changes', fakeAsync(() => {
     const firstRequest = new Subject<CustomerInquiryResult | null>();
     const secondRequest = new Subject<CustomerInquiryResult | null>();
     inquiryService.findByMobile.and.returnValues(firstRequest, secondRequest);
@@ -61,7 +61,9 @@ describe('CustomerInquiryDialogComponent', () => {
     expect(inquiryService.findByMobile).toHaveBeenCalledWith('201098765432');
     secondRequest.next(null);
     expect(component.searched()).toBeTrue();
-  });
+    tick(350);
+    discardPeriodicTasks();
+  }));
 
   it('does not show a mobile error until a number is typed or search is attempted', () => {
     const component = TestBed.createComponent(CustomerInquiryDialogComponent).componentInstance;
@@ -84,6 +86,33 @@ describe('CustomerInquiryDialogComponent', () => {
     component.search();
     expect(component.mobileError()).toBe('CUSTOMER_INQUIRY.ERRORS.MOBILE_REQUIRED');
   });
+
+  it('auto-searches once the mobile number becomes valid', fakeAsync(() => {
+    const request = new Subject<CustomerInquiryResult | null>();
+    inquiryService.findByMobile.and.returnValue(request);
+
+    const component = TestBed.createComponent(CustomerInquiryDialogComponent).componentInstance;
+    component.searchForm.controls.mobile.setValue('01012345678');
+    tick(299);
+    expect(inquiryService.findByMobile).not.toHaveBeenCalled();
+
+    tick(1);
+    expect(inquiryService.findByMobile).toHaveBeenCalledWith('201012345678');
+
+    request.next(null);
+    discardPeriodicTasks();
+  }));
+
+  it('does not call the API for a partial mobile number', fakeAsync(() => {
+    inquiryService.findByMobile.and.returnValue(new Subject<CustomerInquiryResult | null>());
+
+    const component = TestBed.createComponent(CustomerInquiryDialogComponent).componentInstance;
+    component.searchForm.controls.mobile.setValue('0114899');
+    tick(350);
+    expect(inquiryService.findByMobile).not.toHaveBeenCalled();
+    expect(component.searchDisabled()).toBeTrue();
+    discardPeriodicTasks();
+  }));
 
   it('formats money using the tenant currency label', () => {
     const component = TestBed.createComponent(CustomerInquiryDialogComponent).componentInstance;

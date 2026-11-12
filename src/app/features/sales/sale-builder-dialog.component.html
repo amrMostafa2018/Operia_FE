@@ -150,9 +150,9 @@
     <label class="catalog-search">
       <i
         class="pi"
-        [class.pi-search]="!loading()"
-        [class.pi-spin]="loading()"
-        [class.pi-spinner]="loading()"
+        [class.pi-search]="!showCatalogSkeleton()"
+        [class.pi-spin]="showCatalogSkeleton()"
+        [class.pi-spinner]="showCatalogSkeleton()"
         aria-hidden="true"
       ></i>
       <input
@@ -160,59 +160,60 @@
         [value]="searchText()"
         (input)="searchText.set($any($event.target).value)"
         [placeholder]="'SALE_BUILDER.FIND_ITEM' | translate"
-        [disabled]="loading()"
       />
     </label>
 
-    <div class="catalog-shell" [attr.dir]="isRtl() ? 'rtl' : 'ltr'">
-    <div class="category-tabs" [class.is-loading]="loading()">
-      @for (category of categories(); track category.id) {
+    <div
+      class="catalog-shell"
+      [class.is-refreshing]="optionsRefreshing()"
+      [attr.dir]="isRtl() ? 'rtl' : 'ltr'"
+      [attr.aria-busy]="catalogLoading() || categoriesLoading()"
+    >
+      @if (optionsRefreshing()) {
+        <div class="refresh-bar" aria-hidden="true"></div>
+      }
+      <div class="category-tabs">
+        @if (showCategorySkeleton()) {
+          @for (slot of categorySkeletonSlots; track slot) {
+            <span class="category-tab skeleton-tab" aria-hidden="true"></span>
+          }
+        } @else {
+          @for (category of categories(); track category.id) {
+            <button
+              type="button"
+              class="category-tab"
+              [class.active]="categoryId() === category.id"
+              (click)="categoryId.set(category.id)"
+            >
+              <i [class]="categoryIconClass(category.icon)" aria-hidden="true"></i>
+              <span>{{ category.name }}</span>
+            </button>
+          }
+        }
         <button
           type="button"
           class="category-tab"
-          [class.active]="categoryId() === category.id"
-          [disabled]="loading()"
-          (click)="categoryId.set(category.id)"
+          [class.active]="categoryId() === 'all'"
+          (click)="categoryId.set('all')"
         >
-          <i [class]="categoryIconClass(category.icon)" aria-hidden="true"></i>
-          <span>{{ category.name }}</span>
+          <i class="pi pi-th-large" aria-hidden="true"></i>
+          <span>{{ 'SALE_BUILDER.ALL' | translate }}</span>
         </button>
-      }
-      <button
-        type="button"
-        class="category-tab"
-        [class.active]="categoryId() === 'all'"
-        [disabled]="loading()"
-        (click)="categoryId.set('all')"
-      >
-        <i class="pi pi-th-large" aria-hidden="true"></i>
-        <span>{{ 'SALE_BUILDER.ALL' | translate }}</span>
-      </button>
-    </div>
-
-    @if (loading()) {
-      <div
-        class="catalog-loading"
-        role="status"
-        [attr.aria-label]="'SALE_BUILDER.LOADING' | translate"
-      >
-        <p class="loading-banner">
-          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-          {{ 'SALE_BUILDER.LOADING' | translate }}
-        </p>
-        <div class="catalog-grid catalog-skeleton">
-          @for (slot of catalogSkeletonSlots; track slot) {
-            <article class="catalog-card skeleton-card" aria-hidden="true">
-              <span class="skeleton-line short"></span>
-              <span class="skeleton-line"></span>
-              <span class="skeleton-line tiny"></span>
-              <span class="skeleton-line price"></span>
-            </article>
-          }
-        </div>
       </div>
-    } @else {
-      <div class="catalog-grid" [attr.dir]="isRtl() ? 'rtl' : 'ltr'">
+
+      @if (showCatalogSkeleton()) {
+        <div
+          class="catalog-loading"
+          role="status"
+          [attr.aria-label]="'SALE_BUILDER.LOADING' | translate"
+        >
+          <p class="loading-banner">
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+            {{ 'SALE_BUILDER.LOADING' | translate }}
+          </p>
+        </div>
+      }
+      <div class="catalog-grid" [class.catalog-skeleton]="showCatalogSkeleton()">
         <button
           type="button"
           class="unlisted-card"
@@ -229,42 +230,53 @@
               | translate
           }}</span>
         </button>
-        @for (offer of filteredCatalog(); track offer.id) {
-          <article class="catalog-card">
-            <span class="item-type" [class.package]="offer.offerType === 'package'">
-              {{
-                (offer.offerType === 'package' ? 'SALE_BUILDER.PACKAGE' : 'SALE_BUILDER.SERVICE')
-                  | translate
-              }}
-            </span>
-            <strong class="catalog-card-title">{{ offer.name }}</strong>
-            <small class="catalog-card-duration"
-              >{{ offer.sessionDurationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}</small
-            >
-            <span class="offer-price">
-              @if (isRtl()) {
-                {{ currency.currencyLabel() }}
-                {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
-              } @else {
-                {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
-                {{ currency.currencyLabel() }}
-              }
-            </span>
-            <button
-              type="button"
-              class="add-offer-btn"
-              (click)="addOffer(offer)"
-              [attr.aria-label]="'SALE_BUILDER.ADD_ITEM' | translate"
-            >
-              <i class="pi pi-plus"></i>
-            </button>
-          </article>
+        @if (showCatalogSkeleton()) {
+          @for (slot of catalogSkeletonSlots; track slot) {
+            <article class="catalog-card skeleton-card" aria-hidden="true">
+              <span class="skeleton-badge"></span>
+              <span class="skeleton-line title"></span>
+              <span class="skeleton-line duration"></span>
+              <span class="skeleton-line price"></span>
+              <span class="skeleton-add"></span>
+            </article>
+          }
+        } @else {
+          @for (offer of filteredCatalog(); track offer.id) {
+            <article class="catalog-card">
+              <span class="item-type" [class.package]="offer.offerType === 'package'">
+                {{
+                  (offer.offerType === 'package' ? 'SALE_BUILDER.PACKAGE' : 'SALE_BUILDER.SERVICE')
+                    | translate
+                }}
+              </span>
+              <strong class="catalog-card-title">{{ offer.name }}</strong>
+              <small class="catalog-card-duration"
+                >{{ offer.sessionDurationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}</small
+              >
+              <span class="offer-price">
+                @if (isRtl()) {
+                  {{ currency.currencyLabel() }}
+                  {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
+                } @else {
+                  {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
+                  {{ currency.currencyLabel() }}
+                }
+              </span>
+              <button
+                type="button"
+                class="add-offer-btn"
+                (click)="addOffer(offer)"
+                [attr.aria-label]="'SALE_BUILDER.ADD_ITEM' | translate"
+              >
+                <i class="pi pi-plus"></i>
+              </button>
+            </article>
+          }
         }
       </div>
-      @if (filteredCatalog().length === 0) {
+      @if (!showCatalogSkeleton() && filteredCatalog().length === 0) {
         <p class="empty">{{ 'SALE_BUILDER.NO_CATALOG' | translate }}</p>
       }
-    }
     </div>
 
     <section class="customer-section">
@@ -339,17 +351,25 @@
             <span>{{ 'SALE_BUILDER.DIRECT_CUSTOMER' | translate }}</span>
           </label>
           <label for="sale-branch">{{ 'SALE_BUILDER.BRANCH' | translate }}</label>
-          <p-dropdown
-            inputId="sale-branch"
-            formControlName="branchId"
-            [disabled]="saving()"
-            [options]="branches()"
-            optionLabel="name"
-            optionValue="id"
-            [placeholder]="'SALE_BUILDER.BRANCH_SELECT' | translate"
-            (onChange)="branchChanged()"
-            appendTo="body"
-          />
+          @if (showBranchSkeleton()) {
+            <span
+              class="field-skeleton"
+              role="status"
+              [attr.aria-label]="'SALE_BUILDER.LOADING' | translate"
+            ></span>
+          } @else {
+            <p-dropdown
+              inputId="sale-branch"
+              formControlName="branchId"
+              [disabled]="saving()"
+              [options]="branches()"
+              optionLabel="name"
+              optionValue="id"
+              [placeholder]="'SALE_BUILDER.BRANCH_SELECT' | translate"
+              (onChange)="branchChanged()"
+              appendTo="body"
+            />
+          }
           @if (fieldError('branchId'); as error) {
             <small class="field-error">{{ error }}</small>
           }

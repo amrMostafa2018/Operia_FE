@@ -73,54 +73,106 @@ th {
   }
 }
 
-.filters,
 .import-panel {
   border: 1px solid #e5e7f0;
   border-radius: 10px;
   background: #fff;
   padding: 1rem;
 }
-.date-row,
-.filter-grid,
-.summary,
-.filter-actions {
-  display: flex;
-  align-items: end;
-  gap: 0.7rem;
-}
-.date-row {
-  justify-content: center;
-  margin-bottom: 0.8rem;
-  flex-wrap: wrap;
-}
 
-.date-field {
+.filter-bar {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  flex: 0 1 14rem;
-  min-width: min(100%, 14rem);
+  gap: 0.45rem;
+  margin-top: -1rem;
+  width: 100%;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: $border-radius-lg;
+  padding: 1rem 1.25rem;
+  box-shadow: $shadow-sm;
   overflow: visible;
+}
 
-  .date-label {
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-}
-.filter-grid {
-  flex-wrap: wrap;
-}
-label {
+.filters {
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-width: 9rem;
-  flex: 1 1 9rem;
-  font-size: 0.78rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
 }
-input,
-select,
+
+.filter-search {
+  flex: 1 1 180px;
+  min-width: min(100%, 180px);
+  position: relative;
+}
+
+button.search-icon-btn {
+  position: absolute;
+  inset-inline-end: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  color: #6f7180;
+  padding: 0;
+  min-height: 0;
+  cursor: pointer;
+}
+
+.filter-search input {
+  padding-inline-end: 2.5rem;
+}
+
+.filter-service-type,
+.filter-status,
+.filter-payment {
+  flex: 1 1 140px;
+  min-width: min(100%, 140px);
+}
+
+.filter-dates {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.date-range-sep {
+  flex: 0 0 auto;
+  color: #8b90a5;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.filter-date {
+  position: relative;
+  flex: 0 1 16.5rem;
+  width: 16.5rem;
+  max-width: calc(50% - 1.25rem);
+}
+
+.filter-clear {
+  flex: 0 0 auto;
+  align-self: stretch;
+}
+
+.filters input,
+.filter-control {
+  width: 100%;
+}
+
+.filters .search input {
+  width: 100%;
+  height: 42px;
+  border-color: #dfe0e9;
+  border-radius: 7px;
+}
+
 button {
   border: 1px solid #dfe2ef;
   border-radius: 6px;
@@ -129,30 +181,39 @@ button {
   padding: 0.4rem 0.55rem;
   color: #171a43;
   font: inherit;
-}
-button {
   cursor: pointer;
   white-space: nowrap;
 }
+
 button:disabled {
   opacity: 0.55;
   cursor: default;
 }
-button.primary {
-  background: #2520cd;
-  border-color: #2520cd;
-  color: #fff;
+
+button.clear {
+  border: 1px solid #e1e0eb;
+  background: #fff;
+  color: #4e2be2;
+  border-radius: 7px;
+  padding: 0.55rem 0.75rem;
+  min-height: 42px;
+  white-space: nowrap;
+  font: inherit;
 }
-.filter-actions {
-  flex: 0 0 auto;
+
+button.clear i {
+  margin-inline-end: 0.4rem;
 }
+
 .field-error {
   color: #c02b38;
 }
 .summary {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem;
   align-items: stretch;
+  width: 100%;
 }
 .summary article {
   grid-column: span 2;
@@ -164,14 +225,17 @@ button.primary {
   align-content: center;
   align-items: center;
   min-width: 0;
+  min-height: 85px;
 }
 .summary .secondary-summary {
   grid-column: span 3;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   gap: 0.25rem;
-  padding: 0.7rem 1rem;
+  padding: 1rem;
+  min-height: 85px;
 }
 .summary-icon {
   grid-row: span 2;
@@ -215,6 +279,21 @@ button.primary {
   font-size: 0.75rem;
   font-weight: 400;
 }
+.operations-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+}
+
+.grid-heading {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4b24da;
+  text-align: start;
+}
+
 .table-section {
   @include data-table.data-table-shell;
   width: 100%;
@@ -236,13 +315,16 @@ button.primary {
   color: #171a43;
 }
 
-.sortable-head {
-  .sort-icon {
-    margin-inline-start: 0.35rem;
-    font-size: 0.72rem;
-    color: #9aa3b8;
-    vertical-align: middle;
-  }
+.date-caption {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b728a;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .service-cell {
@@ -459,21 +541,56 @@ button.primary {
 }
 
 :host ::ng-deep {
-  .date-field .date-picker.p-calendar {
-    display: inline-flex;
+  .filters .p-dropdown {
     width: 100%;
+    min-height: 42px;
+    border-color: #dfe0e9;
+    border-radius: 7px;
+  }
+
+  .filters .p-dropdown-label {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    padding-block: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .filter-date .date-picker.p-calendar {
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #dfe0e9;
+    border-radius: 10px;
+    background: #fff;
+    overflow: visible;
   }
 
   .date-picker .p-inputtext {
-    font-size: 0.875rem;
-    padding: 0.45rem 0.75rem;
-    width: 100%;
+    flex: 1 1 auto;
+    width: 1%;
     min-width: 0;
+    font-size: 0.875rem;
     direction: ltr;
-    text-align: end;
-    min-height: 2.35rem;
-    border: 1px solid #dfe2ef;
-    border-radius: 6px;
+    text-align: center;
+    min-height: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button,
+  .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button:enabled:hover {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 42px;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    color: var(--color-primary);
+    box-shadow: none;
   }
 
   .date-picker.p-calendar {
@@ -614,12 +731,25 @@ button.primary {
 
 :host-context([dir='rtl']) ::ng-deep {
   .date-picker.p-calendar-w-btn .p-inputtext {
-    padding-left: 2rem;
+    padding-left: 4.25rem;
+    padding-right: 5.6rem;
   }
 
   .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
     right: auto !important;
-    left: 3.15rem !important;
+    left: 2.35rem !important;
+  }
+}
+
+:host-context([dir='ltr']) ::ng-deep {
+  .date-picker.p-calendar-w-btn .p-inputtext {
+    padding-right: 4.25rem;
+    padding-left: 5.6rem;
+  }
+
+  .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
+    left: auto !important;
+    right: 2.35rem !important;
   }
 }
 
@@ -652,8 +782,104 @@ button.primary {
   .summary article {
     width: 100%;
   }
-  .date-row {
-    flex-wrap: wrap;
+}
+
+@media (max-width: $bp-sm) {
+  .filter-bar {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .filter-dates {
+    gap: 0.4rem;
+  }
+
+  .filter-date {
+    flex: 1 1 0;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .date-caption {
+    inset-inline-start: 0.45rem;
+    font-size: 0.68rem;
+  }
+
+  .filter-search,
+  .filter-service-type,
+  .filter-status,
+  .filter-payment,
+  .filter-clear {
+    flex: unset;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .filter-search:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .filters .search input {
+    height: 36px;
+    font-size: 0.75rem;
+    padding-inline: 0.55rem 2.1rem;
+  }
+
+  .search-icon-btn {
+    inset-inline-end: 0.45rem;
+    font-size: 0.85rem;
+  }
+
+  :host ::ng-deep .filters .p-dropdown {
+    min-height: 36px;
+  }
+
+  :host ::ng-deep .filters .p-dropdown-label {
+    min-height: 34px;
+    padding-inline: 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  :host ::ng-deep .filters .p-dropdown-trigger {
+    width: 1.75rem;
+  }
+
+  :host ::ng-deep .date-picker .p-inputtext {
+    min-height: 36px;
+    height: 36px;
+    font-size: 0.72rem;
+  }
+
+  :host-context([dir='rtl']) ::ng-deep .date-picker.p-calendar-w-btn .p-inputtext {
+    padding-right: 3.4rem;
+    padding-left: 2.1rem;
+  }
+
+  :host-context([dir='ltr']) ::ng-deep .date-picker.p-calendar-w-btn .p-inputtext {
+    padding-left: 3.4rem;
+    padding-right: 2.1rem;
+  }
+
+  :host ::ng-deep .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button {
+    width: 1.8rem;
+    height: 36px;
+  }
+
+  button.clear {
+    min-height: 36px;
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
   }
 }
 @media (max-width: 420px) {

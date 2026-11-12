@@ -9,11 +9,15 @@ import {
 import { DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputTextModule } from 'primeng/inputtext';
 import { MenuModule } from 'primeng/menu';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CurrencyService } from '@core/services/currency.service';
@@ -53,6 +57,8 @@ const emptyFilters = (): CustomerOperationsFilters => ({
     FormsModule,
     ButtonModule,
     CalendarModule,
+    DropdownModule,
+    InputTextModule,
     MenuModule,
     TableModule,
     TranslatePipe,
@@ -78,15 +84,11 @@ export class CustomerOperationsComponent {
   readonly canBlock = computed(() => this.permissions.hasPermission(Policies.CustomersBlock));
   readonly canHistory = computed(() => this.permissions.hasPermission(Policies.CustomersHistory));
   readonly result = signal<CustomerOperationsPage | null>(null);
-  readonly rowsPerPageOptions = [10, 25, 50, 100];
-  readonly rows = signal(10);
+  readonly rowsPerPageOptions = [5, 10, 25, 50, 100];
+  readonly rows = signal(5);
   readonly first = signal(0);
-  readonly pageReportTemplate = signal(
-    this.translate.instant('CUSTOMER_OPERATIONS.PAGE_REPORT')
-  );
-  readonly leadingIconPos = computed(() =>
-    getLeadingIconPos(this.languageService.currentLang())
-  );
+  readonly pageReportTemplate = signal(this.translate.instant('CUSTOMER_OPERATIONS.PAGE_REPORT'));
+  readonly leadingIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
   readonly loading = signal(false);
   readonly exporting = signal(false);
   readonly rangeError = signal(false);
@@ -95,14 +97,54 @@ export class CustomerOperationsComponent {
   readonly selectedHistory = signal<CustomerOperation | null>(null);
   readonly draftFromDate = signal<Date | null>(null);
   readonly draftToDate = signal<Date | null>(null);
+  readonly serviceTypeOptions = [
+    { label: 'CUSTOMER_OPERATIONS.TYPES.package', value: 'package' },
+    { label: 'CUSTOMER_OPERATIONS.TYPES.session', value: 'session' },
+  ];
+  readonly statusOptions = [
+    { label: 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.active', value: 'active' },
+    { label: 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.completed', value: 'completed' },
+    { label: 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.expired', value: 'expired' },
+    { label: 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.cancelled', value: 'cancelled' },
+    { label: 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.pending', value: 'pending' },
+  ];
+  readonly paymentTypeOptions = [
+    { label: 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.cash', value: 'cash' },
+    { label: 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.installment', value: 'installment' },
+    { label: 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.owned', value: 'owned' },
+  ];
   draft = emptyFilters();
   private applied = emptyFilters();
   private requestId = 0;
+  private readonly searchChanges = new Subject<void>();
 
   constructor() {
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('CUSTOMER_OPERATIONS.PAGE_REPORT'));
     });
+    this.searchChanges
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyFilters());
+  }
+
+  onServiceChange(value: string): void {
+    this.draft.service = value;
+    this.searchChanges.next();
+  }
+
+  onCustomerChange(value: string): void {
+    this.draft.customer = value;
+    this.searchChanges.next();
+  }
+
+  onMobileChange(value: string): void {
+    this.draft.mobile = value;
+    this.searchChanges.next();
+  }
+
+  onSelectFilterChange(): void {
+    this.normalizeDraftFilters();
+    this.applyFilters();
   }
 
   onDateFromChange(value: Date | null): void {
@@ -111,7 +153,7 @@ export class CustomerOperationsComponent {
       this.draftToDate.set(value);
     }
     this.draftFromDate.set(value);
-    this.rangeError.set(false);
+    this.applyDateFilter();
   }
 
   onDateToChange(value: Date | null): void {
@@ -120,14 +162,15 @@ export class CustomerOperationsComponent {
       this.draftFromDate.set(value);
     }
     this.draftToDate.set(value);
-    this.rangeError.set(false);
+    this.applyDateFilter();
   }
 
-  search(): void {
+  applyFilters(): void {
     this.syncDraftDates();
     const invalid = this.isDateRangeInvalid();
     this.rangeError.set(invalid);
     if (invalid) return;
+    this.normalizeDraftFilters();
     this.applied = { ...this.draft };
     this.first.set(0);
     this.load();
@@ -138,7 +181,7 @@ export class CustomerOperationsComponent {
     this.draftFromDate.set(null);
     this.draftToDate.set(null);
     this.rangeError.set(false);
-    this.search();
+    this.applyFilters();
   }
 
   onLazyLoad(event: TableLazyLoadEvent): void {
@@ -302,6 +345,22 @@ export class CustomerOperationsComponent {
       dateStyle: 'short',
       timeZone: timezone,
     }).format(new Date(value));
+  }
+
+  private applyDateFilter(): void {
+    const invalid = this.isDateRangeInvalid();
+    this.rangeError.set(invalid);
+    if (invalid) return;
+    this.applyFilters();
+  }
+
+  private normalizeDraftFilters(): void {
+    this.draft.customer = this.draft.customer ?? '';
+    this.draft.mobile = this.draft.mobile ?? '';
+    this.draft.service = this.draft.service ?? '';
+    this.draft.serviceType = this.draft.serviceType ?? '';
+    this.draft.status = this.draft.status ?? '';
+    this.draft.paymentType = this.draft.paymentType ?? '';
   }
 
   private syncDraftDates(): void {

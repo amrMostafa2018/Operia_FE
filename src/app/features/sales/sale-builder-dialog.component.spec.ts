@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 import { CurrencyService } from '@core/services/currency.service';
 import { PermissionService } from '@core/services/permission.service';
 import { EmployeeService } from '@app/features/employees/employee.service';
+import { PackageListItem } from '@app/features/packages/models/package-list.model';
 import { ConfirmSaleResult, SaleService } from './sale.service';
 import { SaleBuilderDialogComponent } from './sale-builder-dialog.component';
 
@@ -238,5 +239,66 @@ describe('SaleBuilderDialogComponent confirmation', () => {
     expect(component.unlistedError('name')).toBeTruthy();
     expect(component.unlistedError('price')).toBeTruthy();
     expect(sales.quote).not.toHaveBeenCalled();
+  });
+
+  it('keeps the loaded catalog visible while options refresh', () => {
+    const firstCatalog = new Subject<{ items: PackageListItem[] }>();
+    sales.catalog.and.returnValue(firstCatalog.asObservable());
+    const fixture = TestBed.createComponent(SaleBuilderDialogComponent);
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    expect(component.showCatalogSkeleton()).toBeTrue();
+    expect(component.showCategorySkeleton()).toBeFalse();
+
+    firstCatalog.next({
+      items: [
+        {
+          id: 'offer-1',
+          name: 'Facial',
+          offerType: 'singleSession',
+          sessionDurationMinutes: 30,
+          serviceCategoryId: 'cat',
+          serviceCategoryName: 'Care',
+          price: 100,
+          status: 'active',
+          createdAt: '2026-11-01',
+          endsAt: null,
+        },
+      ],
+    });
+    firstCatalog.complete();
+    expect(component.showCatalogSkeleton()).toBeFalse();
+    expect(component.catalog().map(item => item.id)).toEqual(['offer-1']);
+
+    const refresh = new Subject<{ items: PackageListItem[] }>();
+    sales.catalog.and.returnValue(refresh.asObservable());
+    fixture.componentRef.setInput('visible', false);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+
+    expect(component.catalogLoading()).toBeTrue();
+    expect(component.showCatalogSkeleton()).toBeFalse();
+    expect(component.catalog().map(item => item.id)).toEqual(['offer-1']);
+
+    refresh.next({ items: [] });
+    refresh.complete();
+    expect(component.catalog()).toEqual([]);
+    expect(component.catalogLoading()).toBeFalse();
+  });
+
+  it('shows categories when the catalog request fails', () => {
+    sales.catalog.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    sales.categories.and.returnValue(of([{ id: 'cat', name: 'Care' }]));
+    const fixture = TestBed.createComponent(SaleBuilderDialogComponent);
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    expect(component.catalogLoading()).toBeFalse();
+    expect(component.showCatalogSkeleton()).toBeFalse();
+    expect(component.categories().map(category => category.id)).toEqual(['cat']);
+    expect(component.showCategorySkeleton()).toBeFalse();
   });
 });

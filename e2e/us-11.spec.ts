@@ -1,4 +1,4 @@
-import { expect, test, type APIResponse, type Page } from '@playwright/test';
+import { expect, test, type APIResponse, type Locator, type Page } from '@playwright/test';
 import {
   apiBaseUrl,
   authenticate,
@@ -18,6 +18,16 @@ function errorCodes(responseBody: { errorCodes?: Record<string, string | string[
 async function expectErrorCode(response: APIResponse, status: number, code: string): Promise<void> {
   expect(response.status()).toBe(status);
   expect(errorCodes(await response.json())).toContain(code);
+}
+
+async function selectInstallmentPaymentMethod(
+  paymentDialog: Locator,
+  page: Page,
+  label: string,
+): Promise<void> {
+  const dropdown = paymentDialog.locator('p-dropdown[formcontrolname="paymentMethod"]');
+  await dropdown.locator('.p-dropdown-trigger').click();
+  await page.locator('.p-dropdown-panel .p-dropdown-item').filter({ hasText: label }).click();
 }
 
 async function openInquiryPurchase(page: Page, purchaseName: string) {
@@ -69,7 +79,7 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
     const paymentDialog = page.getByRole('dialog', { name: 'Pay new installment' });
     await expect(paymentDialog).toContainText('E2E Collect in UI');
     await expect(paymentDialog).toContainText('500');
-    await paymentDialog.locator('#collection-payment-method').selectOption('cash');
+    await selectInstallmentPaymentMethod(paymentDialog, page, 'Cash');
     let originalKey = '';
     const collectionUrl = `**/customers/purchases/${e2eIds.uiCollectionPurchase}/installments`;
     const inquiryUrl = `**/customers/purchases/${e2eIds.uiCollectionPurchase}/inquiry`;
@@ -345,7 +355,11 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
     await expect(dialog).toContainText('عملية الشراء المختارة');
     await expect(dialog).toContainText('E2E Final Installment');
     await expect(dialog.getByRole('button', { name: 'تسجيل الدفع المؤكد' })).toBeVisible();
-    await expect(dialog.locator('#collection-payment-method option[value="cash"]')).toHaveCount(1);
+    const dropdown = dialog.locator('p-dropdown[formcontrolname="paymentMethod"]');
+    await dropdown.locator('.p-dropdown-trigger').click();
+    await expect(page.locator('.p-dropdown-panel .p-dropdown-item')).toHaveCount(1);
+    await expect(page.locator('.p-dropdown-panel .p-dropdown-item')).toHaveText('نقدًا');
+    await page.keyboard.press('Escape');
   });
 
   test('reconciles a lost final-payment response and releases every remaining session once', async ({
@@ -358,7 +372,7 @@ test.describe('US-11: Collect one installment and respect released sessions', ()
     const { card } = await openInquiryPurchase(page, 'E2E Final Installment');
     await card.getByRole('button', { name: 'Pay new installment' }).click();
     const paymentDialog = page.getByRole('dialog', { name: 'Pay new installment' });
-    await paymentDialog.locator('#collection-payment-method').selectOption('cash');
+    await selectInstallmentPaymentMethod(paymentDialog, page, 'Cash');
     let key = '';
     await page.route(
       `**/customers/purchases/${e2eIds.finalCollectionPurchase}/installments`,

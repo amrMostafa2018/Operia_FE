@@ -72,9 +72,16 @@ export interface RevenueReport {
   page: number;
   pageSize: number;
   totals: { grossCollections: number; refunds: number; netCollected: number };
-  today: { transactionCount: number; grossCollections: number };
-  month: { transactionCount: number; grossCollections: number };
+  today: RevenueReportCard;
+  month: RevenueReportCard;
   items: RevenueTransaction[];
+}
+
+export interface RevenueReportCard {
+  transactionCount: number;
+  grossCollections: number;
+  countChangePercent: number | null;
+  amountChangePercent: number | null;
 }
 
 export interface RevenuePaymentHistory {

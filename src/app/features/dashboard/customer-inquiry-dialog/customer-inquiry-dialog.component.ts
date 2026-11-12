@@ -58,6 +58,8 @@ export class CustomerInquiryDialogComponent {
   private readonly permissionService = inject(PermissionService);
   private searchSubscription?: Subscription;
   private detailsSubscription?: Subscription;
+  private mobileSearchTimer?: ReturnType<typeof setTimeout>;
+  private lastAutoSearchedMobile = '';
 
   readonly visible = input(false);
   readonly closed = output<void>();
@@ -71,6 +73,10 @@ export class CustomerInquiryDialogComponent {
   readonly searched = signal(false);
   readonly searchAttempted = signal(false);
   readonly loading = signal(false);
+  readonly searchSkeletonSlots = [0, 1, 2];
+  readonly detailsMetaSlots = [0, 1, 2];
+  readonly detailsBalanceSlots = [0, 1];
+  readonly detailsTableSlots = [0, 1, 2, 3];
   readonly selectedPurchaseId = signal<string | null>(null);
   readonly purchaseDetails = signal<InquiryPurchaseDetails | null>(null);
   readonly detailsLoading = signal(false);
@@ -87,13 +93,32 @@ export class CustomerInquiryDialogComponent {
   private paymentKeyStorageName: string | null = null;
   private readonly mobileRevision = signal(0);
   readonly mobileError = computed(() => this.readMobileError());
+  readonly searchDisabled = computed(() => {
+    this.mobileRevision();
+    if (this.loading()) {
+      return true;
+    }
+    const parsed = this.parsedMobile();
+    const national = this.nationalDigits(parsed);
+    if (national.length === 0) {
+      return false;
+    }
+    return !isValidPhoneChangeData(parsed);
+  });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.mobileSearchTimer) {
+        clearTimeout(this.mobileSearchTimer);
+      }
+    });
     this.searchForm.controls.mobile.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.mobileRevision.update(version => version + 1);
+        this.lastAutoSearchedMobile = '';
         this.clearInquiry();
+        this.scheduleMobileSearch();
       });
   }
 
@@ -106,6 +131,7 @@ export class CustomerInquiryDialogComponent {
     this.searchForm.markAsPristine();
     this.searchForm.markAsUntouched();
     this.searchAttempted.set(false);
+    this.lastAutoSearchedMobile = '';
     this.mobileRevision.update(version => version + 1);
     this.selectedCountryISO.set(PHONE_INPUT_DEFAULT_COUNTRY);
     this.closed.emit();
@@ -119,7 +145,33 @@ export class CustomerInquiryDialogComponent {
     const mobile = toBookingSearchMobile(parsed);
     if (!mobile || !isValidPhoneChangeData(parsed) || this.searchForm.invalid) return;
 
+    this.lastAutoSearchedMobile = mobile;
+    this.executeSearch(mobile);
+  }
+
+  private scheduleMobileSearch(): void {
+    if (this.mobileSearchTimer) {
+      clearTimeout(this.mobileSearchTimer);
+    }
+
+    this.mobileSearchTimer = setTimeout(() => {
+      this.mobileSearchTimer = undefined;
+      const parsed = this.parsedMobile();
+      const mobile = toBookingSearchMobile(parsed);
+      if (!mobile || !isValidPhoneChangeData(parsed)) {
+        return;
+      }
+      if (mobile === this.lastAutoSearchedMobile) {
+        return;
+      }
+      this.lastAutoSearchedMobile = mobile;
+      this.executeSearch(mobile);
+    }, 300);
+  }
+
+  private executeSearch(mobile: string): void {
     this.loading.set(true);
+    this.searchSubscription?.unsubscribe();
     this.searchSubscription = this.inquiryService
       .findByMobile(mobile)
       .pipe(takeUntilDestroyed(this.destroyRef))

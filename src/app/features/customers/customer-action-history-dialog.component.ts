@@ -7,21 +7,26 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, expand, reduce } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
 import { CurrencyService } from '@core/services/currency.service';
+import { LanguageService } from '@core/services/language.service';
 import { CustomerOperation } from './customer-operations.service';
 import {
   CustomerActionHistoryPage,
+  CustomerActionHistoryRow,
   CustomerActionHistoryService,
 } from './customer-action-history.service';
+
+type HistoryTone = 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 
 @Component({
   selector: 'app-customer-action-history-dialog',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TranslatePipe, DialogModule],
+  imports: [DecimalPipe, TranslatePipe, DialogModule],
   templateUrl: './customer-action-history-dialog.component.html',
   styleUrl: './customer-action-history-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,41 +36,48 @@ export class CustomerActionHistoryDialogComponent {
   readonly closed = output<void>();
   private readonly service = inject(CustomerActionHistoryService);
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
   readonly currency = inject(CurrencyService);
   readonly data = signal<CustomerActionHistoryPage | null>(null);
   readonly loading = signal(true);
   readonly failed = signal(false);
-  readonly page = signal(1);
-  readonly cursors = signal<(string | null)[]>([null]);
   private requestId = 0;
 
   constructor() {
-    queueMicrotask(() => this.load(1));
+    queueMicrotask(() => this.load());
   }
 
-  load(page: number): void {
-    if (page < 1 || page > this.cursors().length) return;
+  load(): void {
     const id = ++this.requestId;
     this.loading.set(true);
     this.failed.set(false);
     const row = this.row();
+    const saleOnly = row.id.includes(':');
+    const operationId = saleOnly ? row.saleId : row.id;
+
     this.service
-      .get(
-        row.customerId,
-        row.id.includes(':') ? row.saleId : row.id,
-        row.id.includes(':'),
-        this.cursors()[page - 1]
+      .get(row.customerId, operationId, saleOnly, null)
+      .pipe(
+        expand((page, index) =>
+          page.nextCursor && index < 19
+            ? this.service.get(row.customerId, operationId, saleOnly, page.nextCursor)
+            : EMPTY
+        ),
+        reduce(
+          (all, page) => ({
+            total: page.total,
+            nextCursor: null,
+            items: [...all.items, ...page.items],
+          }),
+          { total: 0, nextCursor: null, items: [] as CustomerActionHistoryRow[] }
+        ),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: data => {
           if (id !== this.requestId) return;
           this.data.set(data);
-          this.page.set(page);
-          if (data.nextCursor) {
-            this.cursors.update(cursors => [...cursors.slice(0, page), data.nextCursor]);
-          }
           this.loading.set(false);
         },
         error: () => {
@@ -74,6 +86,51 @@ export class CustomerActionHistoryDialogComponent {
           this.loading.set(false);
         },
       });
+  }
+
+  formatDateTime(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    const locale = this.language.currentLang() === 'ar' ? 'ar-EG' : 'en-GB';
+    const day = date.toLocaleDateString(locale, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    const time = date.toLocaleTimeString(locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+
+    return `${day} · ${time}`;
+  }
+
+  tone(action: string): HistoryTone {
+    switch (action) {
+      case 'SalePaymentConfirmed':
+      case 'InstallmentCollected':
+      case 'PackageInstallmentCollected':
+      case 'CustomerUnblocked':
+        return 'success';
+      case 'PurchaseCancelled':
+      case 'RefundPosted':
+      case 'CustomerBlocked':
+        return 'danger';
+      case 'SaleCollectionAttempted':
+      case 'CustomerBlockReasonChanged':
+        return 'warning';
+      case 'CustomerCreated':
+      case 'SaleConfirmed':
+      case 'PurchaseBranchAttributed':
+        return 'info';
+      default:
+        return 'neutral';
+    }
   }
 
   valueLabel(value: string | null): string {

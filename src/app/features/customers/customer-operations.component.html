@@ -11,116 +11,162 @@
     </nav>
   </div>
 
-  <section class="filters" [attr.aria-label]="'CUSTOMER_OPERATIONS.FILTERS' | translate">
-    <div class="date-row">
-      <div class="date-field">
-        <span class="date-label">{{ 'CUSTOMER_OPERATIONS.FROM_DATE' | translate }}</span>
+  <div class="filter-bar" [attr.aria-label]="'CUSTOMER_OPERATIONS.FILTERS' | translate">
+    <div class="filter-dates">
+      <div class="filter-date">
+        <span class="date-caption" id="customer-ops-from-date">{{
+          'CUSTOMER_OPERATIONS.FROM_DATE' | translate
+        }}</span>
         <p-calendar
+          class="filter-control"
           [ngModel]="draftFromDate()"
           (ngModelChange)="onDateFromChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
-          [showClear]="true"
+          [showClear]="!!draftFromDate()"
+          ariaLabelledBy="customer-ops-from-date"
           dateFormat="dd/mm/yy"
-          [placeholder]="'CUSTOMER_OPERATIONS.FROM_DATE' | translate"
+          placeholder=""
           styleClass="date-picker"
         />
       </div>
-      <div class="date-field">
-        <span class="date-label">{{ 'CUSTOMER_OPERATIONS.TO_DATE' | translate }}</span>
+      <span class="date-range-sep" aria-hidden="true">-</span>
+      <div class="filter-date">
+        <span class="date-caption" id="customer-ops-to-date">{{
+          'CUSTOMER_OPERATIONS.TO_DATE' | translate
+        }}</span>
         <p-calendar
+          class="filter-control"
           [ngModel]="draftToDate()"
           (ngModelChange)="onDateToChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
-          [showClear]="true"
+          [showClear]="!!draftToDate()"
+          ariaLabelledBy="customer-ops-to-date"
           dateFormat="dd/mm/yy"
-          [placeholder]="'CUSTOMER_OPERATIONS.TO_DATE' | translate"
+          placeholder=""
           styleClass="date-picker"
         />
-        @if (rangeError()) {
-          <small class="field-error">{{
-            'CUSTOMER_OPERATIONS.DATE_RANGE_ERROR' | translate
-          }}</small>
-        }
       </div>
     </div>
-    <div class="filter-grid">
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.CUSTOMER' | translate }}</span>
+    <div class="filters">
+      <span class="p-input-icon-right search filter-search">
+        <button
+          type="button"
+          class="search-icon-btn"
+          (click)="applyFilters()"
+          [attr.aria-label]="'COMMON.SEARCH' | translate"
+        >
+          <i class="pi pi-search"></i>
+        </button>
         <input
-          type="text"
-          [(ngModel)]="draft.customer"
-          [placeholder]="'CUSTOMER_OPERATIONS.CUSTOMER' | translate"
+          pInputText
+          [ngModel]="draft.service"
+          (ngModelChange)="onServiceChange($event)"
+          (keyup.enter)="applyFilters()"
+          [placeholder]="'CUSTOMER_OPERATIONS.SEARCH_SERVICE' | translate"
         />
-      </label>
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.MOBILE' | translate }}</span>
+      </span>
+      <span class="p-input-icon-right search filter-search">
+        <button
+          type="button"
+          class="search-icon-btn"
+          (click)="applyFilters()"
+          [attr.aria-label]="'CUSTOMER_OPERATIONS.CUSTOMER' | translate"
+        >
+          <i class="pi pi-user"></i>
+        </button>
         <input
-          type="text"
-          [(ngModel)]="draft.mobile"
+          pInputText
+          [ngModel]="draft.customer"
+          (ngModelChange)="onCustomerChange($event)"
+          (keyup.enter)="applyFilters()"
+          [placeholder]="'CUSTOMER_OPERATIONS.SEARCH_CUSTOMER' | translate"
+        />
+      </span>
+      <span class="p-input-icon-right search filter-search">
+        <button
+          type="button"
+          class="search-icon-btn"
+          (click)="applyFilters()"
+          [attr.aria-label]="'CUSTOMER_OPERATIONS.MOBILE' | translate"
+        >
+          <i class="pi pi-mobile"></i>
+        </button>
+        <input
+          pInputText
+          [ngModel]="draft.mobile"
+          (ngModelChange)="onMobileChange($event)"
+          (keyup.enter)="applyFilters()"
           inputmode="tel"
-          [placeholder]="'CUSTOMER_OPERATIONS.MOBILE' | translate"
+          [placeholder]="'CUSTOMER_OPERATIONS.SEARCH_MOBILE' | translate"
         />
-      </label>
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.SERVICE' | translate }}</span>
-        <input
-          type="text"
-          [(ngModel)]="draft.service"
-          [placeholder]="'CUSTOMER_OPERATIONS.SERVICE' | translate"
-        />
-      </label>
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.SERVICE_TYPE' | translate }}</span>
-        <select [(ngModel)]="draft.serviceType">
-          <option value="">{{ 'CUSTOMER_OPERATIONS.ALL' | translate }}</option>
-          <option value="package">{{ 'CUSTOMER_OPERATIONS.TYPES.package' | translate }}</option>
-          <option value="session">{{ 'CUSTOMER_OPERATIONS.TYPES.session' | translate }}</option>
-        </select>
-      </label>
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUS' | translate }}</span>
-        <select [(ngModel)]="draft.status">
-          <option value="">{{ 'CUSTOMER_OPERATIONS.ALL' | translate }}</option>
-          <option value="active">
-            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.active' | translate }}
-          </option>
-          <option value="completed">
-            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.completed' | translate }}
-          </option>
-          <option value="expired">
-            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.expired' | translate }}
-          </option>
-          <option value="cancelled">
-            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.cancelled' | translate }}
-          </option>
-          <option value="pending">
-            {{ 'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.pending' | translate }}
-          </option>
-        </select>
-      </label>
-      <label>
-        <span>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</span>
-        <select [(ngModel)]="draft.paymentType">
-          <option value="">{{ 'CUSTOMER_OPERATIONS.ALL' | translate }}</option>
-          <option value="cash">{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.cash' | translate }}</option>
-          <option value="installment">
-            {{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.installment' | translate }}
-          </option>
-          <option value="owned">{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.owned' | translate }}</option>
-        </select>
-      </label>
-      <div class="filter-actions">
-        <button type="button" class="primary" (click)="search()" [disabled]="loading()">
-          <i class="pi pi-search"></i> {{ 'CUSTOMER_OPERATIONS.SEARCH' | translate }}
-        </button>
-        <button type="button" (click)="clear()" [disabled]="loading()">
-          <i class="pi pi-refresh"></i> {{ 'CUSTOMER_OPERATIONS.CLEAR' | translate }}
-        </button>
-      </div>
+      </span>
+      <p-dropdown
+        class="filter-control filter-service-type"
+        [options]="serviceTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="draft.serviceType"
+        [showClear]="!!draft.serviceType"
+        [placeholder]="'CUSTOMER_OPERATIONS.FILTER_SERVICE_TYPE' | translate"
+        (onChange)="onSelectFilterChange()"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+      <p-dropdown
+        class="filter-control filter-status"
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="draft.status"
+        [showClear]="!!draft.status"
+        [placeholder]="'CUSTOMER_OPERATIONS.FILTER_STATUS' | translate"
+        (onChange)="onSelectFilterChange()"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+      <p-dropdown
+        class="filter-control filter-payment"
+        [options]="paymentTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="draft.paymentType"
+        [showClear]="!!draft.paymentType"
+        [placeholder]="'CUSTOMER_OPERATIONS.FILTER_PAYMENT_TYPE' | translate"
+        (onChange)="onSelectFilterChange()"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+      <button type="button" class="clear filter-clear" (click)="clear()" [disabled]="loading()">
+        <i class="pi pi-replay"></i>{{ 'CUSTOMER_OPERATIONS.CLEAR' | translate }}
+      </button>
     </div>
-  </section>
+    @if (rangeError()) {
+      <small class="field-error">{{ 'CUSTOMER_OPERATIONS.DATE_RANGE_ERROR' | translate }}</small>
+    }
+  </div>
 
   <div class="summary">
     <article class="sales">
@@ -163,157 +209,159 @@
     </article>
   </div>
 
-  <div class="table-section">
-    <p-table
-      [value]="result()?.rows ?? []"
-      [rows]="rows()"
-      [first]="first()"
-      [totalRecords]="result()?.totalCount ?? 0"
-      [paginator]="true"
-      [lazy]="true"
-      [loading]="loading()"
-      [rowsPerPageOptions]="rowsPerPageOptions"
-      [showCurrentPageReport]="true"
-      [currentPageReportTemplate]="pageReportTemplate()"
-      paginatorDropdownAppendTo="body"
-      paginatorStyleClass="customer-ops-paginator"
-      styleClass="customer-ops-table"
-      (onLazyLoad)="onLazyLoad($event)"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th class="col-num">#</th>
-          <th class="col-customer">{{ 'CUSTOMER_OPERATIONS.CUSTOMER' | translate }}</th>
-          <th class="col-mobile sortable-head">
-            <span>{{ 'CUSTOMER_OPERATIONS.MOBILE' | translate }}</span>
-            <i class="pi pi-sort-alt sort-icon" aria-hidden="true"></i>
-          </th>
-          <th class="col-service">{{ 'CUSTOMER_OPERATIONS.COL_SERVICE_PACKAGE' | translate }}</th>
-          <th>{{ 'CUSTOMER_OPERATIONS.SERVICE_TYPE' | translate }}</th>
-          <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</th>
-          <th class="col-money">{{ 'CUSTOMER_OPERATIONS.TOTAL' | translate }}</th>
-          <th class="col-money">{{ 'CUSTOMER_OPERATIONS.COLLECTED' | translate }}</th>
-          <th class="col-money">{{ 'CUSTOMER_OPERATIONS.REMAINING' | translate }}</th>
-          <th>{{ 'CUSTOMER_OPERATIONS.COL_SESSIONS' | translate }}</th>
-          <th>{{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUS' | translate }}</th>
-          <th>{{ 'CUSTOMER_OPERATIONS.STATUS' | translate }}</th>
-          <th>{{ 'CUSTOMER_OPERATIONS.DATE' | translate }}</th>
-          <th class="col-actions">{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
-        <tr [class.row-blocked]="isRowBlocked(row)">
-          <td class="col-num">{{ rowNumber(rowIndex) }}</td>
-          <td class="col-customer customer-name">{{ row.customerName }}</td>
-          <td class="col-mobile mobile" dir="ltr">{{ row.mobile || '—' }}</td>
-          <td class="col-service">
-            <span class="service-cell">
-              <i [class]="serviceIcon(row.serviceType)" aria-hidden="true"></i>
-              <span class="service-name">{{ row.service || '—' }}</span>
-            </span>
-          </td>
-          <td>
-            <span class="type-pill" [ngClass]="serviceTypePillClass(row.serviceType)">
-              {{ 'CUSTOMER_OPERATIONS.TYPES.' + row.serviceType | translate }}
-            </span>
-          </td>
-          <td>
-            <span class="type-pill" [ngClass]="paymentTypePillClass(row.paymentType)">
-              {{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.' + row.paymentType | translate }}
-            </span>
-          </td>
-          <td class="col-money total-price">{{ (row.total | number: '1.2-2') || '—' }}</td>
-          <td class="col-money">
-            @if (row.collected != null) {
-              <span class="amount-pill amount-pill--paid">{{
-                row.collected | number: '1.2-2'
-              }}</span>
-            } @else {
-              —
-            }
-          </td>
-          <td class="col-money">
-            @if (row.remaining != null) {
-              <span
-                class="amount-pill"
-                [class.amount-pill--zero]="row.remaining <= 0"
-                [class.amount-pill--due]="row.remaining > 0"
-                >{{ row.remaining | number: '1.2-2' }}</span
-              >
-            } @else {
-              —
-            }
-          </td>
-          <td class="sessions-cell">{{ sessionsLabel(row) }}</td>
-          <td class="col-installment">
-            @if (row.installmentDueStatus === 'due') {
-              <span class="installment-urgent">{{
-                'CUSTOMER_OPERATIONS.INSTALLMENT_DUE_NOW' | translate
-              }}</span>
-            } @else if (row.installmentDueStatus === 'scheduled') {
-              <span class="installment-note">
-                <i class="pi pi-info-circle" aria-hidden="true"></i>
-                {{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.scheduled' | translate }}
+  <div class="operations-list">
+    <h2 class="grid-heading">
+      {{ 'CUSTOMER_OPERATIONS.GRID_HEADING' | translate: { count: result()?.totalCount ?? 0 } }}
+    </h2>
+    <div class="table-section">
+      <p-table
+        [value]="result()?.rows ?? []"
+        [rows]="rows()"
+        [first]="first()"
+        [totalRecords]="result()?.totalCount ?? 0"
+        [paginator]="true"
+        [lazy]="true"
+        [loading]="loading()"
+        [rowsPerPageOptions]="rowsPerPageOptions"
+        [showCurrentPageReport]="true"
+        [currentPageReportTemplate]="pageReportTemplate()"
+        paginatorDropdownAppendTo="body"
+        paginatorStyleClass="customer-ops-paginator"
+        styleClass="customer-ops-table"
+        (onLazyLoad)="onLazyLoad($event)"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="col-num">#</th>
+            <th class="col-customer">{{ 'CUSTOMER_OPERATIONS.CUSTOMER' | translate }}</th>
+            <th class="col-mobile">{{ 'CUSTOMER_OPERATIONS.MOBILE' | translate }}</th>
+            <th class="col-service">{{ 'CUSTOMER_OPERATIONS.COL_SERVICE_PACKAGE' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.SERVICE_TYPE' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPE' | translate }}</th>
+            <th class="col-money">{{ 'CUSTOMER_OPERATIONS.TOTAL' | translate }}</th>
+            <th class="col-money">{{ 'CUSTOMER_OPERATIONS.COLLECTED' | translate }}</th>
+            <th class="col-money">{{ 'CUSTOMER_OPERATIONS.REMAINING' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.COL_SESSIONS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.STATUS' | translate }}</th>
+            <th>{{ 'CUSTOMER_OPERATIONS.DATE' | translate }}</th>
+            <th class="col-actions">{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+          <tr [class.row-blocked]="isRowBlocked(row)">
+            <td class="col-num">{{ rowNumber(rowIndex) }}</td>
+            <td class="col-customer customer-name">{{ row.customerName }}</td>
+            <td class="col-mobile mobile" dir="ltr">{{ row.mobile || '—' }}</td>
+            <td class="col-service">
+              <span class="service-cell">
+                <i [class]="serviceIcon(row.serviceType)" aria-hidden="true"></i>
+                <span class="service-name">{{ row.service || '—' }}</span>
               </span>
-            } @else if (row.installmentDueStatus && row.installmentDueStatus !== 'none') {
-              {{
-                'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.' + row.installmentDueStatus | translate
-              }}
-            } @else {
-              —
-            }
-          </td>
-          <td>
-            <span class="status-pill" [ngClass]="statusPillClass(row)">
-              <span class="status-dot" aria-hidden="true"></span>
-              {{ rowStatusKey(row) | translate }}
-            </span>
-          </td>
-          <td>{{ formatOperationDate(row.operationDate) }}</td>
-          <td class="col-actions actions-cell">
-            <p-menu
-              #rowMenu
-              styleClass="customer-row-menu"
-              [model]="getRowMenu(row)"
-              [popup]="true"
-              appendTo="body"
-            />
-            <button
-              type="button"
-              class="row-menu-btn"
-              (click)="rowMenu.toggle($event)"
-              [attr.aria-label]="'CUSTOMER_OPERATIONS.ACTIONS' | translate"
-            >
-              <i class="pi pi-ellipsis-v"></i>
-            </button>
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="14" class="empty-msg">
-            <i class="pi pi-inbox"></i>
-            {{ 'CUSTOMER_OPERATIONS.EMPTY' | translate }}
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="paginatorleft">
-        @if (canExport()) {
-          <div class="export-action">
-            <p-button
-              [label]="'CUSTOMER_OPERATIONS.EXPORT' | translate"
-              icon="pi pi-file-excel"
-              [iconPos]="leadingIconPos()"
-              styleClass="export export-excel-btn"
-              [outlined]="true"
-              [loading]="exporting()"
-              [disabled]="exporting() || !result()"
-              (onClick)="export()"
-            />
-          </div>
-        }
-      </ng-template>
-    </p-table>
+            </td>
+            <td>
+              <span class="type-pill" [ngClass]="serviceTypePillClass(row.serviceType)">
+                {{ 'CUSTOMER_OPERATIONS.TYPES.' + row.serviceType | translate }}
+              </span>
+            </td>
+            <td>
+              <span class="type-pill" [ngClass]="paymentTypePillClass(row.paymentType)">
+                {{ 'CUSTOMER_OPERATIONS.PAYMENT_TYPES.' + row.paymentType | translate }}
+              </span>
+            </td>
+            <td class="col-money total-price">{{ (row.total | number: '1.2-2') || '—' }}</td>
+            <td class="col-money">
+              @if (row.collected != null) {
+                <span class="amount-pill amount-pill--paid">{{
+                  row.collected | number: '1.2-2'
+                }}</span>
+              } @else {
+                —
+              }
+            </td>
+            <td class="col-money">
+              @if (row.remaining != null) {
+                <span
+                  class="amount-pill"
+                  [class.amount-pill--zero]="row.remaining <= 0"
+                  [class.amount-pill--due]="row.remaining > 0"
+                  >{{ row.remaining | number: '1.2-2' }}</span
+                >
+              } @else {
+                —
+              }
+            </td>
+            <td class="sessions-cell">{{ sessionsLabel(row) }}</td>
+            <td class="col-installment">
+              @if (row.installmentDueStatus === 'due') {
+                <span class="installment-urgent">{{
+                  'CUSTOMER_OPERATIONS.INSTALLMENT_DUE_NOW' | translate
+                }}</span>
+              } @else if (row.installmentDueStatus === 'scheduled') {
+                <span class="installment-note">
+                  <i class="pi pi-info-circle" aria-hidden="true"></i>
+                  {{ 'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.scheduled' | translate }}
+                </span>
+              } @else if (row.installmentDueStatus && row.installmentDueStatus !== 'none') {
+                {{
+                  'CUSTOMER_OPERATIONS.INSTALLMENT_STATUSES.' + row.installmentDueStatus | translate
+                }}
+              } @else {
+                —
+              }
+            </td>
+            <td>
+              <span class="status-pill" [ngClass]="statusPillClass(row)">
+                <span class="status-dot" aria-hidden="true"></span>
+                {{ rowStatusKey(row) | translate }}
+              </span>
+            </td>
+            <td>{{ formatOperationDate(row.operationDate) }}</td>
+            <td class="col-actions actions-cell">
+              <p-menu
+                #rowMenu
+                styleClass="customer-row-menu"
+                [model]="getRowMenu(row)"
+                [popup]="true"
+                appendTo="body"
+              />
+              <button
+                type="button"
+                class="row-menu-btn"
+                (click)="rowMenu.toggle($event)"
+                [attr.aria-label]="'CUSTOMER_OPERATIONS.ACTIONS' | translate"
+              >
+                <i class="pi pi-ellipsis-v"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="14" class="empty-msg">
+              <i class="pi pi-inbox"></i>
+              {{ 'CUSTOMER_OPERATIONS.EMPTY' | translate }}
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="paginatorleft">
+          @if (canExport()) {
+            <div class="export-action">
+              <p-button
+                [label]="'CUSTOMER_OPERATIONS.EXPORT' | translate"
+                icon="pi pi-file-excel"
+                [iconPos]="leadingIconPos()"
+                styleClass="export export-excel-btn"
+                [outlined]="true"
+                [loading]="exporting()"
+                [disabled]="exporting() || !result()"
+                (onClick)="export()"
+              />
+            </div>
+          }
+        </ng-template>
+      </p-table>
+    </div>
   </div>
 
   <section class="import-panel">

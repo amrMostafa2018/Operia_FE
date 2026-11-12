@@ -25,42 +25,86 @@
   </ng-template>
 
   <form class="search-form" [formGroup]="searchForm" (ngSubmit)="search()">
-    <div class="search-row">
-      <span class="search-wrap field--phone" [class.is-invalid]="!!mobileError()" dir="ltr">
-        <span class="phone-row phone-row--intl phone-row--filter">
-          <ngx-intl-tel-input
-            [cssClass]="phoneInputCssClass"
-            [onlyCountries]="onlyCountries"
-            [selectedCountryISO]="selectedCountryISO()"
-            [enableAutoCountrySelect]="false"
-            [enablePlaceholder]="true"
-            [customPlaceholder]="'CUSTOMER_INQUIRY.SEARCH_PLACEHOLDER' | translate"
-            [searchCountryFlag]="false"
-            [selectFirstCountry]="false"
-            [separateDialCode]="true"
-            [phoneValidation]="true"
-            inputId="inquiry-mobile"
-            formControlName="mobile"
-            (countryChange)="onMobileCountryChange($event)"
-          />
+    <div class="search-panel">
+      <p class="search-hint">{{ 'CUSTOMER_INQUIRY.SEARCH_HINT' | translate }}</p>
+      <div class="search-row">
+        <span class="search-wrap field--phone" [class.is-invalid]="!!mobileError()" dir="ltr">
+          <span class="phone-row phone-row--intl phone-row--filter">
+            <ngx-intl-tel-input
+              [cssClass]="phoneInputCssClass"
+              [onlyCountries]="onlyCountries"
+              [selectedCountryISO]="selectedCountryISO()"
+              [enableAutoCountrySelect]="false"
+              [enablePlaceholder]="true"
+              [customPlaceholder]="'CUSTOMER_INQUIRY.SEARCH_PLACEHOLDER' | translate"
+              [searchCountryFlag]="false"
+              [selectFirstCountry]="false"
+              [separateDialCode]="true"
+              [phoneValidation]="true"
+              inputId="inquiry-mobile"
+              formControlName="mobile"
+              (countryChange)="onMobileCountryChange($event)"
+            />
+          </span>
+          <button
+            type="submit"
+            class="search-btn"
+            [disabled]="searchDisabled()"
+            [attr.aria-label]="'CUSTOMER_INQUIRY.SEARCH' | translate"
+          >
+            <i
+              class="pi"
+              [class.pi-search]="!loading()"
+              [class.pi-spin]="loading()"
+              [class.pi-spinner]="loading()"
+            ></i>
+          </button>
         </span>
-        <button
-          type="submit"
-          class="search-btn"
-          [disabled]="loading()"
-          [attr.aria-label]="'CUSTOMER_INQUIRY.SEARCH' | translate"
-        >
-          <i class="pi pi-search"></i>
-        </button>
-      </span>
-      @if (mobileError(); as errorKey) {
-        <small class="field-error">{{ errorKey | translate }}</small>
-      }
+        @if (mobileError(); as errorKey) {
+          <small class="field-error">{{ errorKey | translate }}</small>
+        }
+      </div>
     </div>
   </form>
 
   @if (loading()) {
-    <div class="empty-state">{{ 'CUSTOMER_INQUIRY.LOADING' | translate }}</div>
+    <div
+      class="inquiry-loading"
+      role="status"
+      [attr.aria-busy]="true"
+      [attr.aria-label]="'CUSTOMER_INQUIRY.LOADING' | translate"
+    >
+      <p class="loading-banner">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <span>{{ 'CUSTOMER_INQUIRY.LOADING' | translate }}</span>
+      </p>
+      <div class="customer-header skeleton-header" aria-hidden="true">
+        <div class="customer-identity">
+          <span class="avatar skeleton-block"></span>
+          <div class="customer-meta">
+            <span class="skeleton-line short"></span>
+            <span class="skeleton-line tiny"></span>
+          </div>
+        </div>
+        <span class="skeleton-chip"></span>
+        <span class="header-spacer"></span>
+        <span class="skeleton-chip"></span>
+        <span class="skeleton-chip wide"></span>
+      </div>
+      <div class="records-list" aria-hidden="true">
+        @for (slot of searchSkeletonSlots; track slot) {
+          <div class="record-card skeleton-card">
+            <div class="record-toggle">
+              <span class="skeleton-chip"></span>
+              <span class="skeleton-block index"></span>
+              <span class="skeleton-line"></span>
+              <span class="skeleton-chip"></span>
+              <span class="skeleton-chip"></span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
   }
   @if (result(); as inquiry) {
     <div class="customer-header">
@@ -133,7 +177,40 @@
           @if (selectedPurchaseId() === purchase.id) {
             <div class="record-body">
               @if (detailsLoading()) {
-                <div class="empty-state">{{ 'CUSTOMER_INQUIRY.DETAILS_LOADING' | translate }}</div>
+                <div
+                  class="inquiry-loading inquiry-loading--details"
+                  role="status"
+                  [attr.aria-busy]="true"
+                  [attr.aria-label]="'CUSTOMER_INQUIRY.DETAILS_LOADING' | translate"
+                >
+                  <p class="loading-banner">
+                    <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                    <span>{{ 'CUSTOMER_INQUIRY.DETAILS_LOADING' | translate }}</span>
+                  </p>
+                  <div class="meta-row" aria-hidden="true">
+                    @for (slot of detailsMetaSlots; track slot) {
+                      <div class="meta-item">
+                        <span class="skeleton-line tiny"></span>
+                        <span class="skeleton-line short"></span>
+                      </div>
+                    }
+                  </div>
+                  <div class="balance-matrix" aria-hidden="true">
+                    @for (slot of detailsBalanceSlots; track slot) {
+                      <div class="balance-row">
+                        <span class="skeleton-cell label"></span>
+                        <span class="skeleton-cell"></span>
+                        <span class="skeleton-cell"></span>
+                        <span class="skeleton-cell"></span>
+                      </div>
+                    }
+                  </div>
+                  <div class="skeleton-table" aria-hidden="true">
+                    @for (slot of detailsTableSlots; track slot) {
+                      <span class="skeleton-line"></span>
+                    }
+                  </div>
+                </div>
               }
               @if (purchaseDetails(); as details) {
                 <div class="meta-row">

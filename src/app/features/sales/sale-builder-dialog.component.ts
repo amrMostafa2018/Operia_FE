@@ -14,7 +14,6 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
@@ -120,8 +119,25 @@ export class SaleBuilderDialogComponent {
   readonly quote = signal<SaleQuote | null>(null);
   readonly quoteLoading = signal(false);
   readonly saving = signal(false);
-  readonly loading = signal(false);
+  readonly catalogLoading = signal(false);
+  readonly categoriesLoading = signal(false);
+  readonly branchesLoading = signal(false);
   readonly customerLoading = signal(false);
+  readonly showCatalogSkeleton = computed(
+    () => this.catalogLoading() && this.catalog().length === 0
+  );
+  readonly showCategorySkeleton = computed(
+    () => this.categoriesLoading() && this.categories().length === 0
+  );
+  readonly showBranchSkeleton = computed(
+    () => this.branchesLoading() && this.branches().length === 0
+  );
+  readonly optionsRefreshing = computed(
+    () =>
+      !this.showCatalogSkeleton() &&
+      ((this.catalogLoading() && this.catalog().length > 0) ||
+        (this.categoriesLoading() && this.categories().length > 0))
+  );
   readonly pendingConfirmation = signal<PendingConfirmation | null>(null);
   readonly showUnlisted = signal(false);
   readonly editingUnlistedKey = signal<string | null>(null);
@@ -134,10 +150,13 @@ export class SaleBuilderDialogComponent {
   readonly recoveryError = signal<string | null>(null);
   readonly bookingRequested = signal(false);
   readonly canBookNow = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
-  readonly catalogSkeletonSlots = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  readonly catalogSkeletonSlots = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  readonly categorySkeletonSlots = [0, 1, 2, 3];
   private quoteVersion = 0;
   private customerVersion = 0;
   private optionsVersion = 0;
+  private optionsErrorVersion = -1;
+  private optionsLang: string | null = null;
   private confirmationKey = crypto.randomUUID();
   private collectionKey = crypto.randomUUID();
   private readonly recoveryStorageKey = 'operia.sale.pending';
@@ -214,10 +233,6 @@ export class SaleBuilderDialogComponent {
     this.pendingCustomerMode.set(null);
     this.customerForm.controls.mobile.enable({ emitEvent: false });
     this.customerForm.controls.customerId.enable({ emitEvent: false });
-    this.catalog.set([]);
-    this.categories.set([]);
-    this.branches.set([]);
-    this.paymentMethods.set([]);
     this.rows.set([]);
     this.quote.set(null);
     this.itemError.set(null);
@@ -230,38 +245,108 @@ export class SaleBuilderDialogComponent {
 
   private loadOptions(): void {
     const version = ++this.optionsVersion;
-    this.loading.set(true);
-    forkJoin({
-      catalog: this.sales.catalog(),
-      categories: this.sales.categories(),
-      branches: this.sales.branches(),
-      paymentMethods: this.sales.paymentMethods(),
-    })
+    const lang = this.language.currentLang();
+    if (this.optionsLang !== null && this.optionsLang !== lang) {
+      this.catalog.set([]);
+      this.categories.set([]);
+      this.branches.set([]);
+      this.paymentMethods.set([]);
+    }
+    this.optionsLang = lang;
+    this.applyCachedSelections();
+    this.catalogLoading.set(true);
+    this.categoriesLoading.set(true);
+    this.branchesLoading.set(true);
+
+    this.sales
+      .catalog()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: options => {
+        next: catalog => {
           if (version !== this.optionsVersion) return;
           const today = new Date().toISOString().slice(0, 10);
           this.catalog.set(
-            options.catalog.items.filter(
+            catalog.items.filter(
               offer => offer.status === 'active' && (!offer.endsAt || offer.endsAt >= today)
             )
           );
-          this.categories.set(options.categories);
-          this.branches.set(options.branches);
-          this.paymentMethods.set(options.paymentMethods);
-          if (options.branches.length === 1) {
-            this.customerForm.controls.branchId.setValue(options.branches[0].id);
-          }
-          this.selectedMethod.set(options.paymentMethods[0] ?? null);
-          this.loading.set(false);
+          this.catalogLoading.set(false);
         },
         error: (error: HttpErrorResponse) => {
           if (version !== this.optionsVersion) return;
-          this.loading.set(false);
-          this.showError(error);
+          this.catalogLoading.set(false);
+          this.reportOptionsError(version, error);
         },
       });
+
+    this.sales
+      .categories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: categories => {
+          if (version !== this.optionsVersion) return;
+          this.categories.set(categories);
+          this.categoriesLoading.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          if (version !== this.optionsVersion) return;
+          this.categoriesLoading.set(false);
+          this.reportOptionsError(version, error);
+        },
+      });
+
+    this.sales
+      .branches()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: branches => {
+          if (version !== this.optionsVersion) return;
+          this.branches.set(branches);
+          if (branches.length === 1) {
+            this.customerForm.controls.branchId.setValue(branches[0].id);
+          }
+          this.branchesLoading.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          if (version !== this.optionsVersion) return;
+          this.branchesLoading.set(false);
+          this.reportOptionsError(version, error);
+        },
+      });
+
+    this.sales
+      .paymentMethods()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: methods => {
+          if (version !== this.optionsVersion) return;
+          this.paymentMethods.set(methods);
+          const selected = this.selectedMethod();
+          if (!selected || !methods.includes(selected)) {
+            this.selectedMethod.set(methods[0] ?? null);
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          if (version !== this.optionsVersion) return;
+          this.reportOptionsError(version, error);
+        },
+      });
+  }
+
+  private applyCachedSelections(): void {
+    const branches = this.branches();
+    if (branches.length === 1 && !this.customerForm.controls.branchId.value) {
+      this.customerForm.controls.branchId.setValue(branches[0].id);
+    }
+    if (!this.selectedMethod() && this.paymentMethods().length > 0) {
+      this.selectedMethod.set(this.paymentMethods()[0]);
+    }
+  }
+
+  private reportOptionsError(version: number, error: HttpErrorResponse): void {
+    if (this.optionsErrorVersion === version) return;
+    this.optionsErrorVersion = version;
+    this.showError(error);
   }
 
   searchCustomer(): void {
