@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { TagModule } from 'primeng/tag';
 import { CurrencyService } from '@core/services/currency.service';
 import { LanguageService } from '@core/services/language.service';
 import {
@@ -12,12 +11,13 @@ import {
   registerStatusKey,
   registerStatusSeverity,
 } from '../models/booking-register.model';
+import { statusPillClass } from '@app/shared/utils/status-tag.util';
 
 /** Adapts register rows for the shared booking details dialog. */
 @Component({
   selector: 'app-booking-register-details-dialog',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule, TagModule, TranslatePipe],
+  imports: [CommonModule, DialogModule, ButtonModule, TranslatePipe],
   templateUrl: './booking-register-details-dialog.component.html',
   styleUrl: './booking-register-details-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -95,4 +95,6 @@ export class BookingRegisterDetailsDialogComponent {
   statusSeverity(status: BookingRegisterStatus) {
     return registerStatusSeverity(status);
   }
+
+  readonly statusPillClass = statusPillClass;
 }

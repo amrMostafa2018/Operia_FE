@@ -22,11 +22,11 @@ import {
 import {
   bookingStatusKey,
   bookingStatusSeverity,
+  statusPillClass,
   TagSeverity,
 } from '@app/shared/utils/status-tag.util';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
 import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { MenuModule } from 'primeng/menu';
@@ -46,6 +46,7 @@ import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-act
 import { CustomerInquiryDialogComponent } from './customer-inquiry-dialog/customer-inquiry-dialog.component';
 import { MOCK_STATS, StatCard } from './models/dashboard.model';
 import { DashboardRevenueService } from './dashboard-revenue.service';
+import { DashboardRevenueTableComponent } from './dashboard-revenue-table.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -55,7 +56,6 @@ import { DashboardRevenueService } from './dashboard-revenue.service';
     RouterLink,
     TableModule,
     ButtonModule,
-    TagModule,
     DropdownModule,
     CalendarModule,
     MenuModule,
@@ -65,6 +65,7 @@ import { DashboardRevenueService } from './dashboard-revenue.service';
     CustomerInquiryDialogComponent,
     SaleBuilderDialogComponent,
     ConfirmActionDialogComponent,
+    DashboardRevenueTableComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -84,7 +85,10 @@ export class DashboardComponent {
   readonly canInquiry = computed(() => this.permissions.hasPermission(Policies.CustomersRead));
   readonly canBookings = computed(() => this.permissions.hasPermission(Policies.BookingsRead));
   readonly canExport = computed(() => this.permissions.hasPermission(Policies.DashboardExport));
+  readonly canReadRevenue = computed(() => this.permissions.hasPermission(Policies.RevenueRead));
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
+  /** Today's bookings still use sample rows, so the table stays a Coming Soon panel. */
+  readonly bookingsComingSoon = true;
 
   readonly stats = signal<StatCard[]>(
     MOCK_STATS.map(stat => ({
@@ -101,7 +105,7 @@ export class DashboardComponent {
   readonly nameSearch = signal('');
   readonly selectedEmployee = signal<string | null>(null);
   readonly selectedStatus = signal<BookingStatus | null>(null);
-  readonly rows = signal(10);
+  readonly rows = signal(5);
   readonly first = signal(0);
 
   readonly customerInquiryOpen = signal(false);
@@ -118,12 +122,7 @@ export class DashboardComponent {
     ...BOOKING_STATUS_OPTIONS.filter(option => option.value !== null),
   ];
 
-  readonly rowOptions = [
-    { label: '10', value: 10 },
-    { label: '25', value: 25 },
-    { label: '50', value: 50 },
-    { label: '100', value: 100 },
-  ];
+  readonly rowOptions = [5, 10, 25, 50, 100];
 
   readonly pageReportTemplate = signal(this.translate.instant('DASHBOARD.PAGE_REPORT'));
 
@@ -179,17 +178,9 @@ export class DashboardComponent {
   });
 
   constructor() {
-    this.loadBookings();
     this.loadRevenue();
-    this.bookingService
-      .getEmployees()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(emps => {
-        this.employees.set([
-          { label: 'DASHBOARD.ALL_EMPLOYEES', value: null },
-          ...emps.map(e => ({ label: e.fullName, value: e.id })),
-        ]);
-      });
+    this.loadNewCustomers();
+    this.loadMonthlyBookings();
 
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('DASHBOARD.PAGE_REPORT'));
@@ -211,6 +202,37 @@ export class DashboardComponent {
                   : stat.labelKey === 'DASHBOARD.MONTHLY_REVENUE_TOTAL'
                     ? revenue.month
                     : stat.value,
+            }))
+          ),
+      });
+  }
+
+  private loadNewCustomers(): void {
+    this.revenueService
+      .newCustomers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result =>
+          this.stats.update(stats =>
+            stats.map(stat => ({
+              ...stat,
+              value: stat.labelKey === 'DASHBOARD.NEW_CUSTOMERS_MONTH' ? result.count : stat.value,
+            }))
+          ),
+      });
+  }
+
+  private loadMonthlyBookings(): void {
+    this.revenueService
+      .monthlyBookings()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result =>
+          this.stats.update(stats =>
+            stats.map(stat => ({
+              ...stat,
+              value:
+                stat.labelKey === 'DASHBOARD.MONTHLY_BOOKINGS_TOTAL' ? result.count : stat.value,
             }))
           ),
       });
@@ -263,6 +285,8 @@ export class DashboardComponent {
   statusSeverity(status: BookingStatus): TagSeverity {
     return bookingStatusSeverity(status);
   }
+
+  readonly statusPillClass = statusPillClass;
 
   statusKey(status: BookingStatus): string {
     return bookingStatusKey(status);
@@ -321,6 +345,7 @@ export class DashboardComponent {
 
   onSaleConfirmed(result: ConfirmSaleResult): void {
     this.loadRevenue();
+    this.loadMonthlyBookings();
     this.toast.add({
       severity: 'success',
       summary: 'OPERIA',

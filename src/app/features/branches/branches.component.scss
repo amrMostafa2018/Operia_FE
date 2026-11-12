@@ -17,6 +17,8 @@
 }
 .page-head {
   @include page-list.page-head-base;
+  align-items: flex-start;
+  margin-bottom: 0;
 
   h1 {
     font-size: 2rem;
@@ -26,6 +28,14 @@
       color: #3f18e8;
     }
   }
+
+  strong {
+    white-space: nowrap;
+  }
+}
+
+.page-head + .filter-bar {
+  margin-top: -0.9rem;
 }
 .filter-bar {
   display: flex;
@@ -104,7 +114,6 @@
   .p-datatable.branches-table .p-datatable-thead > tr > th {
     font-weight: 700;
     color: var(--text-primary);
-    font-size: 0.8rem;
     white-space: nowrap;
   }
 
@@ -113,11 +122,6 @@
   .p-datatable.branches-table .p-datatable-tbody > tr > td.col-location,
   .p-datatable.branches-table .p-datatable-tbody > tr > td.col-actions {
     text-align: center;
-  }
-
-  .p-datatable.branches-table .p-datatable-tbody > tr > td {
-    font-size: 0.9rem;
-    vertical-align: middle;
   }
 
   .p-datatable.branches-table .p-datatable-tbody > tr > td.col-name {
@@ -346,7 +350,9 @@ label,
   border-radius: 7px;
   box-shadow: none;
   background: #fff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
     border-color: #a7a3bd;
@@ -705,7 +711,7 @@ input {
     grid-template-rows: auto auto auto;
     align-items: start;
     gap: 0.35rem 0.65rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
   }
 
   .page-head > div {

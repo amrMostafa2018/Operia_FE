@@ -26,7 +26,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelect, MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
+import { statusPillClass } from '@app/shared/utils/status-tag.util';
 import { MessageService } from 'primeng/api';
 import { Branch, BranchService } from '@app/features/branches/branch.service';
 import { PermissionService } from '@core/services/permission.service';
@@ -88,7 +88,6 @@ interface BranchScheduleUi {
     InputTextModule,
     MultiSelectModule,
     TableModule,
-    TagModule,
     ConfirmActionDialogComponent,
     NgxIntlTelInputModule,
     PhoneUsernameAutocompleteDirective,
@@ -101,6 +100,8 @@ interface BranchScheduleUi {
 })
 export class EmployeesComponent implements OnInit {
   @ViewChild('branchMultiselect') private branchMultiselect?: MultiSelect;
+
+  readonly statusPillClass = statusPillClass;
 
   private readonly service = inject(EmployeeService);
   private readonly branchesApi = inject(BranchService);

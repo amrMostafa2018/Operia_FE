@@ -15,6 +15,7 @@
   align-items: flex-start;
   align-self: flex-start;
   gap: 0.35rem;
+  margin-bottom: 0;
   text-align: start;
 }
 
@@ -59,6 +60,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
+  margin-top: -0.9rem;
   width: 100%;
   background: var(--surface-card);
   border: 1px solid var(--surface-border);
@@ -83,6 +85,45 @@
   gap: 0.25rem;
   min-width: 140px;
   overflow: visible;
+}
+
+.filter-dates-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.filter-dates {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.45rem;
+}
+
+.date-range-sep {
+  flex: 0 0 auto;
+  color: #8b90a5;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.date-field {
+  position: relative;
+  flex: 0 0 19rem;
+  width: 19rem;
+}
+
+.date-caption {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b728a;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .filter-label {
@@ -240,6 +281,7 @@
   .filter-bar {
     flex-direction: column;
     align-items: stretch;
+    margin-top: 0;
     padding: 0.75rem;
   }
 
@@ -251,14 +293,25 @@
     width: 100%;
   }
 
-  .filter-field {
+  .filter-field,
+  .filter-dates-block,
+  .date-field {
     width: 100%;
     min-width: 0;
+    flex: 1 1 auto;
   }
 
-  .filter-field:nth-child(1),
-  .filter-field:nth-child(2) {
+  .filter-dates-block {
     grid-column: 1 / -1;
+  }
+
+  .filter-dates {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .date-range-sep {
+    align-self: center;
   }
 
   .filter-clear {
@@ -269,8 +322,8 @@
   :host ::ng-deep {
     .filter-drop,
     .filter-drop .p-dropdown,
-    .date-picker.p-calendar,
-    .date-picker .p-inputtext {
+    .date-field .date-picker.p-calendar,
+    .date-field .date-picker .p-inputtext {
       width: 100%;
       min-width: 0;
     }
@@ -461,50 +514,93 @@
     text-align: center;
   }
 
-  .export-action {
-    display: inline-flex;
-    flex-shrink: 0;
-  }
-
-  .export-btn.p-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.82rem !important;
-    padding: 0.5rem 0.95rem !important;
-    border-color: var(--color-primary) !important;
-    color: var(--color-primary) !important;
-    background: transparent !important;
-
-    &:enabled:hover {
-      background: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
-      border-color: var(--color-primary) !important;
-      color: var(--color-primary) !important;
-    }
-
-    .p-button-icon-left,
-    .p-button-icon-right {
-      margin: 0 !important;
-    }
-  }
-
   .filter-drop .p-dropdown {
     font-size: 0.82rem;
     min-width: 140px;
   }
 
-  .date-picker .p-inputtext {
-    font-size: 0.875rem;
-    padding: 0.45rem 0.75rem;
-    min-width: 9.5rem;
-  }
-
-  .date-picker.p-calendar,
-  .filter-field .date-picker.p-calendar {
+  .date-field .date-picker.p-calendar {
     display: inline-flex;
+    align-items: center;
     width: 100%;
+    border: 1px solid #dfe0e9;
+    border-radius: 10px;
+    background: #fff;
+    overflow: visible;
   }
 
+  .date-field .date-picker .p-inputtext {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    font-size: 0.875rem;
+    direction: ltr;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    text-overflow: clip;
+    min-height: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .date-field .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button,
+  .date-field .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button:enabled:hover {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 42px;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    color: var(--color-primary);
+    box-shadow: none;
+  }
+
+  .date-field .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
+    color: var(--text-secondary);
+  }
+}
+
+@media (max-width: $bp-md) {
+  :host ::ng-deep {
+    .date-field .date-picker.p-calendar {
+      width: 100%;
+      min-width: 0;
+      flex-shrink: 1;
+    }
+  }
+}
+
+:host-context([dir='rtl']) ::ng-deep .date-field .date-picker.p-calendar-w-btn .p-inputtext {
+  padding-left: 4.25rem;
+  padding-right: 5.6rem;
+}
+
+:host-context([dir='rtl'])
+  ::ng-deep
+  .date-field
+  .date-picker.p-calendar-w-btn
+  .p-calendar-clear-icon {
+  right: auto !important;
+  left: 2.35rem !important;
+}
+
+:host-context([dir='ltr']) ::ng-deep .date-field .date-picker.p-calendar-w-btn .p-inputtext {
+  padding-right: 4.25rem;
+  padding-left: 5.6rem;
+}
+
+:host-context([dir='ltr'])
+  ::ng-deep
+  .date-field
+  .date-picker.p-calendar-w-btn
+  .p-calendar-clear-icon {
+  left: auto !important;
+  right: 2.35rem !important;
+}
+
+:host ::ng-deep {
   .activity-revenue-paginator.p-paginator,
   .activity-revenue-table .p-paginator {
     justify-content: flex-start;

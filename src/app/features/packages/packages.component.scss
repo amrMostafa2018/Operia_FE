@@ -20,6 +20,10 @@
   @include page-list.page-head-base;
 }
 
+.page-head + .summary {
+  margin-top: -0.9rem;
+}
+
 .summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -192,17 +196,9 @@
     color: var(--text-primary);
   }
 
-  .p-datatable.packages-table .p-datatable-tbody > tr > td {
-    font-size: 0.9rem;
-  }
-
   .p-datatable.packages-table .p-datatable-thead > tr > th.col-actions,
   .p-datatable.packages-table .p-datatable-tbody > tr > td.col-actions {
     text-align: center;
-  }
-
-  .status-tag.p-tag {
-    @include data-table.status-tag-pill;
   }
 
   .packages-paginator.p-paginator,
@@ -413,7 +409,7 @@
     grid-template-rows: auto auto;
     align-items: start;
     gap: 0.35rem 0.65rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
   }
 
   .page-head > div {

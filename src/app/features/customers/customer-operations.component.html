@@ -1,54 +1,61 @@
 <section class="customer-operations">
   <div class="page-header">
-    <div class="page-title">
-      <i class="pi pi-users" aria-hidden="true"></i>
-      <h1>{{ 'CUSTOMER_OPERATIONS.TITLE' | translate }}</h1>
+    <div class="page-heading">
+      <div class="page-title">
+        <i class="pi pi-users" aria-hidden="true"></i>
+        <h1>{{ 'CUSTOMER_OPERATIONS.TITLE' | translate }}</h1>
+      </div>
+      <nav class="breadcrumb" [attr.aria-label]="'COMMON.ARIA.BREADCRUMB' | translate">
+        <span>{{ 'NAV.SECTION.MAIN' | translate }}</span>
+        <i class="pi pi-angle-left" aria-hidden="true"></i>
+        <span class="breadcrumb-current">{{ 'NAV.CUSTOMERS' | translate }}</span>
+      </nav>
     </div>
-    <nav class="breadcrumb" [attr.aria-label]="'COMMON.ARIA.BREADCRUMB' | translate">
-      <span>{{ 'NAV.SECTION.MAIN' | translate }}</span>
-      <i class="pi pi-angle-left" aria-hidden="true"></i>
-      <span class="breadcrumb-current">{{ 'NAV.CUSTOMERS' | translate }}</span>
-    </nav>
+    <div class="header-dates">
+      <div class="filter-dates">
+        <div class="filter-date">
+          <span class="date-caption" id="customer-ops-from-date">{{
+            'CUSTOMER_OPERATIONS.FROM_DATE' | translate
+          }}</span>
+          <p-calendar
+            class="filter-control"
+            [ngModel]="draftFromDate()"
+            (ngModelChange)="onDateFromChange($event)"
+            [readonlyInput]="true"
+            [showIcon]="true"
+            [showClear]="!!draftFromDate()"
+            ariaLabelledBy="customer-ops-from-date"
+            dateFormat="dd/mm/yy"
+            placeholder=""
+            styleClass="date-picker"
+          />
+        </div>
+        <span class="date-range-sep" aria-hidden="true">-</span>
+        <div class="filter-date">
+          <span class="date-caption" id="customer-ops-to-date">{{
+            'CUSTOMER_OPERATIONS.TO_DATE' | translate
+          }}</span>
+          <p-calendar
+            class="filter-control"
+            [ngModel]="draftToDate()"
+            (ngModelChange)="onDateToChange($event)"
+            [readonlyInput]="true"
+            [showIcon]="true"
+            [showClear]="!!draftToDate()"
+            ariaLabelledBy="customer-ops-to-date"
+            dateFormat="dd/mm/yy"
+            placeholder=""
+            styleClass="date-picker"
+          />
+        </div>
+      </div>
+      @if (rangeError()) {
+        <small class="field-error">{{ 'CUSTOMER_OPERATIONS.DATE_RANGE_ERROR' | translate }}</small>
+      }
+    </div>
   </div>
 
   <div class="filter-bar" [attr.aria-label]="'CUSTOMER_OPERATIONS.FILTERS' | translate">
-    <div class="filter-dates">
-      <div class="filter-date">
-        <span class="date-caption" id="customer-ops-from-date">{{
-          'CUSTOMER_OPERATIONS.FROM_DATE' | translate
-        }}</span>
-        <p-calendar
-          class="filter-control"
-          [ngModel]="draftFromDate()"
-          (ngModelChange)="onDateFromChange($event)"
-          [readonlyInput]="true"
-          [showIcon]="true"
-          [showClear]="!!draftFromDate()"
-          ariaLabelledBy="customer-ops-from-date"
-          dateFormat="dd/mm/yy"
-          placeholder=""
-          styleClass="date-picker"
-        />
-      </div>
-      <span class="date-range-sep" aria-hidden="true">-</span>
-      <div class="filter-date">
-        <span class="date-caption" id="customer-ops-to-date">{{
-          'CUSTOMER_OPERATIONS.TO_DATE' | translate
-        }}</span>
-        <p-calendar
-          class="filter-control"
-          [ngModel]="draftToDate()"
-          (ngModelChange)="onDateToChange($event)"
-          [readonlyInput]="true"
-          [showIcon]="true"
-          [showClear]="!!draftToDate()"
-          ariaLabelledBy="customer-ops-to-date"
-          dateFormat="dd/mm/yy"
-          placeholder=""
-          styleClass="date-picker"
-        />
-      </div>
-    </div>
     <div class="filters">
       <span class="p-input-icon-right search filter-search">
         <button
@@ -163,9 +170,6 @@
         <i class="pi pi-replay"></i>{{ 'CUSTOMER_OPERATIONS.CLEAR' | translate }}
       </button>
     </div>
-    @if (rangeError()) {
-      <small class="field-error">{{ 'CUSTOMER_OPERATIONS.DATE_RANGE_ERROR' | translate }}</small>
-    }
   </div>
 
   <div class="summary">

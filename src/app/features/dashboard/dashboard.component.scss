@@ -37,9 +37,14 @@
   grid-column: 2;
   justify-self: center;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   gap: 0.75rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+}
+
+:host-context([dir='rtl']) .date-filters {
+  direction: rtl;
 }
 
 .bookings-link {
@@ -71,21 +76,30 @@
   }
 }
 
+.date-range-sep {
+  flex: 0 0 auto;
+  color: #8b90a5;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 .date-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  position: relative;
+  flex: 0 0 21rem;
+  width: 21rem;
+  max-width: 100%;
+}
 
-  .date-label {
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-
-  ::ng-deep .date-picker .p-inputtext {
-    font-size: 0.875rem;
-    padding: 0.45rem 0.75rem;
-  }
+.date-caption {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b728a;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 ::ng-deep {
@@ -116,6 +130,78 @@
     padding: 0.5rem 1rem !important;
     white-space: nowrap;
   }
+}
+
+:host ::ng-deep {
+  .date-field .date-picker.p-calendar {
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #dfe0e9;
+    border-radius: 10px;
+    background: #fff;
+    overflow: visible;
+  }
+
+  .date-field .date-picker .p-inputtext {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    font-size: 0.875rem;
+    direction: ltr;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    text-overflow: clip;
+    min-height: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .date-field .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button,
+  .date-field .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button:enabled:hover {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 42px;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    color: var(--color-primary);
+    box-shadow: none;
+  }
+
+  .date-field .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
+    color: var(--text-secondary);
+  }
+}
+
+:host-context([dir='rtl']) ::ng-deep .date-field .date-picker.p-calendar-w-btn .p-inputtext {
+  padding-left: 4.25rem;
+  padding-right: 5.6rem;
+}
+
+:host-context([dir='rtl'])
+  ::ng-deep
+  .date-field
+  .date-picker.p-calendar-w-btn
+  .p-calendar-clear-icon {
+  right: auto !important;
+  left: 2.35rem !important;
+}
+
+:host-context([dir='ltr']) ::ng-deep .date-field .date-picker.p-calendar-w-btn .p-inputtext {
+  padding-right: 4.25rem;
+  padding-left: 5.6rem;
+}
+
+:host-context([dir='ltr'])
+  ::ng-deep
+  .date-field
+  .date-picker.p-calendar-w-btn
+  .p-calendar-clear-icon {
+  left: auto !important;
+  right: 2.35rem !important;
 }
 
 :host-context([dir='rtl']) ::ng-deep .sell-action .p-button {
@@ -279,12 +365,8 @@
     @include data-table.primeng-data-table-theme;
   }
 
-  .status-tag.p-tag {
-    @include data-table.status-tag-pill;
-  }
-
-  .dashboard-paginator {
-    padding: 0.75rem 1.25rem;
+  .bookings-table .p-datatable-tbody > tr > td.service-cell {
+    white-space: pre-line;
   }
 }
 
@@ -327,32 +409,58 @@
   }
 }
 
-.row-action-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 0.25rem 0.5rem;
-  border-radius: $border-radius;
-  font-size: 1rem;
-
-  &:hover {
-    background: var(--surface-hover);
-    color: var(--color-primary);
-  }
-}
-
-.table-footer {
+.coming-soon {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  padding: 0.75rem 1.25rem;
-  border-top: 1px solid var(--surface-border);
+  justify-content: center;
+  gap: 0.85rem;
+  min-height: 280px;
+  margin: 1.25rem;
+  padding: 2.75rem 1.5rem;
+  text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 28%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
+      transparent 58%
+    ),
+    var(--surface-card, #fff);
 }
 
-::ng-deep .export-btn .p-button {
-  font-size: 0.82rem !important;
-  padding: 0.4rem 0.85rem !important;
+.coming-soon-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  background: var(--color-primary-light, #eae9ff);
+  color: var(--color-primary);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-primary) 8%, transparent);
+  font-size: 1.45rem;
+}
+
+.coming-soon-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.coming-soon p {
+  margin: 0;
+  max-width: 26rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
 }
 
 .detail-grid {

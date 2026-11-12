@@ -44,3 +44,43 @@ export function subscriptionStatusSeverity(status: SubscriptionStatus): TagSever
 export function subscriptionStatusKey(status: SubscriptionStatus): string {
   return SUBSCRIPTION_STATUS_KEYS[status];
 }
+
+const STATUS_PILL_CLASS: Record<string, string> = {
+  success: 'status-pill status-pill--success',
+  warning: 'status-pill status-pill--warning',
+  warn: 'status-pill status-pill--warning',
+  danger: 'status-pill status-pill--danger',
+  info: 'status-pill status-pill--info',
+};
+
+/** Maps a PrimeNG tag severity onto the customer-operations status pill. */
+export function statusPillClass(severity: string | null | undefined): string {
+  return STATUS_PILL_CLASS[severity ?? ''] ?? 'status-pill status-pill--neutral';
+}
+
+/** Maps a payment method onto the customer-operations type pill. */
+export function paymentTypePillClass(method: string | null | undefined): string {
+  const value = (method ?? '').trim().toLowerCase();
+  if (!value) {
+    return '';
+  }
+  if (value === 'cash') {
+    return 'type-pill type-pill--cash';
+  }
+  if (value === 'installment') {
+    return 'type-pill type-pill--installment';
+  }
+  if (value === 'owned') {
+    return 'type-pill type-pill--owned';
+  }
+  if (value.includes('visa') || value.includes('card')) {
+    return 'type-pill type-pill--card';
+  }
+  if (value === 'bank_transfer' || value === 'bank' || value === 'fawry') {
+    return 'type-pill type-pill--transfer';
+  }
+  if (value === 'instapay' || value === 'e_wallet' || value === 'wallet') {
+    return 'type-pill type-pill--wallet';
+  }
+  return 'type-pill type-pill--neutral';
+}

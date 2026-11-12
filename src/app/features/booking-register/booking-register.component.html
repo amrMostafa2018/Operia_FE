@@ -45,31 +45,40 @@
 
   <div class="filter-bar">
     <div class="filter-fields">
-      <div class="filter-field">
-        <span class="filter-label">{{ 'BOOKING_REGISTER.DATE_FROM' | translate }}</span>
-        <p-calendar
-          [ngModel]="draftDateFrom()"
-          (ngModelChange)="onDateFromChange($event)"
-          [readonlyInput]="true"
-          [showIcon]="true"
-          [showClear]="true"
-          dateFormat="dd/mm/yy"
-          [placeholder]="'BOOKING_REGISTER.DATE_FROM' | translate"
-          styleClass="date-picker"
-        />
-      </div>
-      <div class="filter-field">
-        <span class="filter-label">{{ 'BOOKING_REGISTER.DATE_TO' | translate }}</span>
-        <p-calendar
-          [ngModel]="draftDateTo()"
-          (ngModelChange)="onDateToChange($event)"
-          [readonlyInput]="true"
-          [showIcon]="true"
-          [showClear]="true"
-          dateFormat="dd/mm/yy"
-          [placeholder]="'BOOKING_REGISTER.DATE_TO' | translate"
-          styleClass="date-picker"
-        />
+      <div class="filter-dates">
+        <div class="date-field">
+          <span class="date-caption" id="register-from-date">{{
+            'BOOKING_REGISTER.DATE_FROM' | translate
+          }}</span>
+          <p-calendar
+            [ngModel]="draftDateFrom()"
+            (ngModelChange)="onDateFromChange($event)"
+            [readonlyInput]="true"
+            [showIcon]="true"
+            [showClear]="!!draftDateFrom()"
+            ariaLabelledBy="register-from-date"
+            dateFormat="dd/mm/yy"
+            placeholder=""
+            styleClass="date-picker"
+          />
+        </div>
+        <span class="date-range-sep" aria-hidden="true">-</span>
+        <div class="date-field">
+          <span class="date-caption" id="register-to-date">{{
+            'BOOKING_REGISTER.DATE_TO' | translate
+          }}</span>
+          <p-calendar
+            [ngModel]="draftDateTo()"
+            (ngModelChange)="onDateToChange($event)"
+            [readonlyInput]="true"
+            [showIcon]="true"
+            [showClear]="!!draftDateTo()"
+            ariaLabelledBy="register-to-date"
+            dateFormat="dd/mm/yy"
+            placeholder=""
+            styleClass="date-picker"
+          />
+        </div>
       </div>
       <div class="filter-field filter-field--mobile">
         <span class="filter-label">{{ 'BOOKING_REGISTER.FILTER.MOBILE' | translate }}</span>
@@ -202,11 +211,10 @@
           <td>{{ booking.endTime }}</td>
           <td>{{ confirmationLabel(booking.confirmedAt) }}</td>
           <td>
-            <p-tag
-              [value]="statusKey(booking.status) | translate"
-              [severity]="statusSeverity(booking.status)"
-              styleClass="status-tag"
-            />
+            <span [class]="statusPillClass(statusSeverity(booking.status))">
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ statusKey(booking.status) | translate }}
+            </span>
           </td>
           <td class="actions-cell">
             @if (canRead()) {
@@ -242,9 +250,9 @@
           <div class="export-action">
             <p-button
               [label]="'BOOKING_REGISTER.EXPORT' | translate"
-              icon="pi pi-download"
+              icon="pi pi-file-excel"
               [iconPos]="leadingIconPos()"
-              styleClass="export-btn"
+              styleClass="export export-excel-btn"
               [outlined]="true"
               [loading]="exporting()"
               [disabled]="exporting()"

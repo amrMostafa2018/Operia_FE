@@ -16,7 +16,12 @@
   align-items: flex-start;
   align-self: flex-start;
   gap: 0.35rem;
+  margin-bottom: 0;
   text-align: start;
+}
+
+.page-header + .summary-cards {
+  margin-top: -0.9rem;
 }
 
 .page-title {
@@ -134,26 +139,54 @@
 }
 
 .filter-fields {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  align-items: end;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: nowrap;
   gap: 0.65rem;
   flex: 1 1 auto;
   min-width: 0;
   overflow: visible;
 }
 
+.filter-dates {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.45rem;
+}
+
+.date-range-sep {
+  flex: 0 0 auto;
+  color: #8b90a5;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.date-field {
+  position: relative;
+  flex: 0 0 19rem;
+  width: 19rem;
+}
+
+.date-caption {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b728a;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 .filter-field {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  min-width: 0;
+  flex: 1 1 8rem;
+  min-width: 7.5rem;
   overflow: visible;
-
-  ::ng-deep .date-picker.p-calendar {
-    display: inline-flex;
-    width: 100%;
-  }
 }
 
 .filter-label {
@@ -221,24 +254,46 @@
     white-space: nowrap;
   }
 
-  .date-picker .p-inputtext {
-    font-size: 0.875rem;
-    padding: 0.45rem 0.75rem;
-    padding-left: 2rem;
+  .date-field .date-picker.p-calendar {
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #dfe0e9;
+    border-radius: 10px;
+    background: #fff;
+    overflow: visible;
+  }
+
+  .date-field .date-picker .p-inputtext {
+    flex: 1 1 auto;
     width: 100%;
     min-width: 0;
+    font-size: 0.875rem;
     direction: ltr;
-    text-align: right;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    text-overflow: clip;
+    min-height: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
-  .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
-    right: auto !important;
-    left: 3.15rem !important;
+  .date-field .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button,
+  .date-field .date-picker.p-calendar-w-btn .p-datepicker-trigger.p-button:enabled:hover {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 42px;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    color: var(--color-primary);
+    box-shadow: none;
+  }
+
+  .date-field .date-picker.p-calendar-w-btn .p-calendar-clear-icon {
     color: var(--text-secondary);
-  }
-
-  .date-picker.p-calendar {
-    width: 100%;
   }
 
   .register-table {
@@ -247,38 +302,6 @@
 
   .register-table .p-datatable-table {
     min-width: 1240px;
-  }
-
-  .status-tag.p-tag {
-    @include data-table.status-tag-pill;
-  }
-
-  .export-action {
-    display: inline-flex;
-    flex-shrink: 0;
-    position: relative;
-  }
-
-  .export-btn.p-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.82rem !important;
-    padding: 0.5rem 0.95rem !important;
-    border-color: var(--color-primary) !important;
-    color: var(--color-primary) !important;
-    background: transparent !important;
-
-    &:enabled:hover {
-      background: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
-      border-color: var(--color-primary) !important;
-      color: var(--color-primary) !important;
-    }
-
-    .p-button-icon-left,
-    .p-button-icon-right {
-      margin: 0 !important;
-    }
   }
 
   .register-paginator.p-paginator,
@@ -525,25 +548,31 @@
     min-width: 0;
   }
 
-  .filter-field:nth-child(1),
-  .filter-field:nth-child(2) {
-    grid-column: 1 / -1;
-  }
-
+  .filter-dates,
   .filter-field--mobile,
   .filter-field--customer {
     grid-column: 1 / -1;
   }
 
+  .filter-dates {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .date-field {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .date-range-sep {
+    align-self: center;
+  }
+
   ::ng-deep {
     .filter-drop,
-    .filter-drop .p-dropdown {
-      width: 100%;
-      min-width: 0;
-    }
-
-    .date-picker.p-calendar,
-    .date-picker .p-inputtext {
+    .filter-drop .p-dropdown,
+    .date-field .date-picker.p-calendar,
+    .date-field .date-picker .p-inputtext {
       width: 100%;
       min-width: 0;
     }
@@ -553,4 +582,32 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+:host-context([dir='rtl']) ::ng-deep .date-field .date-picker.p-calendar-w-btn .p-inputtext {
+  padding-left: 4.25rem;
+  padding-right: 5.6rem;
+}
+
+:host-context([dir='rtl'])
+  ::ng-deep
+  .date-field
+  .date-picker.p-calendar-w-btn
+  .p-calendar-clear-icon {
+  right: auto !important;
+  left: 2.35rem !important;
+}
+
+:host-context([dir='ltr']) ::ng-deep .date-field .date-picker.p-calendar-w-btn .p-inputtext {
+  padding-right: 4.25rem;
+  padding-left: 5.6rem;
+}
+
+:host-context([dir='ltr'])
+  ::ng-deep
+  .date-field
+  .date-picker.p-calendar-w-btn
+  .p-calendar-clear-icon {
+  left: auto !important;
+  right: 2.35rem !important;
 }

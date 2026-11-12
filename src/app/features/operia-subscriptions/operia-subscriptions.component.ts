@@ -17,7 +17,6 @@ import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs';
 
 import { FinanceService } from '@core/services/finance.service';
@@ -29,6 +28,7 @@ import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import {
   subscriptionStatusKey,
   subscriptionStatusSeverity,
+  statusPillClass,
   TagSeverity,
 } from '@app/shared/utils/status-tag.util';
 import {
@@ -59,7 +59,6 @@ interface ExportMenuOption {
     FormsModule,
     TableModule,
     ButtonModule,
-    TagModule,
     DropdownModule,
     CalendarModule,
     OverlayPanelModule,
@@ -79,9 +78,7 @@ export class OperiaSubscriptionsComponent implements OnInit {
   private readonly exportButton = viewChild<Button>('exportButton');
   private readonly exportPanel = viewChild<OverlayPanel>('exportPanel');
 
-  readonly leadingIconPos = computed(() =>
-    getLeadingIconPos(this.languageService.currentLang()),
-  );
+  readonly leadingIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
   readonly canExport = computed(() =>
     this.permissionService.hasPermission(Policies.SubscriptionsExport)
   );
@@ -104,12 +101,10 @@ export class OperiaSubscriptionsComponent implements OnInit {
     this.availablePlans().map(plan => ({
       label: plan.name,
       value: plan.code,
-    })),
+    }))
   );
   readonly rowsPerPageOptions = [5, 10, 20, 50];
-  readonly pageReportTemplate = signal(
-    this.translate.instant('OPERIA_SUBSCRIPTIONS.PAGE_REPORT'),
-  );
+  readonly pageReportTemplate = signal(this.translate.instant('OPERIA_SUBSCRIPTIONS.PAGE_REPORT'));
   readonly exportMenuOptions = computed<ExportMenuOption[]>(() => {
     this.languageService.currentLang();
 
@@ -126,13 +121,9 @@ export class OperiaSubscriptionsComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.translate.onLangChange
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.pageReportTemplate.set(
-          this.translate.instant('OPERIA_SUBSCRIPTIONS.PAGE_REPORT'),
-        );
-      });
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pageReportTemplate.set(this.translate.instant('OPERIA_SUBSCRIPTIONS.PAGE_REPORT'));
+    });
 
     this.loadPlanOptions();
   }
@@ -140,6 +131,8 @@ export class OperiaSubscriptionsComponent implements OnInit {
   statusSeverity(status: SubscriptionStatus): TagSeverity {
     return subscriptionStatusSeverity(status);
   }
+
+  readonly statusPillClass = statusPillClass;
 
   statusKey(status: SubscriptionStatus): string {
     return subscriptionStatusKey(status);
@@ -225,7 +218,7 @@ export class OperiaSubscriptionsComponent implements OnInit {
       }
 
       const panelElement = document.querySelector(
-        '.export-menu-panel.p-overlaypanel',
+        '.export-menu-panel.p-overlaypanel'
       ) as HTMLElement | null;
 
       if (!panelElement) {
@@ -249,7 +242,7 @@ export class OperiaSubscriptionsComponent implements OnInit {
       .exportSubscriptions(this.currentFilters(), format)
       .pipe(
         finalize(() => this.exportLoading.set(false)),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(blob => {
         const extension = format === 'pdf' ? 'pdf' : 'xlsx';
@@ -266,7 +259,7 @@ export class OperiaSubscriptionsComponent implements OnInit {
           plans.map(plan => ({
             name: plan.name,
             code: plan.code,
-          })),
+          }))
         );
       });
   }
@@ -279,7 +272,7 @@ export class OperiaSubscriptionsComponent implements OnInit {
       .getSubscriptions(this.currentFilters(), pageNumber, this.rows())
       .pipe(
         finalize(() => this.loading.set(false)),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(result => {
         this.subscriptions.set(result.items);

@@ -18,6 +18,10 @@
   }
 }
 
+.page-head + .summary-cards {
+  margin-top: 0.35rem;
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -111,7 +115,8 @@
 }
 
 .table-card {
-  @include page-list.table-card-base;
+  @include data-table.data-table-shell;
+  width: 100%;
 }
 
 .filters {
@@ -187,15 +192,6 @@
   font-size: 0.8rem;
 }
 
-.icon {
-  border: 1px solid #eee;
-  background: #fff;
-  border-radius: 7px;
-  padding: 0.48rem;
-  cursor: pointer;
-  color: #596174;
-}
-
 .empty-msg {
   text-align: center;
   color: #767b8d;
@@ -206,21 +202,6 @@
     font-size: 2rem;
     margin-bottom: 0.5rem;
   }
-}
-
-.table-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 1rem;
-  border-top: 1px solid #ececf4;
-}
-
-.showing {
-  color: #777;
-  font-size: 0.85rem;
 }
 
 .dialog-title {
@@ -299,8 +280,8 @@ label {
     @include data-table.primeng-data-table-theme;
   }
 
-  .status-tag.p-tag {
-    @include data-table.status-tag-pill;
+  .bookings-table .p-datatable-tbody > tr > td.service-cell {
+    white-space: pre-line;
   }
 
   .booking-detail-dialog .p-dialog-header,

@@ -78,6 +78,11 @@ export class ActivityRevenueService {
     if (filters.toDate) params = params.set('toDate', filters.toDate);
     if (filters.branchId) params = params.set('branchId', filters.branchId);
     if (filters.serviceId) params = params.set('serviceId', filters.serviceId);
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.mobile) params = params.set('mobile', filters.mobile);
+    if (filters.customerName) params = params.set('customerName', filters.customerName);
+    if (filters.employeeId) params = params.set('employeeId', filters.employeeId);
     return params;
   }
 }

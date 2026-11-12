@@ -44,6 +44,11 @@ export interface RevenueReportFilters {
   toDate: string | null;
   branchId: string | null;
   serviceId: string | null;
+  search?: string | null;
+  status?: string | null;
+  mobile?: string | null;
+  customerName?: string | null;
+  employeeId?: string | null;
 }
 
 export interface RevenueTransaction {

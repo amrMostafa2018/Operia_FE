@@ -18,15 +18,17 @@ import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MenuModule } from 'primeng/menu';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, MenuItem } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
+import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
+import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import { Policies } from '@core/models/permissions.model';
 import {
   bookingStatusKey,
   bookingStatusSeverity,
+  statusPillClass,
   TagSeverity,
 } from '@app/shared/utils/status-tag.util';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
@@ -60,7 +62,6 @@ import {
     InputTextModule,
     MenuModule,
     TableModule,
-    TagModule,
     ConfirmActionDialogComponent,
     InquiryBookingModalComponent,
     CalendarAddBookingDialogComponent,
@@ -78,6 +79,7 @@ export class BookingsComponent implements AfterViewInit {
   private readonly permissions = inject(PermissionService);
   private readonly toast = inject(MessageService);
   private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
@@ -101,13 +103,17 @@ export class BookingsComponent implements AfterViewInit {
   readonly reassignEmployeeId = signal<string | null>(null);
   readonly employees = signal<{ id: string; fullName: string }[]>([]);
 
-  page = 1;
-  pageSize = 10;
-
-  readonly pageSizes = BOOKING_PAGE_SIZES.map(v => ({ label: String(v), value: v }));
+  readonly rowsPerPageOptions = [...BOOKING_PAGE_SIZES];
+  readonly rows = signal(5);
+  readonly first = signal(0);
+  readonly pageReportTemplate = signal(this.translate.instant('BOOKINGS.PAGE_REPORT'));
+  readonly leadingIconPos = computed(() => getLeadingIconPos(this.languageService.currentLang()));
   readonly statusOptions = BOOKING_STATUS_OPTIONS;
 
   ngAfterViewInit(): void {
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pageReportTemplate.set(this.translate.instant('BOOKINGS.PAGE_REPORT'));
+    });
     this.bookingService
       .getEmployees()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -119,8 +125,10 @@ export class BookingsComponent implements AfterViewInit {
   load(): void {
     this.loading.set(true);
     const filters = this.buildFilters();
+    const pageSize = this.rows();
+    const page = Math.floor(this.first() / pageSize) + 1;
     this.bookingService
-      .list(filters, this.page, this.pageSize)
+      .list(filters, page, pageSize)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
@@ -151,7 +159,16 @@ export class BookingsComponent implements AfterViewInit {
   }
 
   applyFilters(): void {
-    this.page = 1;
+    this.first.set(0);
+    this.load();
+  }
+
+  onLazyLoad(event: TableLazyLoadEvent): void {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? this.rows();
+    if (first === this.first() && rows === this.rows()) return;
+    this.first.set(first);
+    this.rows.set(rows);
     this.load();
   }
 
@@ -161,12 +178,6 @@ export class BookingsComponent implements AfterViewInit {
     this.selectedEmployee.set(null);
     this.selectedStatus.set(null);
     this.applyFilters();
-  }
-
-  onPageSizeChange(size: number): void {
-    this.pageSize = size;
-    this.page = 1;
-    this.load();
   }
 
   openInquiry(): void {
@@ -272,7 +283,11 @@ export class BookingsComponent implements AfterViewInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.toast.add({ severity: 'success', summary: 'OPERIA', detail: 'Employee reassigned.' });
+          this.toast.add({
+            severity: 'success',
+            summary: 'OPERIA',
+            detail: 'Employee reassigned.',
+          });
           this.closeReassign();
           this.load();
           this.loadCalendar();
@@ -326,6 +341,8 @@ export class BookingsComponent implements AfterViewInit {
   statusSeverity(status: BookingStatus): TagSeverity {
     return bookingStatusSeverity(status);
   }
+
+  readonly statusPillClass = statusPillClass;
 
   statusKey(status: BookingStatus): string {
     return bookingStatusKey(status);

@@ -9,7 +9,7 @@ export interface StatCard {
 export const MOCK_STATS: StatCard[] = [
   {
     labelKey: 'DASHBOARD.NEW_CUSTOMERS_MONTH',
-    value: 54,
+    value: 0,
     icon: 'pi pi-users',
     iconBg: '#E8F4FF',
   },
@@ -21,7 +21,7 @@ export const MOCK_STATS: StatCard[] = [
   },
   {
     labelKey: 'DASHBOARD.MONTHLY_BOOKINGS_TOTAL',
-    value: 248,
+    value: 0,
     icon: 'pi pi-calendar-plus',
     iconBg: '#E8F8F0',
   },

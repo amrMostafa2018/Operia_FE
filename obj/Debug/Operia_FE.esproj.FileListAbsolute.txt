@@ -1,1 +1,2 @@
 D:\Operia Project\Operia_FE\obj\Debug\Operia_FE.esproj.CoreCompileInputs.cache
+C:\Operia\Operia_Project\Operia_FE\obj\Debug\Operia_FE.esproj.CoreCompileInputs.cache

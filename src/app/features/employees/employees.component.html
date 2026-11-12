@@ -181,7 +181,7 @@
           <td>
             <b>{{ employee.fullName }}</b>
           </td>
-          <td>
+          <td class="col-branches">
             @if (employee.branches.length) {
               <div class="branch-list">
                 @for (branch of employee.branches; track branch.id) {
@@ -194,11 +194,10 @@
             <span class="role-pill" [class]="employee.role">{{ roleLabel(employee.role) }}</span>
           </td>
           <td>
-            <p-tag
-              [value]="(employee.isActive ? 'EMPLOYEES.ACTIVE' : 'EMPLOYEES.INACTIVE') | translate"
-              [severity]="employee.isActive ? 'success' : 'danger'"
-              styleClass="status-tag"
-            />
+            <span [class]="statusPillClass(employee.isActive ? 'success' : 'danger')">
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ (employee.isActive ? 'EMPLOYEES.ACTIVE' : 'EMPLOYEES.INACTIVE') | translate }}
+            </span>
           </td>
           <td>{{ formatJoiningDate(employee.joiningDate) }}</td>
           <td class="row-actions">
@@ -218,7 +217,8 @@
                     class="table-icon-btn status-action"
                     (click)="requestStatus(employee)"
                     [attr.aria-label]="
-                      (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE') | translate
+                      (employee.isActive ? 'EMPLOYEES.DEACTIVATE' : 'EMPLOYEES.ACTIVATE')
+                        | translate
                     "
                   >
                     <i [class]="employee.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>

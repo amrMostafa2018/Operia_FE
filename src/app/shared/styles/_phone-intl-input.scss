@@ -306,36 +306,5 @@ html[dir='rtl'] .phone-row--intl {
       right: auto;
       transform: translateY(-50%);
     }
-
-    [id$='__item-eg'] .iti__country-name,
-    [id$='__item-sa'] .iti__country-name,
-    [id$='__item-ae'] .iti__country-name,
-    [id$='__item-kw'] .iti__country-name {
-      font-size: 0;
-      line-height: 0;
-
-      &::after {
-        font-size: 0.82rem;
-        line-height: 1.2;
-        color: var(--text-primary);
-      }
-    }
-
-    [id$='__item-eg'] .iti__country-name::after {
-      content: 'مصر';
-    }
-    [id$='__item-sa'] .iti__country-name::after {
-      content: 'السعودية';
-    }
-    [id$='__item-ae'] .iti__country-name::after {
-      content: 'الإمارات';
-    }
-    [id$='__item-kw'] .iti__country-name::after {
-      content: 'الكويت';
-    }
-
-    li.iti__country {
-      direction: rtl;
-    }
   }
 }

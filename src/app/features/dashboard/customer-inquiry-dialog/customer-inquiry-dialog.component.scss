@@ -20,10 +20,11 @@
   }
 
   &:has(.dropdown-menu.show) {
-    overflow: visible;
+    transform: none !important;
+    overflow: visible !important;
 
     .p-dialog-content {
-      overflow: visible;
+      overflow: visible !important;
     }
   }
 }

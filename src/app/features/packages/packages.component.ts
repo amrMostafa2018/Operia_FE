@@ -30,7 +30,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
+import { statusPillClass } from '@app/shared/utils/status-tag.util';
 import { PermissionService } from '@core/services/permission.service';
 import { CurrencyService } from '@core/services/currency.service';
 import { Policies } from '@core/models/permissions.model';
@@ -172,7 +172,6 @@ function sessionOrPulseXorValidator(group: AbstractControl): ValidationErrors | 
     InputNumberModule,
     InputTextareaModule,
     TableModule,
-    TagModule,
     MultiSelectModule,
     ConfirmActionDialogComponent,
   ],
@@ -190,6 +189,7 @@ export class PackagesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly isFieldInvalid = isFieldInvalid;
+  readonly statusPillClass = statusPillClass;
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.PackagesManage));
   readonly serviceCategoryIdValue = computed(() => this.formValue().serviceCategoryId);
   readonly serviceCategorySearchText = signal('');

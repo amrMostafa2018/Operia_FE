@@ -13,34 +13,45 @@
 
   <div class="filter-bar">
     <div class="filter-fields">
-      <div class="filter-field">
-        <span class="filter-label">{{ 'ACTIVITY_REVENUE.FROM_DATE' | translate }}</span>
-        <p-calendar
-          [ngModel]="dateFrom()"
-          (ngModelChange)="onDateFromChange($event)"
-          [readonlyInput]="true"
-          [showIcon]="true"
-          [showClear]="true"
-          dateFormat="dd/mm/yy"
-          [placeholder]="'ACTIVITY_REVENUE.FROM_DATE' | translate"
-          styleClass="date-picker"
-        />
+      <div class="filter-dates-block">
+        <div class="filter-dates">
+          <div class="date-field">
+            <span class="date-caption" id="revenue-from-date">{{
+              'ACTIVITY_REVENUE.FROM_DATE' | translate
+            }}</span>
+            <p-calendar
+              [ngModel]="dateFrom()"
+              (ngModelChange)="onDateFromChange($event)"
+              [readonlyInput]="true"
+              [showIcon]="true"
+              [showClear]="!!dateFrom()"
+              ariaLabelledBy="revenue-from-date"
+              dateFormat="dd/mm/yy"
+              placeholder=""
+              styleClass="date-picker"
+            />
+          </div>
+          <span class="date-range-sep" aria-hidden="true">-</span>
+          <div class="date-field">
+            <span class="date-caption" id="revenue-to-date">{{
+              'ACTIVITY_REVENUE.TO_DATE' | translate
+            }}</span>
+            <p-calendar
+              [ngModel]="dateTo()"
+              (ngModelChange)="onDateToChange($event)"
+              [readonlyInput]="true"
+              [showIcon]="true"
+              [showClear]="!!dateTo()"
+              ariaLabelledBy="revenue-to-date"
+              dateFormat="dd/mm/yy"
+              placeholder=""
+              styleClass="date-picker"
+            />
+          </div>
+        </div>
         @if (rangeError()) {
           <small class="field-error">{{ 'ERRORS.RevenueDateRangeInvalid' | translate }}</small>
         }
-      </div>
-      <div class="filter-field">
-        <span class="filter-label">{{ 'ACTIVITY_REVENUE.TO_DATE' | translate }}</span>
-        <p-calendar
-          [ngModel]="dateTo()"
-          (ngModelChange)="onDateToChange($event)"
-          [readonlyInput]="true"
-          [showIcon]="true"
-          [showClear]="true"
-          dateFormat="dd/mm/yy"
-          [placeholder]="'ACTIVITY_REVENUE.TO_DATE' | translate"
-          styleClass="date-picker"
-        />
       </div>
       <div class="filter-field filter-field--branch">
         <span class="filter-label">{{ 'ACTIVITY_REVENUE.BRANCH' | translate }}</span>
@@ -240,11 +251,13 @@
               }
             </td>
             <td>
-              {{
-                row.paymentMethod
-                  ? ('CUSTOMER_INQUIRY.METHOD.' + row.paymentMethod.toUpperCase() | translate)
-                  : '—'
-              }}
+              @if (row.paymentMethod) {
+                <span [class]="paymentPillClass(row.paymentMethod)">
+                  {{ 'CUSTOMER_INQUIRY.METHOD.' + row.paymentMethod.toUpperCase() | translate }}
+                </span>
+              } @else {
+                —
+              }
             </td>
             <td>
               <span [class]="'status-pill ' + statusPillClass(row)">
@@ -288,9 +301,9 @@
             <div class="export-action">
               <p-button
                 [label]="'ACTIVITY_REVENUE.EXPORT' | translate"
-                [icon]="exporting() ? 'pi pi-spin pi-spinner' : 'pi pi-download'"
+                [icon]="exporting() ? 'pi pi-spin pi-spinner' : 'pi pi-file-excel'"
                 [iconPos]="leadingIconPos()"
-                styleClass="export-btn"
+                styleClass="export export-excel-btn"
                 [outlined]="true"
                 [disabled]="exporting() || !report()"
                 (onClick)="export()"

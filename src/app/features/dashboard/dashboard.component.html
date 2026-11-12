@@ -24,26 +24,35 @@
 
     <div class="date-filters">
       <div class="date-field">
-        <span class="date-label">{{ 'DASHBOARD.FROM_DATE' | translate }}</span>
+        <span class="date-caption" id="dashboard-from-date">{{
+          'DASHBOARD.FROM_DATE' | translate
+        }}</span>
         <p-calendar
           [ngModel]="dateFrom()"
           (ngModelChange)="onDateFromChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
+          [showClear]="!!dateFrom()"
+          ariaLabelledBy="dashboard-from-date"
           dateFormat="dd/mm/yy"
-          [placeholder]="'DASHBOARD.FROM_DATE' | translate"
+          placeholder=""
           styleClass="date-picker"
         />
       </div>
+      <span class="date-range-sep" aria-hidden="true">-</span>
       <div class="date-field">
-        <span class="date-label">{{ 'DASHBOARD.TO_DATE' | translate }}</span>
+        <span class="date-caption" id="dashboard-to-date">{{
+          'DASHBOARD.TO_DATE' | translate
+        }}</span>
         <p-calendar
           [ngModel]="dateTo()"
           (ngModelChange)="onDateToChange($event)"
           [readonlyInput]="true"
           [showIcon]="true"
+          [showClear]="!!dateTo()"
+          ariaLabelledBy="dashboard-to-date"
           dateFormat="dd/mm/yy"
-          [placeholder]="'DASHBOARD.TO_DATE' | translate"
+          placeholder=""
           styleClass="date-picker"
         />
       </div>
@@ -78,171 +87,192 @@
     }
   </div>
 
-  <div class="table-section">
-    <div class="table-header">
-      <div class="table-title">
-        <i class="pi pi-calendar"></i>
-        <span>{{ 'DASHBOARD.TODAY_TABLE_TITLE' | translate }}</span>
-        <span class="table-date">{{ today() }}</span>
-      </div>
-      <div class="table-filters">
-        <span class="filter-search-wrap">
-          <i class="pi pi-search"></i>
-          <input
-            pInputText
-            class="filter-input"
-            [ngModel]="quickSearch()"
-            (ngModelChange)="quickSearch.set($event)"
-            [placeholder]="'DASHBOARD.SEARCH_PLACEHOLDER' | translate"
-          />
-        </span>
-        <p-dropdown
-          [options]="statusOptions"
-          optionLabel="label"
-          optionValue="value"
-          [ngModel]="selectedStatus()"
-          (ngModelChange)="selectedStatus.set($event); applyTableFilters()"
-          [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
-          styleClass="filter-drop"
-        >
-          <ng-template pTemplate="selectedItem" let-item>
-            @if (item) {
-              {{ item.label | translate }}
-            }
-          </ng-template>
-          <ng-template pTemplate="item" let-item>
-            {{ item.label | translate }}
-          </ng-template>
-        </p-dropdown>
-        <p-dropdown
-          [options]="employees()"
-          optionLabel="label"
-          optionValue="value"
-          [ngModel]="selectedEmployee()"
-          (ngModelChange)="selectedEmployee.set($event); applyTableFilters()"
-          [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
-          styleClass="filter-drop"
-        >
-          <ng-template pTemplate="selectedItem" let-item>
-            @if (item) {
-              {{ item.label | translate }}
-            }
-          </ng-template>
-          <ng-template pTemplate="item" let-item>
-            {{ item.label | translate }}
-          </ng-template>
-        </p-dropdown>
-        <span class="filter-search-wrap">
-          <i class="pi pi-mobile"></i>
-          <input
-            pInputText
-            class="filter-input"
-            dir="ltr"
-            [ngModel]="mobileSearch()"
-            (ngModelChange)="mobileSearch.set($event)"
-            [placeholder]="'DASHBOARD.MOBILE_PLACEHOLDER' | translate"
-          />
-        </span>
-        <span class="filter-search-wrap">
-          <i class="pi pi-user"></i>
-          <input
-            pInputText
-            class="filter-input"
-            [ngModel]="nameSearch()"
-            (ngModelChange)="nameSearch.set($event)"
-            [placeholder]="'DASHBOARD.NAME_PLACEHOLDER' | translate"
-          />
-        </span>
-        <p-button
-          icon="pi pi-search"
-          styleClass="search-btn"
-          [outlined]="true"
-          (onClick)="applyTableFilters()"
-        />
-      </div>
-    </div>
-
-    <p-table
-      [value]="filteredBookings()"
-      [rows]="rows()"
-      [first]="first()"
-      [paginator]="true"
-      [rowsPerPageOptions]="rowOptions"
-      [showCurrentPageReport]="true"
-      [currentPageReportTemplate]="pageReportTemplate()"
-      paginatorDropdownAppendTo="body"
-      paginatorStyleClass="dashboard-paginator"
-      styleClass="bookings-table"
-      [scrollable]="true"
-      (onPage)="onPageChange($event)"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>{{ 'DASHBOARD.TABLE_NUM' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_MOBILE' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_CUSTOMER' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_SERVICE' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_EMPLOYEE' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_FROM' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_TO' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_STATUS' | translate }}</th>
-          <th>{{ 'DASHBOARD.TABLE_ACTIONS' | translate }}</th>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="body" let-row let-i="rowIndex">
-        <tr>
-          <td>{{ rowNumber(i) }}</td>
-          <td dir="ltr">{{ row.customerPhone }}</td>
-          <td>{{ row.customerName }}</td>
-          <td class="service-cell">{{ row.service }}</td>
-          <td>
-            <div class="employee-cell">
-              <span class="employee-avatar">{{ customerInitial(row.employeeName) }}</span>
-              <span>{{ row.employeeName }}</span>
-            </div>
-          </td>
-          <td>{{ row.startTime }}</td>
-          <td>{{ row.endTime }}</td>
-          <td>
-            <p-tag
-              [value]="statusKey(row.status) | translate"
-              [severity]="statusSeverity(row.status)"
-              styleClass="status-tag"
+  @if (canReadRevenue()) {
+    <app-dashboard-revenue-table [dateFrom]="dateFrom()" [dateTo]="dateTo()" />
+  } @else {
+    <div class="table-section">
+      <div class="table-header">
+        <div class="table-title">
+          <i class="pi pi-calendar"></i>
+          <span>{{ 'DASHBOARD.TODAY_TABLE_TITLE' | translate }}</span>
+          <span class="table-date">{{ today() }}</span>
+        </div>
+        @if (!bookingsComingSoon) {
+          <div class="table-filters">
+            <span class="filter-search-wrap">
+              <i class="pi pi-search"></i>
+              <input
+                pInputText
+                class="filter-input"
+                [ngModel]="quickSearch()"
+                (ngModelChange)="quickSearch.set($event)"
+                [placeholder]="'DASHBOARD.SEARCH_PLACEHOLDER' | translate"
+              />
+            </span>
+            <p-dropdown
+              [options]="statusOptions"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="selectedStatus()"
+              (ngModelChange)="selectedStatus.set($event); applyTableFilters()"
+              [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
+              styleClass="filter-drop"
+            >
+              <ng-template pTemplate="selectedItem" let-item>
+                @if (item) {
+                  {{ item.label | translate }}
+                }
+              </ng-template>
+              <ng-template pTemplate="item" let-item>
+                {{ item.label | translate }}
+              </ng-template>
+            </p-dropdown>
+            <p-dropdown
+              [options]="employees()"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="selectedEmployee()"
+              (ngModelChange)="selectedEmployee.set($event); applyTableFilters()"
+              [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
+              styleClass="filter-drop"
+            >
+              <ng-template pTemplate="selectedItem" let-item>
+                @if (item) {
+                  {{ item.label | translate }}
+                }
+              </ng-template>
+              <ng-template pTemplate="item" let-item>
+                {{ item.label | translate }}
+              </ng-template>
+            </p-dropdown>
+            <span class="filter-search-wrap">
+              <i class="pi pi-mobile"></i>
+              <input
+                pInputText
+                class="filter-input"
+                dir="ltr"
+                [ngModel]="mobileSearch()"
+                (ngModelChange)="mobileSearch.set($event)"
+                [placeholder]="'DASHBOARD.MOBILE_PLACEHOLDER' | translate"
+              />
+            </span>
+            <span class="filter-search-wrap">
+              <i class="pi pi-user"></i>
+              <input
+                pInputText
+                class="filter-input"
+                [ngModel]="nameSearch()"
+                (ngModelChange)="nameSearch.set($event)"
+                [placeholder]="'DASHBOARD.NAME_PLACEHOLDER' | translate"
+              />
+            </span>
+            <p-button
+              icon="pi pi-search"
+              styleClass="search-btn"
+              [outlined]="true"
+              (onClick)="applyTableFilters()"
             />
-          </td>
-          <td>
-            <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
-            <button type="button" class="row-action-btn" (click)="rowMenu.toggle($event)">
-              <i class="pi pi-ellipsis-v"></i>
-            </button>
-          </td>
-        </tr>
-      </ng-template>
+          </div>
+        }
+      </div>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="9" class="empty-msg">
-            <i class="pi pi-inbox"></i>
-            {{ 'COMMON.NO_DATA' | translate }}
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+      @if (bookingsComingSoon) {
+        <div class="coming-soon" role="status">
+          <span class="coming-soon-icon" aria-hidden="true">
+            <i class="pi pi-calendar"></i>
+          </span>
+          <span class="coming-soon-badge">{{ 'DASHBOARD.COMING_SOON' | translate }}</span>
+          <p>{{ 'DASHBOARD.TABLE_COMING_SOON' | translate }}</p>
+        </div>
+      } @else {
+        <p-table
+          [value]="filteredBookings()"
+          [rows]="rows()"
+          [first]="first()"
+          [paginator]="filteredBookings().length > 0"
+          [rowsPerPageOptions]="rowOptions"
+          [showCurrentPageReport]="true"
+          [currentPageReportTemplate]="pageReportTemplate()"
+          paginatorDropdownAppendTo="body"
+          paginatorStyleClass="dashboard-paginator"
+          styleClass="bookings-table"
+          [scrollable]="true"
+          (onPage)="onPageChange($event)"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>{{ 'DASHBOARD.TABLE_NUM' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_MOBILE' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_CUSTOMER' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_SERVICE' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_EMPLOYEE' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_FROM' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_TO' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_STATUS' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_ACTIONS' | translate }}</th>
+            </tr>
+          </ng-template>
 
-    <div class="table-footer">
-      @if (canExport()) {
-        <p-button
-          [label]="'DASHBOARD.EXPORT_REPORT' | translate"
-          icon="pi pi-download"
-          [iconPos]="leadingIconPos()"
-          styleClass="export-btn"
-          [outlined]="true"
-          (onClick)="exportReport()"
-        />
+          <ng-template pTemplate="body" let-row let-i="rowIndex">
+            <tr>
+              <td>{{ rowNumber(i) }}</td>
+              <td dir="ltr">{{ row.customerPhone }}</td>
+              <td>{{ row.customerName }}</td>
+              <td class="service-cell">{{ row.service }}</td>
+              <td>
+                <div class="employee-cell">
+                  <span class="employee-avatar">{{ customerInitial(row.employeeName) }}</span>
+                  <span>{{ row.employeeName }}</span>
+                </div>
+              </td>
+              <td>{{ row.startTime }}</td>
+              <td>{{ row.endTime }}</td>
+              <td>
+                <span [class]="statusPillClass(statusSeverity(row.status))">
+                  <span class="status-dot" aria-hidden="true"></span>
+                  {{ statusKey(row.status) | translate }}
+                </span>
+              </td>
+              <td>
+                <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
+                <button
+                  type="button"
+                  class="row-menu-btn"
+                  (click)="rowMenu.toggle($event)"
+                  [attr.aria-label]="'DASHBOARD.TABLE_ACTIONS' | translate"
+                >
+                  <i class="pi pi-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="9" class="empty-msg">
+                <i class="pi pi-inbox" aria-hidden="true"></i>
+                {{ 'COMMON.NO_DATA' | translate }}
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="paginatorleft">
+            @if (canExport() && filteredBookings().length > 0) {
+              <div class="export-action">
+                <p-button
+                  [label]="'DASHBOARD.EXPORT_REPORT' | translate"
+                  icon="pi pi-file-excel"
+                  [iconPos]="leadingIconPos()"
+                  styleClass="export export-excel-btn"
+                  [outlined]="true"
+                  (onClick)="exportReport()"
+                />
+              </div>
+            }
+          </ng-template>
+        </p-table>
       }
     </div>
-  </div>
+  }
 </div>
 
 <app-customer-inquiry-dialog [visible]="customerInquiryOpen()" (closed)="closeCustomerInquiry()" />
@@ -307,7 +337,10 @@
       </div>
       <div>
         <span>{{ 'BOOKINGS.COL_STATUS' | translate }}</span>
-        <p-tag [value]="statusKey(b.status) | translate" [severity]="statusSeverity(b.status)" />
+        <span [class]="statusPillClass(statusSeverity(b.status))">
+          <span class="status-dot" aria-hidden="true"></span>
+          {{ statusKey(b.status) | translate }}
+        </span>
       </div>
     </div>
   }

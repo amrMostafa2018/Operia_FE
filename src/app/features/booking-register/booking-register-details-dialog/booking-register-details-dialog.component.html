@@ -95,11 +95,10 @@
               <small>{{ 'BOOKING_REGISTER.DETAILS.STATUS' | translate }}</small>
             </div>
             @if (displayStatus(); as status) {
-              <p-tag
-                [value]="statusKey(status) | translate"
-                [severity]="statusSeverity(status)"
-                styleClass="status-tag"
-              />
+              <span [class]="statusPillClass(statusSeverity(status))">
+                <span class="status-dot" aria-hidden="true"></span>
+                {{ statusKey(status) | translate }}
+              </span>
             }
           </div>
         </section>

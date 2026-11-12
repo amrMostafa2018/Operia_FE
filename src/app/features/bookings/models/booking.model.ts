@@ -16,7 +16,7 @@ export type ServiceCategory = 'all' | 'services' | 'laser' | 'peeling' | 'skin' 
 /** Identifier of a payment method enabled in business settings. */
 export type PaymentMethodId = 'cash' | 'bank_transfer' | 'instapay' | 'e_wallet' | 'fawry';
 
-export const BOOKING_PAGE_SIZES = [10, 25, 50, 100, 500, 1000, 2000] as const;
+export const BOOKING_PAGE_SIZES = [5, 10, 25, 50, 100, 500, 1000, 2000] as const;
 
 export const BOOKING_STATUS_OPTIONS: { label: string; value: BookingStatus | null }[] = [
   { label: 'BOOKINGS.ALL_STATUS', value: null },

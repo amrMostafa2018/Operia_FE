@@ -20,12 +20,12 @@ import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { LanguageService } from '@core/services/language.service';
 import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
+import { statusPillClass } from '@app/shared/utils/status-tag.util';
 import {
   BOOKING_REGISTER_PAGE_SIZES,
   BOOKING_REGISTER_STATUS_OPTIONS,
@@ -73,7 +73,6 @@ import {
     DropdownModule,
     InputTextModule,
     TableModule,
-    TagModule,
     BusyOverlayComponent,
     BookingDetailsDialogComponent,
     DurationMismatchDialogComponent,
@@ -531,6 +530,7 @@ export class BookingRegisterComponent {
 
   statusKey = registerStatusKey;
   statusSeverity = registerStatusSeverity;
+  readonly statusPillClass = statusPillClass;
   serviceTypeKey = registerServiceTypeKey;
 
   /** Normalizes the register filter controls into an applied API filter set. */

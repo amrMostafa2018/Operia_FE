@@ -1,5 +1,4 @@
 @use '../../../../styles/variables' as *;
-@use '../../../shared/styles/data-table' as data-table;
 @use '../../bookings/bookings-dialog' as dialog;
 
 @include dialog.bookings-dialog-close-button;
@@ -28,10 +27,6 @@
       padding: 0;
       background: #fff;
       direction: inherit;
-    }
-
-    .status-tag.p-tag {
-      @include data-table.status-tag-pill;
     }
   }
 

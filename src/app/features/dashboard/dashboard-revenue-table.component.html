@@ -1,0 +1,339 @@
+<div class="table-section">
+  <div class="table-header">
+    <div class="table-title">
+      <i class="pi pi-calendar"></i>
+      <span>{{ 'ACTIVITY_REVENUE.TRANSACTIONS' | translate }}</span>
+      <span class="table-date">{{ rangeLabel() }}</span>
+    </div>
+    <div class="table-filters">
+      <span class="filter-search-wrap">
+        <i class="pi pi-user"></i>
+        <input
+          pInputText
+          class="filter-input"
+          [ngModel]="nameSearch()"
+          (ngModelChange)="nameSearch.set($event)"
+          (keyup.enter)="applyFilters()"
+          [placeholder]="'DASHBOARD.NAME_PLACEHOLDER' | translate"
+        />
+      </span>
+      <span class="filter-search-wrap">
+        <i class="pi pi-mobile"></i>
+        <input
+          pInputText
+          class="filter-input"
+          dir="ltr"
+          [ngModel]="mobileSearch()"
+          (ngModelChange)="mobileSearch.set($event)"
+          (keyup.enter)="applyFilters()"
+          [placeholder]="'DASHBOARD.MOBILE_PLACEHOLDER' | translate"
+        />
+      </span>
+      @if (showEmployeeFilter()) {
+        <p-dropdown
+          [options]="employees()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="selectedEmployee()"
+          (ngModelChange)="selectedEmployee.set($event); applyFilters()"
+          [placeholder]="'DASHBOARD.ALL_EMPLOYEES' | translate"
+          styleClass="filter-drop"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            @if (item) {
+              {{ item.value ? item.label : (item.label | translate) }}
+            }
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.value ? item.label : (item.label | translate) }}
+          </ng-template>
+        </p-dropdown>
+      }
+      <p-dropdown
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event); applyFilters()"
+        [placeholder]="'DASHBOARD.ALL_STATUS' | translate"
+        styleClass="filter-drop"
+      >
+        <ng-template pTemplate="selectedItem" let-item>
+          @if (item) {
+            {{ item.label | translate }}
+          }
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          {{ item.label | translate }}
+        </ng-template>
+      </p-dropdown>
+      <p-button
+        icon="pi pi-search"
+        styleClass="search-btn"
+        [outlined]="true"
+        (onClick)="applyFilters()"
+        [ariaLabel]="'ACTIVITY_REVENUE.SEARCH' | translate"
+      />
+    </div>
+  </div>
+
+  @if (error() && !report()) {
+    <div class="load-error" role="alert">
+      <p>{{ 'ACTIVITY_REVENUE.LOAD_ERROR' | translate }}</p>
+      <button type="button" (click)="load()">{{ 'ACTIVITY_REVENUE.RETRY' | translate }}</button>
+    </div>
+  } @else {
+    <p-table
+      [value]="report()?.items ?? []"
+      [rows]="rows()"
+      [first]="first()"
+      [totalRecords]="report()?.total ?? 0"
+      [paginator]="(report()?.total ?? 0) > 0"
+      [lazy]="true"
+      [loading]="loading()"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      [currentPageReportTemplate]="pageReportTemplate()"
+      paginatorDropdownAppendTo="body"
+      paginatorStyleClass="dashboard-paginator"
+      styleClass="revenue-operations-table"
+      [scrollable]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ 'DASHBOARD.TABLE_NUM' | translate }}</th>
+          <th>{{ 'ACTIVITY_REVENUE.TRANSACTION_ID' | translate }}</th>
+          <th>{{ 'ACTIVITY_REVENUE.MOBILE' | translate }}</th>
+          <th>{{ 'ACTIVITY_REVENUE.CUSTOMER' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_SERVICE' | translate }}</th>
+          <th>{{ 'ACTIVITY_REVENUE.BRANCH' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_VALUE' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_TX_DATE' | translate }}</th>
+          <th>{{ 'DASHBOARD.TABLE_SCREENSHOT' | translate }}</th>
+          <th>{{ 'ACTIVITY_REVENUE.METHOD' | translate }}</th>
+          <th>{{ 'ACTIVITY_REVENUE.STATUS' | translate }}</th>
+          <th>{{ 'ACTIVITY_REVENUE.ACTIONS' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+        <tr>
+          <td>{{ rowNumber(rowIndex) }}</td>
+          <td>{{ row.transactionId }}</td>
+          <td dir="ltr">{{ row.mobile || '—' }}</td>
+          <td class="customer-name">{{ row.customerName }}</td>
+          <td>{{ row.service || '—' }}</td>
+          <td>{{ row.branch || '—' }}</td>
+          <td class="col-money">
+            <span
+              class="amount-pill"
+              [class.amount-pill--due]="row.kind === 'Refund'"
+              [class.amount-pill--paid]="row.kind !== 'Refund'"
+              >{{ formatMoney(row.amount) }}</span
+            >
+          </td>
+          <td>{{ formatWhen(row.transactionAtUtc) }}</td>
+          <td>
+            @if (row.hasProof && row.paymentId) {
+              <button
+                type="button"
+                class="proof-thumb"
+                (click)="showProof(row.paymentId)"
+                [attr.aria-label]="'ACTIVITY_REVENUE.VIEW_PROOF' | translate"
+              >
+                @if (thumbs()[row.paymentId]; as src) {
+                  <img [src]="src" alt="" />
+                } @else {
+                  <i class="pi pi-image" aria-hidden="true"></i>
+                }
+              </button>
+            } @else {
+              —
+            }
+          </td>
+          <td>
+            @if (row.paymentMethod) {
+              <span [class]="methodClass(row.paymentMethod)">{{
+                methodLabel(row.paymentMethod)
+              }}</span>
+            } @else {
+              —
+            }
+          </td>
+          <td>
+            <span [class]="statusClass(row)">
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ 'ACTIVITY_REVENUE.STATES.' + row.status | translate }}
+            </span>
+          </td>
+          <td>
+            @if (row.paymentId || row.refundId) {
+              <p-menu #rowMenu [model]="getRowMenu(row)" [popup]="true" appendTo="body" />
+              <button
+                type="button"
+                class="row-menu-btn"
+                (click)="rowMenu.toggle($event)"
+                [attr.aria-label]="'ACTIVITY_REVENUE.ACTIONS' | translate"
+              >
+                <i class="pi pi-ellipsis-v"></i>
+              </button>
+            } @else {
+              —
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="12" class="empty-msg">
+            <i class="pi pi-inbox" aria-hidden="true"></i>
+            {{ 'ACTIVITY_REVENUE.EMPTY' | translate }}
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="paginatorleft">
+        @if (canExport()) {
+          <div class="export-action">
+            <p-button
+              [label]="'ACTIVITY_REVENUE.EXPORT' | translate"
+              [icon]="exporting() ? 'pi pi-spin pi-spinner' : 'pi pi-file-excel'"
+              [iconPos]="leadingIconPos()"
+              styleClass="export export-excel-btn"
+              [outlined]="true"
+              [disabled]="exporting() || !report()"
+              (onClick)="exportReport()"
+            />
+          </div>
+        }
+      </ng-template>
+    </p-table>
+  }
+</div>
+
+<p-dialog
+  [visible]="!!proofUrl()"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: 'min(520px, 92vw)' }"
+  [header]="'ACTIVITY_REVENUE.PROOF' | translate"
+  (visibleChange)="onProofVisible($event)"
+>
+  @if (proofUrl(); as url) {
+    <img class="proof-preview" [src]="url" [alt]="'ACTIVITY_REVENUE.PROOF' | translate" />
+  }
+</p-dialog>
+
+<p-dialog
+  [visible]="historyOpen()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="revenue-history-dialog"
+  [style]="{ width: 'min(48rem, 94vw)' }"
+  (visibleChange)="onHistoryVisible($event)"
+>
+  <ng-template pTemplate="header">
+    <div class="history-dialog-header">
+      <div class="history-title">
+        <span class="history-title-icon" aria-hidden="true">
+          <i class="pi pi-history"></i>
+        </span>
+        <h2>{{ 'ACTIVITY_REVENUE.HISTORY' | translate }}</h2>
+      </div>
+      <button
+        type="button"
+        class="history-close"
+        [attr.aria-label]="'ACTIVITY_REVENUE.CLOSE' | translate"
+        (click)="onHistoryVisible(false)"
+      >
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  @if (historyLoading()) {
+    <div class="history-empty-state" role="status">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      <p>{{ 'ACTIVITY_REVENUE.LOADING' | translate }}</p>
+    </div>
+  } @else if (history().length) {
+    <div class="history-table-wrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>{{ 'ACTIVITY_REVENUE.DATE' | translate }}</th>
+            <th>{{ 'ACTIVITY_REVENUE.ACTOR' | translate }}</th>
+            <th>{{ 'ACTIVITY_REVENUE.EVENT' | translate }}</th>
+            <th>{{ 'ACTIVITY_REVENUE.FROM' | translate }}</th>
+            <th>{{ 'ACTIVITY_REVENUE.TO' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of history(); track $index) {
+            <tr>
+              <td>
+                <span class="history-when">
+                  <span class="history-day">{{ formatHistoryDate(entry.atUtc) }}</span>
+                  <span class="history-time">{{ formatHistoryTime(entry.atUtc) }}</span>
+                </span>
+              </td>
+              <td>
+                @if (entry.actor) {
+                  <span class="history-actor">
+                    <span class="history-avatar" aria-hidden="true">{{
+                      actorInitial(entry.actor)
+                    }}</span>
+                    <span>{{ entry.actor }}</span>
+                  </span>
+                } @else {
+                  <span class="history-empty">—</span>
+                }
+              </td>
+              <td>
+                <span [class]="'history-event ' + historyEventClass(entry.action)">
+                  {{ 'ACTIVITY_REVENUE.HISTORY_ACTIONS.' + entry.action | translate }}
+                </span>
+              </td>
+              <td>
+                @if (entry.oldStatus) {
+                  <span [class]="'status-pill ' + historyStatusClass(entry.oldStatus)">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    {{ 'ACTIVITY_REVENUE.STATES.' + entry.oldStatus | translate }}
+                  </span>
+                } @else {
+                  <span class="history-empty">—</span>
+                }
+              </td>
+              <td>
+                @if (entry.newStatus) {
+                  <span [class]="'status-pill ' + historyStatusClass(entry.newStatus)">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    {{ 'ACTIVITY_REVENUE.STATES.' + entry.newStatus | translate }}
+                  </span>
+                } @else {
+                  <span class="history-empty">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="history-empty-state">
+      <i class="pi pi-inbox" aria-hidden="true"></i>
+      <p>{{ 'ACTIVITY_REVENUE.NO_HISTORY' | translate }}</p>
+    </div>
+  }
+</p-dialog>
+
+<app-confirm-action-dialog
+  [visible]="!!pendingAction()"
+  [headerKey]="actionHeaderKey()"
+  messageKey="ACTIVITY_REVENUE.ACTION_QUESTION"
+  [confirmLabelKey]="actionHeaderKey()"
+  [confirming]="acting()"
+  (cancelled)="cancelAction()"
+  (confirmed)="applyAction()"
+/>

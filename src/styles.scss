@@ -2,11 +2,33 @@
 @use 'styles/themes';
 @use 'styles/rtl';
 @use 'app/shared/styles/schedule-days-list';
+@use 'app/shared/styles/data-table' as data-table;
 @use 'app/features/bookings/bookings-dialog-global';
 
 // ─── PrimeNG Theme ────────────────────────────────────────────────────────────
 // Using lara-light theme for good RTL support
 // $p-primary-color and overrides are injected via CSS vars in _themes.scss
+
+// Selected day matches the appointments side calendar: solid brand circle.
+// Today stays a ring unless that day is also the selection.
+.p-datepicker table td > span.p-highlight {
+  background: #4b24da;
+  color: #fff;
+}
+
+.p-datepicker table td.p-datepicker-today > span {
+  background: #fff;
+  color: #4b24da;
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px #4b24da;
+  font-weight: 700;
+}
+
+.p-datepicker table td.p-datepicker-today > span.p-highlight {
+  background: #4b24da;
+  color: #fff;
+  box-shadow: none;
+}
 
 // ─── Base Reset ───────────────────────────────────────────────────────────────
 *,
@@ -103,7 +125,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 
   h1,
   h2 {
@@ -131,74 +153,40 @@ a {
   }
 }
 
-// ─── Employees feature — global PrimeNG overrides ────────────────────────────
-// These rules use component-specific class names as scope so they are safe
-// to live here rather than in the component SCSS.
-
+// List-table footer matches the customer operations bar.
 .employees-paginator.p-paginator,
 .employees-table .p-paginator,
 .users-table-paginator.p-paginator,
-.users-table .p-paginator {
-  justify-content: flex-start;
-  gap: 0.35rem 0.65rem;
-  border-top: 1px solid var(--surface-border);
-  padding: 0.85rem 1.25rem;
-  background: var(--surface-card);
-  font-size: 0.82rem;
-
-  .p-paginator-left-content,
-  .p-paginator-right-content {
-    margin: 0 !important;
-  }
-
-  .p-paginator-current {
-    margin-inline-start: auto !important;
-    margin-inline-end: 0.75rem !important;
-    color: var(--text-secondary);
-    font-size: 0.78rem;
-    white-space: nowrap;
-    cursor: default;
-  }
-
-  .p-paginator-first,
-  .p-paginator-prev,
-  .p-paginator-next,
-  .p-paginator-last,
-  .p-paginator-page {
-    min-width: 2rem;
-    height: 2rem;
-    border-radius: $border-radius;
-  }
-
-  .p-paginator-pages .p-paginator-page.p-highlight {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #fff;
-  }
-
-  .p-paginator-rpp-options {
-    margin-inline-start: 0.35rem;
-
-    .p-dropdown {
-      min-width: 5.25rem;
-      height: 2rem;
-      align-items: center;
-      border-radius: $border-radius;
-    }
-
-    .p-dropdown-label {
-      padding-inline: 0.75rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .p-dropdown-trigger {
-      width: 2rem;
-    }
-  }
+.users-table .p-paginator,
+.customer-ops-paginator.p-paginator,
+.customer-ops-table .p-paginator,
+.packages-paginator.p-paginator,
+.packages-table .p-paginator,
+.branches-paginator.p-paginator,
+.branches-table .p-paginator,
+.activity-revenue-paginator.p-paginator,
+.activity-revenue-table .p-paginator,
+.register-paginator.p-paginator,
+.register-table .p-paginator,
+.subs-paginator.p-paginator,
+.subs-table .p-paginator,
+.bookings-paginator.p-paginator,
+.bookings-table .p-paginator,
+.dashboard-paginator.p-paginator,
+.revenue-operations-table .p-paginator {
+  @include data-table.list-paginator;
 }
+
+.export-action {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.export-excel-btn.p-button {
+  @include data-table.excel-export-button;
+}
+
+@include data-table.customer-table-cells;
 
 .form-field--phone .phone-row--employee {
   ngx-intl-tel-input {
@@ -528,6 +516,69 @@ html[dir='rtl'] .phone-row--intl {
       direction: rtl !important;
       font-family: $font-ar;
     }
+  }
+}
+
+// Keep these global. Component-scoped html[dir] selectors never match <html>.
+@each $iso,
+  $label in ('eg': 'Egypt', 'sa': 'Saudi Arabia', 'ae': 'United Arab Emirates', 'kw': 'Kuwait')
+{
+  html[dir='ltr'] .phone-row--intl [id$='__item-#{$iso}'] .iti__country-name::after {
+    content: '#{$label}';
+  }
+}
+
+@each $iso, $label in ('eg': 'مصر', 'sa': 'السعودية', 'ae': 'الإمارات', 'kw': 'الكويت') {
+  html[dir='rtl'] .phone-row--intl [id$='__item-#{$iso}'] .iti__country-name::after {
+    content: '#{$label}';
+    font-family: $font-ar;
+  }
+}
+
+html[dir='ltr'] .phone-row--intl [id$='__item-eg'] .iti__country-name,
+html[dir='ltr'] .phone-row--intl [id$='__item-sa'] .iti__country-name,
+html[dir='ltr'] .phone-row--intl [id$='__item-ae'] .iti__country-name,
+html[dir='ltr'] .phone-row--intl [id$='__item-kw'] .iti__country-name,
+html[dir='rtl'] .phone-row--intl [id$='__item-eg'] .iti__country-name,
+html[dir='rtl'] .phone-row--intl [id$='__item-sa'] .iti__country-name,
+html[dir='rtl'] .phone-row--intl [id$='__item-ae'] .iti__country-name,
+html[dir='rtl'] .phone-row--intl [id$='__item-kw'] .iti__country-name {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+}
+
+html[dir='ltr'] .phone-row--intl [id$='__item-eg'] .iti__country-name::after,
+html[dir='ltr'] .phone-row--intl [id$='__item-sa'] .iti__country-name::after,
+html[dir='ltr'] .phone-row--intl [id$='__item-ae'] .iti__country-name::after,
+html[dir='ltr'] .phone-row--intl [id$='__item-kw'] .iti__country-name::after,
+html[dir='rtl'] .phone-row--intl [id$='__item-eg'] .iti__country-name::after,
+html[dir='rtl'] .phone-row--intl [id$='__item-sa'] .iti__country-name::after,
+html[dir='rtl'] .phone-row--intl [id$='__item-ae'] .iti__country-name::after,
+html[dir='rtl'] .phone-row--intl [id$='__item-kw'] .iti__country-name::after {
+  font-size: 0.82rem !important;
+  line-height: 1.2 !important;
+  color: var(--text-primary) !important;
+  white-space: nowrap;
+}
+
+// transform: scale(1) on .p-dialog clips the inquiry country menu.
+.p-dialog-mask:has(.customer-inquiry-dialog .dropdown-menu.show),
+.customer-inquiry-dialog.p-dialog:has(.dropdown-menu.show) {
+  overflow: visible !important;
+}
+
+.customer-inquiry-dialog.p-dialog:has(.dropdown-menu.show) {
+  transform: none !important;
+
+  .p-dialog-content {
+    overflow: visible !important;
+  }
+
+  .dropdown-menu.iti__dropdown-content.show {
+    z-index: 30 !important;
+    background: #fff !important;
+    box-shadow: 0 12px 32px rgba(23, 33, 107, 0.16) !important;
   }
 }
 

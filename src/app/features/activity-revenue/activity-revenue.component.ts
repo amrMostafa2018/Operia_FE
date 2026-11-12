@@ -24,6 +24,7 @@ import { CurrencyService } from '@core/services/currency.service';
 import { LanguageService } from '@core/services/language.service';
 import { PermissionService } from '@core/services/permission.service';
 import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
+import { paymentTypePillClass } from '@app/shared/utils/status-tag.util';
 import { toDateKey } from '../bookings/models/booking.model';
 import { ActivityRevenueService } from './activity-revenue.service';
 import {
@@ -78,6 +79,7 @@ export class ActivityRevenueComponent implements OnInit {
   readonly first = signal(0);
   readonly pageReportTemplate = signal(this.translate.instant('ACTIVITY_REVENUE.PAGE_REPORT'));
   readonly leadingIconPos = computed(() => getLeadingIconPos(this.language.currentLang()));
+  readonly paymentPillClass = paymentTypePillClass;
   readonly loading = signal(false);
   readonly exporting = signal(false);
   readonly error = signal(false);
@@ -346,10 +348,11 @@ export class ActivityRevenueComponent implements OnInit {
   }
 
   formatMoney(amount: number): string {
-    return new Intl.NumberFormat(this.language.currentLang() === 'ar' ? 'ar-EG' : 'en-EG', {
-      style: 'currency',
-      currency: 'EGP',
+    const formatted = new Intl.NumberFormat('en-US', {
+      maximumFractionDigits: 0,
     }).format(amount);
+    const label = this.currency.currencyLabel();
+    return label ? `${formatted} ${label}` : formatted;
   }
 
   formatAmount(amount: number): string {
