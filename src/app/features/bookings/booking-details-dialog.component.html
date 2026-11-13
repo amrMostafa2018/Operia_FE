@@ -256,6 +256,7 @@
                             isPackageOnBooking(pkg.packageId, pkg.customerPackageId)
                           "
                           [class.is-disabled]="!ownedPackageSelectable(pkg)"
+                          [disabled]="pkg.installmentDueNow === true"
                           (click)="addOwnedPackage(pkg)"
                         >
                           @if (isPackageOnBooking(pkg.packageId, pkg.customerPackageId)) {
@@ -272,6 +273,11 @@
                                 | translate: { count: customerPackageRemaining(pkg) }
                             }}
                           </small>
+                          @if (pkg.installmentDueNow) {
+                            <small class="picker-card-hint">
+                              {{ 'BOOKINGS.BOOK.PACKAGE_INSTALLMENT_DUE' | translate }}
+                            </small>
+                          }
                           @if (pkg.expiryDate) {
                             <small class="picker-card-meta">
                               {{

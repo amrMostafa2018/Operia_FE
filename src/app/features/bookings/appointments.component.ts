@@ -70,6 +70,7 @@ import {
   SlotSelection,
   mapBookingLineToApiItem,
   sumLineItemDuration,
+  unownedBookingAdditions,
   toDateKey,
   PaymentMethodId,
 } from './models/booking.model';
@@ -122,6 +123,8 @@ interface PendingBookingSale {
   scheduledDate: string;
   startMinutes: number;
   endMinutes: number;
+  /** Set when collection pays only for lines added to an existing booking. */
+  editBookingId?: string;
 }
 
 /** Coordinates calendar availability and booking creation, editing, and cancellation. */
@@ -234,6 +237,7 @@ export class AppointmentsComponent {
   readonly saleHandoffDraft = signal<SaleHandoffDraft | null>(null);
   readonly createRequestKey = signal<string | null>(null);
   readonly pendingBookingSale = signal<PendingBookingSale | null>(null);
+  private pendingDetailsEdit: BookingDetailsSavePayload | null = null;
   readonly paymentDialogVisible = signal(false);
   readonly paymentError = signal<string | null>(null);
   private collectionKey = crypto.randomUUID();
@@ -1226,6 +1230,85 @@ export class AppointmentsComponent {
     return items;
   }
 
+  /** Quotes and confirms a sale for only the unowned lines added to an existing booking. */
+  private startDetailsAdditionSale(
+    booking: BookingRecord,
+    payload: BookingDetailsSavePayload,
+    additions: BookingLineItem[]
+  ): void {
+    if (this.mutating() || this.pendingBookingSale()) {
+      return;
+    }
+    if (!payload.paymentMethod) {
+      this.toast.add({
+        severity: 'error',
+        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+        detail: this.translate.instant('ERRORS.SalePaymentMethodUnavailable'),
+      });
+      return;
+    }
+
+    const saleItems = this.saleItems(additions);
+    const key = this.createRequestKey() ?? crypto.randomUUID();
+    this.createRequestKey.set(key);
+    this.pendingDetailsEdit = payload;
+    this.mutating.set(true);
+    this.sales
+      .quote({
+        customerId: booking.clientId,
+        directCustomer: false,
+        branchId: booking.branchId,
+        items: saleItems,
+      })
+      .pipe(
+        switchMap(quote =>
+          this.sales.confirm({
+            customerId: booking.clientId,
+            directCustomer: false,
+            branchId: booking.branchId,
+            items: saleItems,
+            paymentMethod: quote.dueNow > 0 ? payload.paymentMethod : null,
+            expectedGrandTotal: quote.grandTotal,
+            expectedDueNow: quote.dueNow,
+            idempotencyKey: key,
+            disposition: 'BookNow',
+          })
+        ),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          const collectAfterConfirm = this.collectZeroDueSale;
+          this.collectZeroDueSale = false;
+          this.clearMismatchPrompt();
+          this.mutating.set(false);
+          if (collectAfterConfirm) {
+            this.recordBookingCollection(true);
+          }
+        })
+      )
+      .subscribe({
+        next: result => {
+          this.pendingBookingSale.set({
+            saleId: result.saleId,
+            branchId: booking.branchId,
+            grandTotal: result.grandTotal,
+            dueNow: result.dueNow,
+            employeeId: booking.employeeId,
+            scheduledDate: toDateKey(booking.scheduledDate),
+            startMinutes: booking.startMinutes,
+            endMinutes: booking.startMinutes + booking.slotDurationMinutes,
+            editBookingId: booking.id,
+          });
+          this.paymentError.set(null);
+          this.paymentDialogVisible.set(true);
+          this.collectZeroDueSale = result.dueNow === 0;
+        },
+        error: error => {
+          this.pendingDetailsEdit = null;
+          this.handleMutationError(error);
+        },
+      });
+  }
+
   private startSaleBooking(payload: PendingBookingDraft): void {
     if (this.mutating() || this.pendingBookingSale()) return;
     const saleItems = this.saleItems(payload.lineItems);
@@ -1344,6 +1427,14 @@ export class AppointmentsComponent {
     if (!pending || this.bookingSaleInFlight) {
       if (!this.bookingSaleInFlight) {
         this.mutating.set(false);
+      }
+      return;
+    }
+    if (pending.editBookingId) {
+      const payload = this.pendingDetailsEdit;
+      this.mutating.set(false);
+      if (payload) {
+        this.commitBookingEdit(payload, pending.saleId);
       }
       return;
     }
@@ -1490,9 +1581,16 @@ export class AppointmentsComponent {
   }
 
   /** Sends item and payment changes using the booking's current version. */
-  private commitBookingEdit(payload: BookingDetailsSavePayload): void {
+  private commitBookingEdit(payload: BookingDetailsSavePayload, collectedSaleId?: string): void {
     const booking = this.bookings().find(item => item.id === payload.bookingId);
     if (!booking?.version) {
+      return;
+    }
+    const additions = collectedSaleId
+      ? []
+      : unownedBookingAdditions(booking.lineItems, payload.lineItems);
+    if (additions.length > 0) {
+      this.startDetailsAdditionSale(booking, payload, additions);
       return;
     }
     if (payload.lineItems.length === 0) {
@@ -1517,7 +1615,7 @@ export class AppointmentsComponent {
     }
     this.mutating.set(true);
     this.appointmentsApi
-      .update(booking.id, booking.version, items, payload.paymentMethod)
+      .update(booking.id, booking.version, items, payload.paymentMethod, collectedSaleId)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
@@ -1527,6 +1625,13 @@ export class AppointmentsComponent {
       )
       .subscribe({
         next: () => {
+          if (collectedSaleId) {
+            this.pendingDetailsEdit = null;
+            this.pendingBookingSale.set(null);
+            this.paymentDialogVisible.set(false);
+            this.paymentError.set(null);
+            this.createRequestKey.set(null);
+          }
           this.loadBookings();
           this.showToast('BOOKINGS.TOAST.SAVED');
         },

@@ -315,6 +315,71 @@ describe('BookingDetailsDialogComponent', () => {
     ]);
   });
 
+  it('keeps a customer package with an installment due now visible and unselectable', async () => {
+    await TestBed.configureTestingModule({
+      imports: [BookingDetailsDialogComponent],
+      providers: [
+        FormBuilder,
+        { provide: PermissionService, useValue: { hasPermission: () => true } },
+        { provide: LanguageService, useValue: { currentLang: () => 'en' } },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+        { provide: MessageService, useValue: { add: () => undefined } },
+        { provide: PackageService, useValue: {} },
+        {
+          provide: AppointmentsApiService,
+          useValue: { getPaymentMethods: () => of([]), findCustomer: () => of(null) },
+        },
+        { provide: CurrencyService, useValue: {} },
+      ],
+    })
+      .overrideComponent(BookingDetailsDialogComponent, { set: { template: '' } })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(BookingDetailsDialogComponent);
+    fixture.componentRef.setInput('catalogItems', [
+      {
+        id: 'package-due',
+        name: 'Laser package',
+        category: 'services',
+        durationMinutes: 30,
+        price: 500,
+        icon: 'pi pi-box',
+        type: 'package',
+      } as ServiceCatalogItem,
+    ]);
+    fixture.componentRef.setInput('booking', {
+      id: 'booking-1',
+      status: 'booked',
+      version: 'version-1',
+      lineItems: [],
+    } as unknown as BookingRecord);
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    fixture.componentInstance.matchedClient.set({
+      id: 'customer-1',
+      name: 'Customer',
+      mobile: '01000000000',
+      registered: true,
+      packages: [
+        {
+          customerPackageId: 'due-1',
+          packageId: 'package-due',
+          packageName: 'Laser package',
+          usedSessions: 0,
+          totalSessions: 6,
+          expiryDate: '',
+          installmentDueNow: true,
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    const duePackage = fixture.componentInstance.customerPackages()[0];
+    expect(fixture.componentInstance.ownedPackageSelectable(duePackage)).toBeFalse();
+    fixture.componentInstance.addOwnedPackage(duePackage);
+    expect(fixture.componentInstance.draftLineItems()).toHaveSize(0);
+  });
+
   it('filters the catalog picker by category and search', async () => {
     await TestBed.configureTestingModule({
       imports: [BookingDetailsDialogComponent],

@@ -685,9 +685,18 @@ button.add-service {
     box-shadow: 0 0 0 1px #4b24da;
   }
 
-  &.is-disabled {
+  &.is-disabled,
+  &:disabled {
     opacity: 0.55;
+    cursor: not-allowed;
   }
+}
+
+.picker-card-hint {
+  color: #9a6b12;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .picker-check {

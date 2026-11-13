@@ -14,6 +14,8 @@ import {
   normalizeBookingDetailsLineItem,
   ServiceCatalogItem,
   sumLineItemDuration,
+  unownedBookingAdditions,
+  bookingDetailsSelectionRows,
 } from './booking.model';
 
 describe('booking details owned session pricing', () => {
@@ -597,5 +599,126 @@ describe('booking selection rows', () => {
       rows.every(row => row.amount === 3000 && row.dueNow === 3000 && !row.covered)
     ).toBeTrue();
     expect(bookAppointmentLineTotal(line)).toBe(6000);
+  });
+});
+
+describe('unowned booking additions', () => {
+  const ownedSession = (id: string): BookingLineItem => ({
+    id,
+    name: 'Owned session',
+    type: 'session',
+    quantity: 1,
+    price: 0,
+    durationMinutes: 30,
+    packageSessionLinked: true,
+    catalogPackageId: 'service-owned',
+    customerPackageId: 'owned-1',
+    newPurchaseUnits: 0,
+  });
+
+  const billedSession = (quantity: number): BookingLineItem => ({
+    id: 'line-service-new',
+    name: 'Laser',
+    type: 'session',
+    quantity,
+    price: 250,
+    durationMinutes: 30,
+    catalogPackageId: 'service-new',
+    newPurchaseUnits: 0,
+  });
+
+  it('collects only a newly added service the customer does not own', () => {
+    const additions = unownedBookingAdditions([ownedSession('saved')], [
+      ownedSession('saved'),
+      billedSession(1),
+    ]);
+
+    expect(additions).toHaveSize(1);
+    expect(additions[0].catalogPackageId).toBe('service-new');
+    expect(additions[0].quantity).toBe(1);
+    expect(additions[0].price).toBe(250);
+  });
+
+  it('collects only the extra units when a billed service quantity increases', () => {
+    const additions = unownedBookingAdditions([billedSession(1)], [billedSession(2)]);
+
+    expect(additions).toHaveSize(1);
+    expect(additions[0].quantity).toBe(1);
+  });
+
+  it('does not collect a saved priced service again after the popup is reopened', () => {
+    const saved = {
+      ...billedSession(1),
+      customerPackageId: 'sold-1',
+      packageSessionLinked: false,
+    };
+    const reopened = {
+      ...billedSession(1),
+      customerPackageId: null,
+    };
+    const added: BookingLineItem = {
+      ...billedSession(1),
+      id: 'line-service-other',
+      name: 'تنظيف بشره',
+      catalogPackageId: 'service-other',
+      price: 250,
+    };
+
+    const additions = unownedBookingAdditions([saved], [reopened, added]);
+
+    expect(additions).toHaveSize(1);
+    expect(additions[0].catalogPackageId).toBe('service-other');
+    expect(additions[0].quantity).toBe(1);
+    expect(additions[0].price).toBe(250);
+    const rows = bookingDetailsSelectionRows([saved], [reopened, added]);
+    expect(rows.map(row => row.amount)).toEqual([0, 250]);
+  });
+
+  it('does not price a collected service again when reopening shows its catalog price', () => {
+    const saved = {
+      ...billedSession(1),
+      price: 0,
+      packageSessionLinked: true,
+      customerPackageId: 'sold-1',
+    };
+    const reopened = {
+      ...billedSession(1),
+      price: 150,
+      customerPackageId: null,
+      packageSessionLinked: false,
+    };
+    const added: BookingLineItem = {
+      ...billedSession(1),
+      id: 'line-service-other',
+      name: 'تنظيف بشره',
+      catalogPackageId: 'service-other',
+      price: 250,
+    };
+
+    const additions = unownedBookingAdditions([saved], [reopened, added]);
+
+    expect(additions).toHaveSize(1);
+    expect(additions[0].price).toBe(250);
+    expect(additions[0].quantity).toBe(1);
+    expect(bookingDetailsSelectionRows([saved], [reopened, added]).map(row => row.amount)).toEqual([
+      0, 250,
+    ]);
+  });
+
+  it('skips a package the customer already owns', () => {
+    const ownedPackage: BookingLineItem = {
+      id: 'line-owned-package',
+      name: 'Package',
+      type: 'package',
+      quantity: 1,
+      price: 0,
+      durationMinutes: 30,
+      packageSessionLinked: true,
+      catalogPackageId: 'package-1',
+      customerPackageId: 'owned-package',
+      newPurchaseUnits: 0,
+    };
+
+    expect(unownedBookingAdditions([], [ownedPackage])).toEqual([]);
   });
 });

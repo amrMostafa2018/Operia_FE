@@ -285,11 +285,12 @@ export class AppointmentsApiService {
       unlistedPrice?: number;
       unlistedDurationMinutes?: number;
     }[],
-    paymentMethod: PaymentMethodId | null
+    paymentMethod: PaymentMethodId | null,
+    collectedSaleId?: string | null
   ): Observable<{ id: string; status: string; version: string }> {
     return this.http.put<{ id: string; status: string; version: string }>(
       `${this.url}/${encodeURIComponent(id)}`,
-      { version, items, paymentMethod }
+      { version, items, paymentMethod, collectedSaleId: collectedSaleId ?? null }
     );
   }
 

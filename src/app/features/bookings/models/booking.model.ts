@@ -721,6 +721,46 @@ function selectionUnitDueNow(item: BookingLineItem): number {
   return item.price;
 }
 
+/**
+ * Selection rows for تفاصيل الحجز. Units already stored on the booking stay covered,
+ * so a service collected earlier is not priced again when another service is added.
+ */
+export function bookingDetailsSelectionRows(
+  original: readonly BookingLineItem[],
+  draft: readonly BookingLineItem[]
+): BookingSelectionRow[] {
+  const settled = new Map<string, number>();
+  for (const line of original) {
+    const key = chargedBookingKey(line);
+    settled.set(key, (settled.get(key) ?? 0) + settledBookingUnits(line));
+  }
+
+  const rows: BookingSelectionRow[] = [];
+  for (const item of draft) {
+    const key = chargedBookingKey(item);
+    const already = settled.get(key) ?? 0;
+    const quantity = Math.max(1, Math.trunc(item.quantity) || 1);
+    const coveredByHistory = Math.min(already, quantity);
+    settled.set(key, already - coveredByHistory);
+    const charged = Math.min(quantity, chargedBookingUnits(item));
+    const newlyCharged = Math.max(0, charged - coveredByHistory);
+    const coveredUnits = quantity - newlyCharged;
+
+    for (let index = 0; index < quantity; index++) {
+      const covered = index < coveredUnits;
+      rows.push({
+        key: `${item.id}:${index}`,
+        item,
+        covered,
+        amount: covered ? 0 : item.price,
+        dueNow: covered ? 0 : selectionUnitDueNow(item),
+      });
+    }
+  }
+
+  return rows;
+}
+
 /** Billable amount for one booking line item. */
 export function bookAppointmentLineTotal(
   item: Pick<
@@ -752,6 +792,94 @@ export function bookingLineDisplaysPrice(item: BookingLineItem): boolean {
 /** Booking lines that require payment (excludes owned-package usage with zero charge). */
 export function bookAppointmentPaymentLineItems(items: BookingLineItem[]): BookingLineItem[] {
   return items.filter(item => bookAppointmentLineTotal(item) > 0);
+}
+
+/** Units on a line that still have to be purchased because the customer does not own them. */
+export function chargedBookingUnits(item: BookingLineItem): number {
+  if (item.type === 'unlisted') {
+    return item.price > 0 ? item.quantity : 0;
+  }
+
+  if (item.type === 'package') {
+    return Math.max(0, item.newPurchaseUnits ?? 0);
+  }
+
+  if (item.price <= 0 || item.packageSessionLinked || item.customerPackageId) {
+    return 0;
+  }
+
+  return item.quantity;
+}
+
+function chargedBookingKey(item: BookingLineItem): string {
+  if (item.type === 'unlisted' || !item.catalogPackageId) {
+    return `unlisted:${item.id}`;
+  }
+
+  return `${item.type}:${item.catalogPackageId}`;
+}
+
+/**
+ * Units already stored on the booking. A saved session stays settled after reload, including
+ * when collection stored a zero price or the calendar attached the reservation id.
+ */
+function settledBookingUnits(item: BookingLineItem): number {
+  const charged = chargedBookingUnits(item);
+  if (charged > 0) {
+    return charged;
+  }
+
+  if (item.type === 'package') {
+    return item.price > 0 ? item.quantity : 0;
+  }
+
+  return item.quantity;
+}
+
+/**
+ * Package and service units added in booking details that the customer does not already own.
+ * The returned quantity is only the newly added units.
+ */
+export function unownedBookingAdditions(
+  original: readonly BookingLineItem[],
+  draft: readonly BookingLineItem[]
+): BookingLineItem[] {
+  const originalUnits = new Map<string, number>();
+  for (const line of original) {
+    const key = chargedBookingKey(line);
+    originalUnits.set(key, (originalUnits.get(key) ?? 0) + settledBookingUnits(line));
+  }
+
+  const draftLines = new Map<string, BookingLineItem>();
+  const draftUnits = new Map<string, number>();
+  for (const line of draft) {
+    const units = chargedBookingUnits(line);
+    if (units <= 0) {
+      continue;
+    }
+    const key = chargedBookingKey(line);
+    draftLines.set(key, line);
+    draftUnits.set(key, (draftUnits.get(key) ?? 0) + units);
+  }
+
+  const additions: BookingLineItem[] = [];
+  for (const [key, units] of draftUnits) {
+    const added = units - (originalUnits.get(key) ?? 0);
+    if (added <= 0) {
+      continue;
+    }
+    const sample = draftLines.get(key)!;
+    additions.push({
+      ...sample,
+      id: `added-${key}`,
+      quantity: added,
+      newPurchaseUnits: sample.type === 'package' ? added : 0,
+      customerPackageId: null,
+      packageSessionLinked: false,
+    });
+  }
+
+  return additions;
 }
 
 /** Calendar duration contributed by one catalog line. */

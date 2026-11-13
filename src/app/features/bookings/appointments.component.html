@@ -627,12 +627,14 @@
         <p class="payment-error" role="alert">{{ error }}</p>
       }
       <div class="booking-payment-actions">
-        <p-button
-          [label]="'BOOKINGS.PAYMENT.CHOOSE_SLOT' | translate"
-          [text]="true"
-          [disabled]="mutating()"
-          (onClick)="chooseAnotherPaymentSlot()"
-        />
+        @if (!pending.editBookingId) {
+          <p-button
+            [label]="'BOOKINGS.PAYMENT.CHOOSE_SLOT' | translate"
+            [text]="true"
+            [disabled]="mutating()"
+            (onClick)="chooseAnotherPaymentSlot()"
+          />
+        }
         <p-button
           [label]="'BOOKINGS.PAYMENT.CHECK_STATUS' | translate"
           [outlined]="true"

@@ -52,7 +52,8 @@ import {
   BookingWordStatus,
   bookAppointmentLineTotal,
   bookAppointmentMaxQuantity,
-  bookingSelectionRows,
+  bookingDetailsSelectionRows,
+  unownedBookingAdditions,
   bookAppointmentOwnedPackageLineItem,
   bookingDetailsLineItemFromCatalog,
   bookingLineDisplaysPrice,
@@ -172,7 +173,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     this.draftLineItems().some(item => item.type === 'unlisted')
   );
   readonly selectionRows = computed(() =>
-    this.draftLineItems().flatMap(item => bookingSelectionRows(item))
+    bookingDetailsSelectionRows(this.booking()?.lineItems ?? [], this.draftLineItems())
   );
   readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
   readonly draftPaidAmount = signal(0);
@@ -220,10 +221,10 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     return services;
   });
 
-  readonly totalAmount = computed(() => sumLineItemPrice(this.draftLineItems()));
-  readonly remainingAmount = computed(() =>
-    Math.max(this.totalAmount() - this.draftPaidAmount(), 0)
+  readonly totalAmount = computed(() =>
+    sumLineItemPrice(unownedBookingAdditions(this.booking()?.lineItems ?? [], this.draftLineItems()))
   );
+  readonly remainingAmount = computed(() => this.totalAmount());
   readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
   readonly pendingAction = signal<'save' | 'cancel' | null>(null);
   readonly actionsLocked = computed(
@@ -647,7 +648,9 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   ownedPackageSelectable(pkg: ClientPackage): boolean {
-    return this.catalogItems().some(item => item.id === pkg.packageId);
+    return (
+      pkg.installmentDueNow !== true && this.catalogItems().some(item => item.id === pkg.packageId)
+    );
   }
 
   /** True when the customer already has a balance for this catalog package. */
@@ -682,7 +685,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   addOwnedPackage(pkg: ClientPackage): void {
-    if (!this.isEditable()) {
+    if (!this.isEditable() || pkg.installmentDueNow === true) {
       return;
     }
     if (!this.ownedPackageSelectable(pkg)) {
