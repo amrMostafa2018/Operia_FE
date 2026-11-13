@@ -1214,7 +1214,7 @@
     },
     "MISMATCH": {
       "TITLE": "Booking duration warning",
-      "MESSAGE": "Selected items need {{serviceDuration}} min, but this appointment is {{slotDuration}} min. Choose a longer slot or remove items before confirming.",
+      "MESSAGE": "Selected items need {{serviceDuration}} min, but this appointment is {{slotDuration}} min ({{difference}} min more). Confirm to keep the selected appointment, or go back to change the services or the slot.",
       "CONFIRM": "Confirm booking",
       "CONFIRM_EDIT": "Save changes",
       "BACK": "Back and edit services"

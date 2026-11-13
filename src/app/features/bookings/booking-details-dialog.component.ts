@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import {
@@ -28,8 +29,6 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { DropdownModule } from 'primeng/dropdown';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyService } from '@core/services/currency.service';
 import { LanguageService } from '@core/services/language.service';
@@ -63,7 +62,6 @@ import {
   customerOwnsCatalogPackage,
   displayedPackageRemainingUnits,
   displayedPackageUsedUnits,
-  EMPTY_UNLISTED_FORM,
   formatTimeRange,
   isBookingDetailsCatalogPurchaseLine,
   normalizeBookingDetailsLineItems,
@@ -72,16 +70,20 @@ import {
   PAYMENT_METHODS,
   ServiceCatalogItem,
   sumLineItemPrice,
-  UNLISTED_DURATION_UNIT_OPTIONS,
-  UNLISTED_OFFER_TYPE_OPTIONS,
 } from './models/booking.model';
-import { UnlistedCategoryFieldComponent } from './unlisted-category-field.component';
+import { UnlistedServiceDialogComponent } from './unlisted-service-dialog/unlisted-service-dialog.component';
 import {
   applyUnlistedPackageApiErrors,
   toLineItemFromCreatedPackage,
   toUnlistedPackagePayload,
 } from './unlisted-package.util';
 import { ConfirmPackageUsageDialogComponent } from './confirm-package-usage-dialog.component';
+
+const EMPTY_DETAILS_UNLISTED_FORM = {
+  name: '',
+  price: null as number | null,
+  durationMinutes: 30,
+};
 
 /** Describes booking details save payload used by the booking UI. */
 export interface BookingDetailsSavePayload {
@@ -101,10 +103,8 @@ export interface BookingDetailsSavePayload {
     FormsModule,
     ReactiveFormsModule,
     InputTextModule,
-    InputNumberModule,
-    DropdownModule,
     TranslatePipe,
-    UnlistedCategoryFieldComponent,
+    UnlistedServiceDialogComponent,
     ConfirmPackageUsageDialogComponent,
   ],
   templateUrl: './booking-details-dialog.component.html',
@@ -164,19 +164,14 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   readonly unlistedSaving = signal(false);
 
   readonly unlistedForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(200)]],
-    serviceCategoryId: this.fb.control<string | null>(null, Validators.required),
-    offerType: [EMPTY_UNLISTED_FORM.offerType, Validators.required],
-    durationMinutes: [
-      EMPTY_UNLISTED_FORM.durationMinutes,
-      [Validators.required, Validators.min(1)],
-    ],
-    sessionDurationUnit: [EMPTY_UNLISTED_FORM.sessionDurationUnit],
-    price: [0, [Validators.required, Validators.min(0)]],
+    name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+    durationMinutes: [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
+    price: this.fb.control<number | null>(null, [
+      Validators.required,
+      Validators.min(0),
+      Validators.max(999999999.99),
+    ]),
   });
-
-  readonly durationUnitOptions = UNLISTED_DURATION_UNIT_OPTIONS;
-  readonly offerTypeOptions = UNLISTED_OFFER_TYPE_OPTIONS;
 
   readonly draftLineItems = signal<BookingLineItem[]>([]);
   readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
@@ -234,8 +229,6 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   constructor() {
     setupServerErrorClearing(this.unlistedForm, this.destroyRef, [
       'name',
-      'serviceCategoryId',
-      'offerType',
       'durationMinutes',
       'price',
     ]);
@@ -264,7 +257,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
         this.catalogQuantities.set({});
         this.activeCategory.set('all');
         this.searchQuery.set('');
-        this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
+        this.unlistedForm.reset({ ...EMPTY_DETAILS_UNLISTED_FORM });
       },
       { allowSignalWrites: true }
     );
@@ -490,12 +483,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     return this.unlistedControlError(this.unlistedForm.controls.name, {
       required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_NAME_REQUIRED',
       maxlength: 'ERRORS.PACKAGE_NAME_MAX',
-    });
-  }
-
-  unlistedOfferTypeError(): string | null {
-    return this.unlistedControlError(this.unlistedForm.controls.offerType, {
-      required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_OFFER_TYPE_REQUIRED',
+      pattern: 'ERRORS.SaleUnlistedNameInvalid',
     });
   }
 
@@ -503,6 +491,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     return this.unlistedControlError(this.unlistedForm.controls.durationMinutes, {
       required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_DURATION_REQUIRED',
       min: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_DURATION_MIN',
+      max: 'ERRORS.SaleUnlistedDurationInvalid',
     });
   }
 
@@ -510,7 +499,20 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     return this.unlistedControlError(this.unlistedForm.controls.price, {
       required: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_PRICE_REQUIRED',
       min: 'BOOKINGS.DETAILS.ERRORS.UNLISTED_PRICE_MIN',
+      max: 'ERRORS.SaleUnlistedPriceInvalid',
     });
+  }
+
+  openUnlisted(): void {
+    if (!this.isEditable() || this.unlistedSaving()) {
+      return;
+    }
+    this.unlistedForm.reset({ ...EMPTY_DETAILS_UNLISTED_FORM });
+    this.showUnlisted.set(true);
+  }
+
+  closeUnlisted(): void {
+    this.showUnlisted.set(false);
   }
 
   async copyBookingNumber(number: string): Promise<void> {
@@ -767,7 +769,8 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.unlistedForm.markAllAsTouched();
-    if (this.unlistedForm.invalid) {
+    const value = this.unlistedForm.getRawValue();
+    if (this.unlistedForm.invalid || value.price === null) {
       return;
     }
     if (!this.permissions.hasPermission(Policies.PackagesManage)) {
@@ -779,16 +782,39 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const payload = toUnlistedPackagePayload(this.unlistedForm.getRawValue());
     this.unlistedSaving.set(true);
     this.packagesApi
-      .create(payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .listServiceCategories()
+      .pipe(
+        switchMap(categories => {
+          const categoryId = categories[0]?.id;
+          if (!categoryId) {
+            this.unlistedSaving.set(false);
+            this.toast.add({
+              severity: 'error',
+              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
+              detail: this.translate.instant('BOOKINGS.DETAILS.ERRORS.UNLISTED_CATEGORY_REQUIRED'),
+            });
+            return EMPTY;
+          }
+
+          return this.packagesApi.create(
+            toUnlistedPackagePayload({
+              name: value.name,
+              price: value.price ?? 0,
+              durationMinutes: value.durationMinutes,
+              offerType: 'singleSession',
+              serviceCategoryId: categoryId,
+            })
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: created => {
           this.unlistedSaving.set(false);
           this.draftLineItems.update(items => [...items, toLineItemFromCreatedPackage(created)]);
-          this.unlistedForm.reset({ ...EMPTY_UNLISTED_FORM });
+          this.unlistedForm.reset({ ...EMPTY_DETAILS_UNLISTED_FORM });
           this.showUnlisted.set(false);
           this.packageCreated.emit();
           this.toast.add({

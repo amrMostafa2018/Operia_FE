@@ -7,7 +7,7 @@
   [resizable]="false"
   appendTo="body"
   styleClass="bookings-book-dialog"
-  [style]="{ width: 'min(1180px, 98vw)' }"
+  [style]="{ width: 'min(1180px, calc(100vw - 16px))' }"
   [closeOnEscape]="!saving()"
   (onHide)="close()"
 >
@@ -414,8 +414,12 @@
           [disabled]="unlistedItems().length > 0"
           (click)="openUnlisted()"
         >
-          <i class="pi pi-plus-circle"></i>
-          {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
+          <span class="unlisted-toggle-label">
+            <span class="unlisted-toggle-plus" aria-hidden="true">
+              <i class="pi pi-plus"></i>
+            </span>
+            {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
+          </span>
         </button>
         @if (unlistedItems().length) {
           <small>{{ 'SALE_BUILDER.UNLISTED_ADDED' | translate }}</small>
@@ -432,89 +436,100 @@
       </h4>
 
       <div class="selected-table-wrap">
-        <table class="selected-table">
-          <thead>
-            <tr>
-              <th>{{ 'SALE_BUILDER.ITEM' | translate }}</th>
-              <th>{{ 'BOOKINGS.BOOK.STAFF' | translate }}</th>
-              <th>{{ 'BOOKINGS.BOOK.DURATION' | translate }}</th>
-              <th>{{ 'SALE_BUILDER.PRICE' | translate }}</th>
-              <th>{{ 'SALE_BUILDER.PAYMENT' | translate }}</th>
-              <th>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</th>
-              <th>{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of lineItems(); track item.id) {
+        @if (lineItems().length === 0) {
+          <p class="selected-empty">{{ 'BOOKINGS.BOOK.PAYMENTS_EMPTY' | translate }}</p>
+        } @else {
+          <table class="selected-table">
+            <thead>
               <tr>
-                <td>
-                  <strong>{{ item.name }}</strong
-                  ><small>{{ lineTypeKey(item.type) | translate }}</small>
-                </td>
-                <td>{{ selectedEmployee()?.fullName ?? '—' }}</td>
-                <td>{{ item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</td>
-                <td>{{ lineTotal(item) }} {{ currencyService.currencyLabel() }}</td>
-                <td>
-                  @if (
-                    item.packageSessionLinked || (item.type === 'package' && !item.newPurchaseUnits)
-                  ) {
-                    {{ 'SALE_BUILDER.COVERED' | translate }}
-                  } @else if (
-                    item.type === 'package' && item.catalogPackageId && item.newPurchaseUnits
-                  ) {
-                    <div class="package-payment-choice">
-                      @if (cashAvailable(item.catalogPackageId)) {
-                        <button
-                          type="button"
-                          [class.active]="item.paymentOption !== 'installment'"
-                          (click)="selectPackagePaymentOption(item.catalogPackageId, 'cash')"
-                        >
-                          {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
-                        </button>
-                      }
-                      @if (installmentAvailable(item.catalogPackageId)) {
-                        <button
-                          type="button"
-                          [class.active]="item.paymentOption === 'installment'"
-                          (click)="selectPackagePaymentOption(item.catalogPackageId, 'installment')"
-                        >
-                          {{ 'BOOKINGS.PAYMENT.INSTALLMENT' | translate }}
-                        </button>
-                      }
-                    </div>
-                  } @else {
-                    {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
-                  }
-                </td>
-                <td>{{ lineDueNow(item) }} {{ currencyService.currencyLabel() }}</td>
-                <td class="selected-actions">
-                  @if (item.type === 'unlisted') {
+                <th>{{ 'SALE_BUILDER.ITEM' | translate }}</th>
+                <th>{{ 'BOOKINGS.BOOK.STAFF' | translate }}</th>
+                <th>{{ 'BOOKINGS.BOOK.DURATION' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.PRICE' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.PAYMENT' | translate }}</th>
+                <th>{{ 'SALE_BUILDER.DUE_NOW' | translate }}</th>
+                <th>{{ 'CUSTOMER_OPERATIONS.ACTIONS' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of lineItems(); track item.id) {
+                <tr>
+                  <td class="selected-item">
+                    <strong>{{ item.name }}</strong>
+                    <small>{{ lineTypeKey(item.type) | translate }}</small>
+                  </td>
+                  <td [attr.data-label]="'BOOKINGS.BOOK.STAFF' | translate">
+                    {{ selectedEmployee()?.fullName ?? '—' }}
+                  </td>
+                  <td [attr.data-label]="'BOOKINGS.BOOK.DURATION' | translate">
+                    {{ item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}
+                  </td>
+                  <td [attr.data-label]="'SALE_BUILDER.PRICE' | translate">
+                    {{ lineTotal(item) }} {{ currencyService.currencyLabel() }}
+                  </td>
+                  <td [attr.data-label]="'SALE_BUILDER.PAYMENT' | translate">
+                    @if (
+                      item.packageSessionLinked ||
+                      (item.type === 'package' && !item.newPurchaseUnits)
+                    ) {
+                      {{ 'SALE_BUILDER.COVERED' | translate }}
+                    } @else if (
+                      item.type === 'package' && item.catalogPackageId && item.newPurchaseUnits
+                    ) {
+                      <div class="package-payment-choice">
+                        @if (cashAvailable(item.catalogPackageId)) {
+                          <button
+                            type="button"
+                            [class.active]="item.paymentOption !== 'installment'"
+                            (click)="selectPackagePaymentOption(item.catalogPackageId, 'cash')"
+                          >
+                            {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
+                          </button>
+                        }
+                        @if (installmentAvailable(item.catalogPackageId)) {
+                          <button
+                            type="button"
+                            [class.active]="item.paymentOption === 'installment'"
+                            (click)="
+                              selectPackagePaymentOption(item.catalogPackageId, 'installment')
+                            "
+                          >
+                            {{ 'BOOKINGS.PAYMENT.INSTALLMENT' | translate }}
+                          </button>
+                        }
+                      </div>
+                    } @else {
+                      {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
+                    }
+                  </td>
+                  <td [attr.data-label]="'SALE_BUILDER.DUE_NOW' | translate">
+                    {{ lineDueNow(item) }} {{ currencyService.currencyLabel() }}
+                  </td>
+                  <td class="selected-actions">
+                    @if (item.type === 'unlisted') {
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="openUnlisted(item)"
+                        [attr.aria-label]="'SALE_BUILDER.EDIT_UNLISTED' | translate"
+                      >
+                        <i class="pi pi-pencil"></i>
+                      </button>
+                    }
                     <button
                       type="button"
-                      class="icon-btn"
-                      (click)="openUnlisted(item)"
-                      [attr.aria-label]="'SALE_BUILDER.EDIT_UNLISTED' | translate"
+                      class="icon-btn delete-btn"
+                      (click)="removeLineItem(item.id)"
+                      [attr.aria-label]="'COMMON.DELETE' | translate"
                     >
-                      <i class="pi pi-pencil"></i>
+                      <i class="pi pi-trash"></i>
                     </button>
-                  }
-                  <button
-                    type="button"
-                    class="icon-btn delete-btn"
-                    (click)="removeLineItem(item.id)"
-                    [attr.aria-label]="'COMMON.DELETE' | translate"
-                  >
-                    <i class="pi pi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="7">{{ 'BOOKINGS.BOOK.PAYMENTS_EMPTY' | translate }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </div>
       <div class="payments-total">
         <span>{{ 'BOOKINGS.BOOK.TOTAL' | translate }}</span>
@@ -640,69 +655,15 @@
   </div>
 </p-dialog>
 
-<p-dialog
+<app-unlisted-service-dialog
   [visible]="visible() && showUnlisted()"
-  (visibleChange)="!$event && closeUnlisted()"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  appendTo="body"
-  styleClass="booking-unlisted-dialog"
-  [style]="{ width: 'min(460px, 95vw)' }"
-  [header]="
-    (editingUnlistedId() ? 'SALE_BUILDER.EDIT_UNLISTED' : 'BOOKINGS.DETAILS.ADD_UNLISTED')
-      | translate
-  "
->
-  <form
-    class="booking-unlisted-form"
-    [formGroup]="unlistedForm"
-    (ngSubmit)="addUnlisted()"
-    novalidate
-  >
-    <div class="field">
-      <label for="book-unlisted-name">{{ 'BOOKINGS.DETAILS.UNLISTED_NAME' | translate }} *</label>
-      <input pInputText id="book-unlisted-name" formControlName="name" />
-      @if (unlistedNameError(); as errorKey) {
-        <small class="field-error">{{ errorKey | translate }}</small>
-      }
-    </div>
-    <div class="field">
-      <label for="book-unlisted-price">{{ 'BOOKINGS.BOOK.TOTAL_PRICE' | translate }} *</label>
-      <p-inputNumber
-        inputId="book-unlisted-price"
-        formControlName="price"
-        [min]="0"
-        [maxFractionDigits]="2"
-      />
-      @if (unlistedPriceError(); as errorKey) {
-        <small class="field-error">{{ errorKey | translate }}</small>
-      }
-    </div>
-    <div class="field">
-      <label for="book-unlisted-duration"
-        >{{ 'BOOKINGS.DETAILS.DURATION' | translate }} ({{ 'BOOKINGS.MINUTES' | translate }})
-        *</label
-      >
-      <input
-        pInputText
-        type="number"
-        id="book-unlisted-duration"
-        min="1"
-        max="1440"
-        formControlName="durationMinutes"
-      />
-      @if (unlistedDurationError(); as errorKey) {
-        <small class="field-error">{{ errorKey | translate }}</small>
-      }
-    </div>
-    <div class="unlisted-actions">
-      <button type="button" class="cancel-btn" (click)="closeUnlisted()">
-        {{ 'COMMON.CANCEL' | translate }}
-      </button>
-      <button type="submit" class="confirm-btn">
-        {{ (editingUnlistedId() ? 'COMMON.SAVE' : 'COMMON.ADD') | translate }}
-      </button>
-    </div>
-  </form>
-</p-dialog>
+  [editing]="!!editingUnlistedId()"
+  [form]="unlistedForm"
+  dialogClass="booking-unlisted-dialog"
+  idPrefix="book-unlisted"
+  [nameError]="unlistedNameError()"
+  [priceError]="unlistedPriceError()"
+  [durationError]="unlistedDurationError()"
+  (closed)="closeUnlisted()"
+  (submitted)="addUnlisted()"
+/>

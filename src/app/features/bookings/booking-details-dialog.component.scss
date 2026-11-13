@@ -6,6 +6,7 @@
 @include dialog.bookings-dialog-header;
 @include dialog.bookings-dialog-close-button;
 @include dialog.unlisted-form-layout;
+@include dialog.unlisted-toggle-button;
 @include dialog.services-section-header;
 
 :host ::ng-deep .bookings-details-dialog {
@@ -762,36 +763,6 @@
     border-style: solid;
     border-color: #4b24da;
     background: #f5f3ff;
-  }
-}
-
-.unlisted-panel {
-  margin-top: 0.85rem;
-  border: 1px solid var(--surface-border);
-  border-radius: $border-radius-lg;
-  overflow: hidden;
-}
-
-.unlisted-toggle {
-  width: 100%;
-  border: 0;
-  background: #fafbff;
-  padding: 0.8rem 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  color: #171a43;
-  font-weight: 600;
-
-  span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-  }
-
-  i {
-    color: #4b24da;
   }
 }
 

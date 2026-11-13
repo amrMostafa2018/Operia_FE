@@ -55,6 +55,7 @@ import {
   translateApiFieldErrors,
 } from '@core/utils/api-error.util';
 import { AppointmentsApiService, EligibleBookingEmployee } from './appointments-api.service';
+import { UnlistedServiceDialogComponent } from './unlisted-service-dialog/unlisted-service-dialog.component';
 import { getRtlStartScrollLeft } from '@app/shared/utils/rtl.util';
 import {
   PHONE_INPUT_CSS_CLASS,
@@ -127,6 +128,7 @@ interface CustomerLookupState {
     NgxIntlTelInputModule,
     InputNumberModule,
     TranslatePipe,
+    UnlistedServiceDialogComponent,
   ],
   templateUrl: './book-appointment-dialog.component.html',
   styleUrl: './book-appointment-dialog.component.scss',
@@ -1222,14 +1224,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
 
-    if (this.serviceDuration() > this.selection()!.slotDurationMinutes) {
-      this.toast.add({
-        severity: 'error',
-        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-        detail: this.translate.instant('ERRORS.BookingDurationMismatch'),
-      });
-      return;
-    }
     if (!this.selectedEmployee() || this.eligibleEmployeesLoading()) {
       this.toast.add({
         severity: 'error',

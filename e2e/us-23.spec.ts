@@ -28,7 +28,7 @@ test.describe('US-23: tenant-timezone, branch-scoped collected revenue', () => {
       refunds: 0,
       netCollected: localDay === 1 ? 7200 : 5500,
     });
-    const dashboardBefore = await request.get(`${apiBaseUrl}/dashboard/revenue`, {
+    const dashboardBefore = await request.get(`${apiBaseUrl}/dashboard/summary`, {
       headers,
     });
     expect(dashboardBefore.ok(), await dashboardBefore.text()).toBeTruthy();
@@ -87,13 +87,13 @@ test.describe('US-23: tenant-timezone, branch-scoped collected revenue', () => {
       netCollected: 6000,
     });
 
-    const dashboardAfter = await request.get(`${apiBaseUrl}/dashboard/revenue`, {
+    const dashboardAfter = await request.get(`${apiBaseUrl}/dashboard/summary`, {
       headers,
     });
     expect(dashboardAfter.ok(), await dashboardAfter.text()).toBeTruthy();
     expect(await dashboardAfter.json()).toMatchObject({
-      today: dashboardBaseline.today - 1200,
-      month: dashboardBaseline.month - 1200,
+      todayRevenue: dashboardBaseline.todayRevenue - 1200,
+      monthlyRevenue: dashboardBaseline.monthlyRevenue - 1200,
     });
     expect(
       queryE2eDatabase(`SELECT CONCAT(

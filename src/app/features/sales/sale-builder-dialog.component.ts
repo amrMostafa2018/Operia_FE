@@ -36,6 +36,7 @@ import {
   PackageCategoryOption,
   PackageListItem,
 } from '@app/features/packages/models/package-list.model';
+import { UnlistedServiceDialogComponent } from '@app/features/bookings/unlisted-service-dialog/unlisted-service-dialog.component';
 import {
   ConfirmSaleRequest,
   ConfirmSaleResult,
@@ -66,6 +67,7 @@ interface PendingConfirmation {
     InputTextModule,
     InputNumberModule,
     DropdownModule,
+    UnlistedServiceDialogComponent,
   ],
   templateUrl: './sale-builder-dialog.component.html',
   styleUrl: './sale-builder-dialog.component.scss',

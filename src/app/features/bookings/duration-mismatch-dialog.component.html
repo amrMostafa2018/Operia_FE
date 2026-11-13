@@ -30,7 +30,12 @@
     <p>
       {{
         'BOOKINGS.MISMATCH.MESSAGE'
-          | translate: { serviceDuration: serviceDuration(), slotDuration: slotDuration() }
+          | translate
+            : {
+                serviceDuration: serviceDuration(),
+                slotDuration: slotDuration(),
+                difference: serviceDuration() - slotDuration(),
+              }
       }}
     </p>
     <div class="actions">
@@ -39,6 +44,11 @@
         [outlined]="true"
         styleClass="back-btn"
         (onClick)="back.emit()"
+      />
+      <p-button
+        [label]="confirmLabelKey() | translate"
+        styleClass="confirm-btn"
+        (onClick)="confirmAnyway.emit()"
       />
     </div>
   </div>

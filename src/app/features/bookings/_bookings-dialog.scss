@@ -31,6 +31,76 @@
   }
 }
 
+@mixin unlisted-toggle-button {
+  .unlisted-panel {
+    margin-top: 0.85rem;
+  }
+
+  .unlisted-toggle {
+    width: 100%;
+    border: 1.5px dashed #c8bdf5;
+    background: #f7f5ff;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    cursor: pointer;
+    color: #4b24da;
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 0.92rem;
+    line-height: 1.3;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+
+    &:hover:not(:disabled) {
+      border-style: solid;
+      border-color: #4b24da;
+      background: #f0edff;
+      box-shadow: 0 0 0 3px rgba(75, 36, 218, 0.08);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
+  .unlisted-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .unlisted-toggle-plus {
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 50%;
+    background: #4b24da;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    i {
+      font-size: 0.72rem;
+      color: #fff;
+    }
+  }
+
+  .unlisted-panel small {
+    display: block;
+    color: var(--text-secondary);
+    margin-top: 0.45rem;
+    padding-inline: 0.15rem;
+  }
+}
+
 @mixin unlisted-form-layout {
   .unlisted-form {
     display: grid;

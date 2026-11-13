@@ -6,6 +6,7 @@
 @include dialog.bookings-dialog-header;
 @include dialog.bookings-dialog-close-button;
 @include dialog.unlisted-form-layout;
+@include dialog.unlisted-toggle-button;
 @include dialog.services-section-header;
 @include dialog.booking-package-multiselect;
 
@@ -507,36 +508,6 @@
   }
 }
 
-.unlisted-panel {
-  margin-top: 0.85rem;
-  border: 1px solid var(--surface-border);
-  border-radius: $border-radius-lg;
-  overflow: hidden;
-}
-
-.unlisted-toggle {
-  width: 100%;
-  border: 0;
-  background: #fafbff;
-  padding: 0.8rem 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  color: #171a43;
-  font-weight: 600;
-
-  span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-  }
-
-  i {
-    color: #4b24da;
-  }
-}
-
 .unlisted-form .field {
   display: flex;
   flex-direction: column;
@@ -810,8 +781,8 @@
   gap: 0.75rem;
 
   li {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.75rem;
     padding-bottom: 0.75rem;
@@ -821,12 +792,21 @@
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
+      min-width: 0;
       color: var(--text-secondary);
       font-size: 0.85rem;
 
       i {
         color: #4b24da;
+        flex-shrink: 0;
       }
+    }
+
+    strong {
+      justify-self: end;
+      white-space: nowrap;
+      font-weight: 700;
+      color: #171a43;
     }
   }
 }
@@ -835,14 +815,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-top: 0.85rem;
   padding: 0.85rem;
   border-radius: $border-radius-lg;
   background: #fff7ed;
 
+  span {
+    min-width: 0;
+  }
+
   strong {
     color: #ea580c;
     font-size: 1.15rem;
+    white-space: nowrap;
   }
 }
 
@@ -927,6 +913,17 @@
   overflow-x: auto;
 }
 
+.selected-empty {
+  margin: 0;
+  padding: 0.9rem 0.75rem;
+  border: 1px dashed var(--surface-border);
+  border-radius: $border-radius-lg;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .selected-table {
   width: 100%;
   border-collapse: collapse;
@@ -961,36 +958,92 @@
   margin-top: 0;
 }
 
-.unlisted-panel small {
-  display: block;
-  color: var(--text-secondary);
-  margin-top: 0.4rem;
-}
+@media (max-width: 720px) {
+  .panel-card {
+    padding: 0.85rem 0.8rem;
+  }
 
-.unlisted-toggle:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
+  .unlisted-toggle {
+    justify-content: space-between;
+    padding-inline: 0.9rem;
+  }
 
-.booking-unlisted-form {
-  display: grid;
-  gap: 1rem;
-
-  input {
+  .unlisted-toggle-label {
     width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
   }
 
-  .unlisted-actions {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .selected-table-wrap {
+    overflow: visible;
   }
-}
 
-:host ::ng-deep .booking-unlisted-form .p-inputnumber,
-:host ::ng-deep .booking-unlisted-form .p-inputnumber-input {
-  width: 100%;
+  .selected-table {
+    min-width: 0;
+    display: block;
+
+    thead {
+      display: none;
+    }
+
+    tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    tr {
+      display: grid;
+      gap: 0.45rem;
+      padding: 0.8rem 0.85rem;
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      background: #fafbff;
+    }
+
+    td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0;
+      border: 0;
+      font-size: 0.85rem;
+    }
+
+    td::before {
+      content: attr(data-label);
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    td.selected-item {
+      display: block;
+      padding-bottom: 0.35rem;
+      margin-bottom: 0.2rem;
+      border-bottom: 1px solid #eceef5;
+    }
+
+    td.selected-item::before {
+      content: none;
+    }
+
+    td.selected-actions {
+      justify-content: flex-end;
+      padding-top: 0.25rem;
+    }
+
+    td.selected-actions::before {
+      content: none;
+    }
+  }
+
+  .payments-total,
+  .grand-total {
+    gap: 0.65rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -1000,5 +1053,24 @@
 
   .service-carousel-track {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-card {
+    min-height: 180px;
+    padding: 0.7rem 0.55rem 0.65rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .slot-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .service-carousel-track {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-modes button {
+    flex: 1 1 calc(50% - 0.5rem);
   }
 }

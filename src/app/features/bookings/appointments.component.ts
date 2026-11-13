@@ -228,6 +228,9 @@ export class AppointmentsComponent {
   readonly activeBookingId = signal<string | null>(null);
   readonly mismatchServiceDuration = signal(0);
   readonly mismatchSlotDuration = signal(0);
+  readonly mismatchConfirmLabelKey = signal('BOOKINGS.MISMATCH.CONFIRM');
+  private pendingMismatchCreate: PendingBookingDraft | null = null;
+  private pendingMismatchEdit: BookingDetailsSavePayload | null = null;
   readonly saleHandoffDraft = signal<SaleHandoffDraft | null>(null);
   readonly createRequestKey = signal<string | null>(null);
   readonly pendingBookingSale = signal<PendingBookingSale | null>(null);
@@ -1061,9 +1064,13 @@ export class AppointmentsComponent {
       return;
     }
     if (payload.serviceDuration > payload.selection.slotDurationMinutes) {
-      this.mismatchServiceDuration.set(payload.serviceDuration);
-      this.mismatchSlotDuration.set(payload.selection.slotDurationMinutes);
-      this.mismatchVisible.set(true);
+      this.openDurationMismatch(
+        payload.serviceDuration,
+        payload.selection.slotDurationMinutes,
+        'BOOKINGS.MISMATCH.CONFIRM',
+        payload,
+        null
+      );
       return;
     }
     this.commitBooking(payload);
@@ -1071,6 +1078,39 @@ export class AppointmentsComponent {
 
   onMismatchBack(): void {
     this.mismatchVisible.set(false);
+    this.pendingMismatchCreate = null;
+    this.pendingMismatchEdit = null;
+  }
+
+  /** Books or saves using the appointment interval already selected on this page. */
+  onMismatchConfirm(): void {
+    const create = this.pendingMismatchCreate;
+    const edit = this.pendingMismatchEdit;
+    this.pendingMismatchCreate = null;
+    this.pendingMismatchEdit = null;
+    this.mismatchVisible.set(false);
+    if (create) {
+      this.commitBooking(create);
+      return;
+    }
+    if (edit) {
+      this.commitBookingEdit(edit);
+    }
+  }
+
+  private openDurationMismatch(
+    serviceDuration: number,
+    slotDuration: number,
+    confirmLabelKey: string,
+    create: PendingBookingDraft | null,
+    edit: BookingDetailsSavePayload | null
+  ): void {
+    this.pendingMismatchCreate = create;
+    this.pendingMismatchEdit = edit;
+    this.mismatchConfirmLabelKey.set(confirmLabelKey);
+    this.mismatchServiceDuration.set(serviceDuration);
+    this.mismatchSlotDuration.set(slotDuration);
+    this.mismatchVisible.set(true);
   }
 
   /** Sends a registered customer's booking with an idempotency key and current selections. */
@@ -1403,9 +1443,13 @@ export class AppointmentsComponent {
     }
     const serviceDuration = sumLineItemDuration(payload.lineItems);
     if (serviceDuration > booking.slotDurationMinutes) {
-      this.mismatchServiceDuration.set(serviceDuration);
-      this.mismatchSlotDuration.set(booking.slotDurationMinutes);
-      this.mismatchVisible.set(true);
+      this.openDurationMismatch(
+        serviceDuration,
+        booking.slotDurationMinutes,
+        'BOOKINGS.MISMATCH.CONFIRM_EDIT',
+        null,
+        payload
+      );
       return;
     }
     this.commitBookingEdit(payload);

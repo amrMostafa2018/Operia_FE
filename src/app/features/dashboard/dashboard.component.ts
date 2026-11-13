@@ -45,7 +45,7 @@ import { ConfirmSaleResult } from '@app/features/sales/sale.service';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
 import { CustomerInquiryDialogComponent } from './customer-inquiry-dialog/customer-inquiry-dialog.component';
 import { MOCK_STATS, StatCard } from './models/dashboard.model';
-import { DashboardRevenueService } from './dashboard-revenue.service';
+import { DashboardRevenueService, DashboardSummary } from './dashboard-revenue.service';
 import { DashboardRevenueTableComponent } from './dashboard-revenue-table.component';
 
 @Component({
@@ -178,64 +178,43 @@ export class DashboardComponent {
   });
 
   constructor() {
-    this.loadRevenue();
-    this.loadNewCustomers();
-    this.loadMonthlyBookings();
+    this.loadSummary();
 
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pageReportTemplate.set(this.translate.instant('DASHBOARD.PAGE_REPORT'));
     });
   }
 
-  private loadRevenue(): void {
+  private loadSummary(): void {
     this.revenueService
-      .current()
+      .summary()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: revenue =>
+        next: summary =>
           this.stats.update(stats =>
             stats.map(stat => ({
               ...stat,
-              value:
-                stat.labelKey === 'DASHBOARD.TODAY_REVENUE'
-                  ? revenue.today
-                  : stat.labelKey === 'DASHBOARD.MONTHLY_REVENUE_TOTAL'
-                    ? revenue.month
-                    : stat.value,
+              value: this.summaryValueForCard(stat.labelKey, summary),
             }))
           ),
       });
   }
 
-  private loadNewCustomers(): void {
-    this.revenueService
-      .newCustomers()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: result =>
-          this.stats.update(stats =>
-            stats.map(stat => ({
-              ...stat,
-              value: stat.labelKey === 'DASHBOARD.NEW_CUSTOMERS_MONTH' ? result.count : stat.value,
-            }))
-          ),
-      });
-  }
-
-  private loadMonthlyBookings(): void {
-    this.revenueService
-      .monthlyBookings()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: result =>
-          this.stats.update(stats =>
-            stats.map(stat => ({
-              ...stat,
-              value:
-                stat.labelKey === 'DASHBOARD.MONTHLY_BOOKINGS_TOTAL' ? result.count : stat.value,
-            }))
-          ),
-      });
+  private summaryValueForCard(labelKey: string, summary: DashboardSummary): number {
+    switch (labelKey) {
+      case 'DASHBOARD.NEW_CUSTOMERS_MONTH':
+        return summary.newCustomersMonth;
+      case 'DASHBOARD.TODAY_BOOKINGS':
+        return summary.todayBookings;
+      case 'DASHBOARD.MONTHLY_BOOKINGS_TOTAL':
+        return summary.monthlyBookings;
+      case 'DASHBOARD.TODAY_REVENUE':
+        return summary.todayRevenue;
+      case 'DASHBOARD.MONTHLY_REVENUE_TOTAL':
+        return summary.monthlyRevenue;
+      default:
+        return 0;
+    }
   }
 
   formatStatValue(stat: StatCard): string {
@@ -344,8 +323,7 @@ export class DashboardComponent {
   }
 
   onSaleConfirmed(result: ConfirmSaleResult): void {
-    this.loadRevenue();
-    this.loadMonthlyBookings();
+    this.loadSummary();
     this.toast.add({
       severity: 'success',
       summary: 'OPERIA',
@@ -394,6 +372,7 @@ export class DashboardComponent {
           });
           this.cancelCancelRequest();
           this.loadBookings();
+          this.loadSummary();
         },
       });
   }
@@ -410,6 +389,7 @@ export class DashboardComponent {
             detail: this.translate.instant('BOOKINGS.TOAST.SAVED'),
           });
           this.loadBookings();
+          this.loadSummary();
         },
       });
   }

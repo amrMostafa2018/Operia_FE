@@ -131,7 +131,9 @@ test.describe('US-16: duration, employee eligibility, and conflicts', () => {
     await expectCode(blocked, 409, 'BookingSlotUnavailable');
   });
 
-  test('refuses a short interval and a slot occupied by a seeded booking', async ({ request }) => {
+  test('keeps a short confirmed interval and refuses a slot occupied by a seeded booking', async ({
+    request,
+  }) => {
     const headers = await authenticate(request);
     const tooShort = await request.post(`${apiBaseUrl}/bookings`, {
       headers,
@@ -144,7 +146,12 @@ test.describe('US-16: duration, employee eligibility, and conflicts', () => {
         offerIds: [e2eIds.durationLongOffer, e2eIds.bookingServiceOffer],
       }),
     });
-    await expectCode(tooShort, 409, 'BookingDurationMismatch');
+    expect(tooShort.status()).toBe(201);
+    expect(
+      queryE2eDatabase(`SELECT CONCAT(StartMinutes, '-', EndMinutes) FROM dbo.Bookings
+        WHERE TenantId = '${e2eIds.tenantA}'
+          AND IdempotencyKey = 'e2e-us16-duration-short';`)
+    ).toBe('720-780');
 
     const occupied = await request.post(`${apiBaseUrl}/bookings`, {
       headers,
@@ -161,7 +168,7 @@ test.describe('US-16: duration, employee eligibility, and conflicts', () => {
     expect(
       queryE2eDatabase(`SELECT COUNT(*) FROM dbo.Bookings
         WHERE TenantId = '${e2eIds.tenantA}'
-          AND IdempotencyKey IN ('e2e-us16-duration-short', 'e2e-us16-seeded-booking-conflict');`)
+          AND IdempotencyKey = 'e2e-us16-seeded-booking-conflict';`)
     ).toBe('0');
   });
 

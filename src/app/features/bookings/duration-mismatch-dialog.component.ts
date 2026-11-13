@@ -16,8 +16,10 @@ export class DurationMismatchDialogComponent {
   readonly visible = input(false);
   readonly serviceDuration = input(0);
   readonly slotDuration = input(0);
+  readonly confirmLabelKey = input('BOOKINGS.MISMATCH.CONFIRM');
 
   readonly back = output<void>();
+  readonly confirmAnyway = output<void>();
   readonly closed = output<void>();
 
   close(): void {

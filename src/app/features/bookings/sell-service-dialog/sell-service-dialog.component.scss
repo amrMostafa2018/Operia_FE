@@ -5,6 +5,7 @@
 @include dialog.bookings-dialog-header;
 @include dialog.bookings-dialog-close-button;
 @include dialog.unlisted-form-layout;
+@include dialog.unlisted-toggle-button;
 @include dialog.services-section-header;
 @include dialog.booking-package-multiselect;
 
@@ -441,36 +442,6 @@
   }
 }
 
-.unlisted-panel {
-  margin-top: 0.85rem;
-  border: 1px solid var(--surface-border);
-  border-radius: $border-radius-lg;
-  overflow: hidden;
-}
-
-.unlisted-toggle {
-  width: 100%;
-  border: 0;
-  background: #fafbff;
-  padding: 0.8rem 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  color: #171a43;
-  font-weight: 600;
-
-  span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-  }
-
-  i {
-    color: #4b24da;
-  }
-}
-
 .unlisted-form .field {
   display: flex;
   flex-direction: column;
@@ -734,8 +705,8 @@
   gap: 0.75rem;
 
   li {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.75rem;
     padding-bottom: 0.75rem;
@@ -745,12 +716,19 @@
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
+      min-width: 0;
       color: var(--text-secondary);
       font-size: 0.85rem;
 
       i {
         color: #4b24da;
+        flex-shrink: 0;
       }
+    }
+
+    strong {
+      justify-self: end;
+      white-space: nowrap;
     }
   }
 }

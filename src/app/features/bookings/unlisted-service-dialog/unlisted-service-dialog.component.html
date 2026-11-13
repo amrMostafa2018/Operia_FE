@@ -1,0 +1,101 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  appendTo="body"
+  [styleClass]="styleClass()"
+  [style]="{ width: 'min(92vw, 28rem)' }"
+  [header]="resolvedHeaderKey() | translate"
+  (visibleChange)="visibilityChanged($event)"
+  (onHide)="closed.emit()"
+>
+  <form class="unlisted-form" [formGroup]="form()" (ngSubmit)="submit()" novalidate>
+    <div class="field" [class.error]="!!nameError()">
+      <label [attr.for]="nameId()">
+        {{ 'BOOKINGS.DETAILS.UNLISTED_NAME' | translate }}
+        <em>*</em>
+      </label>
+      <input pInputText [id]="nameId()" formControlName="name" autocomplete="off" />
+      @if (nameError(); as error) {
+        <small class="field-error">
+          {{ errorsAreTranslated() ? error : (error | translate) }}
+        </small>
+      }
+    </div>
+
+    <div class="field" [class.error]="!!priceError()">
+      <label [attr.for]="priceId()">
+        {{ priceLabelKey() | translate }}
+        <em>*</em>
+      </label>
+      <div class="input-with-addon price-input">
+        <p-inputNumber
+          [inputId]="priceId()"
+          formControlName="price"
+          [min]="0"
+          [max]="999999999.99"
+          [useGrouping]="true"
+          locale="en-US"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          styleClass="price-input-number"
+          inputStyleClass="price-input-field"
+        />
+        @if (currencyService.hasCurrency()) {
+          <span class="addon">{{ currencyService.currencyLabel() }}</span>
+        }
+      </div>
+      @if (priceError(); as error) {
+        <small class="field-error">
+          {{ errorsAreTranslated() ? error : (error | translate) }}
+        </small>
+      }
+    </div>
+
+    <div class="field" [class.error]="!!durationError()">
+      <label [attr.for]="durationId()">
+        {{ 'BOOKINGS.DETAILS.DURATION' | translate }}
+        ({{ 'BOOKINGS.MINUTES' | translate }})
+        <em>*</em>
+      </label>
+      <div class="input-with-addon duration-input">
+        <i class="pi pi-clock" aria-hidden="true"></i>
+        <p-inputNumber
+          [inputId]="durationId()"
+          formControlName="durationMinutes"
+          [min]="1"
+          [max]="1440"
+          [useGrouping]="false"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="0"
+          styleClass="duration-input-number"
+          inputStyleClass="duration-input-field"
+        />
+        <span class="addon">{{ 'BOOKINGS.MINUTES' | translate }}</span>
+      </div>
+      @if (durationError(); as error) {
+        <small class="field-error">
+          {{ errorsAreTranslated() ? error : (error | translate) }}
+        </small>
+      }
+    </div>
+
+    <div class="unlisted-actions">
+      <button type="button" class="cancel-btn" [disabled]="saving()" (click)="closed.emit()">
+        {{ 'COMMON.CANCEL' | translate }}
+      </button>
+      <button type="submit" class="confirm-btn" [disabled]="saving()">
+        <i
+          class="pi"
+          [class.pi-plus]="!editing() && !saving()"
+          [class.pi-check]="editing() && !saving()"
+          [class.pi-spin]="saving()"
+          [class.pi-spinner]="saving()"
+          aria-hidden="true"
+        ></i>
+        {{ resolvedSubmitLabelKey() | translate }}
+      </button>
+    </div>
+  </form>
+</p-dialog>

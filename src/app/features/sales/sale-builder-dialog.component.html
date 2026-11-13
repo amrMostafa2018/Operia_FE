@@ -654,64 +654,22 @@
   }
 </p-dialog>
 
-<p-dialog
+<app-unlisted-service-dialog
   [visible]="visible() && showUnlisted()"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  appendTo="body"
-  styleClass="sale-unlisted-dialog"
-  [header]="
-    (editingUnlistedKey() ? 'SALE_BUILDER.EDIT_UNLISTED' : 'SALE_BUILDER.UNLISTED') | translate
-  "
-  [style]="{ width: 'min(92vw, 30rem)' }"
-  (visibleChange)="unlistedVisibilityChanged($event)"
-  (onHide)="closeUnlisted()"
->
-  <form class="unlisted-form" [formGroup]="unlistedForm" (ngSubmit)="addUnlisted()">
-    <div class="field">
-      <label for="sale-unlisted-name">{{ 'SALE_BUILDER.NAME' | translate }}</label>
-      <input pInputText id="sale-unlisted-name" formControlName="name" />
-      @if (unlistedError('name'); as error) {
-        <small class="field-error">{{ error }}</small>
-      }
-    </div>
-    <div class="field">
-      <label for="sale-unlisted-price">{{ 'SALE_BUILDER.PRICE' | translate }}</label>
-      <p-inputNumber
-        inputId="sale-unlisted-price"
-        formControlName="price"
-        [min]="0"
-        [maxFractionDigits]="2"
-      />
-      @if (unlistedError('price'); as error) {
-        <small class="field-error">{{ error }}</small>
-      }
-    </div>
-    <div class="field">
-      <label for="sale-unlisted-duration">{{ 'SALE_BUILDER.DURATION' | translate }}</label>
-      <p-inputNumber
-        inputId="sale-unlisted-duration"
-        formControlName="durationMinutes"
-        [min]="1"
-        [max]="1440"
-      />
-      @if (unlistedError('durationMinutes'); as error) {
-        <small class="field-error">{{ error }}</small>
-      }
-    </div>
-    <div class="actions">
-      <button type="button" class="outline-button" (click)="closeUnlisted()">
-        {{ 'COMMON.CANCEL' | translate }}
-      </button>
-      <button type="submit" class="primary-button">
-        {{
-          (editingUnlistedKey() ? 'SALE_BUILDER.SAVE_ITEM' : 'SALE_BUILDER.ADD_ITEM') | translate
-        }}
-      </button>
-    </div>
-  </form>
-</p-dialog>
+  [editing]="!!editingUnlistedKey()"
+  [form]="unlistedForm"
+  dialogClass="sale-unlisted-dialog"
+  idPrefix="sale-unlisted"
+  [nameError]="unlistedError('name')"
+  [priceError]="unlistedError('price')"
+  [durationError]="unlistedError('durationMinutes')"
+  [errorsAreTranslated]="true"
+  priceLabelKey="SALE_BUILDER.PRICE"
+  [headerKey]="editingUnlistedKey() ? 'SALE_BUILDER.EDIT_UNLISTED' : 'SALE_BUILDER.UNLISTED'"
+  [submitLabelKey]="editingUnlistedKey() ? 'SALE_BUILDER.SAVE_ITEM' : 'SALE_BUILDER.ADD_ITEM'"
+  (closed)="closeUnlisted()"
+  (submitted)="addUnlisted()"
+/>
 
 <p-dialog
   [visible]="pendingCustomerMode() !== null"

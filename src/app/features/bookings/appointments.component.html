@@ -584,8 +584,10 @@
   [visible]="mismatchVisible()"
   [serviceDuration]="mismatchServiceDuration()"
   [slotDuration]="mismatchSlotDuration()"
+  [confirmLabelKey]="mismatchConfirmLabelKey()"
   (closed)="onMismatchBack()"
   (back)="onMismatchBack()"
+  (confirmAnyway)="onMismatchConfirm()"
 />
 
 <app-confirm-action-dialog

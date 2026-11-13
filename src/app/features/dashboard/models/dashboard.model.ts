@@ -15,7 +15,7 @@ export const MOCK_STATS: StatCard[] = [
   },
   {
     labelKey: 'DASHBOARD.TODAY_BOOKINGS',
-    value: 32,
+    value: 0,
     icon: 'pi pi-calendar',
     iconBg: '#EAE9FF',
   },
