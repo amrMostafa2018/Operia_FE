@@ -8,6 +8,7 @@ import { PermissionService } from '@core/services/permission.service';
 import { PackageService } from '@app/features/packages/package.service';
 import { AppointmentsApiService, BookingCustomerDto } from './appointments-api.service';
 import { BookAppointmentDialogComponent } from './book-appointment-dialog.component';
+import { ServiceCatalogItem } from './models/booking.model';
 
 describe('BookAppointmentDialogComponent customer selection', () => {
   let appointmentsApi: jasmine.SpyObj<AppointmentsApiService>;
@@ -250,6 +251,38 @@ describe('BookAppointmentDialogComponent customer selection', () => {
     component.onPackageIdsChange(['due-package', 'open-package']);
     expect(component.selectedPackageIds()).toEqual(['open-package']);
     expect(component.selectedClientPackages().map(pkg => pkg.packageId)).toEqual(['open-package']);
+  });
+
+  it('shows a separate table row for each selection of the same service', () => {
+    const service: ServiceCatalogItem = {
+      id: 'service-laser',
+      name: 'تحديد',
+      category: 'laser',
+      durationMinutes: 30,
+      price: 250,
+      icon: 'pi pi-bolt',
+      type: 'session',
+    };
+    const fixture = TestBed.createComponent(BookAppointmentDialogComponent);
+    fixture.componentRef.setInput('catalogItems', [service]);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.changeQuantity(service, 1);
+    component.changeQuantity(service, 1);
+
+    expect(component.lineItems()).toHaveSize(1);
+    expect(component.lineItems()[0].quantity).toBe(2);
+    expect(component.selectionRows()).toHaveSize(2);
+    expect(component.selectionRows().map(row => row.amount)).toEqual([250, 250]);
+    expect(component.dueNow()).toBe(500);
+    expect(component.serviceDuration()).toBe(60);
+
+    component.removeLineItem(component.lineItems()[0].id);
+
+    expect(component.selectionRows()).toHaveSize(1);
+    expect(component.dueNow()).toBe(250);
+    expect(component.quantityFor(service.id)).toBe(1);
   });
 
   it('rejects empty price and whitespace-only unlisted name', () => {

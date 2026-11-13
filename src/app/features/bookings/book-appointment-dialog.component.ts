@@ -78,6 +78,7 @@ import {
   packageSelectOptions,
   bookAppointmentLineDuration,
   bookAppointmentLineTotal,
+  bookingSelectionRows,
   bookAppointmentMaxQuantity,
   mapBookingLineToApiItem,
   bookAppointmentOwnedPackageLineItem,
@@ -154,6 +155,8 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   readonly catalogCategories = input<CatalogCategoryTab[]>([]);
   readonly catalogLoading = input(false);
   readonly saving = input(false);
+  private readonly submitting = signal(false);
+  readonly confirmBusy = computed(() => this.saving() || this.submitting());
   readonly initialClientName = input('');
   readonly initialClientMobile = input('');
   readonly initialPackageId = input<string | null>(null);
@@ -405,6 +408,10 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     return items;
   });
 
+  readonly selectionRows = computed(() =>
+    this.lineItems().flatMap(item => bookingSelectionRows(item))
+  );
+
   readonly paymentLineItems = computed(() => bookAppointmentPaymentLineItems(this.lineItems()));
 
   readonly serviceDuration = computed(() =>
@@ -471,6 +478,13 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   constructor() {
+    effect(() => {
+      const saving = this.saving();
+      const open = this.visible();
+      if (!open || !saving) {
+        untracked(() => this.submitting.set(false));
+      }
+    });
     this.mobileControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
       this.onMobileInput(value);
     });
@@ -842,28 +856,6 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     }
   }
 
-  lineTypeClass(type: BookingLineItem['type']): string {
-    switch (type) {
-      case 'package':
-        return 'type-package';
-      case 'session':
-        return 'type-session';
-      default:
-        return 'type-unlisted';
-    }
-  }
-
-  lineTotal(item: BookingLineItem): number {
-    return bookAppointmentLineTotal(item);
-  }
-
-  lineDueNow(item: BookingLineItem): number {
-    if (item.packageSessionLinked || (item.type === 'package' && !item.newPurchaseUnits)) return 0;
-    return item.paymentOption === 'installment'
-      ? (item.firstPayment ?? 0) * (item.newPurchaseUnits ?? item.quantity)
-      : this.lineTotal(item);
-  }
-
   /** Stores a country-code mobile and searches only after the number is valid. */
   onMobileInput(value: ChangeData | string | null): void {
     if (typeof value === 'string') {
@@ -882,7 +874,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   setCustomerMode(mode: 'registered' | 'new' | 'direct'): void {
-    if (mode === this.customerMode() || this.registering() || this.saving()) {
+    if (mode === this.customerMode() || this.registering() || this.confirmBusy()) {
       return;
     }
     this.customerMode.set(mode);
@@ -1129,7 +1121,12 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
     const current = this.selectedQuantities();
     if (serviceId in current) {
       const next = { ...current };
-      delete next[serviceId];
+      const nextQuantity = (next[serviceId] ?? 0) - 1;
+      if (nextQuantity <= 0) {
+        delete next[serviceId];
+      } else {
+        next[serviceId] = nextQuantity;
+      }
       this.selectedQuantities.set(next);
       return;
     }
@@ -1186,7 +1183,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
 
   /** Validates the booking draft and emits the selected customer, items, slot, and payment method. */
   submit(): void {
-    if (this.saving() || this.customerLookupPending() || this.customerSelectionLoading()) {
+    if (this.confirmBusy() || this.customerLookupPending() || this.customerSelectionLoading()) {
       return;
     }
     if (this.customerMode() !== 'direct') {
@@ -1232,6 +1229,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       return;
     }
 
+    this.submitting.set(true);
     this.confirmBooking.emit({
       selection: {
         ...this.selection()!,
@@ -1246,6 +1244,11 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
       serviceDuration: this.serviceDuration(),
       paymentMethod: this.draftPaymentMethod(),
       dueNow: this.dueNow(),
+    });
+    setTimeout(() => {
+      if (!this.saving()) {
+        this.submitting.set(false);
+      }
     });
   }
 
@@ -1289,7 +1292,7 @@ export class BookAppointmentDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   close(): void {
-    if (this.saving()) {
+    if (this.confirmBusy()) {
       return;
     }
     this.closeUnlisted();

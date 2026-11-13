@@ -438,21 +438,79 @@
   font-size: 0.875rem;
 }
 
-.service-card {
-  flex: 0 0 168px;
-  width: 168px;
-  border: 1px solid #e4e6ef;
-  border-radius: $border-radius-lg;
-  padding: 0.85rem 0.7rem 0.75rem;
+.service-card,
+.unlisted-card {
+  flex: 0 0 180px;
+  width: 180px;
+  border-radius: 12px;
+  padding: 0.75rem 0.75rem 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
-  align-items: center;
-  text-align: center;
-  min-height: 196px;
+  align-items: flex-start;
+  gap: 0.2rem;
+  min-height: 158px;
   background: #fff;
-  direction: rtl;
-  box-shadow: 0 1px 2px rgba(23, 26, 67, 0.04);
+  text-align: start;
+  box-sizing: border-box;
+}
+
+.service-card {
+  border: 1px solid #e6eaf2;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+
+  &.is-picked {
+    border-color: #2a4bff;
+    box-shadow: 0 0 0 1px #2a4bff;
+  }
+}
+
+.unlisted-card {
+  border: 1.5px dashed #8ea0ff;
+  background: #fbfcff;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+
+  .unlisted-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    width: 100%;
+  }
+
+  strong {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #171a43;
+    line-height: 1.35;
+  }
+
+  small {
+    color: #6b7280;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .add-service {
+    margin-top: auto;
+    align-self: flex-end;
+  }
+
+  &:disabled {
+    cursor: default;
+    border-color: #d7d9e5;
+    background: #f4f5f8;
+
+    strong,
+    small {
+      color: #6b7088;
+    }
+
+    .add-service {
+      background: #c5c9d6;
+      box-shadow: none;
+    }
+  }
 }
 
 .service-icon {
@@ -469,15 +527,16 @@
 }
 
 .service-name {
-  font-size: 0.86rem;
+  font-size: 0.9rem;
+  font-weight: 800;
   line-height: 1.35;
-  color: #4b24da;
-  margin: 0;
+  color: #171a43;
+  margin: 0.15rem 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.35rem;
+  min-height: 2.4rem;
   width: 100%;
 }
 
@@ -486,10 +545,75 @@
   font-size: 0.8rem;
 }
 
+.card-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 0.45rem;
+}
+
 .price {
-  color: #4b24da;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  min-width: 0;
+  color: #171a43;
+}
+
+.price-amount {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.price-currency {
+  font-size: 0.72rem;
   font-weight: 700;
-  font-size: 0.9rem;
+  color: #5c6178;
+}
+
+.add-service {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: #2a4bff;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(42, 75, 255, 0.28);
+
+  i {
+    font-size: 0.85rem;
+    font-weight: 700;
+    pointer-events: none;
+  }
+}
+
+button.add-service {
+  cursor: pointer;
+
+  &:disabled {
+    background: #c5c9d6;
+    box-shadow: none;
+    cursor: default;
+  }
+}
+
+.type-badge.is-package {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.type-badge.is-service {
+  background: #12a37a;
+  color: #fff;
 }
 
 .qty {
@@ -1018,15 +1142,26 @@
 }
 
 .footer-btn {
+  position: relative;
   min-height: 46px;
   border-radius: $border-radius-lg;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 0.65rem 1rem;
+  padding: 0.65rem 2.4rem;
+
+  > i {
+    position: absolute;
+    inset-inline-start: 1.15rem;
+    margin: 0;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 .cancel-btn {

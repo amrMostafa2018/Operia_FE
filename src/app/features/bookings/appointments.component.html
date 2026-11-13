@@ -524,12 +524,15 @@
             icon="pi pi-times"
             [outlined]="true"
             styleClass="footer-cancel-btn"
+            [disabled]="mutating()"
             (onClick)="onFooterCancel()"
           />
           <p-button
             [label]="'BOOKINGS.FOOTER_CONFIRM' | translate"
             icon="pi pi-check"
             styleClass="footer-confirm-btn"
+            [disabled]="mutating()"
+            [loading]="mutating()"
             (onClick)="onFooterConfirm()"
           />
         </div>
@@ -572,7 +575,7 @@
   [catalogItems]="catalogItems()"
   [catalogCategories]="catalogCategories()"
   [catalogLoading]="catalogLoading()"
-  [saving]="mutating()"
+  [saving]="mutating() || cancelConfirmVisible()"
   (closed)="onDetailsDialogClosed()"
   (saved)="onDetailsSaved($event)"
   (cancelBooking)="onDetailsCancelRequest($event)"
@@ -585,6 +588,7 @@
   [serviceDuration]="mismatchServiceDuration()"
   [slotDuration]="mismatchSlotDuration()"
   [confirmLabelKey]="mismatchConfirmLabelKey()"
+  [confirming]="mutating()"
   (closed)="onMismatchBack()"
   (back)="onMismatchBack()"
   (confirmAnyway)="onMismatchConfirm()"

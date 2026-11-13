@@ -8,6 +8,7 @@
   appendTo="body"
   styleClass="bookings-mismatch-dialog"
   [style]="{ width: '480px' }"
+  [closeOnEscape]="!confirming()"
   (onHide)="close()"
 >
   <ng-template pTemplate="header">
@@ -16,6 +17,7 @@
       type="button"
       class="dialog-close"
       (click)="close()"
+      [disabled]="confirming()"
       [attr.aria-label]="'COMMON.CLOSE' | translate"
     >
       <i class="pi pi-times"></i>
@@ -43,11 +45,14 @@
         [label]="'BOOKINGS.MISMATCH.BACK' | translate"
         [outlined]="true"
         styleClass="back-btn"
+        [disabled]="confirming()"
         (onClick)="back.emit()"
       />
       <p-button
         [label]="confirmLabelKey() | translate"
         styleClass="confirm-btn"
+        [disabled]="confirming()"
+        [loading]="confirming()"
         (onClick)="confirmAnyway.emit()"
       />
     </div>

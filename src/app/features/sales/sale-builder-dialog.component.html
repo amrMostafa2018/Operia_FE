@@ -254,13 +254,8 @@
                 >{{ offer.sessionDurationMinutes }} {{ 'SALE_BUILDER.MINUTES' | translate }}</small
               >
               <span class="offer-price">
-                @if (isRtl()) {
-                  {{ currency.currencyLabel() }}
-                  {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
-                } @else {
-                  {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
-                  {{ currency.currencyLabel() }}
-                }
+                {{ displayPrice(offer) | number: '1.0-2' : 'en' }}
+                {{ currency.currencyLabel() }}
               </span>
               <button
                 type="button"

@@ -59,6 +59,12 @@
     grid-template-columns: 1fr 1.4fr;
     gap: 0.75rem;
     margin-top: 0.25rem;
+
+    > p-button {
+      display: block;
+      width: 100%;
+      min-width: 0;
+    }
   }
 
   .cancel-btn,
@@ -90,12 +96,36 @@
   }
 
   .confirm-btn {
+    width: 100%;
     border: 0;
     background: #4b24da;
     color: #fff;
+    justify-content: center;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: #3f1fc4;
+    }
+
+    &:disabled,
+    &.p-disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      background: #4b24da;
+      border-color: #4b24da;
+      color: #fff;
+    }
+
+    .p-button-label {
+      flex: 0 0 auto;
+      text-align: center;
+    }
+
+    .p-button-icon,
+    .p-button-loading-icon {
+      position: absolute;
+      inset-inline-start: 1rem;
+      margin: 0;
+      color: #fff;
     }
 
     i {

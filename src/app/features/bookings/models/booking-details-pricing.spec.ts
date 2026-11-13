@@ -1,5 +1,6 @@
 import {
   bookAppointmentCatalogQuantityLineItem,
+  bookingSelectionRows,
   bookAppointmentLineTotal,
   bookAppointmentOwnedPackageLineItem,
   bookAppointmentPaymentLineItems,
@@ -533,5 +534,68 @@ describe('dedupeOwnedPackageBookingLines', () => {
     ]);
 
     expect(deduped).toHaveSize(2);
+  });
+});
+
+describe('booking selection rows', () => {
+  const laserSession: ServiceCatalogItem = {
+    id: 'service-laser',
+    name: 'تحديد',
+    category: 'laser',
+    durationMinutes: 30,
+    price: 250,
+    icon: 'pi pi-bolt',
+    type: 'session',
+  };
+
+  const pulsePackage: ServiceCatalogItem = {
+    id: 'package-pulse',
+    name: 'باقة 5000 بلس',
+    category: 'laser',
+    durationMinutes: 30,
+    price: 3000,
+    firstPayment: 500,
+    icon: 'pi pi-box',
+    type: 'package',
+  };
+
+  it('shows one row per selected unit of the same service', () => {
+    const line = bookAppointmentCatalogQuantityLineItem(laserSession, 2, []);
+    const rows = bookingSelectionRows(line);
+
+    expect(line.quantity).toBe(2);
+    expect(rows).toHaveSize(2);
+    expect(rows.every(row => row.amount === 250 && row.dueNow === 250 && !row.covered)).toBeTrue();
+    expect(bookAppointmentLineTotal(line)).toBe(500);
+  });
+
+  it('shows one row per selected unit of the same package', () => {
+    const line = bookAppointmentCatalogQuantityLineItem(pulsePackage, 2, [], [], 'installment');
+    const rows = bookingSelectionRows(line);
+
+    expect(rows).toHaveSize(2);
+    expect(rows.every(row => row.amount === 3000 && row.dueNow === 500 && !row.covered)).toBeTrue();
+  });
+
+  it('charges every selected package unit, including when the customer already owns that package', () => {
+    const owned: ClientPackage = {
+      customerPackageId: 'owned-1',
+      packageId: pulsePackage.id,
+      packageName: pulsePackage.name,
+      usedSessions: 0,
+      totalSessions: 3,
+      expiryDate: '2027-11-10',
+      offerType: 'package',
+      sessionCount: 3,
+      pulseCount: null,
+    };
+    const line = bookAppointmentCatalogQuantityLineItem(pulsePackage, 2, [owned]);
+    const rows = bookingSelectionRows(line);
+
+    expect(rows).toHaveSize(2);
+    expect(
+      rows.every(row => row.amount === 3000 && row.dueNow === 3000 && !row.covered)
+    ).toBeTrue();
+    expect(bookAppointmentLineTotal(line)).toBe(6000);
   });
 });

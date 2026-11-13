@@ -67,6 +67,19 @@ describe('BookingDetailsDialogComponent', () => {
     fixture.detectChanges();
 
     fixture.componentInstance.changeCatalogQuantity(extraService, 1);
+    fixture.componentInstance.changeCatalogQuantity(extraService, 1);
+    const extraLine = fixture.componentInstance
+      .draftLineItems()
+      .find(item => item.name === 'Extra service');
+    expect(extraLine?.quantity).toBe(2);
+    expect(
+      fixture.componentInstance.selectionRows().filter(row => row.item.name === 'Extra service')
+    ).toHaveSize(2);
+
+    fixture.componentInstance.removeSelectionUnit(extraLine!.id);
+    expect(
+      fixture.componentInstance.selectionRows().filter(row => row.item.name === 'Extra service')
+    ).toHaveSize(1);
     expect(fixture.componentInstance.draftLineItems().map(item => item.name)).toEqual([
       'Package session',
       'Extra service',
@@ -293,10 +306,7 @@ describe('BookingDetailsDialogComponent', () => {
     fixture.componentInstance.addOwnedPackage(fixture.componentInstance.customerPackages()[2]);
     expect(fixture.componentInstance.draftLineItems()).toHaveSize(3);
 
-    fixture.componentInstance.removeLineItem(
-      fixture.componentInstance.draftLineItems()[1].id,
-      1
-    );
+    fixture.componentInstance.removeLineItem(fixture.componentInstance.draftLineItems()[1].id, 1);
 
     expect(fixture.componentInstance.draftLineItems()).toHaveSize(2);
     expect(fixture.componentInstance.draftLineItems().map(item => item.customerPackageId)).toEqual([
@@ -353,6 +363,78 @@ describe('BookingDetailsDialogComponent', () => {
 
     expect(fixture.componentInstance.filteredCatalogItems().map(item => item.id)).toEqual([
       'laser-1',
+    ]);
+  });
+
+  it('adds and edits one unlisted service as a local draft', async () => {
+    await TestBed.configureTestingModule({
+      imports: [BookingDetailsDialogComponent],
+      providers: [
+        FormBuilder,
+        { provide: PermissionService, useValue: { hasPermission: () => true } },
+        { provide: LanguageService, useValue: {} },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+        { provide: MessageService, useValue: { add: () => undefined } },
+        {
+          provide: PackageService,
+          useValue: { create: () => of(null), listServiceCategories: () => of([]) },
+        },
+        {
+          provide: AppointmentsApiService,
+          useValue: { getPaymentMethods: () => of([]), findCustomer: () => of(null) },
+        },
+        { provide: CurrencyService, useValue: {} },
+      ],
+    })
+      .overrideComponent(BookingDetailsDialogComponent, { set: { template: '' } })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(BookingDetailsDialogComponent);
+    fixture.componentRef.setInput('booking', {
+      id: 'booking-1',
+      status: 'booked',
+      version: 'version-1',
+      paymentMethod: 'cash',
+      paidAmount: 0,
+      clientMobile: '01000000000',
+      lineItems: [],
+    } as unknown as BookingRecord);
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    component.openUnlisted();
+    component.unlistedForm.setValue({ name: 'Custom peel', price: 80, durationMinutes: 45 });
+    component.addUnlisted();
+
+    const added = component.draftLineItems().find(item => item.type === 'unlisted');
+    expect(added).toEqual(
+      jasmine.objectContaining({
+        name: 'Custom peel',
+        price: 80,
+        durationMinutes: 45,
+        type: 'unlisted',
+        quantity: 1,
+      })
+    );
+    expect(added?.catalogPackageId).toBeUndefined();
+    expect(component.hasUnlistedLine()).toBeTrue();
+    expect(component.showUnlisted()).toBeFalse();
+
+    component.openUnlisted();
+    expect(component.showUnlisted()).toBeFalse();
+
+    component.openUnlisted(added);
+    component.unlistedForm.setValue({ name: 'Updated peel', price: 90, durationMinutes: 20 });
+    component.addUnlisted();
+
+    expect(component.draftLineItems().filter(item => item.type === 'unlisted')).toEqual([
+      jasmine.objectContaining({
+        id: added?.id,
+        name: 'Updated peel',
+        price: 90,
+        durationMinutes: 20,
+      }),
     ]);
   });
 });

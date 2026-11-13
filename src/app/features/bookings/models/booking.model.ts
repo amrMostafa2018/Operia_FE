@@ -671,6 +671,56 @@ export function isOwnedSessionLineItem(
   return isPersistedOwnedSessionLineItem(item);
 }
 
+/** One selected unit shown as its own row in the booking services table. */
+export interface BookingSelectionRow {
+  key: string;
+  item: BookingLineItem;
+  covered: boolean;
+  amount: number;
+  dueNow: number;
+}
+
+/**
+ * Expands a combined catalog quantity into one table row per selected unit.
+ * The saved booking line stays a single item with that quantity.
+ */
+export function bookingSelectionRows(item: BookingLineItem): BookingSelectionRow[] {
+  const quantity = Math.max(1, Math.trunc(item.quantity) || 1);
+  const chargedUnits = Math.min(quantity, chargedSelectionUnits(item, quantity));
+  const coveredUnits = quantity - chargedUnits;
+
+  return Array.from({ length: quantity }, (_, index) => {
+    const covered = index < coveredUnits;
+    return {
+      key: `${item.id}:${index}`,
+      item,
+      covered,
+      amount: covered ? 0 : item.price,
+      dueNow: covered ? 0 : selectionUnitDueNow(item),
+    };
+  });
+}
+
+function chargedSelectionUnits(item: BookingLineItem, quantity: number): number {
+  if (item.type === 'unlisted') {
+    return quantity;
+  }
+
+  if (item.type === 'package') {
+    return Math.max(0, item.newPurchaseUnits ?? 0);
+  }
+
+  return isOwnedSessionLineItem(item) ? 0 : quantity;
+}
+
+function selectionUnitDueNow(item: BookingLineItem): number {
+  if (item.paymentOption === 'installment') {
+    return item.firstPayment ?? 0;
+  }
+
+  return item.price;
+}
+
 /** Billable amount for one booking line item. */
 export function bookAppointmentLineTotal(
   item: Pick<
@@ -769,7 +819,24 @@ export function mapBookingLineToApiItem(
   customerPackageId: string | null;
   quantity: number;
   type: string;
+  paymentOption?: string;
+  unlistedName?: string;
+  unlistedPrice?: number;
+  unlistedDurationMinutes?: number;
 } {
+  if (item.type === 'unlisted' && !item.catalogPackageId) {
+    return {
+      packageId: '',
+      customerPackageId: null,
+      quantity: item.quantity,
+      type: 'unlisted',
+      paymentOption: 'cash',
+      unlistedName: item.name.trim(),
+      unlistedPrice: item.price,
+      unlistedDurationMinutes: item.durationMinutes,
+    };
+  }
+
   return {
     packageId: item.catalogPackageId!,
     customerPackageId: bookingLineCustomerPackageIdForApi(item, lineItems),

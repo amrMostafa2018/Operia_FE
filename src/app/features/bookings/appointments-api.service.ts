@@ -280,6 +280,10 @@ export class AppointmentsApiService {
       customerPackageId: string | null;
       quantity: number;
       type?: string;
+      paymentOption?: string;
+      unlistedName?: string;
+      unlistedPrice?: number;
+      unlistedDurationMinutes?: number;
     }[],
     paymentMethod: PaymentMethodId | null
   ): Observable<{ id: string; status: string; version: string }> {

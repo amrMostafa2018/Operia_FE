@@ -11,11 +11,11 @@ import {
   OnDestroy,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import {
@@ -36,7 +36,6 @@ import { PermissionService } from '@core/services/permission.service';
 import { Policies } from '@core/models/permissions.model';
 import { setupServerErrorClearing } from '@core/utils/validators.util';
 import { extractApiFieldErrors, translateApiFieldErrors } from '@core/utils/api-error.util';
-import { PackageService } from '@app/features/packages/package.service';
 import {
   getCarouselNextIcon,
   getCarouselPrevIcon,
@@ -53,6 +52,7 @@ import {
   BookingWordStatus,
   bookAppointmentLineTotal,
   bookAppointmentMaxQuantity,
+  bookingSelectionRows,
   bookAppointmentOwnedPackageLineItem,
   bookingDetailsLineItemFromCatalog,
   bookingLineDisplaysPrice,
@@ -72,11 +72,6 @@ import {
   sumLineItemPrice,
 } from './models/booking.model';
 import { UnlistedServiceDialogComponent } from './unlisted-service-dialog/unlisted-service-dialog.component';
-import {
-  applyUnlistedPackageApiErrors,
-  toLineItemFromCreatedPackage,
-  toUnlistedPackagePayload,
-} from './unlisted-package.util';
 import { ConfirmPackageUsageDialogComponent } from './confirm-package-usage-dialog.component';
 
 const EMPTY_DETAILS_UNLISTED_FORM = {
@@ -117,7 +112,6 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   private readonly languageService = inject(LanguageService);
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(MessageService);
-  private readonly packagesApi = inject(PackageService);
   private readonly appointmentsApi = inject(AppointmentsApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly catalogTrack = viewChild<ElementRef<HTMLElement>>('catalogTrack');
@@ -161,7 +155,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   readonly activeCategory = signal('all');
   readonly searchQuery = signal('');
   readonly customerPackagesLoading = signal(false);
-  readonly unlistedSaving = signal(false);
+  readonly editingUnlistedId = signal<string | null>(null);
 
   readonly unlistedForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
@@ -174,6 +168,12 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
   });
 
   readonly draftLineItems = signal<BookingLineItem[]>([]);
+  readonly hasUnlistedLine = computed(() =>
+    this.draftLineItems().some(item => item.type === 'unlisted')
+  );
+  readonly selectionRows = computed(() =>
+    this.draftLineItems().flatMap(item => bookingSelectionRows(item))
+  );
   readonly draftPaymentMethod = signal<PaymentMethodId | null>(null);
   readonly draftPaidAmount = signal(0);
   readonly matchedClient = signal<ClientRecord | null>(null);
@@ -225,8 +225,19 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     Math.max(this.totalAmount() - this.draftPaidAmount(), 0)
   );
   readonly isRtl = computed(() => this.languageService.currentLang() === 'ar');
+  readonly pendingAction = signal<'save' | 'cancel' | null>(null);
+  readonly actionsLocked = computed(
+    () => this.saving() || this.closeSaving() || this.pendingAction() !== null
+  );
 
   constructor() {
+    effect(() => {
+      const saving = this.saving();
+      const open = this.visible();
+      if (!open || !saving) {
+        untracked(() => this.pendingAction.set(null));
+      }
+    });
     setupServerErrorClearing(this.unlistedForm, this.destroyRef, [
       'name',
       'durationMinutes',
@@ -251,6 +262,7 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
         this.draftPaymentMethod.set(current.paymentMethod);
         this.draftPaidAmount.set(current.paidAmount);
         this.showUnlisted.set(false);
+        this.editingUnlistedId.set(null);
         this.showServicePicker.set(false);
         this.pickerSource.set('customer');
         this.showCatalogSection.set(false);
@@ -503,16 +515,29 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  openUnlisted(): void {
-    if (!this.isEditable() || this.unlistedSaving()) {
+  openUnlisted(item?: BookingLineItem): void {
+    if (!this.isEditable()) {
       return;
     }
-    this.unlistedForm.reset({ ...EMPTY_DETAILS_UNLISTED_FORM });
+    if (!item && this.hasUnlistedLine()) {
+      return;
+    }
+    this.editingUnlistedId.set(item?.id ?? null);
+    this.unlistedForm.reset({
+      name: item?.name ?? '',
+      price: item?.price ?? null,
+      durationMinutes: item?.durationMinutes ?? 30,
+    });
     this.showUnlisted.set(true);
   }
 
   closeUnlisted(): void {
     this.showUnlisted.set(false);
+    this.editingUnlistedId.set(null);
+  }
+
+  canEditUnlisted(item: BookingLineItem): boolean {
+    return item.type === 'unlisted' && !item.catalogPackageId;
   }
 
   async copyBookingNumber(number: string): Promise<void> {
@@ -528,6 +553,40 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
         summary: this.translate.instant('BOOKINGS.DETAILS.COPY_FAILED'),
       });
     }
+  }
+
+  removeSelectionUnit(itemId: string): void {
+    if (!this.isEditable()) {
+      return;
+    }
+    const items = this.draftLineItems();
+    const index = items.findIndex(item => item.id === itemId);
+    if (index < 0) {
+      return;
+    }
+    const item = items[index];
+    if (item.quantity > 1 && item.catalogPackageId && item.id === `line-${item.catalogPackageId}`) {
+      const service = this.catalogItems().find(entry => entry.id === item.catalogPackageId);
+      if (service) {
+        this.changeCatalogQuantity(service, -1);
+        return;
+      }
+    }
+    if (item.quantity > 1) {
+      const next = items.map((line, lineIndex) =>
+        lineIndex === index ? { ...line, quantity: line.quantity - 1 } : line
+      );
+      this.catalogQuantities.set(this.extractCatalogQuantities(next));
+      this.draftLineItems.set(
+        normalizeBookingDetailsLineItems(
+          next,
+          this.catalogItems(),
+          this.matchedClient()?.packages ?? []
+        )
+      );
+      return;
+    }
+    this.removeLineItem(itemId);
   }
 
   removeLineItem(itemId: string, itemIndex?: number): void {
@@ -763,9 +822,9 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     this.updateScrollState();
   }
 
-  /** Validates and creates an unlisted service before adding it to the booking draft. */
+  /** Adds or edits one booking-only service without writing it to the catalog. */
   addUnlisted(): void {
-    if (!this.isEditable() || this.unlistedSaving()) {
+    if (!this.isEditable()) {
       return;
     }
     this.unlistedForm.markAllAsTouched();
@@ -773,78 +832,29 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
     if (this.unlistedForm.invalid || value.price === null) {
       return;
     }
-    if (!this.permissions.hasPermission(Policies.PackagesManage)) {
-      this.toast.add({
-        severity: 'error',
-        summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-        detail: this.translate.instant('BOOKINGS.DETAILS.UNLISTED_NO_PERMISSION'),
-      });
+    const id = this.editingUnlistedId();
+    if (!id && this.hasUnlistedLine()) {
       return;
     }
-
-    this.unlistedSaving.set(true);
-    this.packagesApi
-      .listServiceCategories()
-      .pipe(
-        switchMap(categories => {
-          const categoryId = categories[0]?.id;
-          if (!categoryId) {
-            this.unlistedSaving.set(false);
-            this.toast.add({
-              severity: 'error',
-              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-              detail: this.translate.instant('BOOKINGS.DETAILS.ERRORS.UNLISTED_CATEGORY_REQUIRED'),
-            });
-            return EMPTY;
-          }
-
-          return this.packagesApi.create(
-            toUnlistedPackagePayload({
-              name: value.name,
-              price: value.price ?? 0,
-              durationMinutes: value.durationMinutes,
-              offerType: 'singleSession',
-              serviceCategoryId: categoryId,
-            })
-          );
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: created => {
-          this.unlistedSaving.set(false);
-          this.draftLineItems.update(items => [...items, toLineItemFromCreatedPackage(created)]);
-          this.unlistedForm.reset({ ...EMPTY_DETAILS_UNLISTED_FORM });
-          this.showUnlisted.set(false);
-          this.packageCreated.emit();
-          this.toast.add({
-            severity: 'success',
-            summary: this.translate.instant('PACKAGES.TITLE'),
-            detail: this.translate.instant('BOOKINGS.DETAILS.UNLISTED_ADDED'),
-          });
-        },
-        error: (error: HttpErrorResponse) => {
-          this.unlistedSaving.set(false);
-          const hasFieldErrors = applyUnlistedPackageApiErrors(this.unlistedForm, error, key =>
-            this.translate.instant(key)
-          );
-          if (!hasFieldErrors) {
-            this.toast.add({
-              severity: 'error',
-              summary: this.translate.instant('HTTP_ERRORS.SUMMARY'),
-              detail:
-                (error as HttpErrorResponse & { userMessage?: string }).userMessage ??
-                this.translate.instant('HTTP_ERRORS.SERVER'),
-            });
-          }
-        },
-      });
+    const line: BookingLineItem = {
+      id: id ?? `unlisted-${crypto.randomUUID()}`,
+      name: value.name.trim(),
+      type: 'unlisted',
+      quantity: 1,
+      price: value.price,
+      durationMinutes: value.durationMinutes,
+      paymentOption: 'cash',
+    };
+    this.draftLineItems.update(items =>
+      id ? items.map(item => (item.id === id ? line : item)) : [...items, line]
+    );
+    this.closeUnlisted();
   }
 
   /** Emits edited booking lines and payment method for the parent to persist. */
   save(): void {
     const current = this.booking();
-    if (!current || !this.isEditable() || this.saving()) {
+    if (!current || !this.isEditable() || this.actionsLocked()) {
       return;
     }
     if (this.draftLineItems().length === 0) {
@@ -855,26 +865,38 @@ export class BookingDetailsDialogComponent implements AfterViewInit, OnDestroy {
       });
       return;
     }
+    this.pendingAction.set('save');
     this.saved.emit({
       bookingId: current.id,
       lineItems: this.draftLineItems(),
       paymentMethod: this.draftPaymentMethod(),
+    });
+    setTimeout(() => {
+      if (!this.saving()) {
+        this.pendingAction.set(null);
+      }
     });
   }
 
   /** Requests the parent confirmation flow for this booking. */
   requestCancel(): void {
     const current = this.booking();
-    if (!current || !this.canCancel() || this.saving()) {
+    if (!current || !this.canCancel() || this.actionsLocked()) {
       return;
     }
+    this.pendingAction.set('cancel');
     this.cancelBooking.emit(current.id);
+    setTimeout(() => {
+      if (!this.saving()) {
+        this.pendingAction.set(null);
+      }
+    });
   }
 
   /** Opens the close-and-confirm usage dialog for every booking line. */
   requestCloseBooking(): void {
     const current = this.booking();
-    if (!current || !this.canClose() || this.saving()) {
+    if (!current || !this.canClose() || this.actionsLocked()) {
       return;
     }
     this.showCloseConfirm.set(true);

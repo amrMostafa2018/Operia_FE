@@ -425,40 +425,54 @@ h3 {
 }
 
 .catalog-shell[dir='rtl'] .catalog-card {
+  // Physical columns: type badge on the left, add button on the right.
+  direction: ltr;
+
   .item-type {
-    grid-column: 2;
-    justify-self: end;
+    direction: rtl;
+    grid-column: 1;
+    justify-self: start;
   }
 
   .catalog-card-title,
   .catalog-card-duration {
-    grid-column: 1;
-    justify-self: start;
-    text-align: start;
+    direction: rtl;
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    text-align: right;
+  }
+
+  .catalog-card-title {
+    padding-left: 4.5rem;
   }
 
   .offer-price {
-    grid-column: 2;
-    justify-self: end;
-    text-align: end;
+    direction: ltr;
+    grid-column: 1;
+    justify-self: start;
+    text-align: left;
   }
 
   .add-offer-btn {
-    grid-column: 1;
-    justify-self: start;
+    grid-column: 2;
+    justify-self: end;
   }
 
   .skeleton-badge,
   .skeleton-line.price {
-    grid-column: 2;
-    justify-self: end;
+    grid-column: 1;
+    justify-self: start;
   }
 
   .skeleton-line.title,
-  .skeleton-line.duration,
+  .skeleton-line.duration {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
   .skeleton-add {
-    grid-column: 1;
-    justify-self: start;
+    grid-column: 2;
+    justify-self: end;
   }
 }
 

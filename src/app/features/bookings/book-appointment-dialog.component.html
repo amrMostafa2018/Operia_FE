@@ -8,7 +8,7 @@
   appendTo="body"
   styleClass="bookings-book-dialog"
   [style]="{ width: 'min(1180px, calc(100vw - 16px))' }"
-  [closeOnEscape]="!saving()"
+  [closeOnEscape]="!confirmBusy()"
   (onHide)="close()"
 >
   <ng-template pTemplate="header">
@@ -20,7 +20,7 @@
       type="button"
       class="dialog-close"
       (click)="close()"
-      [disabled]="saving()"
+      [disabled]="confirmBusy()"
       [attr.aria-label]="'COMMON.CLOSE' | translate"
     >
       <i class="pi pi-times"></i>
@@ -357,37 +357,68 @@
           >
             @if (catalogLoading()) {
               <p class="catalog-empty">{{ 'BOOKINGS.BOOK.CATALOG_LOADING' | translate }}</p>
-            } @else if (filteredServices().length === 0) {
-              <p class="catalog-empty">{{ 'BOOKINGS.BOOK.CATALOG_EMPTY' | translate }}</p>
             } @else {
-              @for (service of filteredServices(); track service.id) {
-                <article class="service-card">
-                  <span class="service-icon"><i [class]="service.icon"></i></span>
-                  <strong class="service-name">{{ service.name }}</strong>
-                  <span class="type-badge" [class]="lineTypeClass(service.type)">
-                    {{ lineTypeKey(service.type) | translate }}
-                  </span>
-                  <span class="duration"
-                    >{{ service.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</span
-                  >
-                  <span class="price">
-                    {{ service.price }}
-                    @if (currencyService.hasCurrency()) {
-                      {{ currencyService.currencyLabel() }}
-                    }
-                  </span>
-                  <div class="qty" [class.is-rtl]="isRtl()">
-                    <button type="button" (click)="changeQuantity(service, -1)">-</button>
-                    <span>{{ quantityFor(service.id) }}</span>
+              <button
+                type="button"
+                class="unlisted-card"
+                [disabled]="unlistedItems().length > 0"
+                (click)="openUnlisted()"
+              >
+                <span class="unlisted-copy">
+                  <strong>{{ 'BOOKINGS.BOOK.UNLISTED_CARD' | translate }}</strong>
+                  <small>{{
+                    (unlistedItems().length
+                      ? 'SALE_BUILDER.UNLISTED_ADDED'
+                      : 'BOOKINGS.BOOK.UNLISTED_HINT'
+                    ) | translate
+                  }}</small>
+                </span>
+                <span class="add-service" aria-hidden="true">
+                  <i class="pi pi-plus"></i>
+                </span>
+              </button>
+              @if (filteredServices().length === 0) {
+                <p class="catalog-empty">{{ 'BOOKINGS.BOOK.CATALOG_EMPTY' | translate }}</p>
+              } @else {
+                @for (service of filteredServices(); track service.id) {
+                  <article class="service-card" [class.is-picked]="quantityFor(service.id) > 0">
+                    <span
+                      class="type-badge"
+                      [class.is-package]="service.type === 'package'"
+                      [class.is-service]="service.type !== 'package'"
+                    >
+                      {{
+                        (service.type === 'package'
+                          ? 'SALE_BUILDER.PACKAGE'
+                          : 'SALE_BUILDER.SERVICE'
+                        ) | translate
+                      }}
+                    </span>
+                    <strong class="service-name">{{ service.name }}</strong>
+                    <span class="duration"
+                      >{{ service.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}</span
+                    >
+                    <span class="price" dir="ltr">
+                      <strong class="price-amount">{{
+                        service.price | number: '1.0-2' : 'en'
+                      }}</strong>
+                      @if (currencyService.hasCurrency()) {
+                        <small class="price-currency">{{ currencyService.currencyLabel() }}</small>
+                      }
+                    </span>
                     <button
                       type="button"
+                      class="add-service"
                       [disabled]="!canIncreaseQuantity(service)"
                       (click)="changeQuantity(service, 1)"
+                      [attr.aria-label]="
+                        ('BOOKINGS.BOOK.ADD_CATALOG_ITEM' | translate) + ' ' + service.name
+                      "
                     >
-                      +
+                      <i class="pi pi-plus"></i>
                     </button>
-                  </div>
-                </article>
+                  </article>
+                }
               }
             }
           </div>
@@ -406,25 +437,6 @@
           </button>
         </div>
       </div>
-
-      <div class="unlisted-panel">
-        <button
-          type="button"
-          class="unlisted-toggle"
-          [disabled]="unlistedItems().length > 0"
-          (click)="openUnlisted()"
-        >
-          <span class="unlisted-toggle-label">
-            <span class="unlisted-toggle-plus" aria-hidden="true">
-              <i class="pi pi-plus"></i>
-            </span>
-            {{ 'BOOKINGS.DETAILS.ADD_UNLISTED' | translate }}
-          </span>
-        </button>
-        @if (unlistedItems().length) {
-          <small>{{ 'SALE_BUILDER.UNLISTED_ADDED' | translate }}</small>
-        }
-      </div>
     }
   </section>
 
@@ -432,7 +444,7 @@
     <section class="panel-card payments-section">
       <h4>
         <i class="pi pi-wallet"></i>
-        {{ 'SALE_BUILDER.SELECTED' | translate }} ({{ lineItems().length }})
+        {{ 'SALE_BUILDER.SELECTED' | translate }} ({{ selectionRows().length }})
       </h4>
 
       <div class="selected-table-wrap">
@@ -452,46 +464,41 @@
               </tr>
             </thead>
             <tbody>
-              @for (item of lineItems(); track item.id) {
+              @for (row of selectionRows(); track row.key) {
                 <tr>
                   <td class="selected-item">
-                    <strong>{{ item.name }}</strong>
-                    <small>{{ lineTypeKey(item.type) | translate }}</small>
+                    <strong>{{ row.item.name }}</strong>
+                    <small>{{ lineTypeKey(row.item.type) | translate }}</small>
                   </td>
                   <td [attr.data-label]="'BOOKINGS.BOOK.STAFF' | translate">
                     {{ selectedEmployee()?.fullName ?? '—' }}
                   </td>
                   <td [attr.data-label]="'BOOKINGS.BOOK.DURATION' | translate">
-                    {{ item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}
+                    {{ row.item.durationMinutes }} {{ 'BOOKINGS.MINUTES' | translate }}
                   </td>
                   <td [attr.data-label]="'SALE_BUILDER.PRICE' | translate">
-                    {{ lineTotal(item) }} {{ currencyService.currencyLabel() }}
+                    {{ row.amount }} {{ currencyService.currencyLabel() }}
                   </td>
                   <td [attr.data-label]="'SALE_BUILDER.PAYMENT' | translate">
-                    @if (
-                      item.packageSessionLinked ||
-                      (item.type === 'package' && !item.newPurchaseUnits)
-                    ) {
+                    @if (row.covered) {
                       {{ 'SALE_BUILDER.COVERED' | translate }}
-                    } @else if (
-                      item.type === 'package' && item.catalogPackageId && item.newPurchaseUnits
-                    ) {
+                    } @else if (row.item.type === 'package' && row.item.catalogPackageId) {
                       <div class="package-payment-choice">
-                        @if (cashAvailable(item.catalogPackageId)) {
+                        @if (cashAvailable(row.item.catalogPackageId)) {
                           <button
                             type="button"
-                            [class.active]="item.paymentOption !== 'installment'"
-                            (click)="selectPackagePaymentOption(item.catalogPackageId, 'cash')"
+                            [class.active]="row.item.paymentOption !== 'installment'"
+                            (click)="selectPackagePaymentOption(row.item.catalogPackageId, 'cash')"
                           >
                             {{ 'BOOKINGS.PAYMENT.CASH' | translate }}
                           </button>
                         }
-                        @if (installmentAvailable(item.catalogPackageId)) {
+                        @if (installmentAvailable(row.item.catalogPackageId)) {
                           <button
                             type="button"
-                            [class.active]="item.paymentOption === 'installment'"
+                            [class.active]="row.item.paymentOption === 'installment'"
                             (click)="
-                              selectPackagePaymentOption(item.catalogPackageId, 'installment')
+                              selectPackagePaymentOption(row.item.catalogPackageId, 'installment')
                             "
                           >
                             {{ 'BOOKINGS.PAYMENT.INSTALLMENT' | translate }}
@@ -503,14 +510,14 @@
                     }
                   </td>
                   <td [attr.data-label]="'SALE_BUILDER.DUE_NOW' | translate">
-                    {{ lineDueNow(item) }} {{ currencyService.currencyLabel() }}
+                    {{ row.dueNow }} {{ currencyService.currencyLabel() }}
                   </td>
                   <td class="selected-actions">
-                    @if (item.type === 'unlisted') {
+                    @if (row.item.type === 'unlisted') {
                       <button
                         type="button"
                         class="icon-btn"
-                        (click)="openUnlisted(item)"
+                        (click)="openUnlisted(row.item)"
                         [attr.aria-label]="'SALE_BUILDER.EDIT_UNLISTED' | translate"
                       >
                         <i class="pi pi-pencil"></i>
@@ -519,7 +526,7 @@
                     <button
                       type="button"
                       class="icon-btn delete-btn"
-                      (click)="removeLineItem(item.id)"
+                      (click)="removeLineItem(row.item.id)"
                       [attr.aria-label]="'COMMON.DELETE' | translate"
                     >
                       <i class="pi pi-trash"></i>
@@ -602,7 +609,7 @@
       <ul class="summary-list">
         <li>
           <span><i class="pi pi-gift"></i>{{ 'BOOKINGS.BOOK.SERVICE_COUNT' | translate }}</span>
-          <strong>{{ lineItems().length }}</strong>
+          <strong>{{ selectionRows().length }}</strong>
         </li>
         <li>
           <span><i class="pi pi-sync"></i>{{ 'BOOKINGS.BOOK.SESSION_COUNT' | translate }}</span>
@@ -633,25 +640,20 @@
   </div>
 
   <div class="book-dialog-actions">
-    <button type="button" class="cancel-btn" [disabled]="saving()" (click)="close()">
+    <button type="button" class="cancel-btn" [disabled]="confirmBusy()" (click)="close()">
       {{ 'COMMON.CANCEL' | translate }}
     </button>
-    <button
+    <p-button
       type="button"
-      class="confirm-btn"
+      styleClass="confirm-btn"
+      icon="pi pi-check"
+      [label]="'BOOKINGS.BOOK.CONFIRM' | translate"
       [disabled]="
-        customerLookupPending() || customerSelectionLoading() || registering() || saving()
+        customerLookupPending() || customerSelectionLoading() || registering() || confirmBusy()
       "
-      (click)="submit()"
-    >
-      <i
-        class="pi"
-        [class.pi-check]="!saving()"
-        [class.pi-spin]="saving()"
-        [class.pi-spinner]="saving()"
-      ></i>
-      {{ 'BOOKINGS.BOOK.CONFIRM' | translate }}
-    </button>
+      [loading]="confirmBusy()"
+      (onClick)="submit()"
+    />
   </div>
 </p-dialog>
 

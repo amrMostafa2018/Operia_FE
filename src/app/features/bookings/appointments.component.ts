@@ -237,6 +237,8 @@ export class AppointmentsComponent {
   readonly paymentDialogVisible = signal(false);
   readonly paymentError = signal<string | null>(null);
   private collectionKey = crypto.randomUUID();
+  private bookingSaleInFlight = false;
+  private collectZeroDueSale = false;
   private readonly paymentRecoveryKey = 'operia.booking.pendingSale';
   private calendarRequestId = 0;
   private customerRequestId = 0;
@@ -1077,6 +1079,13 @@ export class AppointmentsComponent {
   }
 
   onMismatchBack(): void {
+    if (this.mutating()) {
+      return;
+    }
+    this.clearMismatchPrompt();
+  }
+
+  private clearMismatchPrompt(): void {
     this.mismatchVisible.set(false);
     this.pendingMismatchCreate = null;
     this.pendingMismatchEdit = null;
@@ -1084,18 +1093,20 @@ export class AppointmentsComponent {
 
   /** Books or saves using the appointment interval already selected on this page. */
   onMismatchConfirm(): void {
+    if (this.mutating()) {
+      return;
+    }
     const create = this.pendingMismatchCreate;
     const edit = this.pendingMismatchEdit;
-    this.pendingMismatchCreate = null;
-    this.pendingMismatchEdit = null;
-    this.mismatchVisible.set(false);
     if (create) {
       this.commitBooking(create);
       return;
     }
     if (edit) {
       this.commitBookingEdit(edit);
+      return;
     }
+    this.clearMismatchPrompt();
   }
 
   private openDurationMismatch(
@@ -1162,7 +1173,10 @@ export class AppointmentsComponent {
       })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.mutating.set(false))
+        finalize(() => {
+          this.mutating.set(false);
+          this.clearMismatchPrompt();
+        })
       )
       .subscribe({
         next: result => {
@@ -1240,7 +1254,15 @@ export class AppointmentsComponent {
           })
         ),
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.mutating.set(false))
+        finalize(() => {
+          const collectAfterConfirm = this.collectZeroDueSale;
+          this.collectZeroDueSale = false;
+          this.clearMismatchPrompt();
+          this.mutating.set(false);
+          if (collectAfterConfirm) {
+            this.recordBookingCollection(true);
+          }
+        })
       )
       .subscribe({
         next: result => {
@@ -1259,7 +1281,7 @@ export class AppointmentsComponent {
           this.bookDialogVisible.set(false);
           this.paymentError.set(null);
           this.paymentDialogVisible.set(true);
-          if (result.dueNow === 0) queueMicrotask(() => this.recordBookingCollection(true));
+          this.collectZeroDueSale = result.dueNow === 0;
         },
         error: error => this.handleMutationError(error),
       });
@@ -1272,20 +1294,21 @@ export class AppointmentsComponent {
     this.paymentError.set(null);
     this.sales
       .collect(pending.saleId, this.collectionKey, confirmed)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.mutating.set(false))
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
           if (!result.paymentConfirmed) {
+            this.mutating.set(false);
             this.collectionKey = crypto.randomUUID();
             this.paymentError.set(this.translate.instant('BOOKINGS.PAYMENT.FAILED'));
             return;
           }
-          queueMicrotask(() => this.bookPendingSale());
+          this.bookPendingSale();
         },
-        error: () => queueMicrotask(() => this.refreshPendingSale()),
+        error: () => {
+          this.mutating.set(false);
+          this.refreshPendingSale();
+        },
       });
   }
 
@@ -1295,34 +1318,45 @@ export class AppointmentsComponent {
     this.mutating.set(true);
     this.sales
       .state(pending.saleId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.mutating.set(false))
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: state => {
           if (state.bookingId || state.status === 'Booked') {
+            this.mutating.set(false);
             this.completePendingSale();
           } else if (state.paymentConfirmed) {
-            queueMicrotask(() => this.bookPendingSale());
+            this.bookPendingSale();
           } else {
+            this.mutating.set(false);
             if (state.collectionId) this.collectionKey = crypto.randomUUID();
             this.paymentError.set(this.translate.instant('BOOKINGS.PAYMENT.NOT_VERIFIED'));
           }
         },
-        error: error => this.handleMutationError(error),
+        error: error => {
+          this.mutating.set(false);
+          this.handleMutationError(error);
+        },
       });
   }
 
   private bookPendingSale(): void {
     const pending = this.pendingBookingSale();
-    if (!pending || this.mutating()) return;
+    if (!pending || this.bookingSaleInFlight) {
+      if (!this.bookingSaleInFlight) {
+        this.mutating.set(false);
+      }
+      return;
+    }
+    this.bookingSaleInFlight = true;
     this.mutating.set(true);
     this.sales
       .book(pending)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.mutating.set(false))
+        finalize(() => {
+          this.bookingSaleInFlight = false;
+          this.mutating.set(false);
+        })
       )
       .subscribe({
         next: result => {
@@ -1470,7 +1504,9 @@ export class AppointmentsComponent {
       return;
     }
     const items = payload.lineItems
-      .filter(item => !!item.catalogPackageId)
+      .filter(
+        item => !!item.catalogPackageId || (item.type === 'unlisted' && !item.catalogPackageId)
+      )
       .map(item => mapBookingLineToApiItem(item, payload.lineItems));
     if (items.length !== payload.lineItems.length) {
       this.showToast('BOOKINGS.BOOK.INVALID_SELECTION', 'error');
@@ -1484,7 +1520,10 @@ export class AppointmentsComponent {
       .update(booking.id, booking.version, items, payload.paymentMethod)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.mutating.set(false))
+        finalize(() => {
+          this.mutating.set(false);
+          this.clearMismatchPrompt();
+        })
       )
       .subscribe({
         next: () => {

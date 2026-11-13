@@ -57,6 +57,7 @@ import {
   BookingRecord,
   CatalogCategoryTab,
   ServiceCatalogItem,
+  mapBookingLineToApiItem,
   sumLineItemDuration,
 } from '../bookings/models/booking.model';
 
@@ -614,12 +615,18 @@ export class BookingRegisterComponent {
       return;
     }
     const items = payload.lineItems
-      .filter(item => !!item.catalogPackageId)
-      .map(item => ({
-        packageId: item.catalogPackageId!,
-        customerPackageId: item.customerPackageId ?? null,
-        quantity: item.quantity,
-      }));
+      .filter(
+        item => !!item.catalogPackageId || (item.type === 'unlisted' && !item.catalogPackageId)
+      )
+      .map(item =>
+        item.type === 'unlisted' && !item.catalogPackageId
+          ? mapBookingLineToApiItem(item, payload.lineItems)
+          : {
+              packageId: item.catalogPackageId!,
+              customerPackageId: item.customerPackageId ?? null,
+              quantity: item.quantity,
+            }
+      );
     if (items.length !== payload.lineItems.length || this.mutating()) {
       return;
     }
