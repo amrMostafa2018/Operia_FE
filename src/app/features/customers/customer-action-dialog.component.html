@@ -2,96 +2,191 @@
   [visible]="true"
   (visibleChange)="!$event && close()"
   [modal]="true"
-  [style]="{ width: 'min(38rem, 96vw)' }"
+  styleClass="customer-action-dialog"
+  [style]="{ width: 'min(44rem, 96vw)' }"
   [header]="'CUSTOMER_ACTION.TITLE' | translate"
   [draggable]="false"
   [resizable]="false"
 >
   @if (loading()) {
-    <p>{{ 'CUSTOMER_ACTION.LOADING' | translate }}</p>
+    <div class="action-status" role="status">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      <p>{{ 'CUSTOMER_ACTION.LOADING' | translate }}</p>
+    </div>
   } @else if (failed()) {
-    <p role="alert">{{ 'CUSTOMER_ACTION.LOAD_ERROR' | translate }}</p>
-  } @else {
+    <div class="action-status action-status--error" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <p>{{ 'CUSTOMER_ACTION.LOAD_ERROR' | translate }}</p>
+    </div>
+  } @else if (data()) {
     @if (data(); as action) {
       <div class="action-content">
-        <header>
-          <strong>{{ action.customerName }}</strong>
-          <span class="mobile">{{ action.mobile }}</span>
+        <header class="identity">
+          <span class="avatar" aria-hidden="true"><i class="pi pi-user"></i></span>
+          <div class="identity-copy">
+            <strong>{{ action.customerName }}</strong>
+            <span class="mobile">{{ action.mobile }}</span>
+            @if (row().service) {
+              <span class="service">{{ row().service }}</span>
+            }
+          </div>
+          <div class="identity-badges">
+            @if (
+              statusPillClass(purchaseAction()?.purchaseStatus || row().purchaseStatus);
+              as pill
+            ) {
+              <span [class]="pill">
+                <span class="status-dot" aria-hidden="true"></span>
+                {{
+                  'CUSTOMER_OPERATIONS.PURCHASE_STATUSES.' +
+                    (purchaseAction()?.purchaseStatus || row().purchaseStatus) | translate
+                }}
+              </span>
+            }
+            @if (action.isBlocked) {
+              <span class="status-pill status-pill--danger">
+                <span class="status-dot" aria-hidden="true"></span>
+                {{ 'CUSTOMER_OPERATIONS.RESTRICTIONS.blocked' | translate }}
+              </span>
+            }
+          </div>
         </header>
+
         @if (canRefund() && purchaseAction(); as purchase) {
-          <section>
-            <h3>{{ 'CUSTOMER_ACTION.REFUND_TITLE' | translate }}</h3>
-            <div class="figures">
+          <section class="panel">
+            <div class="panel-head">
+              <span class="panel-icon panel-icon--danger" aria-hidden="true">
+                <i class="pi pi-undo"></i>
+              </span>
               <div>
-                <span>{{ 'CUSTOMER_ACTION.PAID' | translate }}</span
-                ><strong
-                  >{{ purchase.paid | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong
-                >
-              </div>
-              <div>
-                <span>{{ 'CUSTOMER_ACTION.REFUNDED' | translate }}</span
-                ><strong
-                  >{{ purchase.refunded | number: '1.2-2' }} {{ currency.currencyLabel() }}</strong
-                >
-              </div>
-              <div>
-                <span>{{ 'CUSTOMER_ACTION.MAXIMUM' | translate }}</span
-                ><strong
-                  >{{ purchase.remainingRefundable | number: '1.2-2' }}
-                  {{ currency.currencyLabel() }}</strong
-                >
+                <h3>{{ 'CUSTOMER_ACTION.REFUND_TITLE' | translate }}</h3>
               </div>
             </div>
-            <p class="hint">{{ 'CUSTOMER_ACTION.CANCEL_WARNING' | translate }}</p>
+
+            <div class="figures">
+              <div class="figure">
+                <span>{{ 'CUSTOMER_ACTION.PAID' | translate }}</span>
+                <strong>
+                  {{ purchase.paid | number: '1.2-2' }}
+                  <small>{{ currency.currencyLabel() }}</small>
+                </strong>
+              </div>
+              <div class="figure">
+                <span>{{ 'CUSTOMER_ACTION.REFUNDED' | translate }}</span>
+                <strong>
+                  {{ purchase.refunded | number: '1.2-2' }}
+                  <small>{{ currency.currencyLabel() }}</small>
+                </strong>
+              </div>
+              <div class="figure figure--max" [class.is-empty]="purchase.remainingRefundable <= 0">
+                <span>{{ 'CUSTOMER_ACTION.MAXIMUM' | translate }}</span>
+                <strong>
+                  {{ purchase.remainingRefundable | number: '1.2-2' }}
+                  <small>{{ currency.currencyLabel() }}</small>
+                </strong>
+              </div>
+            </div>
+
+            <p class="callout">
+              <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+              <span>{{ 'CUSTOMER_ACTION.CANCEL_WARNING' | translate }}</span>
+            </p>
+
             <form [formGroup]="refundForm" (ngSubmit)="saveRefund()">
-              <label>
+              <label class="field">
                 <span>{{ 'CUSTOMER_ACTION.AMOUNT' | translate }}</span>
-                <input type="number" min="0.01" step="0.01" formControlName="amount" />
+                <span class="amount-field">
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    formControlName="amount"
+                    [class.is-invalid]="!!refundError()"
+                    [attr.aria-invalid]="!!refundError()"
+                  />
+                  <span class="amount-suffix">{{ currency.currencyLabel() }}</span>
+                </span>
                 @if (refundError(); as error) {
                   <small class="field-error">{{ error }}</small>
                 }
               </label>
-              <label>
+              <label class="field">
                 <span>{{ 'CUSTOMER_ACTION.NOTE' | translate }}</span>
-                <textarea rows="2" formControlName="note"></textarea>
+                <textarea
+                  rows="2"
+                  formControlName="note"
+                  [class.is-invalid]="!!noteError()"
+                  [attr.aria-invalid]="!!noteError()"
+                ></textarea>
                 @if (noteError(); as error) {
                   <small class="field-error">{{ error }}</small>
                 }
               </label>
-              <button
-                type="submit"
-                class="danger"
-                [disabled]="savingRefund() || purchase.remainingRefundable <= 0"
-              >
-                {{ 'CUSTOMER_ACTION.CANCEL_REFUND' | translate }}
-              </button>
+              <div class="form-actions">
+                <button
+                  type="submit"
+                  class="action danger"
+                  [disabled]="savingRefund() || purchase.remainingRefundable <= 0"
+                >
+                  @if (savingRefund()) {
+                    <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                  } @else {
+                    <i class="pi pi-undo" aria-hidden="true"></i>
+                  }
+                  {{ 'CUSTOMER_ACTION.CANCEL_REFUND' | translate }}
+                </button>
+              </div>
             </form>
           </section>
         }
+
         @if (canBlock()) {
-          <section>
-            <h3>{{ 'CUSTOMER_ACTION.BLOCK_TITLE' | translate }}</h3>
-            <p class="hint">{{ 'CUSTOMER_ACTION.BLOCK_HINT' | translate }}</p>
+          <section class="panel">
+            <div class="panel-head">
+              <span class="panel-icon panel-icon--block" aria-hidden="true">
+                <i class="pi pi-ban"></i>
+              </span>
+              <div>
+                <h3>{{ 'CUSTOMER_ACTION.BLOCK_TITLE' | translate }}</h3>
+                <p>{{ 'CUSTOMER_ACTION.BLOCK_HINT' | translate }}</p>
+              </div>
+            </div>
             <form [formGroup]="blockForm" (ngSubmit)="saveBlock()">
               <label class="check">
                 <input type="checkbox" formControlName="isBlocked" />
+                <span class="check-box" aria-hidden="true"></span>
                 <span>{{ 'CUSTOMER_ACTION.BLOCK' | translate }}</span>
               </label>
-              <label>
+              <label class="field">
                 <span>{{ 'CUSTOMER_ACTION.REASON' | translate }}</span>
-                <textarea rows="2" formControlName="reason"></textarea>
+                <textarea
+                  rows="2"
+                  formControlName="reason"
+                  [class.is-invalid]="!!reasonError()"
+                  [attr.aria-invalid]="!!reasonError()"
+                ></textarea>
                 @if (reasonError(); as error) {
                   <small class="field-error">{{ error }}</small>
                 }
               </label>
-              <button type="submit" [disabled]="savingBlock()">
-                {{ 'CUSTOMER_ACTION.SAVE_BLOCK' | translate }}
-              </button>
+              <div class="form-actions">
+                <button type="submit" class="action" [disabled]="savingBlock()">
+                  @if (savingBlock()) {
+                    <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                  } @else {
+                    <i class="pi pi-check" aria-hidden="true"></i>
+                  }
+                  {{ 'CUSTOMER_ACTION.SAVE_BLOCK' | translate }}
+                </button>
+              </div>
             </form>
           </section>
         }
+
         <footer>
-          <button type="button" (click)="close()">{{ 'CUSTOMER_ACTION.CLOSE' | translate }}</button>
+          <button type="button" class="ghost" (click)="close()">
+            {{ 'CUSTOMER_ACTION.CLOSE' | translate }}
+          </button>
         </footer>
       </div>
     }

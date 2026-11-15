@@ -114,6 +114,21 @@ export class CustomerActionDialogComponent {
     return errors['server'] ?? null;
   }
 
+  statusPillClass(status: string | null | undefined): string {
+    switch (status) {
+      case 'active':
+      case 'completed':
+        return 'status-pill status-pill--success';
+      case 'cancelled':
+      case 'expired':
+        return 'status-pill status-pill--danger';
+      case 'pending':
+        return 'status-pill status-pill--warning';
+      default:
+        return '';
+    }
+  }
+
   saveRefund(): void {
     const data = this.purchaseAction();
     if (!data || !this.canRefund() || this.savingRefund()) return;
