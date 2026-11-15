@@ -125,6 +125,13 @@ export function hasPackageCategoryDuplicateError(error: HttpErrorResponse): bool
   );
 }
 
+export function hasRevenueReviewConflictError(error: HttpErrorResponse): boolean {
+  return (
+    error.status === 409 &&
+    extractApiErrorCodes(error).some(code => code === 'RevenueReviewUnavailable')
+  );
+}
+
 function resolveErrorCode(codeOrMessage: string): string {
   if (/^[A-Z][A-Z0-9_]*$/.test(codeOrMessage) || /^[A-Z][A-Za-z0-9]*$/.test(codeOrMessage)) {
     return codeOrMessage;

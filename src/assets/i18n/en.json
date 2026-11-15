@@ -414,6 +414,7 @@
   },
   "HEADER": {
     "NOTIFICATIONS": "Notifications",
+    "NOTIFICATIONS_GENERAL": "General notifications (separate from payment review on the dashboard)",
     "TOGGLE_SIDEBAR": "Toggle sidebar",
     "FULL_NAME": "Full Name",
     "LOGOUT": "Sign Out",
@@ -1377,6 +1378,8 @@
     "MONTHLY_REVENUE": "Monthly Revenue",
     "ACTIVE_PACKAGES": "Active Packages",
     "QUICK_ACTIONS": "Quick Actions",
+    "PENDING_REVIEW_ALERT": "{{count}} payment(s) awaiting review",
+    "PENDING_REVIEW_COUNT": "{{count}} payments awaiting review",
     "SELL_SERVICE": "Sell Service / Offer",
     "INQUIRY": "Inquiry",
     "BOOKINGS": "Bookings",

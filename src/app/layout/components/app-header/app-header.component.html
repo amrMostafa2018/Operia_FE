@@ -19,9 +19,13 @@
 
     <!-- Notification bell -->
     @if (canNotifications()) {
-      <button class="icon-btn notif-btn" [attr.aria-label]="'HEADER.NOTIFICATIONS' | translate">
+      <button
+        class="icon-btn notif-btn"
+        type="button"
+        [attr.aria-label]="'HEADER.NOTIFICATIONS' | translate"
+        [title]="'HEADER.NOTIFICATIONS_GENERAL' | translate"
+      >
         <i class="pi pi-bell"></i>
-        <span class="notif-dot"></span>
       </button>
     }
 

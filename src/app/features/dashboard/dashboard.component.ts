@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -86,7 +87,12 @@ export class DashboardComponent {
   readonly canBookings = computed(() => this.permissions.hasPermission(Policies.BookingsRead));
   readonly canExport = computed(() => this.permissions.hasPermission(Policies.DashboardExport));
   readonly canReadRevenue = computed(() => this.permissions.hasPermission(Policies.RevenueRead));
+  readonly canReviewPayments = computed(() => this.permissions.hasPermission(Policies.RevenueReview));
   readonly canManage = computed(() => this.permissions.hasPermission(Policies.BookingsManage));
+  readonly pendingReviewCount = signal(0);
+
+  @ViewChild(DashboardRevenueTableComponent)
+  private revenueTable?: DashboardRevenueTableComponent;
   /** Today's bookings still use sample rows, so the table stays a Coming Soon panel. */
   readonly bookingsComingSoon = true;
 
@@ -190,14 +196,24 @@ export class DashboardComponent {
       .summary()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: summary =>
+        next: summary => {
+          this.pendingReviewCount.set(summary.pendingReviewCount ?? 0);
           this.stats.update(stats =>
             stats.map(stat => ({
               ...stat,
               value: this.summaryValueForCard(stat.labelKey, summary),
             }))
-          ),
+          );
+        },
       });
+  }
+
+  openPendingReview(): void {
+    this.revenueTable?.filterPendingReview();
+  }
+
+  onReviewCompleted(): void {
+    this.loadSummary();
   }
 
   private summaryValueForCard(labelKey: string, summary: DashboardSummary): number {

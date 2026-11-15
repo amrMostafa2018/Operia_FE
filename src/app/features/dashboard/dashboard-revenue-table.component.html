@@ -3,6 +3,14 @@
     <div class="table-title">
       <i class="pi pi-calendar"></i>
       <span>{{ 'ACTIVITY_REVENUE.TRANSACTIONS' | translate }}</span>
+      @if (pendingReviewCount() > 0) {
+        <span
+          class="pending-review-badge"
+          [attr.aria-label]="'DASHBOARD.PENDING_REVIEW_COUNT' | translate: { count: pendingReviewCount() }"
+        >
+          {{ pendingReviewCount() }}
+        </span>
+      }
       <span class="table-date">{{ rangeLabel() }}</span>
     </div>
     <div class="table-filters">

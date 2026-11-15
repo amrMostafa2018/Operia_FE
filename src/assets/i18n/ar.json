@@ -414,6 +414,7 @@
   },
   "HEADER": {
     "NOTIFICATIONS": "الإشعارات",
+    "NOTIFICATIONS_GENERAL": "إشعارات عامة (منفصلة عن مراجعة الدفع في لوحة التحكم)",
     "TOGGLE_SIDEBAR": "إظهار/إخفاء القائمة الجانبية",
     "FULL_NAME": "الاسم الكامل",
     "LOGOUT": "تسجيل الخروج",
@@ -1377,6 +1378,8 @@
     "MONTHLY_REVENUE": "إجمالي إيرادات الشهر",
     "ACTIVE_PACKAGES": "الباقات النشطة",
     "QUICK_ACTIONS": "الإجراءات السريعة",
+    "PENDING_REVIEW_ALERT": "{{count}} عملية دفع بانتظار المراجعة",
+    "PENDING_REVIEW_COUNT": "{{count}} عمليات بانتظار المراجعة",
     "SELL_SERVICE": "بيع خدمة / عرض",
     "INQUIRY": "استعلام",
     "BOOKINGS": "الحجوزات",

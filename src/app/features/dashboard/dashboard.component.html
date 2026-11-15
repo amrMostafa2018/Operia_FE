@@ -87,8 +87,20 @@
     }
   </div>
 
+  @if (canReadRevenue() && canReviewPayments() && pendingReviewCount() > 0) {
+    <button type="button" class="pending-review-alert" (click)="openPendingReview()">
+      <span class="pending-review-alert__badge">{{ pendingReviewCount() }}</span>
+      <span>{{ 'DASHBOARD.PENDING_REVIEW_ALERT' | translate: { count: pendingReviewCount() } }}</span>
+    </button>
+  }
+
   @if (canReadRevenue()) {
-    <app-dashboard-revenue-table [dateFrom]="dateFrom()" [dateTo]="dateTo()" />
+    <app-dashboard-revenue-table
+      [dateFrom]="dateFrom()"
+      [dateTo]="dateTo()"
+      [pendingReviewCount]="pendingReviewCount()"
+      (reviewCompleted)="onReviewCompleted()"
+    />
   } @else {
     <div class="table-section">
       <div class="table-header">

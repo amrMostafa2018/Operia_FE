@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +7,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -26,6 +28,7 @@ import { PermissionService } from '@core/services/permission.service';
 import { getLeadingIconPos } from '@app/shared/utils/rtl.util';
 import { paymentTypePillClass } from '@app/shared/utils/status-tag.util';
 import { ConfirmActionDialogComponent } from '@app/shared/components/confirm-action-dialog/confirm-action-dialog.component';
+import { extractApiErrorCodes } from '@core/utils/api-error.util';
 import { toDateKey } from '../bookings/models/booking.model';
 import { EmployeeService } from '../employees/employee.service';
 import { ActivityRevenueService } from '../activity-revenue/activity-revenue.service';
@@ -73,6 +76,9 @@ export class DashboardRevenueTableComponent {
 
   readonly dateFrom = input<Date | null>(null);
   readonly dateTo = input<Date | null>(null);
+  readonly pendingReviewCount = input(0);
+
+  readonly reviewCompleted = output<void>();
 
   readonly report = signal<RevenueReport | null>(null);
   readonly loading = signal(false);
@@ -167,6 +173,12 @@ export class DashboardRevenueTableComponent {
     };
     this.first.set(0);
     this.load();
+  }
+
+  /** Filters the grid to payments awaiting review (dashboard payment-review alert). */
+  filterPendingReview(): void {
+    this.selectedStatus.set('UnderReview');
+    this.applyFilters();
   }
 
   onLazyLoad(event: TableLazyLoadEvent): void {
@@ -447,10 +459,29 @@ export class DashboardRevenueTableComponent {
           this.pendingAction.set(null);
           this.acting.set(false);
           this.load();
+          this.reviewCompleted.emit();
         },
-        error: () => {
+        error: (error: HttpErrorResponse) => {
           this.acting.set(false);
           this.pendingAction.set(null);
+          const codes = extractApiErrorCodes(error);
+          if (
+            error.status === 409 ||
+            codes.includes('RevenueReviewUnavailable') ||
+            codes.includes('Conflict')
+          ) {
+            const key = 'ERRORS.RevenueReviewUnavailable';
+            const detail = this.translate.instant(key);
+            this.toast.add({
+              severity: 'warn',
+              summary: 'OPERIA',
+              detail: detail === key ? codes[0] ?? '' : detail,
+              life: 6000,
+            });
+            this.load();
+            this.reviewCompleted.emit();
+            return;
+          }
           this.notify('ACTION_ERROR');
         },
       });
