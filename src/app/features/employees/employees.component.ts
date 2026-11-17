@@ -297,7 +297,7 @@ export class EmployeesComponent implements OnInit {
     });
     this.form.controls.temporaryPassword.setValidators([
       Validators.required,
-      Validators.minLength(8),
+      Validators.minLength(5),
     ]);
     this.form.controls.temporaryPassword.updateValueAndValidity();
     this.passwordToggle.show.set(false);
@@ -569,10 +569,10 @@ export class EmployeesComponent implements OnInit {
       return control.errors['server'];
     }
     if (control.errors['required']) {
-      return this.translate.instant('AUTH.REGISTER_PAGE.PASSWORD_REQUIRED');
+      return this.translate.instant('ERRORS.PasswordRequired');
     }
     if (control.errors['minlength']) {
-      return this.translate.instant('AUTH.REGISTER_PAGE.PASSWORD_MIN');
+      return this.translate.instant('EMPLOYEES.PASSWORD_MIN');
     }
     return null;
   }
